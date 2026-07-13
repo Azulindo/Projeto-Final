@@ -1,0 +1,11 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/", "destination": "/frontend/cliente/index.html" },
+    { "source": "/menu", "destination": "/frontend/cliente/menu.html" },
+    { "source": "/reservas", "destination": "/frontend/cliente/reservas.html" },
+    { "source": "/galeria", "destination": "/frontend/cliente/galeria.html" },
+    { "source": "/sobre", "destination": "/frontend/cliente/sobre.html" },
+    { "source": "/contactos", "destination": "/frontend/cliente/contactos.html" }
+  ]
+}
