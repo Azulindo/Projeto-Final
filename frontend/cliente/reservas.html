@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nosifer&display=swap" rel="stylesheet">
-    <script src="js/reservas.js"></script>
+    <script src="js/reservas.js" defer></script>
 </head>
 <body>
     <!-- BARRA FIXA NO TOPO -->
@@ -47,74 +47,46 @@
     <main class="page-reservas">
         <section class="reservas-content">
             <h2>Reserve a Sua Mesa</h2>
-            <p>Venha desfrutar de uma experiência gastronómica única. Preencha o formulário abaixo para fazer a sua reserva.</p>
+            <p>Venha desfrutar de uma experiência gastronómica única. Converse com o nosso assistente para fazer a sua reserva.</p>
 
-            <form class="reserva-form" id="reservaForm">
-                <div class="form-group">
-                    <label for="nome">Nome Completo</label>
-                    <input type="text" id="nome" name="nome" required placeholder="Digite o seu nome">
-                </div>
+            <!-- CHATBOT DE RESERVA -->
+            <div class="chatbot-wrapper" id="chatbotReserva">
 
-                <div class="form-group">
-                    <label for="telefone">Telefone</label>
-                    <input type="tel" id="telefone" name="telefone" required placeholder="Digite o seu telefone">
-                </div>
-
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required placeholder="Digite o seu email">
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="data">Data</label>
-                        <input type="date" id="data" name="data" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="hora">Hora</label>
-                        <select id="hora" name="hora" required>
-                            <option value="">Selecione o horário</option>
-                            <option value="12:00">12:00</option>
-                            <option value="12:30">12:30</option>
-                            <option value="13:00">13:00</option>
-                            <option value="13:30">13:30</option>
-                            <option value="14:00">14:00</option>
-                            <option value="19:30">19:30</option>
-                            <option value="20:00">20:00</option>
-                            <option value="20:30">20:30</option>
-                            <option value="21:00">21:00</option>
-                            <option value="21:30">21:30</option>
-                            <option value="22:00">22:00</option>
-                            <option value="22:30">22:30</option>
-                        </select>
+                <!-- HEADER DO CHAT -->
+                <div class="chat-header">
+                    <div class="chat-avatar">🥩</div>
+                    <div class="chat-header-info">
+                        <span class="chat-name">Assistente Vem Pro Abate</span>
+                        <span class="chat-status"><span class="status-dot"></span>Online</span>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="pessoas">Número de Pessoas</label>
-                    <select id="pessoas" name="pessoas" required>
-                        <option value="">Selecione o número de pessoas</option>
-                        <option value="1">1 Pessoa</option>
-                        <option value="2">2 Pessoas</option>
-                        <option value="3">3 Pessoas</option>
-                        <option value="4">4 Pessoas</option>
-                        <option value="5">5 Pessoas</option>
-                        <option value="6">6 Pessoas</option>
-                        <option value="7">7 Pessoas</option>
-                        <option value="8">8 Pessoas</option>
-                        <option value="9">9 Pessoas</option>
-                        <option value="10+">10+ Pessoas</option>
-                    </select>
+                <!-- CORPO DO CHAT -->
+                <div class="chat-body" id="chatBody">
+                    <!-- As mensagens são injetadas pelo JS -->
                 </div>
 
-                <div class="form-group">
-                    <label for="mensagem">Observações Especiais</label>
-                    <textarea id="mensagem" name="mensagem" rows="4" placeholder="Alergias, preferências alimentares, ocasião especial..."></textarea>
+                <!-- QUICK REPLIES (injetados dinamicamente pelo JS) -->
+                <div class="quick-replies" id="quickReplies"></div>
+
+                <!-- FOOTER DO CHAT -->
+                <div class="chat-footer">
+                    <input
+                        type="text"
+                        id="chatInput"
+                        class="chat-input"
+                        placeholder="Escreva a sua resposta..."
+                        autocomplete="off"
+                    >
+                    <button class="chat-send-btn" id="chatSendBtn" aria-label="Enviar mensagem">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                        </svg>
+                    </button>
                 </div>
 
-                <button type="submit" class="btn-reservar">Confirmar Reserva</button>
-            </form>
+            </div>
+            <!-- FIM CHATBOT -->
 
             <div class="info-reserva">
                 <div class="info-item">
