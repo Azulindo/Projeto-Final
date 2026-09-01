@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mesa — Vem Pro Abate</title>
+  <meta name="description" content="Faça o seu pedido diretamente da mesa no Vem Pro Abate.">
+  <link rel="stylesheet" href="css/mesa.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- HEADER FIXO -->
+  <header class="mesa-header" id="mesaHeader">
+    <div class="mesa-header-left">
+      <img src="../../assets/logos/logotipo.jpg" alt="Vem Pro Abate" class="mesa-logo">
+    </div>
+    <div class="mesa-header-center">
+      <span class="mesa-num" id="mesaNumero">Mesa —</span>
+    </div>
+    <div class="mesa-header-right">
+      <button class="btn-conta" id="btnVerConta" aria-label="Ver conta">
+        🧾 <span id="badgeItens" class="badge hidden">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ESTADO DA SESSÃO -->
+  <div class="estado-banner hidden" id="estadoBanner"></div>
+
+  <!-- ECRÃ DE LOADING -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-logo">🥩</div>
+    <p>A carregar a mesa…</p>
+  </div>
+
+  <!-- ECRÃ DE ERRO -->
+  <div class="error-screen hidden" id="errorScreen">
+    <div class="error-icon">⚠️</div>
+    <h2>Algo correu mal</h2>
+    <p id="errorMsg">QR Code inválido.</p>
+    <button onclick="location.reload()" class="btn-retry">Tentar novamente</button>
+  </div>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="mesa-main hidden" id="mesaMain">
+
+    <!-- TABS DE CATEGORIA -->
+    <nav class="categoria-tabs" id="categoriaTabs" role="tablist"></nav>
+
+    <!-- GRID DE PRODUTOS -->
+    <section class="produtos-grid" id="produtosGrid"></section>
+
+    <!-- CARRINHO FLUTUANTE -->
+    <div class="carrinho-fab" id="carrinhoFab">
+      <span class="fab-icon">🛒</span>
+      <span class="fab-count" id="fabCount">0</span>
+      <span class="fab-total" id="fabTotal">0,00 €</span>
+    </div>
+
+  </main>
+
+  <!-- PAINEL LATERAL: CONTA / CARRINHO -->
+  <aside class="side-panel" id="sidePanel" aria-hidden="true">
+    <div class="side-panel-inner">
+
+      <div class="side-header">
+        <h2>🧾 A sua conta</h2>
+        <button class="btn-close" id="btnCloseSide" aria-label="Fechar">✕</button>
+      </div>
+
+      <!-- Itens do carrinho local (ainda não pedidos) -->
+      <div class="side-section" id="carrinhoSection">
+        <h3 class="side-section-title">🛒 Por Pedir</h3>
+        <div id="carrinhoItens" class="side-itens"></div>
+        <div class="side-empty hidden" id="carrinhoVazio">Ainda não adicionaste nada.</div>
+        <button class="btn-pedir-itens" id="btnPedirItens">Enviar Pedido para a Cozinha 🔥</button>
+      </div>
+
+      <!-- Itens já pedidos (vindos do servidor) -->
+      <div class="side-section" id="pedidosSection">
+        <h3 class="side-section-title">✅ Já Pedido</h3>
+        <div id="pedidosItens" class="side-itens"></div>
+        <div class="side-empty hidden" id="pedidosVazio">Nenhum pedido enviado ainda.</div>
+      </div>
+
+      <!-- Total e botão de conta -->
+      <div class="side-footer">
+        <div class="side-total">
+          <span>Total</span>
+          <span id="sideTotal">0,00 €</span>
+        </div>
+        <button class="btn-pedir-conta" id="btnPedirConta">Pedir a Conta 💳</button>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- OVERLAY DO PAINEL -->
+  <div class="side-overlay hidden" id="sideOverlay"></div>
+
+  <!-- TOAST de notificação -->
+  <div class="toast hidden" id="toast"></div>
+
+  <script src="js/mesa.js"></script>
+</body>
+</html>
