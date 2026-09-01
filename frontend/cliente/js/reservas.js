@@ -80,29 +80,38 @@ document.addEventListener('DOMContentLoaded', () => {
        preco → preço em texto
   ═══════════════════════════════════════════════════════════════ */
   const MENU = {
+    '🥗 Entradas': [
+      { id: 'en1', nome: 'Abatata Frita',    desc: 'Batatas rústicas com tempero da casa e maionese de alho', preco: '3,90€' },
+      { id: 'en2', nome: 'Vem Pro Abacate',  desc: 'Entrada com abacate, guacamole ou tosta',                 preco: '5,80€' },
+      { id: 'en3', nome: 'Vem p\'ro Alho',   desc: 'Pão de alho no forno',                                    preco: '3,20€' },
+      { id: 'en4', nome: 'Abate-Boca',       desc: 'Mini croquetes de novilho',                               preco: '4,50€' },
+    ],
     '🥩 Pratos Principais': [
       { id: 'pp1', nome: 'Borrego Abatido',        desc: 'Borrego assado com batata, alecrim, alho e vinho branco', preco: '15,50€' },
       { id: 'pp2', nome: 'Francesinha em K.O.',    desc: 'Bife, enchidos, queijo e molho da casa com batata e ovo', preco: '12,20€' },
       { id: 'pp3', nome: 'Abate Misto',            desc: 'Picanha, chouriço e frango na brasa com arroz e batata',  preco: '16,20€' },
-      { id: 'pp4', nome: 'Prega-me Isto',          desc: 'Bife dos Açores grelhado com batata frita',               preco: '16,90€' },
+      { id: 'pp4', nome: 'Prega-me Isto',          desc: 'Bife dos Açores com batata frita',                        preco: '16,90€' },
       { id: 'pp5', nome: 'Picanha na Brasa Negra', desc: 'Picanha grelhada com arroz e batata frita',               preco: '16,00€' },
       { id: 'pp6', nome: 'Tábua Rústica do Abate', desc: 'Carnes mistas com migas e batata a murro',                preco: '17,80€' },
     ],
     '🍺 Bebidas': [
-      { id: 'be1', nome: 'Cerveja',        desc: 'Fino/pressão ou caneca',           preco: '1,70€ / 2,80€' },
-      { id: 'be2', nome: 'Panaché',        desc: 'Cerveja com gasosa',               preco: '2,20€' },
-      { id: 'be3', nome: 'Sangria',        desc: 'Branca, tinta ou espumante',       preco: '3,20€ copo / 12€ jarro' },
-      { id: 'be4', nome: 'Coca-Cola',      desc: 'Normal ou zero',                   preco: '1,90€' },
-      { id: 'be5', nome: 'Ice Tea',        desc: 'Pêssego, limão ou manga',          preco: '1,90€' },
-      { id: 'be6', nome: 'Sumos Naturais', desc: 'Laranja ou mistura de frutos',     preco: '3,00€' },
-      { id: 'be7', nome: 'Água',           desc: 'Mineral ou com gás',               preco: '1,30€ / 1,60€' },
-      { id: 'be8', nome: 'Café / Pingado', desc: 'Café ou descafeinado',             preco: '1,00€' },
+      { id: 'be1a', nome: 'Cerveja (Fino/Pressão)', desc: 'Fino ou pressão',                    preco: '1,70€' },
+      { id: 'be1b', nome: 'Cerveja (Caneca)',        desc: 'Caneca de cerveja',                  preco: '2,80€' },
+      { id: 'be2',  nome: 'Panaché',                 desc: 'Cerveja com gasosa',                 preco: '2,20€' },
+      { id: 'be3a', nome: 'Sangria (Copo)',           desc: 'Branca, tinta ou espumante — copo',  preco: '3,20€' },
+      { id: 'be3b', nome: 'Sangria (Jarro)',          desc: 'Branca, tinta ou espumante — jarro', preco: '12,00€' },
+      { id: 'be4',  nome: 'Coca-Cola',                desc: 'Normal ou zero',                     preco: '1,90€' },
+      { id: 'be5',  nome: 'Ice Tea',                  desc: 'Pêssego, limão ou manga',            preco: '1,90€' },
+      { id: 'be6',  nome: 'Sumos Naturais',           desc: 'Laranja ou mistura de frutos',       preco: '3,00€' },
+      { id: 'be7a', nome: 'Água (Mineral)',            desc: 'Água mineral sem gás',               preco: '1,30€' },
+      { id: 'be7b', nome: 'Água (Com Gás)',            desc: 'Água com gás',                       preco: '1,60€' },
+      { id: 'be8',  nome: 'Abate Pingado',             desc: 'Café ou descafeinado',               preco: '1,00€' },
     ],
     '🍮 Sobremesas': [
-      { id: 'sb1', nome: 'Abategatoue',        desc: 'Petit gâteau com gelado e chocolate fundido', preco: '5,20€' },
-      { id: 'sb2', nome: 'Baba do Pastor',      desc: 'Baba de camelo com bolacha',                 preco: '3,90€' },
-      { id: 'sb3', nome: 'Cheesecake da Casa',  desc: 'Cheesecake com frutos vermelhos',             preco: '4,60€' },
-      { id: 'sb4', nome: 'Taça Gelada da Casa', desc: 'Gelados sortidos, chantilly e chocolate',     preco: '4,20€' },
+      { id: 'sb1', nome: 'Abategatoue',        desc: 'Petit gâteau com gelado e chocolate',     preco: '5,20€' },
+      { id: 'sb2', nome: 'Baba do Pastor',      desc: 'Baba de camelo com bolacha',              preco: '3,90€' },
+      { id: 'sb3', nome: 'Cheesecake da Casa',  desc: 'Cheesecake com frutos vermelhos',         preco: '4,60€' },
+      { id: 'sb4', nome: 'Taça Gelada da Casa', desc: 'Gelados, chantilly e chocolate',          preco: '4,20€' },
     ],
   };
 
@@ -814,6 +823,29 @@ document.addEventListener('DOMContentLoaded', () => {
       card.appendChild(obsRow);
     }
 
+    // ── Total estimado ──────────────────────────────────────────
+    const total = calcularTotal(itens);
+    if (total > 0) {
+      const dividerTotal = document.createElement('div');
+      dividerTotal.className = 'resumo-total-divider';
+      card.appendChild(dividerTotal);
+
+      const totalRow = document.createElement('div');
+      totalRow.className = 'resumo-total-row';
+
+      const totalLabel = document.createElement('span');
+      totalLabel.className = 'resumo-total-label';
+      totalLabel.textContent = '💰 Total Estimado';
+
+      const totalValue = document.createElement('span');
+      totalValue.className = 'resumo-total-value';
+      totalValue.textContent = formatarPreco(total);
+
+      totalRow.appendChild(totalLabel);
+      totalRow.appendChild(totalValue);
+      card.appendChild(totalRow);
+    }
+
     chatBody.appendChild(card);
     scrollDown();
   }
@@ -1325,6 +1357,30 @@ document.addEventListener('DOMContentLoaded', () => {
       addRow('✏️', 'Obs.', state.observacoes);
     }
 
+    // ── Total estimado dos pratos pré-selecionados ──────────────
+    const totalFinal = calcularTotal(itensCarrinho);
+    if (totalFinal > 0) {
+      // Linha divisória antes do total
+      const divFinal = document.createElement('div');
+      divFinal.className = 'summary-divider';
+      card.appendChild(divFinal);
+
+      const totalRow = document.createElement('div');
+      totalRow.className = 'summary-total-row';
+
+      const totalLabel = document.createElement('strong');
+      totalLabel.className = 'summary-total-label';
+      totalLabel.textContent = '💰 Total Estimado';
+
+      const totalValue = document.createElement('span');
+      totalValue.className = 'summary-total-value';
+      totalValue.textContent = formatarPreco(totalFinal);
+
+      totalRow.appendChild(totalLabel);
+      totalRow.appendChild(totalValue);
+      card.appendChild(totalRow);
+    }
+
     chatBody.appendChild(card);
     scrollDown();
 
@@ -1394,6 +1450,51 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollDown();
     clearQR();
     lockUI('Reserva concluída!');
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     UTILITÁRIOS DE PREÇO
+  ═══════════════════════════════════════════════════════════════ */
+
+  /**
+   * parsePrecoPrimeiro — Extrai o primeiro valor numérico de uma string de preço.
+   * Exemplos:
+   *   '15,50€'               → 15.50
+   *   '1,70€ / 2,80€'        → 1.70
+   *   '3,20€ copo / 12€ jarro' → 3.20
+   *
+   * @param {string} precoStr - String de preço do menu.
+   * @returns {number} - Valor numérico do primeiro preço encontrado.
+   */
+  function parsePrecoPrimeiro(precoStr) {
+    // Extrai o primeiro número com vírgula ou ponto (ex: "15,50" ou "1,70")
+    const match = precoStr.replace(/,/g, '.').match(/\d+(\.\d+)?/);
+    return match ? parseFloat(match[0]) : 0;
+  }
+
+  /**
+   * calcularTotal — Calcula o total estimado dos itens do carrinho.
+   * Para cada item multiplica a quantidade pelo primeiro preço do produto.
+   *
+   * @param {Array} itens - Itens com { qty, preco } do carrinho.
+   * @returns {number} - Total em euros.
+   */
+  function calcularTotal(itens) {
+    return itens.reduce((acc, item) => {
+      const precoUnit = parsePrecoPrimeiro(item.preco);
+      return acc + precoUnit * item.qty;
+    }, 0);
+  }
+
+  /**
+   * formatarPreco — Formata um número como string de preço em euros.
+   * Exemplo: 32.5 → '32,50 €'
+   *
+   * @param {number} valor - Valor numérico a formatar.
+   * @returns {string} - Preço formatado.
+   */
+  function formatarPreco(valor) {
+    return valor.toFixed(2).replace('.', ',') + ' €';
   }
 
   /* ═══════════════════════════════════════════════════════════════

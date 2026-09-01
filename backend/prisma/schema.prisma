@@ -1,0 +1,87 @@
+// This is your Prisma schema file
+// Documentação: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Mesa ────────────────────────────────────────────────────────────────────
+// Representa cada mesa física do restaurante.
+// qrToken → UUID único gravado no QR Code impresso em cada mesa.
+model Mesa {
+  id       Int          @id @default(autoincrement())
+  numero   Int          @unique
+  lugares  Int          @default(4)
+  qrToken  String       @unique @default(uuid())
+  ativa    Boolean      @default(true)
+  sessoes  SessaoMesa[]
+
+  @@map("mesas")
+}
+
+// ─── Produto ─────────────────────────────────────────────────────────────────
+// Catálogo de produtos do restaurante. Sincronizado com o menu do site.
+model Produto {
+  id          Int          @id @default(autoincrement())
+  nome        String
+  descricao   String?
+  preco       Decimal      @db.Decimal(8, 2)
+  categoria   String       // "Pratos Principais" | "Bebidas" | "Sobremesas"
+  ativo       Boolean      @default(true)
+  itensPedido ItemPedido[]
+
+  @@map("produtos")
+}
+
+// ─── SessaoMesa ──────────────────────────────────────────────────────────────
+// Uma refeição completa. Abre quando o cliente lê o QR Code e fecha
+// após o pagamento. Uma mesa pode ter muitas sessões ao longo do tempo.
+model SessaoMesa {
+  id          Int          @id @default(autoincrement())
+  mesaId      Int
+  mesa        Mesa         @relation(fields: [mesaId], references: [id])
+  estado      EstadoSessao @default(ABERTA)
+  numPessoas  Int?
+  observacoes String?      @db.Text
+  abertaEm   DateTime     @default(now())
+  fechadaEm  DateTime?
+  itens       ItemPedido[]
+
+  @@map("sessoes_mesa")
+}
+
+enum EstadoSessao {
+  ABERTA
+  AGUARDA_PAGAMENTO
+  FECHADA
+}
+
+// ─── ItemPedido ──────────────────────────────────────────────────────────────
+// Cada linha do pedido. Podem ser adicionados em momentos diferentes
+// (ex: pedidos de bebida, depois de prato principal, depois de sobremesa).
+model ItemPedido {
+  id         Int        @id @default(autoincrement())
+  sessaoId   Int
+  sessao     SessaoMesa @relation(fields: [sessaoId], references: [id])
+  produtoId  Int
+  produto    Produto    @relation(fields: [produtoId], references: [id])
+  quantidade Int        @default(1)
+  precoUnit  Decimal    @db.Decimal(8, 2)  // Preço no momento do pedido (histórico)
+  observacao String?                        // "sem arroz", "bem passado", etc.
+  estado     EstadoItem @default(PENDENTE)
+  criadoEm  DateTime   @default(now())
+
+  @@map("itens_pedido")
+}
+
+enum EstadoItem {
+  PENDENTE       // Chegou ao sistema, cozinha ainda não viu
+  EM_PREPARACAO  // Cozinha a preparar
+  PRONTO         // Pronto para servir
+  SERVIDO        // Entregue na mesa
+}

@@ -321,11 +321,12 @@
 .chat-body {
   flex: 1;            /* Ocupa o espaço restante entre header e footer */
   overflow-y: auto;   /* Scroll vertical dentro do chat */
-  padding: 16px 14px;
+  padding: 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   scroll-behavior: smooth;
+  align-items: stretch; /* Todos os filhos ocupam a largura total */
 }
 
 /* Scrollbar personalizada (Chrome/Edge/Safari) */
@@ -357,8 +358,9 @@
   background: var(--bg-bubble-bot);
   color: var(--text-primary);
   border-top-left-radius: 4px;
-  align-self: flex-start;
+  align-self: flex-start;  /* Balão ancorado à esquerda */
   border: 1px solid var(--border);
+  max-width: 82%;
 }
 
 /* Balão do utilizador (laranja, alinhado à direita) */
@@ -366,7 +368,8 @@
   background: linear-gradient(135deg, var(--orange), var(--orange-dark));
   color: #fff;
   border-top-right-radius: 4px;
-  align-self: flex-end;
+  align-self: flex-end;   /* Balão ancorado à direita */
+  max-width: 82%;
   box-shadow: 0 3px 14px rgba(255, 85, 0, 0.35);
 }
 
@@ -382,7 +385,8 @@
   border-radius: 16px;
   border-top-left-radius: 4px;
   border: 1px solid var(--border);
-  align-self: flex-start;
+  align-self: flex-start; /* Alinhado à esquerda como o balão do bot */
+  width: fit-content;
   animation: bubblePop 0.22s ease both;
 }
 
@@ -410,11 +414,12 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 10px 14px;
+  padding: 10px 16px;
   border-top: 1px solid var(--border);
   background: var(--bg-card);
   flex-shrink: 0;
   align-items: center;
+  justify-content: flex-start; /* Chips alinham à esquerda (comportamento natural de chat) */
   transition: padding 0.2s;
   min-height: 0;
 }
@@ -564,10 +569,10 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px;
-  margin: 4px 0;
-  align-self: flex-start;
-  /* min(340px, 95%) garante que não ultrapassa a largura do chat em mobile */
-  width: min(340px, 95%);
+  margin: 4px auto; /* auto nas margens horizontais centra o calendário */
+  align-self: center; /* Centra dentro do chat-body */
+  /* min(360px, 100%) garante que não ultrapassa a largura do chat */
+  width: min(360px, 100%);
   animation: bubblePop 0.28s ease both;
 }
 
@@ -732,9 +737,9 @@
   border-radius: 12px;
   padding: 14px;
   margin: 4px 0;
-  align-self: flex-start;
-  width: 96%;
-  max-width: 96%;
+  align-self: stretch; /* Ocupa toda a largura do chat-body */
+  width: 100%;
+  max-width: 100%;
   animation: bubblePop 0.28s ease both;
 }
 
@@ -927,8 +932,8 @@
   border-radius: 12px;
   padding: 14px;
   margin: 4px 0;
-  align-self: flex-start;
-  width: 96%;
+  align-self: stretch; /* Ocupa toda a largura do chat-body */
+  width: 100%;
   animation: bubblePop 0.28s ease both;
 }
 
@@ -1016,9 +1021,9 @@
   border-radius: 12px;
   padding: 14px;
   margin: 4px 0;
-  align-self: flex-start;
-  width: 96%;
-  max-width: 96%;
+  align-self: stretch; /* Ocupa toda a largura do chat-body */
+  width: 100%;
+  max-width: 100%;
   font-size: 0.82rem;
   animation: bubblePop 0.28s ease both;
 }
@@ -1098,6 +1103,44 @@
 
 .resumo-obs strong { color: var(--gold); }
 
+/* Linha divisória antes do total no card de resumo do menu */
+.resumo-total-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 10px 0 8px;
+}
+
+/* Linha de total estimado no resumo do menu */
+.resumo-total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+/* Label "💰 Total Estimado" */
+.resumo-total-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Valor do total em destaque verde */
+.resumo-total-value {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #4ade80;
+  letter-spacing: 0.5px;
+}
+
+/* Nota de rodapé discreta */
+.resumo-total-note {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+  line-height: 1.3;
+}
+
 /* §15 — CARD DE RESUMO FINAL
    Card completo exibido no final com todos os dados da reserva.
    Usa textContent internamente (anti-XSS).
@@ -1107,8 +1150,8 @@
   border: 1px solid rgba(229, 169, 60, 0.3);
   border-radius: 12px;
   padding: 16px 18px;
-  align-self: flex-start;
-  max-width: 92%;
+  align-self: stretch; /* Ocupa toda a largura do chat-body */
+  width: 100%;
   font-size: 0.82rem;
   line-height: 1.75;
   color: #ccc;
@@ -1154,6 +1197,39 @@
 .summary-value {
   color: var(--text-primary);
   font-size: 0.82rem;
+}
+
+/* Linha de total estimado no card de resumo final */
+.summary-total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0 2px;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* Label "💰 Total Estimado" no resumo final */
+.summary-total-label {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+/* Valor do total em destaque verde no resumo final */
+.summary-total-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #4ade80;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 12px rgba(74, 222, 128, 0.4);
+}
+
+/* Nota de rodapé discreta no resumo final */
+.summary-total-note {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+  line-height: 1.3;
 }
 
 /* §16 — BOTÕES DE AÇÃO GLOBAIS (Nova Reserva / Ligar)
