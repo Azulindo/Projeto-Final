@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acesso de Funcionários — Vem Pro Abate</title>
+<meta name="description" content="Login da aplicação de gestão do Vem Pro Abate.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+
+  <main class="login-wrap">
+    <div class="login-card">
+      <img src="../../assets/logos/logotipo.jpg" alt="Vem Pro Abate" class="login-logo" onerror="this.style.display='none'">
+      <h1>Vem Pro Abate</h1>
+      <p class="subtitulo">Acesso de Funcionários</p>
+
+      <form id="formLogin" novalidate>
+        <div class="campo" id="campoEmail">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" autocomplete="username" placeholder="nome@vemproabate.pt">
+          <span class="erro-msg">Introduz um email válido.</span>
+        </div>
+
+        <div class="campo" id="campoPassword">
+          <label for="password">Palavra-passe</label>
+          <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••">
+          <span class="erro-msg">A palavra-passe é obrigatória.</span>
+        </div>
+
+        <div id="erroGeral" class="erro-geral hidden" role="alert"></div>
+
+        <button type="submit" class="btn btn-primario btn-entrar" id="btnEntrar">
+          <span id="btnEntrarTexto">Entrar</span>
+        </button>
+      </form>
+
+      <p class="nota-demo">
+        🔧 Modo de demonstração — sem backend ligado ainda.<br>
+        O acesso é por posto de trabalho:<br>
+        <code>cozinha@vemproabate.pt</code><br>
+        <code>balcao@vemproabate.pt</code><br>
+        <code>admin@vemproabate.pt</code><br>
+        palavra-passe <code>abate2026</code>
+      </p>
+    </div>
+  </main>
+
+  <script src="../js/api.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

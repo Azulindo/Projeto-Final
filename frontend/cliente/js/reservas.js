@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
       hora: '',             // Hora escolhida ('20:00')
       nome: '',             // Nome completo do cliente
       telefone: '',         // Número de telemóvel
+      codigo: '',           // Código da reserva, preenchido no fim (F-37)
       processing: false,    // Bloqueio anti-spam: true quando o bot está a processar
     };
   }
@@ -123,6 +124,16 @@ document.addEventListener('DOMContentLoaded', () => {
     almoco: ['12:00', '12:30', '13:00', '13:30', '14:00'],
     jantar: ['19:30', '20:00', '20:30', '21:00', '21:30', '22:00', '22:30'],
   };
+
+  /* Antecedência máxima aceite para uma reserva (F-32).
+     O restaurante não aceita marcações para lá deste horizonte — o
+     calendário bloqueia tudo o que passe daqui. */
+  const MAX_DIAS_ANTECEDENCIA = 60;
+
+  /* Código de reserva mostrado ao cliente no fim (F-37), ex.: RSV-7K2M9.
+     Enquanto não há backend é gerado aqui; quando o POST /api/reservas
+     existir, passa a vir do servidor (ver docs/API.md secção 4.5). */
+  const PREFIXO_CODIGO_RESERVA = 'RSV';
 
   /* ═══════════════════════════════════════════════════════════════
      SECÇÃO 4 — DICIONÁRIO DE NÚMEROS POR EXTENSO
@@ -893,6 +904,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const now = new Date();
     now.setHours(0, 0, 0, 0); // Normaliza para meia-noite para comparação de datas
 
+    // Janela de reservas aceite (F-32 / B-43): de amanhã até 60 dias.
+    // Hoje não entra: às 15h já não faz sentido marcar mesa para as 12h.
+    const minimo = new Date(now);
+    minimo.setDate(minimo.getDate() + 1);
+
+    const limite = new Date(now);
+    limite.setDate(limite.getDate() + MAX_DIAS_ANTECEDENCIA);
+
     const meses  = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                      'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
     const semana = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -923,6 +942,9 @@ document.addEventListener('DOMContentLoaded', () => {
     nextBtn.className = 'cal-nav-btn';
     nextBtn.innerHTML = '&#8250;'; // »
     nextBtn.title = 'Próximo mês';
+    // Bloqueia o "seguinte" se o mês a seguir já cai todo fora do limite de 60 dias
+    const primeiroDiaMesSeguinte = new Date(year, month + 1, 1);
+    nextBtn.disabled = primeiroDiaMesSeguinte > limite;
     nextBtn.addEventListener('click', () => {
       // Navega para o mês seguinte (com wrap de Dezembro para Janeiro)
       if (calState.month === 11) { calState.month = 0; calState.year++; }
@@ -976,9 +998,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // ── Regras de Bloqueio ──────────────────────────────────
       // isPast: qualquer dia anterior a hoje (comparação de timestamps)
-      const isPast    = thisDate < now;
+      // isPast: hoje e qualquer dia anterior — as reservas começam amanhã
+      const isPast    = thisDate < minimo;
       // isMonday: dia da semana = 1 (Segunda-feira = dia de encerramento do restaurante)
       const isMonday  = thisDate.getDay() === 1;
+      // isTooFar: para lá da antecedência máxima aceite (F-32)
+      const isTooFar  = thisDate > limite;
       // isToday: o dia de hoje (para destacar com borda dourada)
       const isToday   = thisDate.getTime() === now.getTime();
       // isSelected: o dia já foi selecionado anteriormente (mantém seleção ao navegar)
@@ -990,15 +1015,18 @@ document.addEventListener('DOMContentLoaded', () => {
       // Aplica classes de estado visuais
       if (isPast)     btn.classList.add('cal-day--past');
       if (isMonday)   btn.classList.add('cal-day--closed');
+      if (isTooFar)   btn.classList.add('cal-day--far');
       if (isToday)    btn.classList.add('cal-day--today');
       if (isSelected) btn.classList.add('cal-day--selected');
 
       // Desativa o botão se o dia está bloqueado
-      btn.disabled = isPast || isMonday;
-      if (isPast || isMonday) btn.setAttribute('aria-disabled', 'true');
+      const bloqueado = isPast || isMonday || isTooFar;
+      btn.disabled = bloqueado;
+      if (bloqueado) btn.setAttribute('aria-disabled', 'true');
+      if (isTooFar) btn.title = `Só aceitamos reservas até ${MAX_DIAS_ANTECEDENCIA} dias de antecedência.`;
 
       // Evento de seleção (apenas para dias disponíveis)
-      if (!isPast && !isMonday) {
+      if (!bloqueado) {
         btn.addEventListener('click', () => {
           // Guarda a data selecionada no estado
           state.data = thisDate;
@@ -1039,7 +1067,9 @@ document.addEventListener('DOMContentLoaded', () => {
     legend.innerHTML = `
       <span class="leg-today">■</span> Hoje
       &nbsp;<span class="leg-closed">■</span> Encerrado (2ª feira)
-      &nbsp;<span class="leg-past">■</span> Passado`;
+      &nbsp;<span class="leg-past">■</span> Indisponível
+      &nbsp;<span class="leg-far">■</span> Mais de ${MAX_DIAS_ANTECEDENCIA} dias
+      <span class="cal-nota">Reservas de amanhã até ${MAX_DIAS_ANTECEDENCIA} dias.</span>`;
     cal.appendChild(legend);
 
     chatBody.appendChild(cal);
@@ -1411,10 +1441,17 @@ document.addEventListener('DOMContentLoaded', () => {
   async function confirmarReserva() {
     state.step = 'done';
 
+    // Gera o código que o cliente vai guardar (F-37).
+    // Quando o POST /api/reservas existir, este código passa a vir na
+    // resposta do servidor — ver docs/API.md secção 4.5.
+    const codigo = gerarCodigoReserva();
+    state.codigo = codigo;
+
     // Persiste a reserva no localStorage para consulta futura
     try {
       const reservas = JSON.parse(localStorage.getItem('vpa_reservas') || '[]');
       reservas.push({
+        codigo,
         nome:       state.nome,
         telefone:   state.telefone,
         pessoas:    state.pessoas,
@@ -1439,6 +1476,9 @@ document.addEventListener('DOMContentLoaded', () => {
       900
     );
 
+    await pause(300);
+    renderCodigoReserva(codigo);
+
     await pause(400);
 
     // Botão para iniciar uma nova reserva
@@ -1450,6 +1490,86 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollDown();
     clearQR();
     lockUI('Reserva concluída!');
+  }
+
+  /**
+   * gerarCodigoReserva — Código curto e legível ao telefone (F-37).
+   * Sem caracteres ambíguos (0/O, 1/I) para não haver enganos quando o
+   * cliente o lê em voz alta ao restaurante.
+   */
+  function gerarCodigoReserva() {
+    const ALFABETO = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let sufixo = '';
+    for (let i = 0; i < 5; i++) {
+      sufixo += ALFABETO[Math.floor(Math.random() * ALFABETO.length)];
+    }
+    return `${PREFIXO_CODIGO_RESERVA}-${sufixo}`;
+  }
+
+  /**
+   * renderCodigoReserva — Mostra o código em destaque, com botão de copiar.
+   * O clipboard só funciona em HTTPS ou localhost; se falhar, o código
+   * fica selecionado para o utilizador copiar à mão.
+   */
+  function renderCodigoReserva(codigo) {
+    const card = document.createElement('div');
+    card.className = 'codigo-card';
+
+    const label = document.createElement('div');
+    label.className = 'codigo-label';
+    label.textContent = 'O teu código de reserva';
+
+    const valor = document.createElement('div');
+    valor.className = 'codigo-valor';
+    valor.textContent = codigo; // textContent: nunca innerHTML com dados
+
+    const btn = document.createElement('button');
+    btn.className = 'btn-copiar-codigo';
+    btn.type = 'button';
+    btn.textContent = '📋 Copiar código';
+    btn.addEventListener('click', () => copiarCodigo(codigo, btn, valor));
+
+    const nota = document.createElement('div');
+    nota.className = 'codigo-nota';
+    nota.textContent = 'Guarda este código — é o que precisas para alterar ou cancelar a reserva.';
+
+    card.append(label, valor, btn, nota);
+    chatBody.appendChild(card);
+    scrollDown();
+  }
+
+  async function copiarCodigo(codigo, btn, valorEl) {
+    const marcarCopiado = () => {
+      btn.textContent = '✅ Copiado!';
+      btn.classList.add('copiado');
+      setTimeout(() => {
+        btn.textContent = '📋 Copiar código';
+        btn.classList.remove('copiado');
+      }, 2000);
+    };
+
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(codigo);
+        marcarCopiado();
+        return;
+      }
+      throw new Error('clipboard indisponível');
+    } catch (e) {
+      // Alternativa quando o clipboard está bloqueado (http://, permissões):
+      // seleciona o código para o utilizador copiar com Ctrl+C / toque longo.
+      try {
+        const intervalo = document.createRange();
+        intervalo.selectNodeContents(valorEl);
+        const selecao = window.getSelection();
+        selecao.removeAllRanges();
+        selecao.addRange(intervalo);
+        btn.textContent = 'Seleciona e copia ↑';
+        setTimeout(() => { btn.textContent = '📋 Copiar código'; }, 2600);
+      } catch (e2) {
+        console.warn('Não foi possível copiar o código:', e2);
+      }
+    }
   }
 
   /* ═══════════════════════════════════════════════════════════════

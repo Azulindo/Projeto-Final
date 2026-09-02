@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt" data-niveis="balcao administrador">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Codes das Mesas — Vem Pro Abate</title>
+<meta name="description" content="Gerar e imprimir os QR Codes das mesas.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/qrcodes.css">
+
+<script src="../js/api.js"></script>
+<script src="js/auth-guard.js"></script>
+</head>
+<body data-pagina="qrcodes" data-titulo="QR Codes das Mesas">
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="content-area">
+      <header class="content-topbar" id="contentTopbar"></header>
+
+      <main class="content-main" id="conteudoPagina">
+
+        <!-- ── Painel de configuração (não sai na impressão) ── -->
+        <section class="painel-config" id="painelConfig">
+          <div class="config-linha">
+            <div class="campo campo-url">
+              <label for="urlBase">Endereço público do site</label>
+              <input type="url" id="urlBase" placeholder="https://vemproabate.vercel.app" autocomplete="off">
+              <span class="ajuda">
+                É este endereço que vai dentro do QR Code. Tem de ser um endereço que o
+                <strong>telemóvel do cliente</strong> consiga abrir — não serve
+                <code>file://</code> nem <code>localhost</code>.
+              </span>
+            </div>
+            <button type="button" class="btn btn-primario btn-imprimir" id="btnImprimir">🖨️ Imprimir</button>
+          </div>
+
+          <div class="aviso aviso-erro hidden" id="avisoUrl">
+            ⚠️ Sem um endereço público, os QR Codes vão apontar para um sítio que o telemóvel não abre.
+          </div>
+
+          <div class="aviso aviso-info" id="avisoOrigem"></div>
+        </section>
+
+        <!-- ── Estado de carregamento / erro ── -->
+        <p class="estado-msg" id="estadoMsg">A carregar as mesas…</p>
+
+        <!-- ── Folha imprimível ── -->
+        <div class="folha-qr" id="folhaQr"></div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="js/vendor/qrcode-generator.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/qrcodes.js"></script>
+</body>
+</html>

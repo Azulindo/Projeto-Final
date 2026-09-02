@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt" data-niveis="cozinha balcao administrador">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Início — Vem Pro Abate</title>
+<meta name="description" content="Aplicação de gestão do Vem Pro Abate.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/dashboard.css">
+
+<script src="../js/api.js"></script>
+<script src="js/auth-guard.js"></script>
+</head>
+<body data-pagina="dashboard" data-titulo="Início">
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="content-area">
+      <header class="content-topbar" id="contentTopbar"></header>
+
+      <main class="content-main" id="conteudoPagina">
+        <div class="placeholder-card">
+          <p class="placeholder-icone" aria-hidden="true">🧭</p>
+          <h1>Bem-vindo à app de gestão</h1>
+          <p>
+            O login, a sessão e a navegação (F-08 a F-14, F-44) já estão a
+            funcionar. Os ecrãs de Pedidos, Produtos, Stock e Funcionários
+            que vês na barra lateral chegam a seguir, no Sprint 4.
+          </p>
+          <p id="expiraEm" class="expira-nota"></p>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="js/layout.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+/* =====================================================================
+   qrcodes.css — Página imprimível dos QR Codes das mesas (F-58)
+   =====================================================================
+   Duas apresentações no mesmo ficheiro:
+     · Ecrã    — dentro do layout da app de gestão, cartões escuros
+     · Impressão — só os cartões, a preto e branco, 2 por linha em A4
+   ===================================================================== */
+
+/* ── PAINEL DE CONFIGURAÇÃO ──────────────────────────────────────── */
+
+.painel-config {
+  background: var(--bg-elevada);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  margin-bottom: 22px;
+}
+
+.config-linha {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.campo-url {
+  flex: 1;
+  min-width: 260px;
+}
+
+.campo-url .ajuda {
+  font-size: 12px;
+  color: var(--texto-suave);
+  line-height: 1.5;
+}
+
+.campo-url .ajuda code {
+  background: var(--bg-card);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  color: var(--dourado);
+}
+
+.btn-imprimir { white-space: nowrap; }
+
+.aviso {
+  margin-top: 14px;
+  padding: 10px 13px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.aviso-erro {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.32);
+  color: #ff9494;
+}
+
+.aviso-info {
+  background: rgba(79, 157, 222, 0.1);
+  border: 1px solid rgba(79, 157, 222, 0.3);
+  color: #9fcbf0;
+}
+
+@keyframes piscarAviso {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-4px); }
+  75%      { transform: translateX(4px); }
+}
+
+.aviso.a-piscar { animation: piscarAviso 0.35s ease-in-out 2; }
+
+.estado-msg {
+  color: var(--texto-suave);
+  font-size: 14px;
+  padding: 14px 0;
+}
+
+.estado-msg.estado-erro { color: var(--perigo); }
+
+/* ── FOLHA DE CARTÕES ────────────────────────────────────────────── */
+
+.folha-qr {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 18px;
+}
+
+.cartao-qr {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px 16px 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.cartao-topo {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cobre);
+}
+
+.cartao-numero {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--texto);
+}
+
+.cartao-qr-img {
+  width: 100%;
+  max-width: 170px;
+  aspect-ratio: 1 / 1;
+  background: #fff;      /* fundo branco obrigatório: o leitor precisa de contraste */
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.cartao-qr-img svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.cartao-instrucao {
+  font-size: 12px;
+  color: var(--texto-suave);
+  line-height: 1.4;
+}
+
+.cartao-token {
+  font-family: "Courier New", monospace;
+  font-size: 9px;
+  color: var(--texto-fraco);
+  word-break: break-all;
+  line-height: 1.3;
+}
+
+.qr-falhou {
+  color: var(--perigo);
+  font-size: 12px;
+}
+
+/* ── IMPRESSÃO ───────────────────────────────────────────────────── */
+
+@media print {
+  /* Fora tudo o que não é cartão: barra lateral, topo, configuração */
+  .sidebar,
+  .sidebar-overlay,
+  .content-topbar,
+  .painel-config,
+  .estado-msg {
+    display: none !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html, body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .app-shell { display: block !important; }
+  .content-area { min-height: auto !important; }
+  .content-main { padding: 0 !important; overflow: visible !important; }
+
+  .folha-qr {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8mm;
+  }
+
+  .cartao-qr {
+    background: #fff !important;
+    border: 1.5px dashed #999 !important;  /* linha de corte */
+    border-radius: 0;
+    padding: 5mm 4mm;
+    gap: 3mm;
+    /* Nunca deixar um cartão partido entre duas páginas */
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .cartao-topo    { color: #000 !important; font-size: 8pt; }
+  .cartao-numero  { color: #000 !important; font-size: 19pt; }
+  .cartao-instrucao { color: #333 !important; font-size: 8pt; }
+  .cartao-token   { color: #777 !important; font-size: 6pt; }
+
+  .cartao-qr-img {
+    max-width: 42mm;
+    padding: 0;
+    border-radius: 0;
+  }
+}

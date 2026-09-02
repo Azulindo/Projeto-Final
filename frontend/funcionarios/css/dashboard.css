@@ -1,0 +1,41 @@
+/* =====================================================================
+   dashboard.css — Ecrã "Início" (F-14)
+   A barra lateral e o topo vêm de layout.css / layout.js.
+   ===================================================================== */
+
+body[data-pagina="dashboard"] #conteudoPagina {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder-card {
+  max-width: 440px;
+  text-align: center;
+  background: var(--bg-elevada);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px 32px;
+}
+
+.placeholder-icone {
+  font-size: 40px;
+  margin-bottom: 14px;
+}
+
+.placeholder-card h1 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.placeholder-card p {
+  color: var(--texto-suave);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.expira-nota {
+  margin-top: 18px;
+  font-size: 12px;
+  color: var(--texto-fraco);
+}

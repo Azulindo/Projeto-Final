@@ -459,3 +459,20 @@
     height: 120px !important;
   }
 }
+
+
+/* Link discreto para a app de gestão — os funcionários entram por aqui
+   na primeira vez e depois guardam nos favoritos do tablet. */
+.footer-staff {
+  margin-top: 10px;
+  font-size: 0.72rem;
+}
+
+.footer-staff a {
+  color: #6a6a6a;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  transition: color 0.15s ease;
+}
+
+.footer-staff a:hover { color: #c9832f; }

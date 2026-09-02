@@ -681,6 +681,13 @@
   pointer-events: none; /* Bloqueia qualquer interação */
 }
 
+/* Além do limite de antecedência (60 dias) — igual aos dias passados */
+.cal-day--far {
+  color: #333;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* Segunda-feira (encerrado) — cinzento com ponto indicador */
 .cal-day--closed {
   color: #3a3a3f;
@@ -727,6 +734,80 @@
 .cal-legend .leg-today  { color: var(--gold); }
 .cal-legend .leg-closed { color: #3a3a3f; }
 .cal-legend .leg-past   { color: #333; }
+.cal-legend .leg-far    { color: #333; }
+
+/* Nota do calendário — ocupa a linha toda por baixo da legenda */
+.cal-legend .cal-nota {
+  flex-basis: 100%;
+  margin-top: 2px;
+  color: var(--text-dim);
+}
+
+/* Hoje, quando não é selecionável (as reservas começam amanhã):
+   mantém-se assinalado, mas sem parecer disponível. */
+.cal-day--today:disabled {
+  color: #6b5a2e;
+  border-color: #6b5a2e;
+}
+
+/* §11b — CARTÃO DO CÓDIGO DE RESERVA (ecrã final)
+   O código é a única coisa que o cliente precisa de guardar, por isso
+   fica em destaque e com um botão para copiar.
+   ----------------------------------------------------------------------- */
+.codigo-card {
+  background: linear-gradient(135deg, #1e1e21, #141416);
+  border: 1px solid var(--gold);
+  border-radius: 14px;
+  padding: 18px 16px;
+  margin: 10px 0 4px;
+  text-align: center;
+  animation: fadeInUp 0.4s ease-out both;
+}
+
+.codigo-card .codigo-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.codigo-card .codigo-valor {
+  font-family: "Courier New", monospace;
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--gold);
+  margin-bottom: 12px;
+  user-select: all; /* um toque longo seleciona o código inteiro */
+}
+
+.btn-copiar-codigo {
+  background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.1s ease;
+}
+
+.btn-copiar-codigo:hover  { filter: brightness(1.08); }
+.btn-copiar-codigo:active { transform: scale(0.97); }
+
+.btn-copiar-codigo.copiado {
+  background: #1f7a4d;
+  cursor: default;
+}
+
+.codigo-card .codigo-nota {
+  margin-top: 10px;
+  font-size: 0.66rem;
+  color: var(--text-dim);
+  line-height: 1.45;
+}
 
 /* §12 — CARD DE MENU POR CATEGORIAS (STEPPERS)
    Container para seleção de pratos com seletores [ - ] N [ + ].
@@ -1465,3 +1546,20 @@ html { scroll-behavior: smooth; }
   /* Resumo final: max-width maior */
   .summary-card { max-width: 98%; }
 }
+
+
+/* Link discreto para a app de gestão — os funcionários entram por aqui
+   na primeira vez e depois guardam nos favoritos do tablet. */
+.footer-staff {
+  margin-top: 10px;
+  font-size: 0.72rem;
+}
+
+.footer-staff a {
+  color: #6a6a6a;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  transition: color 0.15s ease;
+}
+
+.footer-staff a:hover { color: #c9832f; }

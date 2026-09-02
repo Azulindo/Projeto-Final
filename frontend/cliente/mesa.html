@@ -1,109 +1,745 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mesa — Vem Pro Abate</title>
-  <meta name="description" content="Faça o seu pedido diretamente da mesa no Vem Pro Abate.">
-  <link rel="stylesheet" href="css/mesa.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-</head>
-<body>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mesa — Vem Pro Abate</title>
+<meta name="description" content="Faça o seu pedido diretamente da mesa no Vem Pro Abate.">
 
-  <!-- HEADER FIXO -->
-  <header class="mesa-header" id="mesaHeader">
-    <div class="mesa-header-left">
-      <img src="../../assets/logos/logotipo.jpg" alt="Vem Pro Abate" class="mesa-logo">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          carvao:  '#121212',
+          carvao2: '#1a1a1a',
+          carvao3: '#242424',
+          copper:  '#c9832f',
+          copperdark: '#8a5a1f',
+          gold:    '#e8b34f',
+        },
+        fontFamily: {
+          display: ['"Playfair Display"', 'serif'],
+          sans: ['Inter', 'system-ui', 'sans-serif'],
+        },
+        boxShadow: {
+          soft: '0 10px 30px -8px rgba(0,0,0,0.55)',
+          liftup: '0 -8px 24px -6px rgba(0,0,0,0.55)',
+        },
+      },
+    },
+  };
+</script>
+
+<style>
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card-enter { animation: fadeInUp .35s ease-out both; }
+
+  @keyframes softPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(232,179,79,0.45); }
+    50%      { box-shadow: 0 0 0 6px rgba(232,179,79,0); }
+  }
+  .pulse-ring { animation: softPulse 2.4s ease-in-out infinite; }
+
+  @keyframes girar { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 34px; height: 34px; border-radius: 9999px;
+    border: 3px solid rgba(232,179,79,0.25); border-top-color: #e8b34f;
+    animation: girar .8s linear infinite;
+  }
+  .spinner-pequeno {
+    width: 15px; height: 15px; border-radius: 9999px;
+    border: 2px solid rgba(0,0,0,0.25); border-top-color: rgba(0,0,0,0.75);
+    animation: girar .7s linear infinite;
+  }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+    background: radial-gradient(ellipse at top, #1a1611 0%, #121212 55%);
+  }
+
+  .placeholder-icon { background: radial-gradient(circle at 30% 30%, #2a2015, #161616); }
+
+  /* Classes aplicadas por JS — declaradas aqui para o Tailwind CDN as
+     gerar já no primeiro varrimento da página. */
+  .warmup { }
+</style>
+</head>
+
+<body class="bg-carvao text-neutral-100 font-sans pb-28 min-h-screen">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       ECRÃ DE CARREGAMENTO (F-26)
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="ecraCarregamento" class="fixed inset-0 z-[70] bg-carvao flex flex-col items-center justify-center gap-4">
+    <div class="spinner"></div>
+    <p class="text-neutral-400 text-sm">A abrir a mesa…</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       ECRÃ DE ERRO (F-26)
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="ecraErro" class="hidden fixed inset-0 z-[70] bg-carvao flex-col items-center justify-center gap-4 px-8 text-center">
+    <p class="text-5xl" aria-hidden="true">⚠️</p>
+    <h2 class="font-display text-xl font-bold text-white">Algo correu mal</h2>
+    <p id="erroMensagem" class="text-neutral-400 text-sm max-w-xs">Não foi possível abrir a mesa.</p>
+    <button id="btnTentarNovamente" class="mt-2 bg-gradient-to-r from-gold to-copper text-carvao font-bold rounded-2xl px-6 py-3 text-sm">
+      Tentar novamente
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       CABEÇALHO
+  ═══════════════════════════════════════════════════════════ -->
+  <header class="sticky top-0 z-40 bg-carvao/85 backdrop-blur-md border-b border-white/[0.06]">
+    <div class="max-w-3xl mx-auto flex items-center justify-between px-4 pt-3 pb-2.5">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <img src="../../assets/logos/logotipo.jpg" alt="Vem Pro Abate"
+             class="w-10 h-10 rounded-full object-cover ring-2 ring-copper/50 flex-shrink-0"
+             onerror="this.style.display='none'">
+        <div class="leading-tight min-w-0">
+          <p class="font-display text-base sm:text-lg font-bold text-white tracking-wide truncate">Vem Pro Abate</p>
+          <p class="text-[11px] text-neutral-400 -mt-0.5 tracking-wide">STEAKHOUSE</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5 bg-gradient-to-br from-gold to-copper text-carvao text-sm font-bold px-3.5 py-1.5 rounded-full shadow-soft pulse-ring flex-shrink-0">
+        <span aria-hidden="true">📍</span>
+        <span id="mesaNumero">Mesa —</span>
+      </div>
     </div>
-    <div class="mesa-header-center">
-      <span class="mesa-num" id="mesaNumero">Mesa —</span>
+
+    <!-- Aviso de conta pedida (sessão em AGUARDA_PAGAMENTO) -->
+    <div id="bannerConta" class="hidden bg-gradient-to-r from-gold to-copper text-carvao text-[12.5px] font-bold text-center py-2 px-4">
+      💳 Conta pedida — um empregado vem já à mesa.
     </div>
-    <div class="mesa-header-right">
-      <button class="btn-conta" id="btnVerConta" aria-label="Ver conta">
-        🧾 <span id="badgeItens" class="badge hidden">0</span>
+
+    <!-- RESUMO DO PEDIDO — painel retrátil -->
+    <div class="max-w-3xl mx-auto px-4 pb-3">
+      <button id="resumoToggle"
+              class="w-full flex items-center justify-between gap-3 bg-carvao2 border border-white/[0.06] rounded-2xl px-4 py-3 shadow-soft active:scale-[0.99] transition-transform"
+              aria-expanded="false">
+        <span class="flex items-center gap-2 text-sm min-w-0">
+          <span class="text-lg" aria-hidden="true">🧾</span>
+          <span class="text-neutral-300 font-medium">O seu pedido</span>
+          <span id="resumoCount" class="hidden bg-copper/20 text-copper text-[11px] font-bold px-1.5 py-0.5 rounded-full">0</span>
+        </span>
+        <span class="flex items-center gap-2 flex-shrink-0">
+          <span id="resumoSubtotal" class="font-bold text-gold text-[15px]">0,00 €</span>
+          <svg id="resumoChevron" class="w-4 h-4 text-neutral-500 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </span>
       </button>
+
+      <div id="resumoPanel" class="overflow-hidden transition-[max-height] duration-300 ease-in-out" style="max-height:0px;">
+        <div class="bg-carvao2 border border-white/[0.06] border-t-0 rounded-b-2xl -mt-2 pt-3 px-4 pb-4">
+          <div id="resumoLista" class="space-y-2.5 text-sm"></div>
+          <p id="resumoVazio" class="text-neutral-500 text-xs text-center py-1.5">Ainda não adicionaste nada ao pedido.</p>
+        </div>
+      </div>
     </div>
   </header>
 
-  <!-- ESTADO DA SESSÃO -->
-  <div class="estado-banner hidden" id="estadoBanner"></div>
+  <!-- ═══════════════════════════════════════════════════════════
+       FILTROS DE MENU
+  ═══════════════════════════════════════════════════════════ -->
+  <nav id="filtros" class="max-w-3xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar" role="tablist" aria-label="Categorias do menu"></nav>
 
-  <!-- ECRÃ DE LOADING -->
-  <div class="loading-screen" id="loadingScreen">
-    <div class="loading-logo">🥩</div>
-    <p>A carregar a mesa…</p>
-  </div>
-
-  <!-- ECRÃ DE ERRO -->
-  <div class="error-screen hidden" id="errorScreen">
-    <div class="error-icon">⚠️</div>
-    <h2>Algo correu mal</h2>
-    <p id="errorMsg">QR Code inválido.</p>
-    <button onclick="location.reload()" class="btn-retry">Tentar novamente</button>
-  </div>
-
-  <!-- CONTEÚDO PRINCIPAL -->
-  <main class="mesa-main hidden" id="mesaMain">
-
-    <!-- TABS DE CATEGORIA -->
-    <nav class="categoria-tabs" id="categoriaTabs" role="tablist"></nav>
-
-    <!-- GRID DE PRODUTOS -->
-    <section class="produtos-grid" id="produtosGrid"></section>
-
-    <!-- CARRINHO FLUTUANTE -->
-    <div class="carrinho-fab" id="carrinhoFab">
-      <span class="fab-icon">🛒</span>
-      <span class="fab-count" id="fabCount">0</span>
-      <span class="fab-total" id="fabTotal">0,00 €</span>
-    </div>
-
+  <!-- ═══════════════════════════════════════════════════════════
+       GRELHA DE PRODUTOS
+  ═══════════════════════════════════════════════════════════ -->
+  <main class="max-w-3xl mx-auto px-4 pb-6">
+    <div id="produtosGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
   </main>
 
-  <!-- PAINEL LATERAL: CONTA / CARRINHO -->
-  <aside class="side-panel" id="sidePanel" aria-hidden="true">
-    <div class="side-panel-inner">
+  <!-- TOAST -->
+  <div id="toast"
+       class="fixed left-1/2 -translate-x-1/2 bottom-28 z-[60] bg-carvao3 border border-white/10 text-white text-sm font-medium px-5 py-3 rounded-full shadow-soft opacity-0 translate-y-2 pointer-events-none transition-all duration-300 max-w-[88vw] text-center">
+  </div>
 
-      <div class="side-header">
-        <h2>🧾 A sua conta</h2>
-        <button class="btn-close" id="btnCloseSide" aria-label="Fechar">✕</button>
-      </div>
+  <!-- OVERLAY + BOTTOM SHEET: chamar empregado / pedir conta -->
+  <div id="sheetOverlay" class="fixed inset-0 bg-black/60 z-40 opacity-0 pointer-events-none transition-opacity duration-300"></div>
 
-      <!-- Itens do carrinho local (ainda não pedidos) -->
-      <div class="side-section" id="carrinhoSection">
-        <h3 class="side-section-title">🛒 Por Pedir</h3>
-        <div id="carrinhoItens" class="side-itens"></div>
-        <div class="side-empty hidden" id="carrinhoVazio">Ainda não adicionaste nada.</div>
-        <button class="btn-pedir-itens" id="btnPedirItens">Enviar Pedido para a Cozinha 🔥</button>
-      </div>
-
-      <!-- Itens já pedidos (vindos do servidor) -->
-      <div class="side-section" id="pedidosSection">
-        <h3 class="side-section-title">✅ Já Pedido</h3>
-        <div id="pedidosItens" class="side-itens"></div>
-        <div class="side-empty hidden" id="pedidosVazio">Nenhum pedido enviado ainda.</div>
-      </div>
-
-      <!-- Total e botão de conta -->
-      <div class="side-footer">
-        <div class="side-total">
-          <span>Total</span>
-          <span id="sideTotal">0,00 €</span>
-        </div>
-        <button class="btn-pedir-conta" id="btnPedirConta">Pedir a Conta 💳</button>
-      </div>
-
+  <div id="sheet"
+       class="fixed left-0 right-0 bottom-0 z-50 bg-carvao2 border-t border-white/10 rounded-t-3xl shadow-liftup px-5 pt-3 pb-8 translate-y-full transition-transform duration-300">
+    <div class="w-10 h-1.5 bg-white/15 rounded-full mx-auto mb-4"></div>
+    <p class="text-center text-neutral-400 text-sm mb-4">Como podemos ajudar?</p>
+    <div class="space-y-2.5">
+      <button id="btnChamarEmpregado" class="w-full flex items-center gap-3 bg-carvao3 hover:bg-white/10 border border-white/[0.06] rounded-2xl px-4 py-3.5 text-left transition-colors">
+        <span class="text-xl" aria-hidden="true">🛎️</span>
+        <span>
+          <span class="block font-semibold text-white text-sm">Chamar Empregado</span>
+          <span class="block text-xs text-neutral-400">Alguém vem já à mesa</span>
+        </span>
+      </button>
+      <button id="btnPedirConta" class="w-full flex items-center gap-3 bg-carvao3 hover:bg-white/10 border border-white/[0.06] rounded-2xl px-4 py-3.5 text-left transition-colors">
+        <span class="text-xl" aria-hidden="true">💳</span>
+        <span>
+          <span class="block font-semibold text-white text-sm">Pedir a Conta</span>
+          <span class="block text-xs text-neutral-400">Fechar a mesa e pagar</span>
+        </span>
+      </button>
+      <button id="btnCancelarSheet" class="w-full text-center text-neutral-400 text-sm py-3">Cancelar</button>
     </div>
-  </aside>
+  </div>
 
-  <!-- OVERLAY DO PAINEL -->
-  <div class="side-overlay hidden" id="sideOverlay"></div>
+  <!-- ═══════════════════════════════════════════════════════════
+       AÇÕES RÁPIDAS — RODAPÉ FIXO
+  ═══════════════════════════════════════════════════════════ -->
+  <footer class="fixed bottom-0 left-0 right-0 z-30 bg-carvao/95 backdrop-blur-md border-t border-white/10 px-4 pt-3 shadow-liftup"
+          style="padding-bottom: max(0.9rem, env(safe-area-inset-bottom));">
+    <div class="max-w-3xl mx-auto flex items-center gap-3">
+      <button id="btnEmpregado" aria-label="Chamar empregado ou pedir a conta"
+              class="flex-shrink-0 w-14 h-14 rounded-2xl bg-carvao3 border border-white/10 flex items-center justify-center text-xl active:scale-95 transition-transform">
+        🛎️
+      </button>
+      <button id="btnPedirItens" disabled
+              class="flex-1 flex items-center justify-between gap-2 bg-gradient-to-r from-gold to-copper disabled:from-carvao3 disabled:to-carvao3 text-carvao disabled:text-neutral-500 font-bold rounded-2xl px-5 py-4 shadow-soft disabled:shadow-none active:scale-[0.98] transition-all">
+        <span class="flex items-center gap-2">
+          <span id="btnPedirIcone" aria-hidden="true">🔥</span>
+          <span id="btnPedirTexto">Pedir Itens</span>
+          <span id="footerCount" class="hidden bg-black/15 text-[12px] font-bold px-1.5 py-0.5 rounded-full">0</span>
+        </span>
+        <span id="footerTotal">0,00 €</span>
+      </button>
+    </div>
+  </footer>
 
-  <!-- TOAST de notificação -->
-  <div class="toast hidden" id="toast"></div>
+  <script src="../js/api.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
 
-  <script src="js/mesa.js"></script>
+  /* ═══════════════════════════════════════════════════════════
+     Este ecrã fala com o backend através do api.js:
+       GET  mesas/:token/sessao          → abre/lê a sessão da mesa
+       GET  produtos                     → catálogo (ainda simulado)
+       POST mesas/:token/pedir           → envia itens para a cozinha
+       POST mesas/:token/pedir-conta     → pede a conta
+       POST mesas/:token/chamar-empregado
+     Formatos em docs/API.md. Nada aqui tem dados de menu escritos à
+     mão — tudo vem da API, incluindo os produtoId.
+  ═══════════════════════════════════════════════════════════ */
+
+  const CAMINHO_IMAGENS = '../../assets/imagens/pratos/';
+
+  /* Imagens por nome de produto.
+     Solução temporária: a tabela `Produto` ainda não tem coluna de
+     imagem (ver sugestão 1 em docs/API.md secção 6). Assim que existir
+     `produto.imagem`, esta tabela pode desaparecer — o código já
+     prefere `produto.imagem` quando ele vier preenchido. */
+  const IMAGENS_POR_NOME = {
+    'Abatata Frita':            'abatata_frita.png',
+    'Vem Pro Abacate':          'vem_pro_abacate.png',
+    "Vem p'ro Alho":            'vem_pro_alho.png',
+    'Abate-Boca':               'abate_boca.png',
+    'Borrego Abatido':          'borrego_abatido.png',
+    'Francesinha em K.O.':      'francesinha_em_ko.png',
+    'Abate Misto':              'prato_favorito.jpg',
+    'Prega-me Isto':            'prego.jpg',
+    'Picanha na Brasa Negra':   'picanha_na_brasa_negra.png',
+    'Tábua Rústica do Abate':   'tabua_rustica_do_abate.png',
+    'Abategatoue':              'abategatoue.png',
+    'Baba do Pastor':           'baba_do_pastor.png',
+    'Cheesecake da Casa':       'cheesecake_da_casa.png',
+    'Taça Gelada da Casa':      'taca_gelada_da_casa.png',
+  };
+
+  /* Emojis para os produtos sem fotografia (bebidas) */
+  const EMOJIS_POR_PALAVRA = [
+    [/cerveja/i, '🍺'], [/panach/i, '🍻'], [/sangria/i, '🍷'], [/cola/i, '🥤'],
+    [/ice tea/i, '🧊'], [/sumo/i, '🧃'], [/água|agua/i, '💧'], [/pingado|caf/i, '☕'],
+  ];
+
+  /* Ordem e ícone dos separadores. Categorias que apareçam na API e não
+     estejam aqui são mostradas no fim, com ícone genérico — assim, se o
+     João acrescentar uma categoria nova, ela aparece na mesma. */
+  const ORDEM_CATEGORIAS = ['Pratos Principais', 'Entradas', 'Bebidas', 'Sobremesas'];
+  const ICONES_CATEGORIA = {
+    'Pratos Principais': '🥩', 'Entradas': '🥗', 'Bebidas': '🍹', 'Sobremesas': '🍰',
+  };
+
+  /* ── REFERÊNCIAS AO DOM ─────────────────────────────────────── */
+  const ecraCarregamento = document.getElementById('ecraCarregamento');
+  const ecraErro         = document.getElementById('ecraErro');
+  const erroMensagem     = document.getElementById('erroMensagem');
+  const btnTentarNovamente = document.getElementById('btnTentarNovamente');
+
+  const mesaNumeroEl = document.getElementById('mesaNumero');
+  const bannerConta  = document.getElementById('bannerConta');
+  const filtrosEl    = document.getElementById('filtros');
+  const gridEl       = document.getElementById('produtosGrid');
+
+  const resumoToggle   = document.getElementById('resumoToggle');
+  const resumoChevron  = document.getElementById('resumoChevron');
+  const resumoPanel    = document.getElementById('resumoPanel');
+  const resumoLista    = document.getElementById('resumoLista');
+  const resumoVazio    = document.getElementById('resumoVazio');
+  const resumoSubtotal = document.getElementById('resumoSubtotal');
+  const resumoCount    = document.getElementById('resumoCount');
+
+  const footerCount   = document.getElementById('footerCount');
+  const footerTotal   = document.getElementById('footerTotal');
+  const btnPedirItens = document.getElementById('btnPedirItens');
+  const btnPedirTexto = document.getElementById('btnPedirTexto');
+  const btnPedirIcone = document.getElementById('btnPedirIcone');
+
+  const btnEmpregado      = document.getElementById('btnEmpregado');
+  const sheet             = document.getElementById('sheet');
+  const sheetOverlay      = document.getElementById('sheetOverlay');
+  const btnChamarEmpregado = document.getElementById('btnChamarEmpregado');
+  const btnPedirConta     = document.getElementById('btnPedirConta');
+  const btnCancelarSheet  = document.getElementById('btnCancelarSheet');
+
+  const toastEl = document.getElementById('toast');
+
+  /* ── ESTADO ─────────────────────────────────────────────────── */
+  const state = {
+    token: null,
+    mesa: null,        // { id, numero, lugares }
+    sessao: null,      // { id, estado, abertaEm, itens[], total } — vem do servidor
+    produtos: [],      // GET /produtos
+    produtosPorId: {},
+    categorias: [],
+    categoriaAtiva: '',
+    carrinho: {},      // { produtoId: quantidade } — ainda por enviar
+  };
+
+  let resumoAberto = false;
+  let toastTimer = null;
+  let aEnviar = false;
+
+  /* ═══════════════════════════════════════════════════════════
+     ARRANQUE
+  ═══════════════════════════════════════════════════════════ */
+  async function init() {
+    const params = new URLSearchParams(location.search);
+    const emSimulacao = typeof MODO_SIMULACAO !== 'undefined' && MODO_SIMULACAO;
+    // O QR Code de cada mesa aponta para ...mesa.html?mesa=<qrToken>.
+    // Sem parâmetro, em modo de demonstração abrimos uma mesa de exemplo.
+    state.token = params.get('mesa') || (emSimulacao ? 'demo-mesa-3' : null);
+
+    if (!state.token) {
+      mostrarErro('Falta o código da mesa. Lê outra vez o QR Code da tua mesa.');
+      return;
+    }
+
+    mostrarCarregamento(true);
+    try {
+      const [dadosSessao, produtos] = await Promise.all([
+        chamarAPI(`mesas/${encodeURIComponent(state.token)}/sessao`),
+        chamarAPI('produtos'),
+      ]);
+
+      state.mesa   = dadosSessao.mesa;
+      state.sessao = dadosSessao.sessao;
+      state.produtos = produtos;
+      state.produtosPorId = {};
+      produtos.forEach(p => { state.produtosPorId[p.id] = p; });
+
+      state.categorias = ordenarCategorias([...new Set(produtos.map(p => p.categoria))]);
+      state.categoriaAtiva = state.categorias[0] || '';
+
+      mesaNumeroEl.textContent = `Mesa ${String(state.mesa.numero).padStart(2, '0')}`;
+      atualizarBannerConta();
+      renderFiltros();
+      renderGrid();
+      atualizarTotais();
+
+      mostrarCarregamento(false);
+    } catch (erro) {
+      mostrarErro(erro.message || 'Não foi possível ligar ao servidor.');
+    }
+  }
+
+  function ordenarCategorias(categorias) {
+    const conhecidas = ORDEM_CATEGORIAS.filter(c => categorias.includes(c));
+    const novas = categorias.filter(c => !ORDEM_CATEGORIAS.includes(c)).sort();
+    return [...conhecidas, ...novas];
+  }
+
+  function mostrarCarregamento(ativo) {
+    ecraCarregamento.classList.toggle('hidden', !ativo);
+    ecraCarregamento.classList.toggle('flex', ativo);
+  }
+
+  function mostrarErro(mensagem) {
+    mostrarCarregamento(false);
+    erroMensagem.textContent = mensagem;
+    ecraErro.classList.remove('hidden');
+    ecraErro.classList.add('flex');
+  }
+
+  btnTentarNovamente.addEventListener('click', () => {
+    ecraErro.classList.add('hidden');
+    ecraErro.classList.remove('flex');
+    init();
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     FILTROS DE CATEGORIA
+  ═══════════════════════════════════════════════════════════ */
+  function renderFiltros() {
+    filtrosEl.innerHTML = '';
+    state.categorias.forEach(categoria => {
+      const ativo = categoria === state.categoriaAtiva;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.role = 'tab';
+      btn.setAttribute('aria-selected', ativo ? 'true' : 'false');
+      btn.dataset.categoria = categoria;
+      btn.className = [
+        'flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors border',
+        ativo
+          ? 'bg-gradient-to-r from-gold to-copper text-carvao border-transparent shadow-soft'
+          : 'bg-carvao2 text-neutral-300 border-white/[0.06] hover:border-copper/40',
+      ].join(' ');
+      btn.innerHTML = `<span aria-hidden="true">${ICONES_CATEGORIA[categoria] || '🍽️'}</span><span>${escapeHtml(categoria)}</span>`;
+      btn.addEventListener('click', () => {
+        if (state.categoriaAtiva === categoria) return;
+        state.categoriaAtiva = categoria;
+        renderFiltros();
+        renderGrid();
+      });
+      filtrosEl.appendChild(btn);
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     GRELHA DE PRODUTOS
+  ═══════════════════════════════════════════════════════════ */
+  function renderGrid() {
+    gridEl.innerHTML = '';
+    state.produtos
+      .filter(p => p.categoria === state.categoriaAtiva)
+      .forEach((produto, i) => {
+        const card = criarCard(produto);
+        card.style.animationDelay = `${Math.min(i, 6) * 35}ms`;
+        gridEl.appendChild(card);
+      });
+  }
+
+  function ficheiroImagem(produto) {
+    // Quando a coluna Produto.imagem existir, é ela que manda.
+    if (produto.imagem) return produto.imagem;
+    const ficheiro = IMAGENS_POR_NOME[produto.nome];
+    return ficheiro ? CAMINHO_IMAGENS + ficheiro : null;
+  }
+
+  function emojiProduto(produto) {
+    for (const [padrao, emoji] of EMOJIS_POR_PALAVRA) {
+      if (padrao.test(produto.nome)) return emoji;
+    }
+    return '🍽️';
+  }
+
+  function criarCard(produto) {
+    const qty = state.carrinho[produto.id] || 0;
+    const caminho = ficheiroImagem(produto);
+
+    const card = document.createElement('article');
+    card.className = 'card-enter flex gap-3 bg-carvao2 border border-white/[0.06] rounded-2xl p-3 shadow-soft';
+    card.dataset.id = produto.id;
+
+    const mediaHtml = caminho
+      ? `<img src="${escapeAttr(caminho)}" alt="${escapeAttr(produto.nome)}" loading="lazy"
+             class="w-24 h-24 sm:w-28 sm:h-28 rounded-xl object-cover flex-shrink-0 bg-carvao3"
+             onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'w-24 h-24 sm:w-28 sm:h-28 rounded-xl flex-shrink-0 placeholder-icon flex items-center justify-center text-3xl',textContent:'🍽️'}))">`
+      : `<div class="w-24 h-24 sm:w-28 sm:h-28 rounded-xl flex-shrink-0 placeholder-icon flex items-center justify-center text-3xl" aria-hidden="true">${emojiProduto(produto)}</div>`;
+
+    card.innerHTML = `
+      ${mediaHtml}
+      <div class="flex-1 min-w-0 flex flex-col justify-between">
+        <div>
+          <h3 class="font-semibold text-white text-[15px] leading-snug">${escapeHtml(produto.nome)}</h3>
+          <p class="text-xs text-neutral-400 mt-0.5 line-clamp-2">${escapeHtml(produto.descricao || '')}</p>
+        </div>
+        <div class="flex items-center justify-between mt-2.5">
+          <span class="text-gold font-bold text-[15px]">${formatarPreco(Number(produto.preco))}</span>
+          <div class="flex items-center gap-0.5 bg-carvao3 rounded-full p-1">
+            <button type="button" data-action="menos" aria-label="Diminuir quantidade"
+                    class="w-7 h-7 rounded-full flex items-center justify-center text-neutral-300 hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition-colors" ${qty === 0 ? 'disabled' : ''}>−</button>
+            <span class="qty-value w-6 text-center text-sm font-bold text-white">${qty}</span>
+            <button type="button" data-action="mais" aria-label="Aumentar quantidade"
+                    class="w-7 h-7 rounded-full flex items-center justify-center bg-copper text-white hover:bg-gold hover:text-carvao transition-colors">+</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    card.querySelector('[data-action="menos"]').addEventListener('click', () => alterarQuantidade(produto.id, -1));
+    card.querySelector('[data-action="mais"]').addEventListener('click', () => alterarQuantidade(produto.id, 1));
+
+    return card;
+  }
+
+  function alterarQuantidade(produtoId, delta) {
+    const atual = state.carrinho[produtoId] || 0;
+    const nova = Math.max(0, atual + delta);
+    if (nova === 0) delete state.carrinho[produtoId];
+    else state.carrinho[produtoId] = nova;
+
+    // Atualiza só o cartão afetado (não perde o scroll da lista)
+    const card = gridEl.querySelector(`[data-id="${produtoId}"]`);
+    if (card) {
+      card.querySelector('.qty-value').textContent = nova;
+      card.querySelector('[data-action="menos"]').disabled = nova === 0;
+    }
+
+    atualizarTotais();
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     TOTAIS / CONTA
+     A conta mostra o que já foi enviado à cozinha (vem da sessão do
+     servidor) MAIS o que ainda está no carrinho — por isso nunca fica
+     vazia depois de "Pedir Itens".
+  ═══════════════════════════════════════════════════════════ */
+  function itensEnviadosAgrupados() {
+    // Junta linhas do mesmo produto para a conta ficar legível.
+    const porProduto = {};
+    (state.sessao?.itens || []).forEach(item => {
+      const id = item.produtoId;
+      if (!porProduto[id]) {
+        porProduto[id] = {
+          produtoId: id,
+          nome: item.produto?.nome || state.produtosPorId[id]?.nome || 'Produto',
+          precoUnit: Number(item.precoUnit),
+          quantidade: 0,
+          estados: new Set(),
+        };
+      }
+      porProduto[id].quantidade += item.quantidade;
+      porProduto[id].estados.add(item.estado);
+    });
+    return Object.values(porProduto);
+  }
+
+  function atualizarTotais() {
+    const enviados = itensEnviadosAgrupados();
+    const pendentes = Object.entries(state.carrinho);
+
+    const itensPendentes = pendentes.reduce((s, [, q]) => s + q, 0);
+    const precoPendentes = pendentes.reduce((s, [id, q]) => s + Number(state.produtosPorId[id].preco) * q, 0);
+
+    const itensEnviados = enviados.reduce((s, i) => s + i.quantidade, 0);
+    const precoEnviados = enviados.reduce((s, i) => s + i.precoUnit * i.quantidade, 0);
+
+    const totalItens = itensPendentes + itensEnviados;
+
+    // Rodapé — só o que está por enviar
+    footerTotal.textContent = formatarPreco(precoPendentes);
+    if (itensPendentes > 0) {
+      footerCount.textContent = itensPendentes;
+      footerCount.classList.remove('hidden');
+      btnPedirItens.disabled = aEnviar;
+    } else {
+      footerCount.classList.add('hidden');
+      btnPedirItens.disabled = true;
+    }
+
+    // Resumo — a conta toda
+    resumoSubtotal.textContent = formatarPreco(precoPendentes + precoEnviados);
+    if (totalItens > 0) {
+      resumoCount.textContent = totalItens;
+      resumoCount.classList.remove('hidden');
+    } else {
+      resumoCount.classList.add('hidden');
+    }
+
+    resumoLista.innerHTML = '';
+    if (totalItens === 0) {
+      resumoVazio.classList.remove('hidden');
+    } else {
+      resumoVazio.classList.add('hidden');
+      enviados.forEach(item => resumoLista.appendChild(
+        criarLinhaResumo(item.nome, item.quantidade, item.precoUnit, etiquetaEstado(item.estados))
+      ));
+      pendentes.forEach(([id, qty]) => {
+        const p = state.produtosPorId[id];
+        resumoLista.appendChild(criarLinhaResumo(p.nome, qty, Number(p.preco), 'por enviar'));
+      });
+    }
+
+    if (resumoAberto) resumoPanel.style.maxHeight = resumoPanel.scrollHeight + 'px';
+  }
+
+  /* Traduz os estados do backend (PENDENTE/EM_PREPARACAO/PRONTO/SERVIDO)
+     para uma etiqueta única e legível na conta do cliente. */
+  function etiquetaEstado(estados) {
+    if (estados.has('PENDENTE'))      return 'enviado';
+    if (estados.has('EM_PREPARACAO')) return 'a preparar';
+    if (estados.has('PRONTO'))        return 'pronto';
+    return 'servido';
+  }
+
+  const CORES_ETIQUETA = {
+    'por enviar':  'text-gold',
+    'enviado':     'text-emerald-400',
+    'a preparar':  'text-amber-400',
+    'pronto':      'text-emerald-400',
+    'servido':     'text-neutral-500',
+  };
+
+  function criarLinhaResumo(nome, qty, precoUnit, etiqueta) {
+    const linha = document.createElement('div');
+    linha.className = 'flex items-center justify-between gap-2';
+    const cor = CORES_ETIQUETA[etiqueta] || 'text-neutral-500';
+    const marca = etiqueta === 'por enviar' ? '' : '✅ ';
+    linha.innerHTML = `
+      <span class="text-neutral-300 truncate flex items-center gap-1.5">
+        <span class="text-copper font-semibold flex-shrink-0">${qty}×</span>
+        <span class="truncate">${escapeHtml(nome)}</span>
+        <span class="text-[10px] ${cor} font-semibold whitespace-nowrap">${marca}${etiqueta}</span>
+      </span>
+      <span class="text-neutral-400 flex-shrink-0">${formatarPreco(precoUnit * qty)}</span>
+    `;
+    return linha;
+  }
+
+  function alternarResumo() {
+    resumoAberto = !resumoAberto;
+    resumoToggle.setAttribute('aria-expanded', String(resumoAberto));
+    resumoChevron.classList.toggle('rotate-180', resumoAberto);
+    resumoPanel.style.maxHeight = resumoAberto ? resumoPanel.scrollHeight + 'px' : '0px';
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     ENVIAR PEDIDO  →  POST mesas/:token/pedir
+  ═══════════════════════════════════════════════════════════ */
+  async function enviarPedido() {
+    const pendentes = Object.entries(state.carrinho);
+    if (pendentes.length === 0 || aEnviar) return;
+
+    const itens = pendentes.map(([produtoId, quantidade]) => ({
+      produtoId: Number(produtoId),
+      quantidade,
+    }));
+
+    definirEstadoEnvio(true);
+    try {
+      await chamarAPI(`mesas/${encodeURIComponent(state.token)}/pedir`, {
+        method: 'POST',
+        body: { itens },
+      });
+
+      // Relê a sessão para a conta ficar igual à do servidor
+      const dados = await chamarAPI(`mesas/${encodeURIComponent(state.token)}/sessao`);
+      state.sessao = dados.sessao;
+      state.carrinho = {};
+
+      renderGrid();
+      atualizarTotais();
+      atualizarBannerConta();
+      mostrarToast('🔥 Pedido enviado para a cozinha!');
+    } catch (erro) {
+      mostrarToast(`⚠️ ${erro.message}`);
+    } finally {
+      definirEstadoEnvio(false);
+    }
+  }
+
+  function definirEstadoEnvio(ativo) {
+    aEnviar = ativo;
+    btnPedirTexto.textContent = ativo ? 'A enviar…' : 'Pedir Itens';
+    btnPedirIcone.innerHTML = ativo ? '<span class="spinner-pequeno inline-block"></span>' : '🔥';
+    if (ativo) btnPedirItens.disabled = true;
+    else atualizarTotais();
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     CHAMAR EMPREGADO / PEDIR CONTA
+  ═══════════════════════════════════════════════════════════ */
+  async function chamarEmpregado() {
+    fecharSheet();
+    try {
+      const r = await chamarAPI(`mesas/${encodeURIComponent(state.token)}/chamar-empregado`, { method: 'POST' });
+      mostrarToast(r.mensagem || '🛎️ Empregado chamado.');
+    } catch (erro) {
+      mostrarToast(`⚠️ ${erro.message}`);
+    }
+  }
+
+  async function pedirConta() {
+    fecharSheet();
+    try {
+      const r = await chamarAPI(`mesas/${encodeURIComponent(state.token)}/pedir-conta`, { method: 'POST' });
+      if (state.sessao) state.sessao.estado = 'AGUARDA_PAGAMENTO';
+      atualizarBannerConta();
+      mostrarToast(r.mensagem || '💳 Conta pedida.');
+    } catch (erro) {
+      mostrarToast(`⚠️ ${erro.message}`);
+    }
+  }
+
+  function atualizarBannerConta() {
+    const aguarda = state.sessao?.estado === 'AGUARDA_PAGAMENTO';
+    bannerConta.classList.toggle('hidden', !aguarda);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     BOTTOM SHEET / TOAST
+  ═══════════════════════════════════════════════════════════ */
+  function abrirSheet() {
+    sheetOverlay.classList.remove('opacity-0', 'pointer-events-none');
+    sheet.classList.remove('translate-y-full');
+  }
+
+  function fecharSheet() {
+    sheetOverlay.classList.add('opacity-0', 'pointer-events-none');
+    sheet.classList.add('translate-y-full');
+  }
+
+  function mostrarToast(msg) {
+    clearTimeout(toastTimer);
+    toastEl.textContent = msg;
+    toastEl.classList.remove('opacity-0', 'translate-y-2', 'pointer-events-none');
+    toastTimer = setTimeout(() => {
+      toastEl.classList.add('opacity-0', 'translate-y-2', 'pointer-events-none');
+    }, 2600);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     UTILITÁRIOS
+  ═══════════════════════════════════════════════════════════ */
+  function formatarPreco(valor) {
+    return Number(valor).toFixed(2).replace('.', ',') + ' €';
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str ?? '';
+    return div.innerHTML;
+  }
+
+  function escapeAttr(str) {
+    return String(str ?? '').replace(/"/g, '&quot;');
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     EVENTOS
+  ═══════════════════════════════════════════════════════════ */
+  resumoToggle.addEventListener('click', alternarResumo);
+  btnPedirItens.addEventListener('click', enviarPedido);
+  btnEmpregado.addEventListener('click', abrirSheet);
+  btnCancelarSheet.addEventListener('click', fecharSheet);
+  sheetOverlay.addEventListener('click', fecharSheet);
+  btnChamarEmpregado.addEventListener('click', chamarEmpregado);
+  btnPedirConta.addEventListener('click', pedirConta);
+
+  init();
+});
+</script>
 </body>
 </html>

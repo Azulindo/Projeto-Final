@@ -1,0 +1,204 @@
+/* =====================================================================
+   base.css — Fundações visuais da App de Gestão · "Vem Pro Abate"
+   =====================================================================
+   F-08: paleta e tipografia da aplicação de gestão.
+
+   Propositadamente DIFERENTE da estética "fogo/steakhouse" do site de
+   cliente: aqui o objetivo é legibilidade em tabelas e formulários
+   durante um turno de trabalho, não impacto visual. Por isso:
+     - Tipografia única: Inter (nunca Nosifer — decorativa e ilegível
+       em tabelas, como já foi assinalado na lista de tarefas).
+     - Contraste mais neutro (grafite em vez de preto puro + laranja
+       fogo), com o cobre/dourado da marca reservado a ações e estados.
+
+   Todos os ecrãs da app de gestão (login, dashboard, pedidos,
+   produtos, etc.) devem importar este ficheiro primeiro.
+   ===================================================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Superfícies */
+  --bg:          #14161a;   /* fundo geral — grafite, não preto puro */
+  --bg-elevada:  #1b1e24;   /* barras, cabeçalhos */
+  --bg-card:     #20242b;   /* cartões, painéis, linhas de tabela */
+  --bg-hover:    #262a32;   /* hover / linha selecionada */
+  --border:      #2d323b;
+
+  /* Marca — usar com moderação (ações, estados ativos, destaques) */
+  --cobre:       #c9832f;
+  --dourado:     #e8b34f;
+
+  /* Texto */
+  --texto:        #eef0f3;
+  --texto-suave:  #98a0ac;
+  --texto-fraco:  #5b6270;
+
+  /* Estados semânticos — usados em badges de estado de pedido, stock, etc. */
+  --sucesso:      #3ecf8e;
+  --aviso:        #f5a524;
+  --perigo:       #ef4444;
+  --info:         #4f9dde;
+
+  /* Escala e forma */
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  18px;
+  --sombra:     0 10px 26px -10px rgba(0, 0, 0, 0.55);
+  --topbar-h:   64px;
+  --sidebar-w:  220px;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--texto);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: "Inter", system-ui, sans-serif; /* mesma família — nunca Nosifer aqui */
+  font-weight: 700;
+  color: var(--texto);
+  line-height: 1.25;
+}
+
+a { color: inherit; }
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Tabelas — o motivo direto de banir a Nosifer: precisam de ser lidas
+   em diagonal, depressa, muitas vezes em ecrãs pequenos de cozinha. */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--texto-suave);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+tr:hover td { background: var(--bg-hover); }
+
+/* Utilitários partilhados */
+.hidden { display: none !important; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: var(--radius-md);
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.15s ease, background 0.15s ease;
+}
+
+.btn:active { transform: scale(0.98); }
+
+.btn-primario {
+  background: linear-gradient(135deg, var(--dourado), var(--cobre));
+  color: #16130d;
+}
+
+.btn-primario:hover { filter: brightness(1.06); }
+
+.btn-secundario {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--texto);
+}
+
+.btn-secundario:hover { background: var(--bg-hover); }
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.campo label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.campo input,
+.campo select {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px 13px;
+  color: var(--texto);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.campo input:focus,
+.campo select:focus {
+  border-color: var(--cobre);
+  box-shadow: 0 0 0 3px rgba(201, 131, 47, 0.18);
+}
+
+.campo.com-erro input {
+  border-color: var(--perigo);
+}
+
+.campo .erro-msg {
+  font-size: 12.5px;
+  color: var(--perigo);
+  display: none;
+}
+
+.campo.com-erro .erro-msg { display: block; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge-sucesso { background: rgba(62, 207, 142, 0.15); color: var(--sucesso); }
+.badge-aviso   { background: rgba(245, 165, 36, 0.15); color: var(--aviso); }
+.badge-perigo  { background: rgba(239, 68, 68, 0.15);  color: var(--perigo); }
+.badge-info    { background: rgba(79, 157, 222, 0.15); color: var(--info); }

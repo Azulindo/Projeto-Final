@@ -1,0 +1,218 @@
+/* =====================================================================
+   cozinha.css — Ecrã da cozinha (F-45, F-46)
+   =====================================================================
+   Pensado para um monitor na cozinha: letra grande, alvos grandes,
+   e o atraso a saltar à vista pela cor.
+   ===================================================================== */
+
+/* ── Barra de estado ─────────────────────────────────────────────── */
+
+.barra-estado {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--bg-elevada);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin-bottom: 18px;
+}
+
+.estado-ligacao {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--texto-suave);
+  flex: 1;
+  min-width: 200px;
+}
+
+.ponto-ligacao {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--texto-fraco);
+  flex-shrink: 0;
+}
+
+.ponto-ligacao.ligado    { background: var(--sucesso); box-shadow: 0 0 7px var(--sucesso); }
+.ponto-ligacao.desligado { background: var(--perigo);  box-shadow: 0 0 7px var(--perigo); }
+
+.contadores {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.contador {
+  font-size: 12.5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--texto-suave);
+}
+
+.contador strong { color: var(--texto); font-size: 14px; }
+.contador-novos strong    { color: var(--dourado); }
+.contador-preparar strong { color: var(--info); }
+
+.btn-atualizar { white-space: nowrap; }
+
+/* ── Colunas ─────────────────────────────────────────────────────── */
+
+.colunas-cozinha {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.coluna {
+  background: var(--bg-elevada);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  min-height: 200px;
+}
+
+.coluna-topo {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.coluna-topo h2 { font-size: 17px; }
+
+.coluna-ajuda {
+  font-size: 11.5px;
+  color: var(--texto-fraco);
+}
+
+.coluna-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.coluna-vazia {
+  text-align: center;
+  color: var(--texto-fraco);
+  font-size: 13px;
+  padding: 26px 0;
+}
+
+/* ── Cartão de item ──────────────────────────────────────────────── */
+
+.cartao-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--texto-fraco);
+  border-radius: var(--radius-sm);
+  padding: 13px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  transition: opacity 0.15s ease;
+}
+
+.cartao-item.a-gravar { opacity: 0.5; }
+
+/* Cor pela antiguidade (F-46) */
+.cartao-item.espera-normal  { border-left-color: var(--sucesso); }
+.cartao-item.espera-atencao { border-left-color: var(--aviso); }
+.cartao-item.espera-atraso  {
+  border-left-color: var(--perigo);
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.08), var(--bg-card) 60%);
+}
+
+.item-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.item-mesa {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--cobre);
+}
+
+.item-tempo {
+  font-size: 11.5px;
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+
+.espera-atraso .item-tempo { color: var(--perigo); font-weight: 700; }
+.espera-atencao .item-tempo { color: var(--aviso); }
+
+.item-corpo {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.item-qtd {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--dourado);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.item-nome {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.item-observacao {
+  background: rgba(245, 165, 36, 0.12);
+  border: 1px solid rgba(245, 165, 36, 0.32);
+  color: #f5cb7a;
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.btn-accao {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--dourado), var(--cobre));
+  color: #16130d;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.08s ease;
+}
+
+.btn-accao:hover:not(:disabled) { filter: brightness(1.07); }
+.btn-accao:active:not(:disabled) { transform: scale(0.985); }
+.btn-accao:disabled { opacity: 0.5; cursor: wait; }
+
+.nota-rodape {
+  margin-top: 20px;
+  font-size: 12px;
+  color: var(--texto-fraco);
+  line-height: 1.6;
+}
+
+/* ── Ecrãs pequenos: uma coluna de cada vez ──────────────────────── */
+
+@media (max-width: 820px) {
+  .colunas-cozinha { grid-template-columns: 1fr; }
+}

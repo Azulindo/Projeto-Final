@@ -160,7 +160,7 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 | ⬜ | F-05 | Linha de botões de resposta, com quebra de linha em ecrãs pequenos | 1 h | F-02 |
 | ⬜ | F-06 | Indicador fixo no topo `📍 Mesa 04` | 45 min | F-02 |
 | ⬜ | F-07 | Card de produto — imagem, nome, preço, botão "+ Adicionar" | 1 h 30 | F-02 |
-| ⬜ | F-08 | Definir paleta e tipografia da aplicação de gestão (**não usar a fonte Nosifer**: é decorativa e ilegível em tabelas) | 1 h 30 | — |
+| ✅ | F-08 | Definir paleta e tipografia da aplicação de gestão (**não usar a fonte Nosifer**: é decorativa e ilegível em tabelas) | 1 h 30 | — |
 
 **Total do sprint: ≈ 9 h**
 
@@ -168,12 +168,12 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | F-09 | `js/api.js` — função única de chamada à API, com o token anexado automaticamente | 1 h 30 | C-03 |
-| ⬜ | F-10 | `frontend/funcionarios/login.html` | 1 h 30 | F-08 |
-| ⬜ | F-11 | `css/login.css` | 1 h | F-10 |
-| ⬜ | F-12 | Validação do formulário e mensagens de erro visíveis | 1 h | F-10 |
-| ⬜ | F-13 | Guardar o token da sessão e redirecionar para o dashboard | 45 min | F-09 |
-| ⬜ | F-14 | Ecrã protegido de teste (dashboard vazio) que devolve ao login sem sessão | 1 h | F-13 |
+| ✅ | F-09 | `js/api.js` — função única de chamada à API, com o token anexado automaticamente | 1 h 30 | C-03 |
+| ✅ | F-10 | `frontend/funcionarios/login.html` | 1 h 30 | F-08 |
+| ✅ | F-11 | `css/login.css` | 1 h | F-10 |
+| ✅ | F-12 | Validação do formulário e mensagens de erro visíveis | 1 h | F-10 |
+| ✅ | F-13 | Guardar o token da sessão e redirecionar para o dashboard | 45 min | F-09 |
+| ✅ | F-14 | Ecrã protegido de teste (dashboard vazio) que devolve ao login sem sessão | 1 h | F-13 |
 
 **Total do sprint: ≈ 6 h 45**
 
@@ -192,7 +192,7 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 | ⬜ | F-23 | Botão de remover item no resumo | 1 h | F-22 |
 | ⬜ | F-24 | Ecrã de nome + telemóvel do take away, com validação | 1 h 30 | F-16 |
 | ⬜ | F-25 | Ecrã de confirmação com o **número do pedido em destaque** e botão "copiar" | 1 h 30 | F-22 |
-| ⬜ | F-26 | Estados visuais de "a carregar" e de erro de ligação | 1 h | F-15 |
+| ✅ | F-26 | Estados visuais de "a carregar" e de erro de ligação | 1 h | F-15 |
 | ⬜ | F-27 | Testar e afinar tudo em telemóvel real | 2 h | F-25 |
 
 **Total do sprint: ≈ 17 h 45**
@@ -201,16 +201,16 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | F-28 | Reconstruir `reservas.html` como fluxo guiado, reaproveitando os componentes do Sprint 2 | 2 h | F-27 |
-| ⬜ | F-29 | Seletor de nº de pessoas (botões 1–9 + "10 ou mais") | 1 h | F-28 |
-| ⬜ | F-30 | Ecrã de escolha do modo de ementa (dois botões grandes) | 1 h | F-28 |
-| ⬜ | F-31 | Componente de calendário — mês, navegação, seleção de dia | 2 h 30 | F-28 |
-| ⬜ | F-32 | Calendário: bloquear segundas-feiras, datas passadas e além de 60 dias | 1 h 30 | F-31 |
+| ✅ | F-28 | Reconstruir `reservas.html` como fluxo guiado, reaproveitando os componentes do Sprint 2 | 2 h | F-27 |
+| ✅ | F-29 | Seletor de nº de pessoas (botões 1–9 + "10 ou mais") | 1 h | F-28 |
+| ✅ | F-30 | Ecrã de escolha do modo de ementa (dois botões grandes) | 1 h | F-28 |
+| ✅ | F-31 | Componente de calendário — mês, navegação, seleção de dia | 2 h 30 | F-28 |
+| ✅ | F-32 | Calendário: bloquear segundas-feiras, datas passadas e além de 60 dias | 1 h 30 | F-31 |
 | ⬜ | F-33 | Ecrã de período (almoço / jantar) | 45 min | F-30 |
-| ⬜ | F-34 | Grelha de horas disponíveis | 1 h | F-33 |
-| ⬜ | F-35 | Campos de nome e telemóvel com validação visível | 1 h 30 | F-28 |
-| ⬜ | F-36 | Ecrã de resumo da reserva + `✅ Confirmar` / `🔄 Recomeçar` | 1 h 30 | F-35 |
-| ⬜ | F-37 | Ecrã final com o **código de reserva em destaque** e botão "copiar" | 1 h 30 | F-36 |
+| ✅ | F-34 | Grelha de horas disponíveis | 1 h | F-33 |
+| ✅ | F-35 | Campos de nome e telemóvel com validação visível | 1 h 30 | F-28 |
+| ✅ | F-36 | Ecrã de resumo da reserva + `✅ Confirmar` / `🔄 Recomeçar` | 1 h 30 | F-35 |
+| ✅ | F-37 | Ecrã final com o **código de reserva em destaque** e botão "copiar" | 1 h 30 | F-36 |
 | ⬜ | F-38 | As 4 páginas da ementa, com indicador de progresso `2/4` | 2 h 30 | F-19 |
 | ⬜ | F-39 | Seletores de quantidade nos cards, com total parcial sempre visível | 2 h | F-38 |
 | ⬜ | F-40 | Navegação `◀ Anterior` / `Seguinte ▶` sem perder as escolhas | 1 h 30 | F-38 |
@@ -224,9 +224,9 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | F-44 | Layout da aplicação de gestão (barra lateral + área de conteúdo) | 2 h | F-14 |
-| ⬜ | F-45 | Ecrã de pedidos em colunas por estado (quadro tipo Kanban) | 2 h 30 | F-44 |
-| ⬜ | F-46 | Cartão de pedido com cor a mudar conforme a antiguidade | 1 h 30 | F-45 |
+| ✅ | F-44 | Layout da aplicação de gestão (barra lateral + área de conteúdo) | 2 h | F-14 |
+| ✅ | F-45 | Ecrã de pedidos em colunas por estado (quadro tipo Kanban) | 2 h 30 | F-44 |
+| ✅ | F-46 | Cartão de pedido com cor a mudar conforme a antiguidade | 1 h 30 | F-45 |
 | ⬜ | F-47 | Painel de detalhe do pedido (itens, observações, mesa ou nome do take away) | 2 h | F-45 |
 | ⬜ | F-48 | Botões de mudança de estado no detalhe | 1 h | F-47 |
 | ⬜ | F-49 | Tabela de produtos com pesquisa e ordenação | 2 h | F-44 |
@@ -245,7 +245,7 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 | ⬜ | F-55 | Cartões de métricas do dashboard | 1 h 30 | F-44 |
 | ⬜ | F-56 | Gráfico de faturação diária e mensal (Chart.js) | 2 h | F-55 |
 | ⬜ | F-57 | Gráfico de produtos mais vendidos | 1 h 30 | F-56 |
-| ⬜ | F-58 | Página imprimível dos QR Codes (um por mesa, com o número bem visível) | 2 h | B-66 |
+| ✅ | F-58 | Página imprimível dos QR Codes (um por mesa, com o número bem visível) | 2 h | B-66 |
 | ⬜ | F-59 | Revisão de responsividade de todos os ecrãs do cliente | 2 h | — |
 | ⬜ | F-60 | Revisão visual final e afinação de detalhes | 2 h | — |
 | ⬜ | F-61 | 🔁 *(recuperação)* Tabela de reservas no dashboard | 1 h 30 | B-73 |
@@ -264,7 +264,7 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 |---|---|---|---|---|
 | ⬜ | C-01 | Ler e aprovar o `CONTEXTO.md` v3.0 — cada um lê sozinho, depois discutem as dúvidas | 1 h | — |
 | ⬜ | C-02 | Fechar o diagrama ER: 16 tabelas, com as 4 novas e as 7 alterações | 1 h 30 | C-01 |
-| ⬜ | C-03 | ⭐ **Escrever o `docs/API.md`** — para cada endpoint, o que entra e o que sai, com exemplo de JSON | 2 h | C-02 |
+| ✅ | C-03 | ⭐ **Escrever o `docs/API.md`** — para cada endpoint, o que entra e o que sai, com exemplo de JSON | 2 h | C-02 |
 
 > **C-03 é a tarefa mais importante da semana 1.** É o contrato que permite ao Gui construir ecrãs sem esperar pela API, e ao João construir a API sem esperar pelos ecrãs. Sem ela, os dois ficam à espera um do outro ou constroem coisas que não encaixam.
 
