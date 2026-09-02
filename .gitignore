@@ -1,0 +1,102 @@
+# ─────────────────────────────────────────────
+#  Dependências
+# ─────────────────────────────────────────────
+node_modules/
+jspm_packages/
+.pnp
+.pnp.js
+
+
+# ─────────────────────────────────────────────
+#  Variáveis de ambiente e segredos
+#  ⚠️ NUNCA fazer commit destes ficheiros.
+#  Guardam a ligação à base de dados, a chave
+#  do JWT e as credenciais do serviço de email.
+#  O .env.example (sem valores reais) é a única
+#  versão que vai para o repositório.
+# ─────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credenciais.json
+
+
+# ─────────────────────────────────────────────
+#  Logs
+# ─────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+# ─────────────────────────────────────────────
+#  Base de dados local / dumps
+# ─────────────────────────────────────────────
+*.sqlite
+*.sqlite3
+*.db
+dump.sql
+backup*.sql
+
+
+# ─────────────────────────────────────────────
+#  Testes e cobertura
+# ─────────────────────────────────────────────
+coverage/
+.nyc_output/
+
+
+# ─────────────────────────────────────────────
+#  Builds e caches
+# ─────────────────────────────────────────────
+dist/
+build/
+.cache/
+.parcel-cache/
+.temp/
+tmp/
+
+
+# ─────────────────────────────────────────────
+#  Alojamento
+# ─────────────────────────────────────────────
+.vercel
+.render/
+
+
+# ─────────────────────────────────────────────
+#  Editores
+# ─────────────────────────────────────────────
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+
+# ─────────────────────────────────────────────
+#  Sistema operativo
+# ─────────────────────────────────────────────
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+
+# ─────────────────────────────────────────────
+#  Ficheiros pessoais / rascunhos
+# ─────────────────────────────────────────────
+rascunhos/
+notas-pessoais.md
+*.bak
