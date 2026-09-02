@@ -275,10 +275,12 @@
   letter-spacing: 0.04em;
 }
 
-.estado-pendente      { color: var(--texto-fraco); }
+.estado-recebido      { color: var(--texto-fraco); }
+.estado-confirmado    { color: var(--info); }
 .estado-em_preparacao { color: var(--aviso); }
 .estado-pronto        { color: var(--sucesso); }
-.estado-servido       { color: var(--texto-fraco); }
+.estado-entregue      { color: var(--texto-fraco); }
+.estado-cancelado     { color: var(--perigo); text-decoration: line-through; }
 
 .conta-observacao {
   font-size: 11.5px;

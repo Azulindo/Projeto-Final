@@ -374,6 +374,32 @@ Valores aceites: `recebido`, `confirmado`, `em_preparacao`, `pronto`, `entregue`
   o cliente ver: `{ "mensagem": "…", "pedido": { "id": 42, "numero": "PED-4K9M2" }, "itens": [ … ] }`
   — o `numero` é curto e legível para se gritar no balcão.
 
+### 3.10.4 Dois pontos ainda por fechar
+
+**1. Uma ronda `cancelado` entra no `total`?** — ⚠️ **pergunta para o João, mexe em dinheiro.**
+
+O front-end **não cobra** rondas anuladas: ficam de fora do `total` da conta do cliente e
+aparece uma linha a explicar *"1 item foi anulado pela cozinha e não está a ser cobrado"*.
+A lógica é simples — a cozinha não fez o prato, o cliente não paga.
+
+Isto tem de bater certo com o `total` que o servidor devolve em
+`GET /mesas/:token/sessao` e `GET /pedidos/ativos`. Se o servidor somar as rondas anuladas
+e o ecrã não, o cliente e o balcão vêem **valores diferentes para a mesma mesa** — e num
+sistema de restaurante não há bug pior que dois totais discordantes.
+
+> **O que se pede ao backend:** que o `total` **exclua** as rondas em `cancelado`.
+> Se por alguma razão não puder ser, é preciso dizer, porque então é o front-end que muda.
+
+**2. Os estados da sessão também são minúsculos?**
+
+Os estados do *pedido* estão fechados (minúsculas). Os da *sessão* — `ABERTA`,
+`AGUARDA_PAGAMENTO`, `FECHADA` no plano original (secção 2) — nunca foram confirmados
+contra a base de dados.
+
+Isto **não bloqueia nada**: o front-end compara-os com `estadoIgual()` (em
+`frontend/js/api.js`), que ignora maiúsculas e minúsculas. Funciona nos dois casos e não há
+nada a mudar quando se souber qual é. Fica registado só para não se perder o fio.
+
 ---
 
 ## 4. Endpoints em falta ⛔ (o front-end já conta com eles)

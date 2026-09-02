@@ -41,6 +41,20 @@ const MODO_SIMULACAO = true;
 const CHAVE_SESSAO = 'vpa_sessao_funcionario';
 const DURACAO_SESSAO_MS = 8 * 60 * 60 * 1000; // 8h — validade sugerida do JWT (ver docs/API.md 4.1)
 
+/**
+ * estadoIgual — Compara estados vindos da API sem distinguir maiúsculas.
+ *
+ * Os estados do PEDIDO já estão acordados em minúsculas (docs/API.md
+ * 3.10). Os estados da SESSÃO (`aberta`, `aguarda_pagamento`, `fechada`)
+ * ainda não foram confirmados com o back-end: o plano escreveu-os em
+ * maiúsculas e a base de dados pode tê-los de outra maneira. Em vez de
+ * ficar à espera dessa resposta, o frontend compara-os sem distinguir
+ * maiúsculas — funciona nos dois casos e não há nada a mudar depois.
+ */
+function estadoIgual(valor, esperado) {
+  return String(valor ?? '').toLowerCase() === String(esperado).toLowerCase();
+}
+
 /* ═══════════════════════════════════════════════════════════════════
    SESSÃO DO FUNCIONÁRIO
    Guardada em localStorage e lida automaticamente por chamarAPI().
@@ -240,14 +254,19 @@ let contadorRondas = 0;
 
 function proximoNumeroRonda() {
   contadorRondas += 1;
-  const base = (Math.floor(Date.now() / 1000) % 10000) + contadorRondas;
-  return { id: base, numero: `PED-${String(base).padStart(4, '0')}` };
+  const id = (Math.floor(Date.now() / 1000) % 10000) + contadorRondas;
+  // Curto e legivel para se gritar no balcao. Sem 0/O/1/I, que se
+  // confundem quando alguem le o numero em voz alta.
+  const ALFABETO = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let sufixo = '';
+  for (let i = 0; i < 5; i++) sufixo += ALFABETO[Math.floor(Math.random() * ALFABETO.length)];
+  return { id, numero: `PED-${sufixo}` };
 }
 
 /** estadoDaRonda — Estado da ronda a que um item pertence. */
 function estadoDaRonda(sessao, item) {
   const ronda = (sessao.rondas || []).find(r => r.id === item.pedidoId);
-  return ronda ? ronda.estado : 'PENDENTE';
+  return ronda ? ronda.estado : 'recebido';
 }
 
 /** itensComEstado — Itens da sessão já com o estado da respetiva ronda. */
@@ -305,10 +324,10 @@ async function simularEndpoint(endpoint, opcoes) {
     const sessoes = lerSessoesDemo();
 
     if (accao === 'sessao') {
-      if (!sessoes[token] || sessoes[token].estado === 'FECHADA') {
+      if (!sessoes[token] || estadoIgual(sessoes[token].estado, 'fechada')) {
         sessoes[token] = {
           id: Math.floor(Date.now() / 1000) % 100000,
-          estado: 'ABERTA',
+          estado: 'aberta',
           abertaEm: new Date().toISOString(),
           itens: [],
           rondas: [],
@@ -328,7 +347,7 @@ async function simularEndpoint(endpoint, opcoes) {
     }
 
     const sessao = sessoes[token];
-    if (!sessao || sessao.estado === 'FECHADA') {
+    if (!sessao || estadoIgual(sessao.estado, 'fechada')) {
       throw erroSimulado(accao === 'pedir' ? 'Sem sessão ativa. Refresca a página.' : 'Sem sessão ativa.', accao === 'pedir' ? 409 : 404);
     }
 
@@ -341,7 +360,7 @@ async function simularEndpoint(endpoint, opcoes) {
       // Cada envio cria uma RONDA com estado próprio (docs/API.md 3.10)
       const ronda = {
         ...proximoNumeroRonda(),
-        estado: 'PENDENTE',
+        estado: 'recebido',       // docs/API.md 3.10 — minusculas
         criadoEm: new Date().toISOString(),
       };
 
@@ -399,8 +418,8 @@ async function simularEndpoint(endpoint, opcoes) {
     }
 
     if (accao === 'pedir-conta' && metodo === 'POST') {
-      if (sessao.estado !== 'ABERTA') throw erroSimulado('Sessão não está aberta.', 409);
-      sessao.estado = 'AGUARDA_PAGAMENTO';
+      if (!estadoIgual(sessao.estado, 'aberta')) throw erroSimulado('Sessão não está aberta.', 409);
+      sessao.estado = 'aguarda_pagamento';
       gravarSessoesDemo(sessoes);
       return { mensagem: 'Conta pedida! Um empregado irá ter consigo em breve. 🧾' };
     }
@@ -417,7 +436,7 @@ async function simularEndpoint(endpoint, opcoes) {
   if (caminho === 'pedidos/ativos') {
     const sessoes = lerSessoesDemo();
     return Object.entries(sessoes)
-      .filter(([, s]) => s.estado === 'ABERTA' || s.estado === 'AGUARDA_PAGAMENTO')
+      .filter(([, s]) => estadoIgual(s.estado, 'aberta') || estadoIgual(s.estado, 'aguarda_pagamento'))
       .map(([token, s]) => {
         const mesa = MESAS_DEMO.find(m => m.qrToken === token);
         return {
@@ -427,7 +446,7 @@ async function simularEndpoint(endpoint, opcoes) {
           mesa: { id: mesa?.id, numero: mesa?.numero, lugares: mesa?.lugares },
           numItens: s.itens.reduce((a, i) => a + i.quantidade, 0),
           total: totalDemo(s.itens),
-          temPendentes: (s.rondas || []).some(r => r.estado === 'PENDENTE'),
+          temPendentes: (s.rondas || []).some(r => ['recebido', 'confirmado', 'em_preparacao'].includes(r.estado)),
         };
       })
       .sort((a, b) => new Date(a.abertaEm) - new Date(b.abertaEm));
@@ -440,13 +459,13 @@ async function simularEndpoint(endpoint, opcoes) {
     Object.entries(sessoes).forEach(([token, s]) => {
       const mesa = MESAS_DEMO.find(m => m.qrToken === token);
       (s.rondas || [])
-        .filter(r => r.estado === 'PENDENTE' || r.estado === 'EM_PREPARACAO')
+        .filter(r => ['recebido', 'confirmado', 'em_preparacao', 'pronto'].includes(r.estado))
         .forEach(r => linhas.push({
           id: r.id,
           numero: r.numero,
           estado: r.estado,
           criadoEm: r.criadoEm,
-          tipo: 'mesa',
+          tipo: 'mesa',   // 'take_away' quando existir (docs/API.md 3.10.1)
           mesa: { numero: mesa?.numero, sessaoId: s.id },
           itens: s.itens
             .filter(i => i.pedidoId === r.id)
@@ -467,7 +486,7 @@ async function simularEndpoint(endpoint, opcoes) {
   if (rondaMatch && metodo === 'PATCH') {
     const idRonda = Number(rondaMatch[1]);
     const { estado } = opcoes.body || {};
-    const validos = ['PENDENTE', 'EM_PREPARACAO', 'PRONTO', 'SERVIDO'];
+    const validos = ['recebido', 'confirmado', 'em_preparacao', 'pronto', 'entregue', 'cancelado'];
     if (!validos.includes(estado)) {
       throw erroSimulado(`Estado inválido. Use: ${validos.join(', ')}`, 400);
     }
@@ -527,8 +546,8 @@ async function simularEndpoint(endpoint, opcoes) {
     const sessoes = lerSessoesDemo();
     for (const s of Object.values(sessoes)) {
       if (s.id === idSessao) {
-        if (s.estado === 'FECHADA') throw erroSimulado('Sessão já está fechada.', 409);
-        s.estado = 'FECHADA';
+        if (estadoIgual(s.estado, 'fechada')) throw erroSimulado('Sessão já está fechada.', 409);
+        s.estado = 'fechada';
         s.fechadaEm = new Date().toISOString();
         gravarSessoesDemo(sessoes);
         return { mensagem: 'Mesa fechada com sucesso! ✅', sessao: s };

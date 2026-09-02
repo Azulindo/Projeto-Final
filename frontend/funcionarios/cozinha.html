@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cozinha — Vem Pro Abate</title>
-<meta name="description" content="Ecrã da cozinha: itens a preparar.">
+<meta name="description" content="Ecrã da cozinha: rondas a preparar.">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,43 +30,22 @@
 
         <!-- Barra de estado da ligação -->
         <div class="barra-estado">
-          <div class="estado-ligacao" id="estadoLigacao">
+          <div class="estado-ligacao">
             <span class="ponto-ligacao" id="pontoLigacao"></span>
             <span id="textoLigacao">A ligar…</span>
           </div>
-          <div class="contadores">
-            <span class="contador contador-novos">Rondas novas: <strong id="contaNovos">0</strong></span>
-            <span class="contador contador-preparar">A preparar: <strong id="contaPreparar">0</strong></span>
-          </div>
+          <div class="contador" id="contadores">Nada em mãos.</div>
           <button type="button" class="btn btn-secundario btn-atualizar" id="btnAtualizar">↻ Atualizar</button>
         </div>
 
-        <!-- Duas colunas de trabalho -->
-        <div class="colunas-cozinha">
-
-          <section class="coluna" id="colunaNovos">
-            <header class="coluna-topo">
-              <h2>🔔 Novos</h2>
-              <span class="coluna-ajuda">Cada cartão é um envio do cliente</span>
-            </header>
-            <div class="coluna-lista" id="listaNovos"></div>
-            <p class="coluna-vazia" id="vazioNovos">Nenhuma ronda à espera. 👌</p>
-          </section>
-
-          <section class="coluna" id="colunaPreparar">
-            <header class="coluna-topo">
-              <h2>🔥 Em preparação</h2>
-              <span class="coluna-ajuda">Toca quando estiver pronto</span>
-            </header>
-            <div class="coluna-lista" id="listaPreparar"></div>
-            <p class="coluna-vazia" id="vazioPreparar">Nenhuma ronda em preparação.</p>
-          </section>
-
-        </div>
+        <!-- Uma coluna por estado. Construídas por cozinha.js. -->
+        <div class="colunas-cozinha" id="colunasCozinha"></div>
 
         <p class="nota-rodape">
-          As rondas desaparecem daqui quando ficam <strong>prontas</strong> — a partir daí é com o balcão.
-          O ecrã atualiza-se sozinho a cada 10 segundos.
+          Cada cartão é <strong>uma ronda</strong> — tudo o que o cliente enviou de uma vez.
+          Ao <strong>aceitar</strong>, o stock desce; ao <strong>anular</strong> (✕), volta.
+          As rondas saem do ecrã quando são marcadas como entregues.
+          Atualiza-se sozinho a cada 10 segundos.
         </p>
 
       </main>

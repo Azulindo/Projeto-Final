@@ -120,7 +120,7 @@
       </div>
     </div>
 
-    <!-- Aviso de conta pedida (sessão em AGUARDA_PAGAMENTO) -->
+    <!-- Aviso de conta pedida (sessão em aguarda_pagamento) -->
     <div id="bannerConta" class="hidden bg-gradient-to-r from-gold to-copper text-carvao text-[12.5px] font-bold text-center py-2 px-4">
       💳 Conta pedida — um empregado vem já à mesa.
     </div>
@@ -508,8 +508,12 @@ document.addEventListener('DOMContentLoaded', () => {
   ═══════════════════════════════════════════════════════════ */
   function itensEnviadosAgrupados() {
     // Junta linhas do mesmo produto para a conta ficar legível.
+    // Rondas anuladas ficam de FORA: o cliente não paga o que a cozinha
+    // não fez. São contadas à parte, para ele perceber o que aconteceu.
     const porProduto = {};
-    (state.sessao?.itens || []).forEach(item => {
+    (state.sessao?.itens || [])
+      .filter(item => item.estado !== 'cancelado')
+      .forEach(item => {
       const id = item.produtoId;
       if (!porProduto[id]) {
         porProduto[id] = {
@@ -524,6 +528,12 @@ document.addEventListener('DOMContentLoaded', () => {
       porProduto[id].estados.add(item.estado);
     });
     return Object.values(porProduto);
+  }
+
+  function contarAnulados() {
+    return (state.sessao?.itens || [])
+      .filter(i => i.estado === 'cancelado')
+      .reduce((soma, i) => soma + i.quantidade, 0);
   }
 
   function atualizarTotais() {
@@ -559,37 +569,62 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     resumoLista.innerHTML = '';
-    if (totalItens === 0) {
-      resumoVazio.classList.remove('hidden');
-    } else {
-      resumoVazio.classList.add('hidden');
-      enviados.forEach(item => resumoLista.appendChild(
-        criarLinhaResumo(item.nome, item.quantidade, item.precoUnit, etiquetaEstado(item.estados))
-      ));
-      pendentes.forEach(([id, qty]) => {
-        const p = state.produtosPorId[id];
-        resumoLista.appendChild(criarLinhaResumo(p.nome, qty, Number(p.preco), 'por enviar'));
-      });
+    const anulados = contarAnulados();
+
+    // "Não tens nada" só é verdade se também não houver nada anulado:
+    // se a cozinha anulou a ronda toda, o cliente tem de saber porque é
+    // que a conta ficou vazia.
+    resumoVazio.classList.toggle('hidden', totalItens > 0 || anulados > 0);
+
+    enviados.forEach(item => resumoLista.appendChild(
+      criarLinhaResumo(item.nome, item.quantidade, item.precoUnit, etiquetaEstado(item.estados))
+    ));
+    pendentes.forEach(([id, qty]) => {
+      const p = state.produtosPorId[id];
+      resumoLista.appendChild(criarLinhaResumo(p.nome, qty, Number(p.preco), 'por enviar'));
+    });
+
+    if (anulados > 0) {
+      const aviso = document.createElement('p');
+      aviso.className = 'text-[11px] text-red-400/80 pt-1';
+      aviso.id = 'resumoAnulados';
+      aviso.textContent = anulados === 1
+        ? '1 item foi anulado pela cozinha e não está a ser cobrado.'
+        : `${anulados} itens foram anulados pela cozinha e não estão a ser cobrados.`;
+      resumoLista.appendChild(aviso);
     }
 
     if (resumoAberto) resumoPanel.style.maxHeight = resumoPanel.scrollHeight + 'px';
   }
 
-  /* Traduz os estados do backend (PENDENTE/EM_PREPARACAO/PRONTO/SERVIDO)
-     para uma etiqueta única e legível na conta do cliente. */
+  /* A API fala a linguagem da base de dados (minúsculas); é aqui que se
+     traduz para o que o cliente lê. Regra do projeto — docs/API.md 3.10.
+     Quando um produto aparece em rondas com estados diferentes, mostra-se
+     o menos avançado: é o que falta para a mesa estar servida. */
+  const ORDEM_ESTADOS = ['recebido', 'confirmado', 'em_preparacao', 'pronto', 'entregue'];
+
+  const ETIQUETA_CLIENTE = {
+    recebido:      'enviado',
+    confirmado:    'aceite',
+    em_preparacao: 'a preparar',
+    pronto:        'pronto',
+    entregue:      'servido',
+    cancelado:     'anulado',
+  };
+
   function etiquetaEstado(estados) {
-    if (estados.has('PENDENTE'))      return 'enviado';
-    if (estados.has('EM_PREPARACAO')) return 'a preparar';
-    if (estados.has('PRONTO'))        return 'pronto';
-    return 'servido';
+    const menosAvancado = ORDEM_ESTADOS.find(e => estados.has(e));
+    return ETIQUETA_CLIENTE[menosAvancado] || 'enviado';
   }
 
   const CORES_ETIQUETA = {
     'por enviar':  'text-gold',
     'enviado':     'text-emerald-400',
+    'aceite':      'text-emerald-400',
     'a preparar':  'text-amber-400',
     'pronto':      'text-emerald-400',
     'servido':     'text-neutral-500',
+    'anulado':     'text-red-400',
   };
 
   function criarLinhaResumo(nome, qty, precoUnit, etiqueta) {
@@ -675,7 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fecharSheet();
     try {
       const r = await chamarAPI(`mesas/${encodeURIComponent(state.token)}/pedir-conta`, { method: 'POST' });
-      if (state.sessao) state.sessao.estado = 'AGUARDA_PAGAMENTO';
+      if (state.sessao) state.sessao.estado = 'aguarda_pagamento';
       atualizarBannerConta();
       mostrarToast(r.mensagem || '💳 Conta pedida.');
     } catch (erro) {
@@ -684,7 +719,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function atualizarBannerConta() {
-    const aguarda = state.sessao?.estado === 'AGUARDA_PAGAMENTO';
+    const aguarda = estadoIgual(state.sessao?.estado, 'aguarda_pagamento');
     bannerConta.classList.toggle('hidden', !aguarda);
   }
 

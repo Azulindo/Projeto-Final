@@ -89,8 +89,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function desenhar() {
     // Quem pediu a conta primeiro: está alguém à espera na mesa.
     const ordenadas = [...mesas].sort((a, b) => {
-      const pesoA = a.estado === 'AGUARDA_PAGAMENTO' ? 0 : 1;
-      const pesoB = b.estado === 'AGUARDA_PAGAMENTO' ? 0 : 1;
+      const pesoA = estadoIgual(a.estado, 'aguarda_pagamento') ? 0 : 1;
+      const pesoB = estadoIgual(b.estado, 'aguarda_pagamento') ? 0 : 1;
       if (pesoA !== pesoB) return pesoA - pesoB;
       return new Date(a.abertaEm) - new Date(b.abertaEm);
     });
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function criarCartaoMesa(mesa) {
-    const aguarda = mesa.estado === 'AGUARDA_PAGAMENTO';
+    const aguarda = estadoIgual(mesa.estado, 'aguarda_pagamento');
 
     const cartao = document.createElement('button');
     cartao.type = 'button';
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // sempre engano, por isso avisa-se antes e não depois.
     const porServir = categorias
       .flatMap(([, itens]) => itens)
-      .filter(i => i.estado !== 'SERVIDO');
+      .filter(i => i.estado !== 'entregue' && i.estado !== 'cancelado');
 
     if (porServir.length > 0) {
       painelAviso.textContent =
@@ -297,10 +297,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-/* Estados do ItemPedido traduzidos para o balcão */
+/* A API fala a linguagem da base de dados; é aqui que se traduz para o
+   balcão. Regra do projeto — docs/API.md 3.10. */
 const ETIQUETA_ESTADO = {
-  PENDENTE:      'na fila',
-  EM_PREPARACAO: 'a preparar',
-  PRONTO:        'pronto',
-  SERVIDO:       'servido',
+  recebido:      'na fila',
+  confirmado:    'aceite',
+  em_preparacao: 'a preparar',
+  pronto:        'pronto',
+  entregue:      'entregue',
+  cancelado:     'anulado',
 };
