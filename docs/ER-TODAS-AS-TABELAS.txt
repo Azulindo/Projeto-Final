@@ -1,0 +1,297 @@
+═══════════════════════════════════════════════════════════
+  VEM PRO ABATE — MODELO DE DADOS COMPLETO (16 TABELAS)
+  Para desenhar o diagrama ER
+═══════════════════════════════════════════════════════════
+
+LEGENDA
+  PK = chave primária    FK = chave estrangeira
+  UQ = valor único       🆕 = novo / a acrescentar
+
+Todas as chaves estrangeiras: ON DELETE RESTRICT
+Nada se apaga — desativa-se com o campo "ativo"
+
+
+───────────────────────────────────────────
+  1. UTILIZADOR
+  Credenciais comuns a clientes e funcionários
+───────────────────────────────────────────
+PK            id_utilizador      Integer
+NOT NULL      nome               Varchar(120)
+UQ, NOT NULL  email              Varchar(150)
+NOT NULL      password_hash      Varchar(255)
+NOT NULL      telefone           Varchar(30)
+NOT NULL      tipo_utilizador    Enum('cliente','funcionario')
+NOT NULL      ativo              Boolean
+NOT NULL      data_registo       Datetime
+
+
+───────────────────────────────────────────
+  2. CLIENTE                    (criada, sem uso nesta versão)
+───────────────────────────────────────────
+PK            id_cliente                Integer
+FK, NOT NULL  id_utilizador             Integer
+NULL          morada                    Varchar(255)
+NULL          alergias                  Text
+NULL          preferencias_alimentares  Text
+
+
+───────────────────────────────────────────
+  3. FUNCIONARIO
+───────────────────────────────────────────
+PK            id_funcionario     Integer
+FK, NOT NULL  id_utilizador      Integer
+NOT NULL      cargo              Enum('administrador','gerente',
+                                      'cozinheiro','empregado_mesa')
+NOT NULL      data_contratacao   Date
+
+
+───────────────────────────────────────────
+  4. CATEGORIA
+  Só 4 registos: Entradas, Pratos Principais,
+  Bebidas, Sobremesas
+───────────────────────────────────────────
+PK            id_categoria       Integer
+NOT NULL      nome               Varchar(100)
+NULL          descricao          Text
+NOT NULL      ativo              Boolean
+
+
+───────────────────────────────────────────
+  5. PRODUTO
+───────────────────────────────────────────
+PK            id_produto         Integer
+FK, NOT NULL  id_categoria       Integer
+NOT NULL      nome               Varchar(150)
+NULL          descricao          Text
+NOT NULL      preco              Decimal(10,2)
+NULL          imagem_url         Varchar(255)
+NOT NULL      disponivel         Boolean
+NOT NULL      tempo_preparacao   Integer
+NOT NULL   🆕 controla_stock     Boolean
+              ↳ false para pratos feitos na hora
+
+
+───────────────────────────────────────────
+  6. STOCK
+───────────────────────────────────────────
+PK            id_stock            Integer
+FK, NOT NULL  id_produto          Integer
+NOT NULL      quantidade_atual    Integer
+NOT NULL      quantidade_minima   Integer
+NOT NULL      data_atualizacao    Datetime
+
+
+───────────────────────────────────────────
+  7. MESA
+───────────────────────────────────────────
+PK            id_mesa            Integer
+NOT NULL      numero_mesa        Integer
+NOT NULL      capacidade         Integer
+UQ, NOT NULL  qr_code            Varchar(255)
+              ↳ token aleatório, nunca o nº da mesa
+NOT NULL      estado             Enum('livre','ocupada','reservada')
+NOT NULL      ativo              Boolean
+
+
+───────────────────────────────────────────
+  8. PEDIDO
+───────────────────────────────────────────
+PK            id_pedido           Integer
+UQ, NOT NULL 🆕 numero_pedido     Varchar(20)
+              ↳ o código que se mostra ao cliente
+FK, NULL      id_cliente          Integer
+FK, NULL      id_mesa             Integer
+FK, NULL      id_funcionario      Integer
+NOT NULL      tipo_pedido         Enum('restaurante','take_away')
+NOT NULL      estado              Enum('recebido','confirmado',
+                                       'em_preparacao','pronto',
+                                       'entregue','cancelado')
+NOT NULL      data_hora           Datetime
+NOT NULL   🆕 data_atualizacao    Datetime
+NOT NULL      valor_total         Decimal(10,2)
+NULL          nome_convidado      Varchar(120)
+NULL          email_convidado     Varchar(150)
+NULL          telefone_convidado  Varchar(30)
+NULL          observacoes         Text
+
+
+───────────────────────────────────────────
+  9. ITEM_PEDIDO
+───────────────────────────────────────────
+PK            id_item            Integer
+FK, NOT NULL  id_pedido          Integer
+FK, NOT NULL  id_produto         Integer
+NOT NULL      quantidade         Integer
+NOT NULL      preco_unitario     Decimal(10,2)
+              ↳ preço à data do pedido
+NOT NULL      subtotal           Decimal(10,2)
+NULL          observacoes        Text
+
+
+───────────────────────────────────────────
+  10. FAVORITO                   (criada, sem uso nesta versão)
+───────────────────────────────────────────
+PK, FK        id_cliente         Integer
+PK, FK        id_produto         Integer
+NOT NULL      data_adicao        Datetime
+
+
+───────────────────────────────────────────
+  11. AVALIACAO                  (criada, sem uso nesta versão)
+───────────────────────────────────────────
+PK            id_avaliacao       Integer
+FK, NOT NULL  id_cliente         Integer
+FK, NOT NULL  id_pedido          Integer
+NOT NULL      classificacao      Tinyint  (1 a 5)
+NULL          comentario         Text
+NOT NULL      data_avaliacao     Datetime
+
+
+───────────────────────────────────────────
+  12. NOTIFICACAO
+───────────────────────────────────────────
+PK            id_notificacao      Integer
+FK, NULL      id_cliente          Integer
+FK, NOT NULL  id_pedido           Integer
+NULL          email_destinatario  Varchar(150)
+NOT NULL      assunto             Varchar(150)
+NOT NULL      mensagem            Text
+NOT NULL      lida                Boolean
+NOT NULL   🆕 estado              Enum('pendente','enviado','falhou')
+NOT NULL      data_envio          Datetime
+
+
+═══════════════════════════════════════════
+  🆕 TABELAS NOVAS
+═══════════════════════════════════════════
+
+
+───────────────────────────────────────────
+  13. SLOT_HORARIO  🆕
+  12 registos: 5 de almoço + 7 de jantar
+───────────────────────────────────────────
+PK            id_slot            Integer
+NOT NULL      hora               Time
+NOT NULL      periodo            Enum('almoco','jantar')
+NOT NULL      lotacao_maxima     Integer
+              ↳ criado mas sem uso nesta versão
+NOT NULL      dias_semana        Varchar(20)
+              ↳ ex: "2,3,4,5,6,7" (terça a domingo)
+NOT NULL      ativo              Boolean
+
+
+───────────────────────────────────────────
+  14. RESERVA  🆕
+───────────────────────────────────────────
+PK            id_reserva         Integer
+UQ, NOT NULL  codigo_reserva     Varchar(20)
+              ↳ ex: RSV-7K2M9 — é o que o cliente leva
+NOT NULL      nome               Varchar(120)
+NOT NULL      telemovel          Varchar(20)
+NULL          email              Varchar(150)      (futuro)
+FK, NULL      id_cliente         Integer           (futuro)
+NOT NULL      num_pessoas        Integer
+NOT NULL      data_reserva       Date
+FK, NOT NULL  id_slot            Integer
+NOT NULL      modo_ementa        Enum('no_restaurante',
+                                      'pre_selecionada')
+NULL          observacoes        Text
+NULL          valor_estimado     Decimal(10,2)
+NOT NULL      estado             Enum('pendente','confirmada',
+                                      'recusada','cancelada',
+                                      'concluida','nao_compareceu')
+NULL          motivo_recusa      Varchar(255)      (futuro)
+FK, NULL      id_funcionario     Integer           (futuro)
+FK, NULL      id_pedido          Integer           (futuro)
+NOT NULL      data_criacao       Datetime
+NOT NULL      data_atualizacao   Datetime
+
+
+───────────────────────────────────────────
+  15. ITEM_RESERVA  🆕
+  A ementa pré-selecionada
+───────────────────────────────────────────
+PK            id_item_reserva    Integer
+FK, NOT NULL  id_reserva         Integer
+FK, NOT NULL  id_produto         Integer
+NOT NULL      quantidade         Integer
+NOT NULL      preco_unitario     Decimal(10,2)
+              ↳ preço à data da reserva
+NOT NULL      subtotal           Decimal(10,2)
+
+
+───────────────────────────────────────────
+  16. HISTORICO_ESTADO_PEDIDO  🆕
+  Um registo por cada mudança de estado.
+  É daqui que sai o tempo médio de preparação.
+───────────────────────────────────────────
+PK            id_historico       Integer
+FK, NOT NULL  id_pedido          Integer
+NOT NULL      estado             Enum('recebido','confirmado',
+                                      'em_preparacao','pronto',
+                                      'entregue','cancelado')
+FK, NULL      id_funcionario     Integer
+NOT NULL      data_hora          Datetime
+
+
+═══════════════════════════════════════════
+  LIGAÇÕES ENTRE TABELAS
+═══════════════════════════════════════════
+
+  UTILIZADOR   1 ─── 1   CLIENTE            perfil cliente
+  UTILIZADOR   1 ─── 1   FUNCIONARIO        perfil funcionário
+
+  CATEGORIA    1 ─── N   PRODUTO            possui
+  PRODUTO      1 ─── 1   STOCK              tem stock
+
+  CLIENTE      0 ─── N   PEDIDO             faz
+  MESA         0 ─── N   PEDIDO             é atendido em
+  FUNCIONARIO  0 ─── N   PEDIDO             é atendido por
+  PEDIDO       1 ─── N   ITEM_PEDIDO        contém
+  PRODUTO      1 ─── N   ITEM_PEDIDO        referenciado em
+
+  CLIENTE      1 ─── N   FAVORITO           favorita
+  PRODUTO      1 ─── N   FAVORITO           é favorito de
+
+  CLIENTE      1 ─── N   AVALIACAO          avalia
+  PEDIDO       1 ─── 1   AVALIACAO          tem avaliação
+
+  PEDIDO       1 ─── N   NOTIFICACAO        gera
+  CLIENTE      0 ─── N   NOTIFICACAO        recebe
+
+🆕 SLOT_HORARIO 1 ─── N   RESERVA            tem reservas
+🆕 RESERVA      1 ─── N   ITEM_RESERVA       contém
+🆕 PRODUTO      1 ─── N   ITEM_RESERVA       referenciado em
+🆕 CLIENTE      0 ─── N   RESERVA            faz          (futuro)
+🆕 FUNCIONARIO  0 ─── N   RESERVA            trata de     (futuro)
+🆕 PEDIDO       0 ─── 1   RESERVA            gerado de    (futuro)
+🆕 PEDIDO       1 ─── N   HISTORICO_ESTADO_PEDIDO   regista
+🆕 FUNCIONARIO  0 ─── N   HISTORICO_ESTADO_PEDIDO   alterou
+
+
+═══════════════════════════════════════════
+  SUGESTÃO DE ARRUMAÇÃO NO QUADRO
+═══════════════════════════════════════════
+
+  Coluna 1 (esquerda) — Utilizadores
+      UTILIZADOR
+      ├── CLIENTE
+      └── FUNCIONARIO
+
+  Coluna 2 — Catálogo
+      CATEGORIA → PRODUTO → STOCK
+      FAVORITO
+
+  Coluna 3 (centro) — Operação
+      MESA
+      PEDIDO → ITEM_PEDIDO
+             → HISTORICO_ESTADO_PEDIDO
+             → NOTIFICACAO
+             → AVALIACAO
+
+  Coluna 4 (direita) — Reservas
+      SLOT_HORARIO → RESERVA → ITEM_RESERVA
+
+  As tabelas sem uso nesta versão (CLIENTE, FAVORITO,
+  AVALIACAO) podem ficar com um tom mais claro ou uma
+  etiqueta "v2" — mostra que foram pensadas de propósito.

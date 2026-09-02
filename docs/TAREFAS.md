@@ -2,7 +2,7 @@
 
 **Projeto Final de Curso** · João Ribeiro & Guilherme Gonçalves
 **Documentos relacionados:** `CONTEXTO.md` (o quê e porquê) · `PLANEAMENTO.md` (calendário e sprints)
-**Versão:** 1.1 · **Última revisão:** 1 de setembro de 2026
+**Versão:** 1.2 · **Última revisão:** 1 de setembro de 2026
 
 ---
 
@@ -10,11 +10,11 @@
 
 | | Feito | Parcial | Por fazer | Total |
 |---|---|---|---|---|
-| 🔵 **João** — back-end | **2** | 0 | 71 | 73 |
+| 🔵 **João** — back-end | **12** | 0 | 61 | 73 |
 | 🟠 **Guilherme** — front-end | **21** | 9 | 31 | 61 |
 | 🟢 **Os dois** | 0 | 2 | 20 | 22 |
 
-**Estado do Sprint 0 (1–7 set):** o Guilherme está adiantado — já fez trabalho do Sprint 3. O João tem o `.gitignore` e o `README` fechados e o resto do Sprint 0 por começar.
+**Estado do Sprint 0 (1–7 set):** o Guilherme está adiantado — já fez trabalho do Sprint 3. O João tem a **base de dados criada e populada** (B-01 a B-12); falta arrancar o projeto Express e publicá-lo (B-13 a B-16).
 
 **Legenda:** ✅ feito · 🟨 parcial (ver nota) · ⬜ por fazer
 
@@ -63,22 +63,22 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 |---|---|---|---|---|
 | **✅** | B-01 | ~~Preencher o `.gitignore`~~ — **feito 1 set**, commit `8357a2a`, já no `main` | 15 min | — |
 | **✅** | B-02 | ~~Escrever o `README.md` base~~ — **feito 1 set**, mesmo commit | 30 min | — |
-| ⬜ | B-03 | Criar conta Neon ou Supabase e guardar a string de ligação | 30 min | — |
-| ⬜ | B-04 | `schema.sql`: tabelas de utilizadores — `UTILIZADOR`, `FUNCIONARIO`, `CLIENTE` | 1 h | C-02 |
-| ⬜ | B-05 | `schema.sql`: catálogo — `CATEGORIA`, `PRODUTO` (com `controla_stock`), `STOCK` | 1 h | C-02 |
-| ⬜ | B-06 | `schema.sql`: pedidos — `MESA`, `PEDIDO`, `ITEM_PEDIDO`, `HISTORICO_ESTADO_PEDIDO` | 1 h 30 | C-02 |
-| ⬜ | B-07 | `schema.sql`: reservas — `SLOT_HORARIO`, `RESERVA`, `ITEM_RESERVA` | 1 h | C-02 |
-| ⬜ | B-08 | `schema.sql`: restantes — `FAVORITO`, `AVALIACAO`, `NOTIFICACAO` | 30 min | C-02 |
-| ⬜ | B-09 | Correr o schema na base de dados e confirmar as 16 tabelas | 30 min | B-04…B-08 |
-| ⬜ | B-10 | `seed.sql`: 4 categorias + os 25 produtos reais *(usar o `MENU` do `reservas.js` — já tem nomes, descrições e preços)* | 1 h 30 | B-09 |
-| ⬜ | B-11 | `seed.sql`: 10 mesas com token aleatório + 12 slots horários | 45 min | B-09 |
-| ⬜ | B-12 | `seed.sql`: 1 administrador + 2 funcionários (hashes bcrypt) + stock inicial | 45 min | B-09 |
-| ⬜ | B-13 | `npm init` e instalar `express`, `pg`, `dotenv`, `cors`, `zod`, `bcrypt`, `jsonwebtoken` | 30 min | — |
+| **✅** | B-03 | ~~Instalar o MySQL 8 e o Workbench~~ — **feito 1 set**, base de dados local `vem_pro_abate` | 30 min | — |
+| **✅** | B-04 | ~~`schema.sql`: utilizadores~~ — `utilizador`, `cliente`, `funcionario` | 1 h | C-02 |
+| **✅** | B-05 | ~~`schema.sql`: catálogo~~ — `categoria`, `produto`, `stock` | 1 h | C-02 |
+| **✅** | B-06 | ~~`schema.sql`: pedidos~~ — `mesa`, `pedido`, `item_pedido`, `historico_estado_pedido` | 1 h 30 | C-02 |
+| **✅** | B-07 | ~~`schema.sql`: reservas~~ — `slot_horario`, `reserva`, `item_reserva` | 1 h | C-02 |
+| **✅** | B-08 | ~~`schema.sql`: restantes~~ — `favorito`, `avaliacao`, `notificacao` | 30 min | C-02 |
+| **✅** | B-09 | ~~Correr o schema e confirmar as 16 tabelas~~ — 16/16 ✔ | 30 min | B-04…B-08 |
+| **✅** | B-10 | ~~`seed.sql`: 4 categorias + 25 produtos reais~~ | 1 h 30 | B-09 |
+| **✅** | B-11 | ~~`seed.sql`: 10 mesas + 12 slots horários~~ | 45 min | B-09 |
+| **✅** | B-12 | ~~`seed.sql`: 3 contas + stock + pedidos e reservas de exemplo~~ | 45 min | B-09 |
+| ⬜ | B-13 | `npm init` e instalar `express`, **`mysql2`**, `dotenv`, `cors`, `zod`, `bcrypt`, `jsonwebtoken` | 30 min | — |
 | ⬜ | B-14 | Estrutura de pastas + `config/bd.js` (pool de ligação) + `.env.example` | 45 min | B-13 |
 | ⬜ | B-15 | `app.js` a arrancar + endpoint `GET /api/saude` | 30 min | B-14 |
 | ⬜ | B-16 | Publicar no Render, configurar variáveis de ambiente, confirmar que responde do exterior | 1 h 30 | B-15 |
 
-**Sprint 0: 2 de 16 feitas · falta ≈ 11 h 45**
+**Sprint 0: 12 de 16 feitas · falta ≈ 3 h 15** (B-13 a B-16)
 
 ## Sprint 1 · Login de gestão (Semana 2: 8–14 set)
 

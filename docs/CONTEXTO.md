@@ -3,7 +3,7 @@
 **Projeto Final de Curso** — Técnico Especialista de Tecnologias e Programação de Sistemas de Informação
 **Equipa:** João Ribeiro (back-end, base de dados, aplicação de gestão) · Guilherme Gonçalves (front-end, design, UX)
 **Repositório:** `Projeto-Final` (Git) · **Site atual:** alojado em Vercel
-**Versão do documento:** 3.0 · **Data:** setembro de 2026
+**Versão do documento:** 3.1 · **Data:** setembro de 2026
 
 **Alterações desde a v2.0 — redução deliberada de âmbito:**
 - ❌ Sai o **login e registo de clientes** (a autenticação de funcionários e administradores mantém-se)
@@ -438,7 +438,7 @@ Mais: **10 mesas** com token e QR, **12 slots horários** (5 almoço + 7 jantar,
             └───────────────┬────────────────┘
                             ▼
             ┌────────────────────────────────┐
-            │  PostgreSQL → Neon / Supabase  │
+            │   MySQL 8  →  local / Aiven    │
             └────────────────────────────────┘
 ```
 
@@ -446,7 +446,7 @@ Mais: **10 mesas** com token e QR, **12 slots horários** (5 almoço + 7 jantar,
 |---|---|---|
 | Front-end | HTML5, CSS3, JavaScript (sem framework) | É o que já existe; introduzir React a meio seria risco desnecessário |
 | Back-end | **Node.js + Express** | Mesma linguagem do front-end — o Guilherme consegue ler e ajudar |
-| Base de dados | **PostgreSQL** (Neon ou Supabase, gratuito) | Relacional, com backup automático e acessível de qualquer sítio |
+| Base de dados | **MySQL 8** — local no desenvolvimento, [Aiven](https://aiven.io/free-mysql-database) (gratuito) quando for preciso alojar | É o que a equipa já conhece; o MySQL Workbench junta na mesma ferramenta a gestão da base de dados e o diagrama ER |
 | Autenticação | `jsonwebtoken` + `bcrypt` | Padrão da indústria, simples de explicar |
 | Validação | `zod` | Valida tudo o que entra na API |
 | Datas | `date-fns` | Dias da semana, slots e limites de antecedência |
@@ -468,7 +468,7 @@ Projeto-Final/
 │   └── funcionarios/          (dashboard — a criar)
 ├── backend/
 │   ├── src/
-│   │   ├── config/ · middleware/ · routes/ · controllers/
+│   │   ├── config/ · middleware/ · routes/ · controllers/   (driver: mysql2)
 │   │   ├── services/
 │   │   │   ├── motorFluxos.js       (o motor, escrito uma vez)
 │   │   │   ├── fluxoPedido.js       (definição do fluxo de pedidos)
