@@ -374,31 +374,61 @@ Valores aceites: `recebido`, `confirmado`, `em_preparacao`, `pronto`, `entregue`
   o cliente ver: `{ "mensagem": "…", "pedido": { "id": 42, "numero": "PED-4K9M2" }, "itens": [ … ] }`
   — o `numero` é curto e legível para se gritar no balcão.
 
-### 3.10.4 Dois pontos ainda por fechar
+### 3.10.4 Rondas anuladas e o total — **fechado a 02/09**
 
-**1. Uma ronda `cancelado` entra no `total`?** — ⚠️ **pergunta para o João, mexe em dinheiro.**
+**Uma ronda em `cancelado` NÃO entra no total, em sítio nenhum.** Confirmado pelo João: o
+cálculo tem `AND p.estado <> 'cancelado'` desde o início.
 
-O front-end **não cobra** rondas anuladas: ficam de fora do `total` da conta do cliente e
-aparece uma linha a explicar *"1 item foi anulado pela cozinha e não está a ser cobrado"*.
-A lógica é simples — a cozinha não fez o prato, o cliente não paga.
+**O total é UM cálculo só, não vários que coincidem.** O João criou a vista
+**`vw_total_sessao`**: em vez de cada endpoint somar por sua conta, o `/sessao`, o `/conta`,
+o `/pedidos/ativos` e as estatísticas leem todos dali. Não é "os dois lados concordam por
+sorte" — é impossível discordarem, porque é literalmente a mesma soma.
 
-Isto tem de bater certo com o `total` que o servidor devolve em
-`GET /mesas/:token/sessao` e `GET /pedidos/ativos`. Se o servidor somar as rondas anuladas
-e o ecrã não, o cliente e o balcão vêem **valores diferentes para a mesma mesa** — e num
-sistema de restaurante não há bug pior que dois totais discordantes.
+> **O front-end segue a mesma regra e não faz somas próprias.**
+> · `mesa.html` lê o `total` da resposta (`totalJaEnviado()`), não soma as linhas.
+> · O balcão já lia o `conta.total`.
+> · A simulação em `api.js` tem uma única `totalDemo(sessao)` — nenhum outro sítio do
+>   ficheiro soma itens à mão. É a vista, em JavaScript.
+>
+> Ao carrinho local do cliente (o que ainda não foi enviado) soma-se por cima, porque o
+> servidor ainda não sabe que ele existe.
 
-> **O que se pede ao backend:** que o `total` **exclua** as rondas em `cancelado`.
-> Se por alguma razão não puder ser, é preciso dizer, porque então é o front-end que muda.
+**Enquanto a sessão está aberta o total é calculado na hora.** Só ao fechar a conta é que o
+valor fica gravado — congela, para a conta de hoje não mudar se amanhã se alterar um preço.
 
-**2. Os estados da sessão também são minúsculos?**
+**Quando uma ronda é cancelada, o stock volta automaticamente** (regra 24 do CONTEXTO). O
+front-end não tem de fazer nada: não pede reposição nem recalcula stock, só muda o estado.
 
-Os estados do *pedido* estão fechados (minúsculas). Os da *sessão* — `ABERTA`,
-`AGUARDA_PAGAMENTO`, `FECHADA` no plano original (secção 2) — nunca foram confirmados
-contra a base de dados.
+#### As rondas anuladas vêm no payload — e o que o front-end faz com elas
 
-Isto **não bloqueia nada**: o front-end compara-os com `estadoIgual()` (em
-`frontend/js/api.js`), que ignora maiúsculas e minúsculas. Funciona nos dois casos e não há
-nada a mudar quando se souber qual é. Fica registado só para não se perder o fio.
+O backend **manda-as**, com `estado: "cancelado"`. Foi escolha do João mandar em vez de
+esconder, e é a certa: o empregado precisa de as ver quando o cliente perguntar pelo prato.
+O `total` nunca muda, seja qual for a decisão da interface.
+
+Decidido do lado do front-end — **mostrar, riscadas e sem preço**:
+
+| Ecrã | O que aparece |
+|---|---|
+| `mesa.html` (cliente) | Linha riscada no fim da conta: `1× Borrego Abatido — anulado · não cobrado`, mais uma nota: *"A cozinha não conseguiu fazer estes itens."* |
+| `balcao.html` | Nome riscado e, na coluna do preço, `ANULADO · NÃO COBRADO` |
+| `cozinha.html` | Não aparece — sai do ecrã assim que é anulada, o trabalho acabou |
+
+**Porquê sem preço, e não com o preço riscado:** se a linha mostrasse um valor, quem somasse
+as linhas do ecrã à mão chegava a um número diferente do total. Sem número, não há nada para
+somar por engano. Pela mesma razão o `numItens` também exclui as anuladas — o cartão do
+balcão diz *"1 item"*, não *"2 itens"*.
+
+**Porquê mostrar qual o prato, e não só quantos:** dizer *"1 item foi anulado"* conta ao
+cliente que alguma coisa desapareceu sem dizer o quê — é pior do que não dizer nada, porque
+ele fica a perguntar-se o que foi. Com o nome à frente, a pergunta não chega a existir.
+
+#### Nota lateral: os estados da sessão
+
+Os do *pedido* estão fechados (minúsculas). Os da *sessão* — `ABERTA`, `AGUARDA_PAGAMENTO`,
+`FECHADA` no plano original (secção 2) — nunca foram confirmados contra a base de dados.
+
+**Não bloqueia nada:** o front-end compara-os com `estadoIgual()` (em `frontend/js/api.js`),
+que ignora maiúsculas. Funciona nos dois casos e não há nada a mudar quando se souber.
 
 ---
 

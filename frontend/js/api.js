@@ -240,8 +240,31 @@ function erroSimulado(mensagem, status) {
   return erro;
 }
 
-function totalDemo(itens) {
-  return itens.reduce((acc, i) => acc + Number(i.precoUnit) * i.quantidade, 0).toFixed(2);
+/**
+ * totalDemo / numItensDemo — O cálculo do total, feito UMA vez só.
+ *
+ * No backend real isto é a vista `vw_total_sessao` (ideia do João, 02/09):
+ * em vez de cada endpoint somar por sua conta, todos leem o mesmo cálculo.
+ * Assim os dois lados não "concordam por sorte" — é impossível
+ * discordarem. Aqui na simulação a ideia é a mesma: nenhum sítio deste
+ * ficheiro soma itens à mão, chamam todos estas duas funções.
+ *
+ * Rondas em `cancelado` ficam de fora: a cozinha não fez, o cliente não
+ * paga (docs/API.md 3.10.4). Os itens continuam a ir no payload — só não
+ * contam para o dinheiro.
+ */
+function itensQueContam(sessao) {
+  return itensComEstado(sessao).filter(i => i.estado !== 'cancelado');
+}
+
+function totalDemo(sessao) {
+  return itensQueContam(sessao)
+    .reduce((acc, i) => acc + Number(i.precoUnit) * i.quantidade, 0)
+    .toFixed(2);
+}
+
+function numItensDemo(sessao) {
+  return itensQueContam(sessao).reduce((acc, i) => acc + i.quantidade, 0);
 }
 
 /* ── RONDAS (docs/API.md 3.10) ────────────────────────────────────
@@ -341,7 +364,7 @@ async function simularEndpoint(endpoint, opcoes) {
         sessao: {
           id: s.id, estado: s.estado, abertaEm: s.abertaEm,
           itens: itensComEstado(s),   // formato igual ao de antes
-          total: totalDemo(s.itens),
+          total: totalDemo(s),
         },
       };
     }
@@ -412,8 +435,8 @@ async function simularEndpoint(endpoint, opcoes) {
         mesa: { numero: mesa.numero },
         sessao: { id: sessao.id, estado: sessao.estado, abertaEm: sessao.abertaEm },
         porCategoria,
-        total: totalDemo(sessao.itens),
-        numItens: sessao.itens.reduce((a, i) => a + i.quantidade, 0),
+        total: totalDemo(sessao),
+        numItens: numItensDemo(sessao),
       };
     }
 
@@ -444,8 +467,8 @@ async function simularEndpoint(endpoint, opcoes) {
           estado: s.estado,
           abertaEm: s.abertaEm,
           mesa: { id: mesa?.id, numero: mesa?.numero, lugares: mesa?.lugares },
-          numItens: s.itens.reduce((a, i) => a + i.quantidade, 0),
-          total: totalDemo(s.itens),
+          numItens: numItensDemo(s),
+          total: totalDemo(s),
           temPendentes: (s.rondas || []).some(r => ['recebido', 'confirmado', 'em_preparacao'].includes(r.estado)),
         };
       })
@@ -533,8 +556,8 @@ async function simularEndpoint(endpoint, opcoes) {
         mesa: { numero: mesa?.numero },
         sessao: { id: s.id, estado: s.estado, abertaEm: s.abertaEm },
         porCategoria,
-        total: totalDemo(s.itens),
-        numItens: s.itens.reduce((a, i) => a + i.quantidade, 0),
+        total: totalDemo(s),
+        numItens: numItensDemo(s),
       };
     }
     throw erroSimulado('Sessão não encontrada.', 404);

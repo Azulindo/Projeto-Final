@@ -506,17 +506,28 @@ document.addEventListener('DOMContentLoaded', () => {
      servidor) MAIS o que ainda está no carrinho — por isso nunca fica
      vazia depois de "Pedir Itens".
   ═══════════════════════════════════════════════════════════ */
-  function itensEnviadosAgrupados() {
-    // Junta linhas do mesmo produto para a conta ficar legível.
-    // Rondas anuladas ficam de FORA: o cliente não paga o que a cozinha
-    // não fez. São contadas à parte, para ele perceber o que aconteceu.
-    const porProduto = {};
-    (state.sessao?.itens || [])
-      .filter(item => item.estado !== 'cancelado')
-      .forEach(item => {
+  /**
+   * agruparEnviados — Junta linhas do mesmo produto para a conta ficar
+   * legível, separando o que se paga do que foi anulado.
+   *
+   * As rondas anuladas vêm no payload de propósito (decisão do backend,
+   * 02/09): o cliente tem de ver *qual* prato é que a cozinha anulou, não
+   * só que "houve um". Aparecem riscadas e sem preço — presentes, mas
+   * claramente fora da conta.
+   *
+   * Anulados nunca se juntam a cobrados do mesmo produto: se pediste dois
+   * bifes e um foi anulado, tens de ver uma linha de cada.
+   */
+  function agruparEnviados() {
+    const cobrados = {};
+    const anulados = {};
+
+    (state.sessao?.itens || []).forEach(item => {
+      const anulado = item.estado === 'cancelado';
+      const grupo = anulado ? anulados : cobrados;
       const id = item.produtoId;
-      if (!porProduto[id]) {
-        porProduto[id] = {
+      if (!grupo[id]) {
+        grupo[id] = {
           produtoId: id,
           nome: item.produto?.nome || state.produtosPorId[id]?.nome || 'Produto',
           precoUnit: Number(item.precoUnit),
@@ -524,27 +535,40 @@ document.addEventListener('DOMContentLoaded', () => {
           estados: new Set(),
         };
       }
-      porProduto[id].quantidade += item.quantidade;
-      porProduto[id].estados.add(item.estado);
+      grupo[id].quantidade += item.quantidade;
+      grupo[id].estados.add(item.estado);
     });
-    return Object.values(porProduto);
+
+    return { cobrados: Object.values(cobrados), anulados: Object.values(anulados) };
   }
 
-  function contarAnulados() {
-    return (state.sessao?.itens || [])
-      .filter(i => i.estado === 'cancelado')
-      .reduce((soma, i) => soma + i.quantidade, 0);
+  /**
+   * totalJaEnviado — O que a mesa já deve, segundo o SERVIDOR.
+   *
+   * Não somamos as linhas nós: lemos o `total` que a API manda, que vem
+   * da vista `vw_total_sessao` — o mesmo cálculo que o balcão vê. Se o
+   * ecrã fizesse a sua própria soma, bastava um arredondamento ou um
+   * desconto futuro para o cliente e o empregado verem números
+   * diferentes para a mesma mesa (docs/API.md 3.10.4).
+   *
+   * A soma à mão fica só como rede, para o caso de a resposta não trazer
+   * `total`.
+   */
+  function totalJaEnviado(cobrados) {
+    const doServidor = Number(state.sessao?.total);
+    if (Number.isFinite(doServidor)) return doServidor;
+    return cobrados.reduce((s, i) => s + i.precoUnit * i.quantidade, 0);
   }
 
   function atualizarTotais() {
-    const enviados = itensEnviadosAgrupados();
+    const { cobrados, anulados } = agruparEnviados();
     const pendentes = Object.entries(state.carrinho);
 
     const itensPendentes = pendentes.reduce((s, [, q]) => s + q, 0);
     const precoPendentes = pendentes.reduce((s, [id, q]) => s + Number(state.produtosPorId[id].preco) * q, 0);
 
-    const itensEnviados = enviados.reduce((s, i) => s + i.quantidade, 0);
-    const precoEnviados = enviados.reduce((s, i) => s + i.precoUnit * i.quantidade, 0);
+    const itensEnviados = cobrados.reduce((s, i) => s + i.quantidade, 0);
+    const precoEnviados = totalJaEnviado(cobrados);
 
     const totalItens = itensPendentes + itensEnviados;
 
@@ -569,14 +593,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     resumoLista.innerHTML = '';
-    const anulados = contarAnulados();
 
-    // "Não tens nada" só é verdade se também não houver nada anulado:
-    // se a cozinha anulou a ronda toda, o cliente tem de saber porque é
-    // que a conta ficou vazia.
-    resumoVazio.classList.toggle('hidden', totalItens > 0 || anulados > 0);
+    // "Não tens nada" só é verdade se também não houver nada anulado: se
+    // a cozinha anulou a ronda toda, o cliente tem de saber porque é que
+    // a conta ficou vazia.
+    resumoVazio.classList.toggle('hidden', totalItens > 0 || anulados.length > 0);
 
-    enviados.forEach(item => resumoLista.appendChild(
+    cobrados.forEach(item => resumoLista.appendChild(
       criarLinhaResumo(item.nome, item.quantidade, item.precoUnit, etiquetaEstado(item.estados))
     ));
     pendentes.forEach(([id, qty]) => {
@@ -584,14 +607,14 @@ document.addEventListener('DOMContentLoaded', () => {
       resumoLista.appendChild(criarLinhaResumo(p.nome, qty, Number(p.preco), 'por enviar'));
     });
 
-    if (anulados > 0) {
-      const aviso = document.createElement('p');
-      aviso.className = 'text-[11px] text-red-400/80 pt-1';
-      aviso.id = 'resumoAnulados';
-      aviso.textContent = anulados === 1
-        ? '1 item foi anulado pela cozinha e não está a ser cobrado.'
-        : `${anulados} itens foram anulados pela cozinha e não estão a ser cobrados.`;
-      resumoLista.appendChild(aviso);
+    // Os anulados vão para o fim, riscados e sem preço.
+    anulados.forEach(item => resumoLista.appendChild(criarLinhaAnulada(item)));
+    if (anulados.length > 0) {
+      const nota = document.createElement('p');
+      nota.className = 'text-[11px] text-neutral-500 pt-1';
+      nota.id = 'resumoAnulados';
+      nota.textContent = 'A cozinha não conseguiu fazer estes itens. Não estão a ser cobrados.';
+      resumoLista.appendChild(nota);
     }
 
     if (resumoAberto) resumoPanel.style.maxHeight = resumoPanel.scrollHeight + 'px';
@@ -639,6 +662,27 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="text-[10px] ${cor} font-semibold whitespace-nowrap">${marca}${etiqueta}</span>
       </span>
       <span class="text-neutral-400 flex-shrink-0">${formatarPreco(precoUnit * qty)}</span>
+    `;
+    return linha;
+  }
+
+  /**
+   * criarLinhaAnulada — Uma ronda que a cozinha anulou.
+   *
+   * Riscada e com "não cobrado" onde estaria o preço. Mostrar o valor
+   * riscado seria pior: o cliente somava as linhas de cima e não batia
+   * certo com o total. Aqui não há número nenhum para somar por engano.
+   */
+  function criarLinhaAnulada(item) {
+    const linha = document.createElement('div');
+    linha.className = 'flex items-center justify-between gap-2 opacity-60';
+    linha.dataset.anulado = 'sim';
+    linha.innerHTML = `
+      <span class="text-neutral-500 truncate flex items-center gap-1.5 line-through">
+        <span class="font-semibold flex-shrink-0">${item.quantidade}×</span>
+        <span class="truncate">${escapeHtml(item.nome)}</span>
+      </span>
+      <span class="text-[10px] text-red-400/90 font-semibold whitespace-nowrap flex-shrink-0">anulado · não cobrado</span>
     `;
     return linha;
   }

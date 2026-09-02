@@ -188,6 +188,12 @@ document.addEventListener('DOMContentLoaded', () => {
       bloco.appendChild(titulo);
 
       itens.forEach(item => {
+        // Uma ronda anulada aparece na conta (o empregado tem de poder
+        // responder ao cliente que perguntar pelo prato), mas SEM preço:
+        // se mostrasse o valor, quem somasse as linhas à mão não batia
+        // certo com o total, que já o exclui. Ver docs/API.md 3.10.4.
+        const anulada = estadoIgual(item.estado, 'cancelado');
+
         const linha = document.createElement('div');
         linha.className = 'conta-linha';
 
@@ -198,11 +204,17 @@ document.addEventListener('DOMContentLoaded', () => {
         nome.className = 'conta-nome';
         nome.textContent = `${item.quantidade}× ${item.nome}`;
 
-        const estado = document.createElement('span');
-        estado.className = `conta-estado estado-${item.estado.toLowerCase()}`;
-        estado.textContent = ETIQUETA_ESTADO[item.estado] || item.estado;
+        esquerda.appendChild(nome);
 
-        esquerda.append(nome, estado);
+        // Numa linha anulada o estado NÃO se repete: a coluna do preço já
+        // diz "anulado · não cobrado". Repetir dava duas etiquetas riscadas
+        // uma por cima da outra e não acrescentava nada.
+        if (!anulada) {
+          const estado = document.createElement('span');
+          estado.className = `conta-estado estado-${String(item.estado).toLowerCase()}`;
+          estado.textContent = ETIQUETA_ESTADO[item.estado] || item.estado;
+          esquerda.appendChild(estado);
+        }
 
         if (item.observacao) {
           const obs = document.createElement('span');
@@ -212,8 +224,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const preco = document.createElement('span');
-        preco.className = 'conta-preco';
-        preco.textContent = formatarPreco(item.subtotal);
+        preco.className = anulada ? 'conta-preco conta-preco-anulado' : 'conta-preco';
+        preco.textContent = anulada ? 'anulado · não cobrado' : formatarPreco(item.subtotal);
+        if (anulada) linha.classList.add('conta-linha-anulada');
 
         linha.append(esquerda, preco);
         bloco.appendChild(linha);
