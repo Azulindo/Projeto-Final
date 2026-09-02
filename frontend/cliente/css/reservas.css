@@ -1563,3 +1563,54 @@ html { scroll-behavior: smooth; }
 }
 
 .footer-staff a:hover { color: #c9832f; }
+
+
+/* §12b — INDICADOR DE PROGRESSO E NAVEGAÇÃO DA EMENTA (F-38 / F-40)
+   ----------------------------------------------------------------------- */
+.menu-card-progresso {
+  margin-left: auto;
+  margin-right: 10px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.menu-card-nav {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  margin-top: 10px;
+}
+
+/* O botão de avançar ocupa o espaço todo que sobra */
+.menu-card-nav .btn-menu-confirm {
+  flex: 1;
+  margin-top: 0;
+}
+
+.btn-menu-voltar {
+  flex: 0 0 auto;
+  max-width: 42%;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-menu-voltar:hover {
+  border-color: var(--orange);
+  color: var(--text-primary);
+}

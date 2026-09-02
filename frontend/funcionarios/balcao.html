@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt" data-niveis="balcao administrador">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Balcão — Vem Pro Abate</title>
+<meta name="description" content="Ecrã do balcão: mesas abertas e fecho de contas.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/balcao.css">
+
+<script src="../js/api.js"></script>
+<script src="js/auth-guard.js"></script>
+</head>
+<body data-pagina="balcao" data-titulo="Balcão">
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="content-area">
+      <header class="content-topbar" id="contentTopbar"></header>
+
+      <main class="content-main" id="conteudoPagina">
+
+        <!-- Resumo do turno + estado da ligação -->
+        <div class="barra-estado">
+          <div class="estado-ligacao">
+            <span class="ponto-ligacao" id="pontoLigacao"></span>
+            <span id="textoLigacao">A ligar…</span>
+          </div>
+          <div class="contadores">
+            <span class="contador">Mesas abertas: <strong id="contaMesas">0</strong></span>
+            <span class="contador contador-euros">Em aberto: <strong id="totalAberto">0,00 €</strong></span>
+          </div>
+          <button type="button" class="btn btn-secundario" id="btnAtualizar">↻ Atualizar</button>
+        </div>
+
+        <!-- Mesas -->
+        <div class="grelha-mesas" id="grelhaMesas"></div>
+        <p class="sem-mesas hidden" id="semMesas">
+          Nenhuma mesa aberta neste momento. As mesas aparecem aqui assim que um cliente lê o QR Code.
+        </p>
+
+        <p class="nota-rodape">
+          As mesas que pediram a conta aparecem primeiro e a dourado. O ecrã atualiza-se sozinho a cada 10 segundos.
+        </p>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Painel de detalhe da conta -->
+  <div class="painel-overlay" id="painelOverlay"></div>
+  <aside class="painel-conta" id="painelConta" aria-hidden="true" aria-label="Detalhe da conta">
+    <header class="painel-topo">
+      <div>
+        <h2 id="painelMesa">Mesa —</h2>
+        <p class="painel-sub" id="painelSub">—</p>
+      </div>
+      <button type="button" class="btn-fechar-painel" id="btnFecharPainel" aria-label="Fechar">✕</button>
+    </header>
+
+    <div class="painel-corpo" id="painelCorpo">
+      <p class="painel-carregar" id="painelCarregar">A carregar a conta…</p>
+    </div>
+
+    <footer class="painel-rodape">
+      <div class="painel-total">
+        <span>Total</span>
+        <strong id="painelTotal">0,00 €</strong>
+      </div>
+      <button type="button" class="btn btn-primario btn-fechar-mesa" id="btnFecharMesa">
+        Fechar mesa (pago)
+      </button>
+      <p class="painel-aviso" id="painelAviso"></p>
+    </footer>
+  </aside>
+
+  <script src="js/layout.js"></script>
+  <script src="js/balcao.js"></script>
+</body>
+</html>

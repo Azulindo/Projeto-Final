@@ -42,7 +42,7 @@ const NIVEIS = ['cozinha', 'balcao', 'administrador'];
 const NAV_ITEMS = [
   { id: 'dashboard',    icone: '🏠', label: 'Início',        href: 'dashboard.html', niveis: NIVEIS },
   { id: 'cozinha',      icone: '🔥', label: 'Cozinha',        href: 'cozinha.html',   niveis: NIVEIS },
-  { id: 'balcao',       icone: '🧾', label: 'Balcão',         href: null, tag: 'a seguir', niveis: ['balcao', 'administrador'] },
+  { id: 'balcao',       icone: '🧾', label: 'Balcão',         href: 'balcao.html',    niveis: ['balcao', 'administrador'] },
   { id: 'qrcodes',      icone: '🔳', label: 'QR Codes',       href: 'qrcodes.html',   niveis: ['balcao', 'administrador'] },
   { id: 'produtos',     icone: '🍽️', label: 'Produtos',       href: null, tag: 'F-49', niveis: ['administrador'] },
   { id: 'categorias',   icone: '🏷️', label: 'Categorias',     href: null, tag: 'F-51', niveis: ['administrador'] },

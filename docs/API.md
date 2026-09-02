@@ -6,13 +6,19 @@ Este ficheiro foi escrito a partir do **código real** que já existe em `backen
 partir do que estava planeado. Onde o planeamento (`CONTEXTO.md` / `TAREFAS.md`) e o código
 divergem, manda o código — e a divergência está assinalada na secção 6.
 
+> ### ⚠️ Ler primeiro: a secção **3.10** é a que vale
+> A 02/09 o back-end passou de Prisma para `mysql2`, e o estado dos pedidos passou a ser
+> **por ronda** e em **minúsculas**. As secções 2, 3.7 e 3.8 descrevem o modelo Prisma antigo
+> e ficam aqui só como histórico — **a 3.10 substitui-as**. O arranque atual é o
+> `backend/src/app.js` (porta 3000, `GET /api/saude`).
+
 ---
 
 ## 1. Regras gerais
 
 | | |
 |---|---|
-| **Base URL (local)** | `http://localhost:3001/api` (`PORT` no `.env`, por omissão 3001) |
+| **Base URL (local)** | `http://localhost:3000/api` (`PORT` no `.env`, por omissão 3000) |
 | **Base URL (produção)** | `https://<a-definir>.onrender.com/api` — preencher quando o B-16 estiver feito |
 | **Formato** | JSON em ambas as direções (`Content-Type: application/json`) |
 | **CORS** | `FRONTEND_URL` no `.env` do backend; por omissão `*` |
@@ -55,7 +61,8 @@ ItemPedido    id, sessaoId, produtoId, quantidade, precoUnit, observacao?, estad
 
 **`SessaoMesa.estado`** — `ABERTA` → `AGUARDA_PAGAMENTO` → `FECHADA`
 
-**`ItemPedido.estado`** — `PENDENTE` → `EM_PREPARACAO` → `PRONTO` → `SERVIDO`
+**Estado do pedido (ronda)** — `recebido` → `confirmado` → `em_preparacao` → `pronto` →
+`entregue`, mais `cancelado`. **Ver a secção 3.10**, que é a que vale.
 
 **`Produto.categoria`** é uma *string livre*. Os valores usados pelo `seed.js`, e que o
 front-end espera, são exatamente estes quatro:
@@ -258,6 +265,117 @@ O funcionário fecha a mesa depois de receber o pagamento. `estado → FECHADA`,
 
 ---
 
+## 3.10 ⭐ ACORDADO: o estado passa a ser por **ronda**, não por item
+
+> **Isto substitui o 3.7 e o 3.8.** Combinado entre o João e o Guilherme a 02/09, quando o
+> back-end passou de Prisma para `mysql2`. As rotas, os nomes e os formatos de resposta do
+> lado do cliente (`/api/mesas/...`) **não mudam** — o front-end desse lado não mexe uma linha.
+
+### O que muda
+
+Antes, cada **item** tinha estado próprio (`PENDENTE` → `EM_PREPARACAO` → `PRONTO` → `SERVIDO`).
+Agora o estado é do **pedido** (a "ronda"): cada vez que o cliente carrega em *Enviar para a
+Cozinha* cria-se um pedido com os itens dessa vez, e é esse pedido que anda pelos estados.
+
+**Porquê:** com estado nos dois sítios, é fácil dessincronizarem — e quando isso acontece
+ninguém sabe qual é o verdadeiro. Uma fonte de verdade só.
+
+**O que se ganha:** número de pedido para mostrar ao cliente, desconto automático de stock,
+histórico de estados com data e hora (dá o tempo médio de preparação para as estatísticas do
+F-57), take-away, e o total da sessão calculado a partir das rondas.
+
+> ⚠️ **Caso a vigiar:** se o cliente juntar uma bebida e um prato e enviar de uma vez, ficam
+> na *mesma* ronda — e a bebida não pode ser entregue sem esperar pelo prato. Se isso
+> incomodar na prática, resolve-se **do lado do cliente**: o `mesa.html` passa a enviar
+> bebidas numa ronda e comida noutra. Não obriga a mexer no back-end nem a duplicar estado.
+
+### 3.10.1 `GET /api/pedidos/cozinha` (novo formato)
+
+Rondas por fazer, da mais antiga para a mais recente.
+
+```json
+[
+  {
+    "id": 42,
+    "numero": "PED-4K9M2",
+    "estado": "recebido",
+    "criadoEm": "2026-09-02T19:35:02.000Z",
+    "tipo": "mesa",
+    "mesa": { "numero": 4, "sessaoId": 12 },
+    "itens": [
+      { "id": 88, "nome": "Borrego Abatido", "categoria": "Pratos Principais",
+        "quantidade": 2, "observacao": "bem passado" },
+      { "id": 89, "nome": "Coca-Cola", "categoria": "Bebidas",
+        "quantidade": 1, "observacao": null }
+    ]
+  }
+]
+```
+
+`tipo` é `"mesa"` ou `"take_away"` (com underscore — é o valor do ENUM da tabela).
+No take-away **não vem `mesa` nem `sessaoId`**, porque não pertence a sessão nenhuma; vem
+em vez disso `"cliente": { "nome": "Rita", "telemovel": "912345678" }`.
+
+### Estados de uma ronda — **fechado a 02/09**
+
+```
+recebido → confirmado → em_preparacao → pronto → entregue
+                    ↘ cancelado
+```
+
+| Estado | O que significa |
+|---|---|
+| `recebido` | Chegou ao sistema; a cozinha ainda não olhou |
+| `confirmado` | A cozinha aceitou — **é aqui que o stock desce** |
+| `em_preparacao` | A ser feito |
+| `pronto` | Pronto para servir |
+| `entregue` | Entregue na mesa (ou levantado, no take-away) |
+| `cancelado` | Anulado — **é aqui que o stock volta** |
+
+Duas notas sobre o porquê de serem seis e não quatro:
+
+- **`confirmado` existe para o stock não mentir.** Se descontasse logo em `recebido`,
+  descontavas coisas que a cozinha ainda vai recusar.
+- **`cancelado` existe porque a cozinha tem de poder desistir de uma ronda** — acaba um
+  ingrediente, o prato queima. Sem este estado, a ronda fica presa no ecrã para sempre.
+
+> **Regra de ouro (do João, e é a certa):** a API fala sempre a linguagem da base de dados —
+> **minúsculas, exatamente estes valores**. Quem traduz para as pessoas é a interface. Assim
+> nunca andam dois vocabulários à roda.
+>
+> A tradução do lado do front-end está em `funcionarios/js/cozinha.js` e `cliente/mesa.html`
+> — por exemplo, o cliente vê "a preparar" onde a API diz `em_preparacao`.
+
+**Equivalência com os nomes antigos** (os do modelo Prisma, já não usados):
+
+| Antes | Agora |
+|---|---|
+| `PENDENTE` | `recebido` |
+| — | `confirmado` *(novo)* |
+| `EM_PREPARACAO` | `em_preparacao` |
+| `PRONTO` | `pronto` |
+| `SERVIDO` | `entregue` |
+| — | `cancelado` *(novo)* |
+
+### 3.10.2 `PATCH /api/pedidos/:id/estado`
+
+Substitui o `PATCH /api/pedidos/item/:id/estado`. O `:id` é agora o **id da ronda**.
+
+**Body:** `{ "estado": "em_preparacao" }` · **Resposta:** `{ "mensagem": "…", "pedido": { … } }`
+
+Valores aceites: `recebido`, `confirmado`, `em_preparacao`, `pronto`, `entregue`, `cancelado`.
+
+### 3.10.3 Efeito nos outros endpoints
+
+- **`GET /api/mesas/:token/conta`** e **`GET /api/gestao/sessoes/:id/conta`** — o campo
+  `estado` de cada linha passa a ser o estado da **ronda a que o item pertence**. O formato
+  não muda, por isso o front-end continua a funcionar.
+- **`POST /api/mesas/:token/pedir`** — passa a devolver também o número da ronda criada, para
+  o cliente ver: `{ "mensagem": "…", "pedido": { "id": 42, "numero": "PED-4K9M2" }, "itens": [ … ] }`
+  — o `numero` é curto e legível para se gritar no balcão.
+
+---
+
 ## 4. Endpoints em falta ⛔ (o front-end já conta com eles)
 
 Estes ainda **não existem**. O front-end já os chama através do `frontend/js/api.js`, que
@@ -366,6 +484,33 @@ Implementação sugerida: `prisma.mesa.findMany({ where: { ativa: true }, orderB
 > Existe também o caminho por terminal: `npm run qrcodes -- https://o-site.pt` gera um PNG
 > por mesa em `backend/qrcodes/` (ficheiro `backend/prisma/gerarQRCodes.js`, tarefa B-65).
 
+### 4.7 `GET /api/gestao/sessoes/:id/conta` — **bloqueia o detalhe no balcão**
+
+A conta de uma sessão, procurada **pelo ID da sessão** em vez do token da mesa.
+
+**Porque é preciso um endpoint novo:** o `GET /api/mesas/:token/conta` (3.4) já devolve
+exatamente estes dados, mas exige o `qrToken`. O ecrã do balcão trabalha a partir do
+`GET /api/pedidos/ativos`, que devolve `sessaoId` e **não** devolve o token — e ainda bem:
+o `qrToken` é a credencial que dá acesso a pedir naquela mesa, não deve andar a circular
+pelos ecrãs da gestão nem ficar no histórico do browser.
+
+A resposta é igual à do 3.4:
+
+```json
+{
+  "mesa":   { "numero": 5 },
+  "sessao": { "id": 12, "estado": "AGUARDA_PAGAMENTO", "abertaEm": "…" },
+  "porCategoria": { "Pratos Principais": [ { "id": 45, "nome": "…", "quantidade": 3,
+                     "precoUnit": 15.5, "subtotal": 46.5, "estado": "PENDENTE",
+                     "observacao": null, "criadoEm": "…" } ] },
+  "total": "46.50",
+  "numItens": 3
+}
+```
+
+Implementação sugerida: é a mesma query do 3.4, trocando o `findFirst` pela mesa por um
+`findUnique` na sessão. Deve exigir sessão de funcionário.
+
 ---
 
 ## 5. Como ligar o front-end ao backend real
@@ -392,7 +537,8 @@ reais documentadas acima.
 | `funcionarios/login.html` | `auth/login` |
 | `funcionarios/dashboard.html` | `auth/eu` (revalidação de sessão) |
 | `funcionarios/qrcodes.html` | `gestao/mesas/qrcodes` |
-| *(por construir — F-45)* | `pedidos/ativos`, `pedidos/cozinha`, `pedidos/item/:id/estado`, `pedidos/sessao/:id/fechar` |
+| `funcionarios/cozinha.html` | `pedidos/cozinha`, `pedidos/item/:id/estado` |
+| `funcionarios/balcao.html` | `pedidos/ativos`, `gestao/sessoes/:id/conta`, `pedidos/sessao/:id/fechar` |
 | `cliente/reservas.html` | *(nenhum — ainda em `localStorage`)* |
 
 ---

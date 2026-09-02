@@ -206,16 +206,16 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 | ✅ | F-30 | Ecrã de escolha do modo de ementa (dois botões grandes) | 1 h | F-28 |
 | ✅ | F-31 | Componente de calendário — mês, navegação, seleção de dia | 2 h 30 | F-28 |
 | ✅ | F-32 | Calendário: bloquear segundas-feiras, datas passadas e além de 60 dias | 1 h 30 | F-31 |
-| ⬜ | F-33 | Ecrã de período (almoço / jantar) | 45 min | F-30 |
+| ✅ | F-33 | Ecrã de período (almoço / jantar) | 45 min | F-30 |
 | ✅ | F-34 | Grelha de horas disponíveis | 1 h | F-33 |
 | ✅ | F-35 | Campos de nome e telemóvel com validação visível | 1 h 30 | F-28 |
 | ✅ | F-36 | Ecrã de resumo da reserva + `✅ Confirmar` / `🔄 Recomeçar` | 1 h 30 | F-35 |
 | ✅ | F-37 | Ecrã final com o **código de reserva em destaque** e botão "copiar" | 1 h 30 | F-36 |
-| ⬜ | F-38 | As 4 páginas da ementa, com indicador de progresso `2/4` | 2 h 30 | F-19 |
-| ⬜ | F-39 | Seletores de quantidade nos cards, com total parcial sempre visível | 2 h | F-38 |
-| ⬜ | F-40 | Navegação `◀ Anterior` / `Seguinte ▶` sem perder as escolhas | 1 h 30 | F-38 |
-| ⬜ | F-41 | Ecrã de observações para a cozinha (com opção de saltar) | 1 h | F-21 |
-| ⬜ | F-42 | Resumo da ementa com subtotais e **aviso claro de que o valor é estimado** | 1 h 30 | F-39 |
+| ✅ | F-38 | As 4 páginas da ementa, com indicador de progresso `2/4` | 2 h 30 | F-19 |
+| ✅ | F-39 | Seletores de quantidade nos cards, com total parcial sempre visível | 2 h | F-38 |
+| ✅ | F-40 | Navegação `◀ Anterior` / `Seguinte ▶` sem perder as escolhas | 1 h 30 | F-38 |
+| ✅ | F-41 | Ecrã de observações para a cozinha (com opção de saltar) | 1 h | F-21 |
+| ✅ | F-42 | Resumo da ementa com subtotais e **aviso claro de que o valor é estimado** | 1 h 30 | F-39 |
 | ⬜ | F-43 | Resumo final combinado (reserva + ementa + observações) | 1 h 30 | F-42, F-36 |
 
 **Total do sprint: ≈ 24 h**
@@ -227,7 +227,7 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 | ✅ | F-44 | Layout da aplicação de gestão (barra lateral + área de conteúdo) | 2 h | F-14 |
 | ✅ | F-45 | Ecrã de pedidos em colunas por estado (quadro tipo Kanban) | 2 h 30 | F-44 |
 | ✅ | F-46 | Cartão de pedido com cor a mudar conforme a antiguidade | 1 h 30 | F-45 |
-| ⬜ | F-47 | Painel de detalhe do pedido (itens, observações, mesa ou nome do take away) | 2 h | F-45 |
+| ✅ | F-47 | Painel de detalhe do pedido (itens, observações, mesa ou nome do take away) | 2 h | F-45 |
 | ⬜ | F-48 | Botões de mudança de estado no detalhe | 1 h | F-47 |
 | ⬜ | F-49 | Tabela de produtos com pesquisa e ordenação | 2 h | F-44 |
 | ⬜ | F-50 | Formulário de produto (criar / editar / ativar / desativar) | 2 h | F-49 |

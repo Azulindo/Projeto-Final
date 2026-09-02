@@ -449,14 +449,24 @@ document.addEventListener('DOMContentLoaded', () => {
    * Inicia o fluxo sequencial por categorias.
    */
   async function ramoMenu() {
-    await botReply(
-      '🔥 Ótima escolha! Vamos ver o nosso menu por partes.<br>Começa pelos <strong>Pratos Principais</strong> 👇',
-      800
-    );
-    // Inicializa o índice de categorias e começa pelo primeiro
+    // Inicializa as categorias ANTES da mensagem: o texto anuncia a
+    // primeira categoria e tem de dizer a verdadeira. (Antes estava
+    // escrito "Pratos Principais" à mão e mostrava as Entradas.)
     state.menuCategorias = CATEGORIAS_SEQUENCIAIS.slice();
     state.catIndex = 0;
+
+    const primeira = nomeSemEmoji(state.menuCategorias[0]);
+    await botReply(
+      `🔥 Ótima escolha! Vamos ver o nosso menu por partes.<br>Começa pelas <strong>${primeira}</strong> 👇`,
+      800
+    );
+
     renderCategoria(state.catIndex);
+  }
+
+  /** nomeSemEmoji — '🥗 Entradas' → 'Entradas' */
+  function nomeSemEmoji(nome) {
+    return String(nome).replace(/^[^\s]+\s/, '');
   }
 
   /* ═══════════════════════════════════════════════════════════════
@@ -497,7 +507,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cabeçalho do card
     const header = document.createElement('div');
     header.className = 'menu-card-header';
+    // Indicador de progresso (F-38): saber quantas páginas faltam evita
+    // a sensação de "isto nunca mais acaba" a meio da ementa.
     header.innerHTML = `<span>${catNome}</span>
+      <span class="menu-card-progresso">${index + 1}/${state.menuCategorias.length}</span>
       <a href="menu.html" target="_blank" class="menu-card-link">Ver menu completo ↗</a>`;
     card.appendChild(header);
 
@@ -628,7 +641,29 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 320);
     });
 
-    card.appendChild(confirmBtn);
+    // Navegação (F-40): a partir da 2.ª categoria dá para recuar e
+    // corrigir uma quantidade. As escolhas não se perdem — ficam em
+    // state.carrinho, que sobrevive à mudança de categoria.
+    const navegacao = document.createElement('div');
+    navegacao.className = 'menu-card-nav';
+
+    if (index > 0) {
+      const voltarBtn = document.createElement('button');
+      voltarBtn.className = 'btn-menu-voltar';
+      voltarBtn.type = 'button';
+      voltarBtn.textContent = `◀ ${nomeSemEmoji(state.menuCategorias[index - 1])}`;
+      voltarBtn.addEventListener('click', () => {
+        if (state.processing) return;
+        state.catIndex = index - 1;
+        renderCategoria(state.catIndex);
+        scrollDown();
+      });
+      navegacao.appendChild(voltarBtn);
+    }
+
+    navegacao.appendChild(confirmBtn);
+    card.appendChild(navegacao);
+
     chatBody.appendChild(card);
     scrollDown();
     unlockUI('Ajusta as quantidades acima…');

@@ -14,23 +14,28 @@
  * respostas simuladas têm EXATAMENTE o mesmo formato que as reais,
  * documentado em docs/API.md.
  *
- * ── ESTADO ATUAL ────────────────────────────────────────────────────
- * Já existem no backend (backend/src/routes/):
- *     GET   mesas/:token/sessao
- *     POST  mesas/:token/pedir
- *     GET   mesas/:token/conta
- *     POST  mesas/:token/pedir-conta
- *     GET   pedidos/ativos · pedidos/cozinha
- *     PATCH pedidos/item/:id/estado
+ * ── ESTADO ATUAL (02/09) ────────────────────────────────────────────
+ * O back-end passou de Prisma para mysql2. O novo arranque é o
+ * `backend/src/app.js` e, por agora, só serve `GET /api/saude` — as
+ * rotas abaixo estão a ser portadas para SQL pelo João, mantendo os
+ * mesmos nomes e formatos (acordado a 02/09, docs/API.md 3.10).
+ *
+ * A portar (formatos já acordados, não mudam):
+ *     GET   mesas/:token/sessao · POST mesas/:token/pedir
+ *     GET   mesas/:token/conta  · POST mesas/:token/pedir-conta
+ *     GET   pedidos/ativos      · GET  pedidos/cozinha
+ *     PATCH pedidos/:id/estado          ← agora por RONDA, não por item
  *     POST  pedidos/sessao/:id/fechar
- * Ainda NÃO existem (simulados aqui, ver docs/API.md secção 4):
+ *
+ * Ainda por desenhar (simulados aqui, ver docs/API.md secção 4):
  *     GET   produtos                        ← bloqueia o menu do mesa.html
  *     POST  auth/login · GET auth/eu        ← bloqueia a app de gestão
  *     POST  mesas/:token/chamar-empregado
+ *     GET   gestao/mesas/qrcodes · GET gestao/sessoes/:id/conta
  * =====================================================================
  */
 
-const API_BASE = 'http://localhost:3001/api'; // porta 3001 = PORT por omissão em backend/src/server.js
+const API_BASE = 'http://localhost:3000/api'; // porta 3000 = PORT por omissão em backend/src/app.js
 const MODO_SIMULACAO = true;
 
 const CHAVE_SESSAO = 'vpa_sessao_funcionario';
@@ -225,6 +230,31 @@ function totalDemo(itens) {
   return itens.reduce((acc, i) => acc + Number(i.precoUnit) * i.quantidade, 0).toFixed(2);
 }
 
+/* ── RONDAS (docs/API.md 3.10) ────────────────────────────────────
+   O estado é do pedido (a ronda), não do item. Mas a sessão continua
+   a devolver os itens em lista simples, cada um com o estado da ronda
+   a que pertence — é isso que mantém o mesa.html a funcionar sem
+   mexer numa linha. */
+
+let contadorRondas = 0;
+
+function proximoNumeroRonda() {
+  contadorRondas += 1;
+  const base = (Math.floor(Date.now() / 1000) % 10000) + contadorRondas;
+  return { id: base, numero: `PED-${String(base).padStart(4, '0')}` };
+}
+
+/** estadoDaRonda — Estado da ronda a que um item pertence. */
+function estadoDaRonda(sessao, item) {
+  const ronda = (sessao.rondas || []).find(r => r.id === item.pedidoId);
+  return ronda ? ronda.estado : 'PENDENTE';
+}
+
+/** itensComEstado — Itens da sessão já com o estado da respetiva ronda. */
+function itensComEstado(sessao) {
+  return (sessao.itens || []).map(item => ({ ...item, estado: estadoDaRonda(sessao, item) }));
+}
+
 async function simularEndpoint(endpoint, opcoes) {
   await new Promise(r => setTimeout(r, 350)); // simula latência de rede
   const metodo = (opcoes.method || 'GET').toUpperCase();
@@ -281,13 +311,19 @@ async function simularEndpoint(endpoint, opcoes) {
           estado: 'ABERTA',
           abertaEm: new Date().toISOString(),
           itens: [],
+          rondas: [],
         };
         gravarSessoesDemo(sessoes);
       }
       const s = sessoes[token];
+      s.rondas = s.rondas || [];
       return {
         mesa: { id: mesa.id, numero: mesa.numero, lugares: mesa.lugares },
-        sessao: { id: s.id, estado: s.estado, abertaEm: s.abertaEm, itens: s.itens, total: totalDemo(s.itens) },
+        sessao: {
+          id: s.id, estado: s.estado, abertaEm: s.abertaEm,
+          itens: itensComEstado(s),   // formato igual ao de antes
+          total: totalDemo(s.itens),
+        },
       };
     }
 
@@ -302,30 +338,45 @@ async function simularEndpoint(endpoint, opcoes) {
         throw erroSimulado('Envia pelo menos um item.', 400);
       }
 
+      // Cada envio cria uma RONDA com estado próprio (docs/API.md 3.10)
+      const ronda = {
+        ...proximoNumeroRonda(),
+        estado: 'PENDENTE',
+        criadoEm: new Date().toISOString(),
+      };
+
       const criados = itens.map(({ produtoId, quantidade = 1, observacao }) => {
         const produto = PRODUTOS_DEMO.find(p => p.id === Number(produtoId));
         if (!produto || !produto.ativo) throw erroSimulado(`Produto #${produtoId} não disponível.`, 400);
         return {
           id: Math.floor(Math.random() * 1e6),
           sessaoId: sessao.id,
+          pedidoId: ronda.id,
           produtoId: produto.id,
           quantidade: Number(quantidade),
           precoUnit: produto.preco,
           observacao: observacao || null,
-          estado: 'PENDENTE',
-          criadoEm: new Date().toISOString(),
+          estado: ronda.estado,     // espelho do estado da ronda
+          criadoEm: ronda.criadoEm,
           produto: { ...produto },
         };
       });
 
+      sessao.rondas = sessao.rondas || [];
+      sessao.rondas.push(ronda);
       sessao.itens.push(...criados);
       gravarSessoesDemo(sessoes);
-      return { mensagem: `${criados.length} item(ns) adicionado(s)!`, itens: criados };
+
+      return {
+        mensagem: `${criados.length} item(ns) adicionado(s)!`,
+        pedido: { id: ronda.id, numero: ronda.numero },
+        itens: criados,
+      };
     }
 
     if (accao === 'conta') {
       const porCategoria = {};
-      sessao.itens.forEach(item => {
+      itensComEstado(sessao).forEach(item => {
         const cat = item.produto.categoria;
         (porCategoria[cat] ||= []).push({
           id: item.id,
@@ -376,35 +427,45 @@ async function simularEndpoint(endpoint, opcoes) {
           mesa: { id: mesa?.id, numero: mesa?.numero, lugares: mesa?.lugares },
           numItens: s.itens.reduce((a, i) => a + i.quantidade, 0),
           total: totalDemo(s.itens),
-          temPendentes: s.itens.some(i => i.estado === 'PENDENTE'),
+          temPendentes: (s.rondas || []).some(r => r.estado === 'PENDENTE'),
         };
       })
       .sort((a, b) => new Date(a.abertaEm) - new Date(b.abertaEm));
   }
 
+  /* Rondas por fazer (docs/API.md 3.10.1) */
   if (caminho === 'pedidos/cozinha') {
     const sessoes = lerSessoesDemo();
     const linhas = [];
     Object.entries(sessoes).forEach(([token, s]) => {
       const mesa = MESAS_DEMO.find(m => m.qrToken === token);
-      s.itens
-        .filter(i => i.estado === 'PENDENTE' || i.estado === 'EM_PREPARACAO')
-        .forEach(i => linhas.push({
-          id: i.id,
-          estado: i.estado,
-          quantidade: i.quantidade,
-          observacao: i.observacao,
-          criadoEm: i.criadoEm,
-          produto: { nome: i.produto.nome, categoria: i.produto.categoria },
+      (s.rondas || [])
+        .filter(r => r.estado === 'PENDENTE' || r.estado === 'EM_PREPARACAO')
+        .forEach(r => linhas.push({
+          id: r.id,
+          numero: r.numero,
+          estado: r.estado,
+          criadoEm: r.criadoEm,
+          tipo: 'mesa',
           mesa: { numero: mesa?.numero, sessaoId: s.id },
+          itens: s.itens
+            .filter(i => i.pedidoId === r.id)
+            .map(i => ({
+              id: i.id,
+              nome: i.produto.nome,
+              categoria: i.produto.categoria,
+              quantidade: i.quantidade,
+              observacao: i.observacao,
+            })),
         }));
     });
     return linhas.sort((a, b) => new Date(a.criadoEm) - new Date(b.criadoEm));
   }
 
-  const itemMatch = caminho.match(/^pedidos\/item\/(\d+)\/estado$/);
-  if (itemMatch && metodo === 'PATCH') {
-    const idItem = Number(itemMatch[1]);
+  /* Estado de uma RONDA (docs/API.md 3.10.2) */
+  const rondaMatch = caminho.match(/^pedidos\/(\d+)\/estado$/);
+  if (rondaMatch && metodo === 'PATCH') {
+    const idRonda = Number(rondaMatch[1]);
     const { estado } = opcoes.body || {};
     const validos = ['PENDENTE', 'EM_PREPARACAO', 'PRONTO', 'SERVIDO'];
     if (!validos.includes(estado)) {
@@ -413,14 +474,51 @@ async function simularEndpoint(endpoint, opcoes) {
 
     const sessoes = lerSessoesDemo();
     for (const s of Object.values(sessoes)) {
-      const item = s.itens.find(i => i.id === idItem);
-      if (item) {
-        item.estado = estado;
+      const ronda = (s.rondas || []).find(r => r.id === idRonda);
+      if (ronda) {
+        ronda.estado = estado;
+        // Espelha nos itens, para quem lê a lista simples ver o mesmo
+        s.itens.forEach(i => { if (i.pedidoId === idRonda) i.estado = estado; });
         gravarSessoesDemo(sessoes);
-        return { mensagem: `Item #${idItem} → ${estado}`, item };
+        return { mensagem: `Pedido ${ronda.numero} → ${estado}`, pedido: ronda };
       }
     }
     throw erroSimulado('Registo não encontrado.', 404);
+  }
+
+  /* Conta de uma sessão pelo ID (docs/API.md 4.7).
+     O ecrã do balcão sabe o ID da sessão mas não o qrToken da mesa — e
+     não deve saber: o token é a credencial de acesso da mesa. */
+  const contaSessaoMatch = caminho.match(/^gestao\/sessoes\/(\d+)\/conta$/);
+  if (contaSessaoMatch) {
+    const idSessao = Number(contaSessaoMatch[1]);
+    const sessoes = lerSessoesDemo();
+    for (const [token, s] of Object.entries(sessoes)) {
+      if (s.id !== idSessao) continue;
+      const mesa = MESAS_DEMO.find(m => m.qrToken === token);
+      const porCategoria = {};
+      itensComEstado(s).forEach(item => {
+        const cat = item.produto.categoria;
+        (porCategoria[cat] ||= []).push({
+          id: item.id,
+          nome: item.produto.nome,
+          quantidade: item.quantidade,
+          precoUnit: Number(item.precoUnit),
+          subtotal: Number(item.precoUnit) * item.quantidade,
+          estado: item.estado,
+          observacao: item.observacao,
+          criadoEm: item.criadoEm,
+        });
+      });
+      return {
+        mesa: { numero: mesa?.numero },
+        sessao: { id: s.id, estado: s.estado, abertaEm: s.abertaEm },
+        porCategoria,
+        total: totalDemo(s.itens),
+        numItens: s.itens.reduce((a, i) => a + i.quantidade, 0),
+      };
+    }
+    throw erroSimulado('Sessão não encontrada.', 404);
   }
 
   const fecharMatch = caminho.match(/^pedidos\/sessao\/(\d+)\/fechar$/);
