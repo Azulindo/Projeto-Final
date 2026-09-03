@@ -414,12 +414,14 @@ Os testes estão em `frontend/testes/` e correm com Playwright:
 | `estados-pedido.js` | As seis fases de um pedido, o cancelamento em dois toques, e que uma ronda anulada não é cobrada nem faz os totais discordarem | 24 |
 | `reserva-resumo.js` | O fluxo de reserva do princípio ao fim, e que o resumo final junta mesmo as três partes (reserva + ementa + observações) | 16 |
 | `auditoria-responsiva.js` | Scroll horizontal, alvos de toque abaixo de 44px, texto abaixo de 12px e peso das imagens, em 11 páginas × 5 larguras | — |
+| `xss-nome.js` | Que um nome com etiquetas HTML não vira código na página (o X-01 da lista do João) | 2 |
 
 ```bash
 npm install playwright        # uma vez
 node frontend/testes/estados-pedido.js
 node frontend/testes/reserva-resumo.js
 node frontend/testes/auditoria-responsiva.js
+node frontend/testes/xss-nome.js
 ```
 
 > **Um aviso sobre a auditoria:** a `mesa.html` vai buscar o Tailwind a um CDN, e num

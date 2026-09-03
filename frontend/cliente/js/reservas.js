@@ -19,7 +19,11 @@
  *
  * REGRAS DE SEGURANÇA:
  *  ✓ NUNCA chamar .focus() ou .scrollIntoView() no arranque (evita auto-scroll)
- *  ✓ Input do utilizador sempre via .textContent (proteção anti-XSS)
+ *  ✓ Input do utilizador nunca entra em HTML sem passar por escaparHTML();
+ *    onde dá, usa-se .textContent, que é mais seguro ainda
+ *    (esta linha dizia que era "sempre .textContent" — não era: duas
+ *     mensagens punham o nome do cliente dentro de innerHTML. Corrigido
+ *     a 03/09, era o problema X-01 da lista do João.)
  *  ✓ Botões desativados durante processamento (bloqueio anti-spam)
  *  ✓ Validação de telemóvel com Regex português
  *  ✓ Conversão de números por extenso via dicionário
@@ -263,6 +267,29 @@ document.addEventListener('DOMContentLoaded', () => {
    *
    * @param {string} text - Texto a mostrar no balão do utilizador.
    */
+  /**
+   * escaparHTML — Torna texto do utilizador seguro dentro de HTML.
+   *
+   * O `botReply()` escreve com innerHTML, de propósito: as mensagens do
+   * bot têm <strong>, <br> e <em>, e é isso que lhes dá forma. Mas duas
+   * dessas mensagens metiam o NOME do cliente lá dentro — e o nome vem
+   * de uma caixa de texto. Um nome como `Ana<iframe srcdoc=…>` deixava
+   * de ser um nome e passava a ser código na página.
+   *
+   * O `validateNome()` não chega para isto: só recusa números e nomes
+   * com menos de duas letras. `<b>` passa à vontade.
+   *
+   * Regra daqui para a frente: se um valor veio do cliente e vai parar a
+   * uma string com HTML, passa por aqui primeiro. Onde der para usar
+   * `textContent` (como no userBubble aqui em baixo), usa-se isso, que é
+   * melhor ainda — não há nada para esquecer de escapar.
+   */
+  function escaparHTML(valor) {
+    const d = document.createElement('div');
+    d.textContent = String(valor ?? '');
+    return d.innerHTML;
+  }
+
   function userBubble(text) {
     const bubble = document.createElement('div');
     bubble.className = 'chat-bubble user';
@@ -1208,7 +1235,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Usa apenas o primeiro nome para uma saudação mais natural
     const primeiroNome = state.nome.split(' ')[0];
     await botReply(
-      `Obrigado, <strong>${primeiroNome}</strong>! 😊<br>Qual é o <strong>telemóvel</strong> de contacto? <em>(9 dígitos)</em>`,
+      `Obrigado, <strong>${escaparHTML(primeiroNome)}</strong>! 😊<br>Qual é o <strong>telemóvel</strong> de contacto? <em>(9 dígitos)</em>`,
       750
     );
     unlockUI('Ex: 912 345 678');
@@ -1506,8 +1533,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const primeiroNome = state.nome.split(' ')[0];
     await botReply(
-      `Até ao dia <strong>${state.dataStr}</strong> às <strong>${state.hora}</strong>, <strong>${primeiroNome}</strong>! 🥩🔥<br>` +
-      `Confirmaremos a reserva pelo telemóvel <strong>${state.telefone}</strong>.`,
+      `Até ao dia <strong>${escaparHTML(state.dataStr)}</strong> às <strong>${escaparHTML(state.hora)}</strong>, ` +
+      `<strong>${escaparHTML(primeiroNome)}</strong>! 🥩🔥<br>` +
+      `Confirmaremos a reserva pelo telemóvel <strong>${escaparHTML(state.telefone)}</strong>.`,
       900
     );
 
