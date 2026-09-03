@@ -67,6 +67,7 @@
   align-items: center;
   gap: 11px;
   padding: 10px 12px;
+  min-height: 44px;          /* alvo de dedo; estava a 42 */
   border-radius: var(--radius-sm);
   color: var(--texto-suave);
   text-decoration: none;
@@ -187,8 +188,10 @@
   display: none;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  /* 44px: é o botão que abre o menu e o mais usado destes ecrãs num
+     telemóvel. Estava a 38. */
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--bg-card);

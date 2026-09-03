@@ -82,13 +82,17 @@
   display: flex;
   align-items: baseline;
   gap: 10px;
-  flex-wrap: wrap;
+  /* Sem quebra de linha: com ela, "Em preparação" empurrava o contador
+     para baixo e essa coluna ficava mais alta que as outras três. O
+     título encolhe-se em vez de partir. */
+  flex-wrap: nowrap;
+  justify-content: space-between;
   margin-bottom: 14px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border);
 }
 
-.coluna-topo h2 { font-size: 15px; }
+.coluna-topo h2 { font-size: 15px; min-width: 0; overflow-wrap: anywhere; }
 
 .coluna-conta {
   margin-left: auto;

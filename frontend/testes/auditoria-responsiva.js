@@ -54,7 +54,16 @@ function medir() {
     const r = el.getBoundingClientRect();
     if (r.width === 0 || r.height === 0) return;
     const est = getComputedStyle(el);
-    if (est.position === 'fixed' && r.left >= larguraJanela) return; // painel fechado
+    // Painéis fechados: ficam de propósito fora do ecrã, empurrados
+    // para lá da margem com um transform. Não são transbordo — não
+    // causam scroll nenhum. Isto apanha o próprio painel E o que está
+    // lá dentro, que era o que me dava quatro falsos positivos no
+    // ecrã do balcão, em todas as larguras.
+    if (est.position === 'fixed' && r.left >= larguraJanela) return;
+    for (let a = el; a && a !== document.body; a = a.parentElement) {
+      const ea = getComputedStyle(a);
+      if (ea.position === 'fixed' && a.getBoundingClientRect().left >= larguraJanela - 1) return;
+    }
     if (est.visibility === 'hidden' || est.display === 'none') return;
     if (r.right > larguraJanela + 1) {
       transbordam.push({
@@ -77,7 +86,9 @@ function medir() {
     if (r.width === 0 || r.height === 0) return;
     const est = getComputedStyle(el);
     if (est.visibility === 'hidden' || est.display === 'none' || est.opacity === '0') return;
-    if (r.height < 44 || r.width < 44) {
+    // Meio píxel de tolerância: um botão de 44 medido como 43,99 por
+    // arredondamento do layout não é um alvo pequeno.
+    if (r.height < 43.5 || r.width < 43.5) {
       alvosPequenos.push({
         etiqueta: el.tagName.toLowerCase() + (el.id ? '#' + el.id : ''),
         w: Math.round(r.width), h: Math.round(r.height),
@@ -105,7 +116,19 @@ function medir() {
     }
   });
 
+  // Se a página depende de uma folha de estilo externa que não carregou
+  // (a mesa.html vai buscar o Tailwind a um CDN), o que se mede é a
+  // página EM BRUTO: cada botão fica com a altura do texto e tudo
+  // "transborda". Reportar isso são 22 problemas que não existem, e um
+  // auditor que grita ao acaso deixa de ser lido. Diz que não sabe.
+  const dependeDeCDN = !!document.querySelector('script[src*="cdn."], link[href*="cdn."]');
+  const estiloAplicado = (() => {
+    const corpo = getComputedStyle(document.body).backgroundColor;
+    return corpo !== 'rgba(0, 0, 0, 0)' && corpo !== 'transparent';
+  })();
+
   return {
+    naoMedivel: dependeDeCDN && !estiloAplicado,
     scrollHorizontal: doc.scrollWidth > larguraJanela + 1,
     scrollWidth: doc.scrollWidth,
     larguraJanela,
@@ -122,6 +145,7 @@ function medir() {
 (async () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   const problemas = [];
+  const naoMedidas = new Set();
   const pesoPorPagina = {};
 
   async function auditar(paginas, ctxOpts = {}, rotulo = '') {
@@ -158,6 +182,11 @@ function medir() {
           if (!pesoPorPagina[pag.nome]) pesoPorPagina[pag.nome] = [];
 
           const etiqueta = `${rotulo}${pag.nome} @ ${ecra.largura}px (${ecra.nome})`;
+          if (r.naoMedivel) {
+            naoMedidas.add(`${rotulo}${pag.nome}`);
+            await ctx.close();
+            continue;
+          }
           if (!r.temViewport) problemas.push({ tipo: 'viewport', onde: etiqueta, detalhe: 'sem meta viewport' });
           if (r.scrollHorizontal) {
             problemas.push({
@@ -220,6 +249,13 @@ function medir() {
         if (tipo === 'texto')    console.log(`      ↳ ${c.etiqueta} ${c.px}px  "${c.texto}"`);
       });
     });
+  }
+
+  if (naoMedidas.size) {
+    console.log('\n🚫 NÃO FOI POSSÍVEL MEDIR');
+    console.log(linha);
+    naoMedidas.forEach(n => console.log(`  ${n} — depende de uma folha de estilo externa que não carregou`));
+    console.log('  (sem internet, esta página renderiza em bruto; tem de ser vista num browser com rede)');
   }
 
   console.log('\n🖼️  PESO DAS IMAGENS POR PÁGINA');

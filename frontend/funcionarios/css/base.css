@@ -121,6 +121,10 @@ tr:hover td { background: var(--bg-hover); }
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
+  /* 44px de altura mínima, como nos campos. Os botões estavam entre 38
+     e 40 — o suficiente para se falhar num tablet ao balcão com as mãos
+     ocupadas. */
+  min-height: 44px;
   transition: transform 0.1s ease, opacity 0.15s ease, background 0.15s ease;
 }
 
@@ -168,6 +172,10 @@ tr:hover td { background: var(--bg-hover); }
   color: var(--texto);
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  /* 44px é o mínimo para um alvo de dedo (Apple, WCAG). Estava a 42
+     — dois píxeis, mas é a diferença entre acertar e falhar num
+     telemóvel a tremer numa cozinha. */
+  min-height: 44px;
 }
 
 .campo input:focus,

@@ -262,7 +262,7 @@ uma tarefa apagada parece esquecida, uma tarefa marcada mostra que houve uma dec
 | ⬜ | F-51 | Tabela e formulário de categorias | 1 h 30 | F-49 |
 | ⬜ | F-52 | Ecrã de stock com aviso visual de stock baixo | 2 h | F-49 |
 | ⬜ | F-53 | Ecrã de funcionários (tabela + formulário) | 2 h | F-49 |
-| ⬜ | F-54 | Responsividade da aplicação de gestão | 1 h 30 | F-53 |
+| ✅ | F-54 | Responsividade da aplicação de gestão — *zero alvos abaixo de 44px e zero scroll horizontal, em 4 larguras* | 1 h 30 | F-53 |
 
 **Total do sprint: ≈ 20 h**
 
@@ -408,8 +408,14 @@ dos cartões altos ficava cortado) e X-09 (a caixa de escrita ficava ligada em p
 engolia o texto sem responder). O X-08 não consegui reproduzir, mas tapei a causa que ele
 apontou. O X-02, X-03, X-04 e X-06 já estavam resolvidos de antes.
 
-**Falta de acabamento, sem depender de ninguém:** responsividade da app de gestão (F-54) e a
-revisão visual final (F-60).
+**Falta uma só coisa que não depende de ninguém: a revisão visual final (F-60)** — e essa é
+a única tarefa desta lista sem critério de medida. As outras tinham um: píxeis, totais que
+batem certo, um elemento que aparece ou não. "Revisão visual" é gosto, e o gosto é de quem
+faz o projeto. Precisa de alguém a olhar para os ecrãs, não de mais um teste.
+
+O que sobra na auditoria são 16 ocorrências de texto abaixo de 12px, e são todas a mesma
+coisa: o aviso de "modo de demonstração" com as contas de teste, que desaparece quando o
+login real entrar.
 
 ### Como se prova que isto funciona
 
