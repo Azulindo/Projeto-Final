@@ -181,7 +181,19 @@ document.addEventListener('DOMContentLoaded', () => {
    * scrollDown — Faz scroll até ao fim do chat body.
    * Chamado após adicionar qualquer nova mensagem.
    */
-  function scrollDown() {
+  function scrollDown(elemento) {
+    // Ir sempre ao fundo funciona para balões de conversa, que são
+    // baixos. Mas os cartões altos — a ementa de uma categoria, o
+    // calendário, o resumo final — ficam com o TOPO cortado: o cliente
+    // aterra a meio da coisa que acabou de aparecer e tem de subir para
+    // perceber o que está a ver.
+    //
+    // Se o que acabou de entrar não cabe no ecrã, alinha-se o topo dele.
+    // Se cabe, mantém-se o comportamento de sempre.
+    if (elemento && elemento.offsetHeight > chatBody.clientHeight - 24) {
+      chatBody.scrollTop = elemento.offsetTop - 12;
+      return;
+    }
     chatBody.scrollTop = chatBody.scrollHeight;
   }
 
@@ -219,6 +231,30 @@ document.addEventListener('DOMContentLoaded', () => {
     chatInput.value  = '';
     state.processing = false;
     // ⚠️ NÃO chamamos .focus() — evita scroll automático para o chat
+  }
+
+  /**
+   * apenasBotoes — Passos em que só se responde clicando.
+   *
+   * O `unlockUI()` reativa a caixa de escrita, e havia três passos (a
+   * escolha de pedir ou não, a ementa, e a confirmação final) onde ela
+   * ficava ligada mas o `onSend()` não tinha nada para fazer com o que
+   * lá se escrevesse: a mensagem desaparecia sem resposta nenhuma.
+   *
+   * Uma caixa em que se pode escrever e onde escrever não faz nada é
+   * pior do que uma caixa desligada — quem escreve fica à espera. Aqui
+   * desliga-se a escrita e deixam-se os botões a funcionar, com o
+   * placeholder a dizer porquê.
+   *
+   * @param {string} placeholder - Porque é que a escrita está desligada.
+   */
+  function apenasBotoes(placeholder) {
+    chatInput.disabled = true;
+    sendBtn.disabled   = true;
+    chatInput.placeholder = placeholder;
+    chatInput.value  = '';
+    state.processing = false;   // os botões continuam a responder
+    qrContainer.querySelectorAll('.qr-btn').forEach(b => { b.disabled = false; });
   }
 
   /**
@@ -350,11 +386,24 @@ document.addEventListener('DOMContentLoaded', () => {
       { label: '👥 2 Pessoas', value: '2'  },
       { label: '👥 4 Pessoas', value: '4'  },
       { label: '👥 6 Pessoas', value: '6'  },
-      { label: '🎉 +6 Grupo',  value: '99' },
+      { label: '🎉 Somos mais', value: 'mais' },
     ], (label, value) => {
-      // Converte o value para número e processa
-      const n = value === '99' ? 99 : parseInt(value, 10);
-      processPessoas(label, n);
+      // "Somos mais" PERGUNTA quantos, não assume.
+      //
+      // Antes este botão mandava 99, o que caía direito na regra dos
+      // grupos e despachava a pessoa para o telefone. Quem fosse 7, 8, 9
+      // ou 10 ficava sem caminho — apesar de a própria mensagem dizer
+      // que só acima de 10 é que era por telefone. E quem escrevesse "8"
+      // à mão conseguia reservar: o botão e o texto não diziam o mesmo.
+      if (value === 'mais') {
+        clearQR();
+        userBubble(label);
+        lockUI();
+        botReply('Quantas pessoas são ao certo? 🤔', 650)
+          .then(() => unlockUI('Ex: 8'));
+        return;
+      }
+      processPessoas(label, parseInt(value, 10));
     });
 
     unlockUI('Ex: 3 ou "quatro"…');
@@ -362,18 +411,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /**
    * processPessoas — Valida e avança com o número de pessoas.
-   * Lida com grupos grandes (> 10) redireccionando para telefone.
+   * Acima de 10, a reserva é por telefone.
    *
    * @param {string} rawLabel - Texto mostrado no balão do utilizador.
-   * @param {number} n        - Número de pessoas (99 = grupo grande).
+   * @param {number} n        - Número de pessoas.
    */
   async function processPessoas(rawLabel, n) {
     clearQR();
     userBubble(rawLabel);
     lockUI();
 
-    // Grupos grandes (>10 pessoas ou flag de grupo): redireciona para telefone
-    if (n > 10 || n === 99) {
+    // Grupos com mais de 10: reserva por telefone. A condição é só o
+    // número — a bandeira 99 desapareceu com o botão que a enviava.
+    if (n > 10) {
       await botReply(
         '📞 Para grupos com mais de <strong>10 pessoas</strong>, a reserva é feita diretamente por telefone.<br>Liga-nos e tratamos de tudo! 😊',
         750
@@ -456,7 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
       else ramoMenu();
     });
 
-    unlockUI('Clica numa opção acima…');
+    apenasBotoes('Escolhe uma das opções acima 👆');
   }
 
   /**
@@ -692,8 +742,8 @@ document.addEventListener('DOMContentLoaded', () => {
     card.appendChild(navegacao);
 
     chatBody.appendChild(card);
-    scrollDown();
-    unlockUI('Ajusta as quantidades acima…');
+    scrollDown(card);
+    apenasBotoes('Ajusta as quantidades no cartão acima 👆');
   }
 
   /**
@@ -780,7 +830,7 @@ document.addEventListener('DOMContentLoaded', () => {
     card.appendChild(textarea);
     card.appendChild(footer);
     chatBody.appendChild(card);
-    scrollDown();
+    scrollDown(card);
   }
 
   /**
@@ -920,7 +970,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     chatBody.appendChild(card);
-    scrollDown();
+    scrollDown(card);
   }
 
   /* ═══════════════════════════════════════════════════════════════
@@ -1135,7 +1185,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cal.appendChild(legend);
 
     chatBody.appendChild(cal);
-    scrollDown();
+    scrollDown(cal);
   }
 
   /* ═══════════════════════════════════════════════════════════════
@@ -1367,6 +1417,14 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmarObservacoes(raw);
         break;
       }
+
+      // Rede de segurança: se um passo novo se esquecer de desligar a
+      // escrita, o cliente recebe uma resposta em vez de silêncio.
+      default: {
+        userBubble(raw);
+        botReply('Neste passo é mais fácil clicares num dos botões acima 👆', 500);
+        break;
+      }
     }
   }
 
@@ -1474,7 +1532,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     chatBody.appendChild(card);
-    scrollDown();
+    scrollDown(card);
 
     await botReply('Os dados estão corretos? 🤔', 600);
 
@@ -1489,7 +1547,7 @@ document.addEventListener('DOMContentLoaded', () => {
       else resetChat();
     }, true); // Estilo primário (laranja)
 
-    unlockUI('Confirma ou recomeça…');
+    apenasBotoes('Confirma ou recomeça nos botões acima 👆');
   }
 
   /* ═══════════════════════════════════════════════════════════════
@@ -1598,7 +1656,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     card.append(label, valor, btn, nota);
     chatBody.appendChild(card);
-    scrollDown();
+    scrollDown(card);
   }
 
   async function copiarCodigo(codigo, btn, valorEl) {

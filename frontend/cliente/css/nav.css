@@ -31,6 +31,26 @@
    mais trabalho ao cliente, não menos.
    ===================================================================== */
 
+/* ── Fundo da página, em todas as larguras ────────────────────────
+   O `html` e o `body` destas seis páginas não tinham cor de fundo: o
+   que se via por baixo do conteúdo era o branco do browser. Enquanto o
+   conteúdo cobre o ecrã inteiro não se nota, mas basta uma página mais
+   curta, uma imagem que não carregue, ou o "elástico" do scroll num
+   telemóvel, para aparecer uma banda branca num site que é todo escuro.
+
+   O `color-scheme: dark` trata da outra metade: barras de deslocamento
+   e o fundo que o browser pinta para lá dos limites da página.
+
+   (O João reportou isto como X-08, a 1440px. Não consegui reproduzir a
+   banda dele — procurei no topo e no fundo das seis páginas e não
+   apareceu. Mas a causa que ele apontou é real e custa três linhas
+   tapar, por isso fica tapada em vez de ficar em discussão.) */
+:root { color-scheme: dark; }
+
+html, body {
+  background-color: #0a0a0a;
+}
+
 @media (max-width: 768px) {
 
   /* A barra passa a ter duas linhas. Como a altura vem desta variável

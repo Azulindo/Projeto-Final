@@ -402,6 +402,12 @@ métricas e gráficos do dashboard (F-55, F-56, F-57) e a tabela de reservas (F-
 (responsividade dos ecrãs do cliente) também — o menu deixou de encolher a letra até 5px e
 as imagens passaram de 38,6 MB para 3,6 MB.
 
+**Problemas da lista do João, todos fechados a 03/09:** X-01 (o nome do cliente podia virar
+código na página), X-05 (quem fosse 7 a 10 ficava sem caminho para reservar), X-07 (o topo
+dos cartões altos ficava cortado) e X-09 (a caixa de escrita ficava ligada em passos onde
+engolia o texto sem responder). O X-08 não consegui reproduzir, mas tapei a causa que ele
+apontou. O X-02, X-03, X-04 e X-06 já estavam resolvidos de antes.
+
 **Falta de acabamento, sem depender de ninguém:** responsividade da app de gestão (F-54) e a
 revisão visual final (F-60).
 
@@ -415,6 +421,7 @@ Os testes estão em `frontend/testes/` e correm com Playwright:
 | `reserva-resumo.js` | O fluxo de reserva do princípio ao fim, e que o resumo final junta mesmo as três partes (reserva + ementa + observações) | 16 |
 | `auditoria-responsiva.js` | Scroll horizontal, alvos de toque abaixo de 44px, texto abaixo de 12px e peso das imagens, em 11 páginas × 5 larguras | — |
 | `xss-nome.js` | Que um nome com etiquetas HTML não vira código na página (o X-01 da lista do João) | 2 |
+| `grupo-7a10.js` | Que quem for 7 a 10 pessoas consegue reservar, e que acima de 10 vai mesmo para o telefone (X-05) | 4 |
 
 ```bash
 npm install playwright        # uma vez
@@ -422,6 +429,7 @@ node frontend/testes/estados-pedido.js
 node frontend/testes/reserva-resumo.js
 node frontend/testes/auditoria-responsiva.js
 node frontend/testes/xss-nome.js
+node frontend/testes/grupo-7a10.js
 ```
 
 > **Um aviso sobre a auditoria:** a `mesa.html` vai buscar o Tailwind a um CDN, e num
