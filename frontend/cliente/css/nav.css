@@ -1,6 +1,11 @@
 /* =====================================================================
-   nav.css — Barra de navegação em ecrãs pequenos
+   nav.css — Barra de navegação e alvos de toque em ecrãs pequenos
    =====================================================================
+   Começou por ser só a barra de navegação; ficou também com as outras
+   correções de área tocável, porque é o único ficheiro carregado pelas
+   seis páginas do cliente e não vale a pena repetir o mesmo bloco seis
+   vezes. O nome ficou.
+   ---------------------------------------------------------------------
    Carregada DEPOIS da folha de cada página, porque é isso que lhe
    permite corrigir as regras antigas (que usam !important).
 
@@ -113,6 +118,15 @@
                       align-items: center !important; font-size: 13px !important; }
 
   .footer-staff     { margin: 0 !important; }
+
+  /* Chatbot das reservas: as respostas rápidas e a caixa de escrita
+     estavam a 40px — quatro píxeis abaixo do mínimo. Sobe-se a altura
+     sem mexer no tamanho da letra, por isso o aspeto quase não muda. */
+  .qr-btn           { min-height: 44px !important; }
+
+  .chat-input       { min-height: 44px !important; }
+
+  .chat-send-btn    { min-height: 44px !important; min-width: 44px !important; }
 }
 
 /* Telemóveis mesmo estreitos (iPhone SE e afins). A letra NÃO volta a

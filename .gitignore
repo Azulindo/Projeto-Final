@@ -100,3 +100,6 @@ $RECYCLE.BIN/
 rascunhos/
 notas-pessoais.md
 *.bak
+
+# Capturas de ecrã geradas pelos testes
+frontend/testes/_capturas/

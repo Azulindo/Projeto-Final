@@ -244,7 +244,7 @@ uma tarefa apagada parece esquecida, uma tarefa marcada mostra que houve uma dec
 | ✅ | F-40 | Navegação `◀ Anterior` / `Seguinte ▶` sem perder as escolhas | 1 h 30 | F-38 |
 | ✅ | F-41 | Ecrã de observações para a cozinha (com opção de saltar) | 1 h | F-21 |
 | ✅ | F-42 | Resumo da ementa com subtotais e **aviso claro de que o valor é estimado** | 1 h 30 | F-39 |
-| ⬜ | F-43 | Resumo final combinado (reserva + ementa + observações) | 1 h 30 | F-42, F-36 |
+| ✅ | F-43 | Resumo final combinado (reserva + ementa + observações) — *verificado ponta a ponta, `frontend/testes/reserva-resumo.js`* | 1 h 30 | F-42, F-36 |
 
 **Total do sprint: ≈ 24 h**
 
@@ -274,7 +274,7 @@ uma tarefa apagada parece esquecida, uma tarefa marcada mostra que houve uma dec
 | ⬜ | F-56 | Gráfico de faturação diária e mensal (Chart.js) | 2 h | F-55 |
 | ⬜ | F-57 | Gráfico de produtos mais vendidos | 1 h 30 | F-56 |
 | ✅ | F-58 | Página imprimível dos QR Codes (um por mesa, com o número bem visível) | 2 h | B-66 |
-| ⬜ | F-59 | Revisão de responsividade de todos os ecrãs do cliente | 2 h | — |
+| ✅ | F-59 | Revisão de responsividade de todos os ecrãs do cliente — *menu de 5px→15px, alvos a 44px, imagens 38,6→3,6 MB; medido em 5 larguras* | 2 h | — |
 | ⬜ | F-60 | Revisão visual final e afinação de detalhes | 2 h | — |
 | ⬜ | F-61 | 🔁 *(recuperação)* Tabela de reservas no dashboard | 1 h 30 | B-73 |
 
@@ -398,8 +398,36 @@ Dessas 13, **9 estão à espera de endpoints que ainda não existem** (`docs/API
 gestão de produtos (F-49, F-50), categorias (F-51), stock (F-52), funcionários (F-53),
 métricas e gráficos do dashboard (F-55, F-56, F-57) e a tabela de reservas (F-61).
 
-**As 4 que não dependem de ninguém:** o resumo final da reserva (F-43) e o acabamento —
-responsividade da app de gestão (F-54), responsividade dos ecrãs do cliente (F-59) e a
-revisão visual final (F-60). ≈ 7 h de trabalho que dá para fazer já.
+**Feitas desde então:** a F-43 (resumo final da reserva) ficou verificada a 03/09, e a F-59
+(responsividade dos ecrãs do cliente) também — o menu deixou de encolher a letra até 5px e
+as imagens passaram de 38,6 MB para 3,6 MB.
+
+**Falta de acabamento, sem depender de ninguém:** responsividade da app de gestão (F-54) e a
+revisão visual final (F-60).
+
+### Como se prova que isto funciona
+
+Os testes estão em `frontend/testes/` e correm com Playwright:
+
+| Ficheiro | O que prova | Verificações |
+|---|---|---|
+| `estados-pedido.js` | As seis fases de um pedido, o cancelamento em dois toques, e que uma ronda anulada não é cobrada nem faz os totais discordarem | 24 |
+| `reserva-resumo.js` | O fluxo de reserva do princípio ao fim, e que o resumo final junta mesmo as três partes (reserva + ementa + observações) | 16 |
+| `auditoria-responsiva.js` | Scroll horizontal, alvos de toque abaixo de 44px, texto abaixo de 12px e peso das imagens, em 11 páginas × 5 larguras | — |
+
+```bash
+npm install playwright        # uma vez
+node frontend/testes/estados-pedido.js
+node frontend/testes/reserva-resumo.js
+node frontend/testes/auditoria-responsiva.js
+```
+
+> **Um aviso sobre a auditoria:** a `mesa.html` vai buscar o Tailwind a um CDN, e num
+> ambiente sem internet a página mede-se sem estilo nenhum. Os números dela na auditoria
+> não valem — tem de ser vista num browser com rede.
+
+> **Porque é que estes testes existem:** marquei a F-43 como feita uma vez sem a ter testado
+> e tive de a desmarcar. O código do resumo já estava escrito — o que faltava era a prova.
+> Um ✅ que ninguém verificou não vale nada num documento de entrega.
 
 **Nota honesta sobre as estimativas:** estes números contam o tempo de *escrever* cada coisa. O `PLANEAMENTO.md` fala em ~108 h para o João e ~90 h para o Gui porque inclui aquilo que nunca aparece numa lista de tarefas: procurar erros, refazer o que não ficou bem à primeira, esperar por deploys, ler documentação. **Conta com cerca de mais 25 % do que está aqui** — e não te assustes quando uma tarefa de 1 h demorar 3. Acontece a toda a gente.
