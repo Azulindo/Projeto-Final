@@ -2,21 +2,25 @@
 
 **Projeto Final de Curso** · João Ribeiro & Guilherme Gonçalves
 **Documentos relacionados:** `CONTEXTO.md` (o quê e porquê) · `PLANEAMENTO.md` (calendário e sprints)
-**Versão:** 1.4 · **Última revisão:** 1 de setembro de 2026
+**Versão:** 2.0 · **merge das duas versões (João + Guilherme)** · **Última revisão:** 3 de setembro de 2026
 
 ---
 
 ## Ponto de situação
 
-| | Feito | Parcial | Por fazer | Total |
-|---|---|---|---|---|
-| 🔵 **João** — back-end | **17** | 0 | 56 | 73 |
-| 🟠 **Guilherme** — front-end | **21** | 9 | 31 | 61 |
-| 🟢 **Os dois** | 0 | 2 | 20 | 22 |
+| | Feito | Parcial | 🔁 Não se aplica | Por fazer | Total |
+|---|---|---|---|---|---|
+| 🔵 **João** — back-end | **17** | 0 | 0 | 56 | 73 |
+| 🟠 **Guilherme** — front-end | **29** | 0 | 19 | 13 | 61 |
+| 🟢 **Os dois** | 1 | 2 | 0 | 19 | 22 |
+
+> As 19 tarefas 🔁 do Guilherme (≈22 h) descreviam a `pedido.html` — a página de conversa
+> com um bot, substituída pela `mesa.html`. **Não estão em falta**: o que garantiam está
+> feito noutra forma. Não as contes no que falta.
 
 **Estado a 3 de setembro:** Sprint 0 fechado menos o Render (B-16). A API responde em `localhost:3000` com o catálogo ligado à base de dados. O Guilherme escreveu o contrato (`docs/API.md`) e tem o front-end do Sprint 3 quase todo feito.
 
-**Legenda:** ✅ feito · 🟨 parcial (ver nota) · ⬜ por fazer
+**Legenda:** ✅ feito · 🟨 parcial (ver nota) · ⬜ por fazer · 🔁 **já não se aplica** — o plano mudou pelo caminho e a tarefa deixou de fazer sentido. Fica à vista, marcada, em vez de apagada: uma tarefa apagada parece esquecida, uma marcada mostra que houve uma decisão.
 
 ---
 
@@ -44,7 +48,7 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 | ✅ | ID | Correção | Est. | Quem |
 |---|---|---|---|---|
 | ⬜ | **X-01** | 🔴 **XSS no campo do nome** — `botReply()` usa `innerHTML` com `state.nome` interpolado. Testado: um nome com `<iframe/srcdoc="…">` executa código. Corrigir com `textContent` ou escapando o valor | 1 h | Gui |
-| ⬜ | **X-02** | 🔴 **`mesa.html` não abre** — falta criar `css/mesa.css` e `js/mesa.js`; a página aparece em branco | — | Gui *(é a tarefa F-02)* |
+| **✅** | **X-02** | ~~`mesa.html` não abre~~ — resolvido a 02/09: a página foi reescrita e os ficheiros antigos foram para `_obsoleto/` | — | Gui |
 | ⬜ | **X-03** | 🟠 Calendário sem limite superior — dá para reservar em Setembro de 2028. Limitar a 60 dias | 30 min | Gui |
 | ⬜ | **X-04** | 🟠 Hoje é selecionável e não há validação de hora — às 23h ainda se reserva hoje ao meio-dia. Só a partir de amanhã | 45 min | Gui |
 | ⬜ | **X-05** | 🟠 Botão "+6 Grupo" manda para o telefone mas a mensagem fala em "mais de 10". Quem for 7–10 fica sem caminho | 30 min | Gui |
@@ -168,86 +172,120 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 
 # 🟠 GUILHERME — Front-end
 
+> **Podes começar já, sem esperar pelo João:** F-01 a F-08 não dependem de nada. F-09 em diante só precisam do `docs/API.md` (C-03) para saberem que formato de dados esperar — e até lá dá para usar dados falsos escritos à mão.
+
 ## Sprint 0 · Fundações (Semana 1: 1–7 set)
+
+> **🔁 Estas tarefas já não se aplicam.** Descreviam a `pedido.html` — uma página de
+> conversa com um bot, em que o cliente respondia a perguntas passo a passo. Essa página
+> foi substituída pela **`mesa.html`**, que mostra a ementa toda de uma vez com o carrinho
+> sempre à vista: menos toques para pedir e muito melhor num telemóvel de pé, à mesa.
+>
+> O que estas tarefas queriam garantir **está feito**, só que noutra forma: cards de
+> produto, seletor de quantidade, observações, resumo com subtotais, remover item, número
+> do pedido em destaque. Ficam aqui marcadas 🔁 em vez de apagadas, para se perceber a
+> decisão e não parecer trabalho esquecido.
+>
+> São ≈ 22 h que **não estão em falta** — não as contes no que falta fazer.
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| **✅** | F-01 | ~~Esqueleto da página de pedido~~ — **feito como `mesa.html`** (grelha de produtos + carrinho, não chatbot) | 1 h | — |
-| ⬜ | F-02 | `css/mesa.css` — layout base *(**é a X-02**: o ficheiro não existe e a página abre em branco)* | 1 h 30 | F-01 |
-| **✅** | F-03 | ~~Balão de mensagem do bot~~ — feito em `reservas.css` | 1 h | — |
-| **✅** | F-04 | ~~Balão de mensagem do cliente~~ | 45 min | — |
-| **✅** | F-05 | ~~Linha de botões de resposta~~ — quick replies, com quebra de linha | 1 h | — |
-| 🟨 | F-06 | Indicador fixo `📍 Mesa 04` — *o HTML existe em `mesa.html`, falta o CSS* | 45 min | F-02 |
-| **✅** | F-07 | ~~Card de produto~~ — linhas do menu com nome, descrição, preço e stepper | 1 h 30 | — |
-| ⬜ | F-08 | Paleta e tipografia da aplicação de gestão (**não usar a fonte Nosifer**) | 1 h 30 | — |
+| 🔁 | F-01 | `frontend/cliente/pedido.html` — esqueleto da página | 1 h | — |
+| 🔁 | F-02 | `css/pedido.css` — layout base (área de conversa + área de resposta fixa em baixo) | 1 h 30 | F-01 |
+| 🔁 | F-03 | Balão de mensagem do bot (à esquerda) | 1 h | F-02 |
+| 🔁 | F-04 | Balão de mensagem do cliente (à direita) | 45 min | F-03 |
+| 🔁 | F-05 | Linha de botões de resposta, com quebra de linha em ecrãs pequenos | 1 h | F-02 |
+| 🔁 | F-06 | Indicador fixo no topo `📍 Mesa 04` | 45 min | F-02 |
+| 🔁 | F-07 | Card de produto — imagem, nome, preço, botão "+ Adicionar" | 1 h 30 | F-02 |
+| ✅ | F-08 | Definir paleta e tipografia da aplicação de gestão (**não usar a fonte Nosifer**: é decorativa e ilegível em tabelas) | 1 h 30 | — |
+
+**Total do sprint: ≈ 9 h**
 
 ## Sprint 1 · Login de gestão (Semana 2: 8–14 set)
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | F-09 | `js/api.js` — função única de chamada à API, com o token anexado | 1 h 30 | C-03 |
-| ⬜ | F-10 | `frontend/funcionarios/login.html` | 1 h 30 | F-08 |
-| ⬜ | F-11 | `css/login.css` | 1 h | F-10 |
-| ⬜ | F-12 | Validação do formulário e mensagens de erro visíveis | 1 h | F-10 |
-| ⬜ | F-13 | Guardar o token da sessão e redirecionar para o dashboard | 45 min | F-09 |
-| ⬜ | F-14 | Ecrã protegido de teste que devolve ao login sem sessão | 1 h | F-13 |
+| ✅ | F-09 | `js/api.js` — função única de chamada à API, com o token anexado automaticamente | 1 h 30 | C-03 |
+| ✅ | F-10 | `frontend/funcionarios/login.html` | 1 h 30 | F-08 |
+| ✅ | F-11 | `css/login.css` | 1 h | F-10 |
+| ✅ | F-12 | Validação do formulário e mensagens de erro visíveis | 1 h | F-10 |
+| ✅ | F-13 | Guardar o token da sessão e redirecionar para o dashboard | 45 min | F-09 |
+| ✅ | F-14 | Ecrã protegido de teste (dashboard vazio) que devolve ao login sem sessão | 1 h | F-13 |
+
+**Total do sprint: ≈ 6 h 45**
 
 ## Sprint 2 · Fluxo de pedidos (Semanas 3–5: 15 set – 5 out)
 
-> ⚠️ Muitos destes componentes **já estão construídos** no chatbot de reservas. Aqui é sobretudo reutilizá-los — ou, se a decisão **C-23** for a grelha, substituí-los.
+> **🔁 Estas tarefas já não se aplicam.** Descreviam a `pedido.html` — uma página de
+> conversa com um bot, em que o cliente respondia a perguntas passo a passo. Essa página
+> foi substituída pela **`mesa.html`**, que mostra a ementa toda de uma vez com o carrinho
+> sempre à vista: menos toques para pedir e muito melhor num telemóvel de pé, à mesa.
+>
+> O que estas tarefas queriam garantir **está feito**, só que noutra forma: cards de
+> produto, seletor de quantidade, observações, resumo com subtotais, remover item, número
+> do pedido em destaque. Ficam aqui marcadas 🔁 em vez de apagadas, para se perceber a
+> decisão e não parecer trabalho esquecido.
+>
+> São ≈ 22 h que **não estão em falta** — não as contes no que falta fazer.
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| **✅** | F-15 | ~~Renderizar a mensagem da API no balão do bot~~ — feito com dados locais | 1 h 30 | — |
-| **✅** | F-16 | ~~Renderizar os botões de opção e enviar a escolha~~ | 1 h 30 | — |
-| **✅** | F-17 | ~~Scroll automático para a última mensagem~~ *(ver X-07)* | 45 min | — |
-| **✅** | F-18 | ~~Animação "o bot está a escrever…"~~ | 1 h | — |
-| 🟨 | F-19 | Carrossel horizontal de cards — *está lista vertical; decidir se chega* | 2 h | — |
-| **✅** | F-20 | ~~Seletor de quantidade (– 1 +)~~ | 1 h | — |
-| **✅** | F-21 | ~~Campo de observações + botão "sem observações"~~ — com contador de 300 | 1 h | — |
-| 🟨 | F-22 | Painel da conta em `mesa.html` — *o HTML existe, falta o CSS e ligá-lo* | 2 h | F-02 |
-| ⬜ | F-23 | Botão de remover item no resumo | 1 h | F-22 |
-| ⬜ | F-24 | Ecrã de nome + telemóvel do take away | 1 h 30 | F-02 |
-| ⬜ | F-25 | Ecrã de confirmação com o número do pedido + botão "copiar" | 1 h 30 | F-22 |
-| 🟨 | F-26 | Estados de "a carregar" e de erro — *há bloqueio de UI, falta o erro de rede* | 1 h | — |
-| ⬜ | F-27 | Testar e afinar tudo em telemóvel real | 2 h | F-25 |
+| 🔁 | F-15 | Renderizar a mensagem que a API devolve dentro do balão do bot | 1 h 30 | F-03, F-09 |
+| 🔁 | F-16 | Renderizar os botões de opção e enviar a escolha à API | 1 h 30 | F-05, F-15 |
+| 🔁 | F-17 | Scroll automático para a última mensagem | 45 min | F-15 |
+| 🔁 | F-18 | Animação "o bot está a escrever…" | 1 h | F-15 |
+| 🔁 | F-19 | Carrossel horizontal de cards de produto | 2 h | F-07 |
+| 🔁 | F-20 | Seletor de quantidade (– 1 +) | 1 h | F-16 |
+| 🔁 | F-21 | Campo de observações + botão "sem observações" | 1 h | F-16 |
+| 🔁 | F-22 | Ecrã de resumo do pedido (itens, quantidades, subtotais, total) | 2 h | F-16 |
+| 🔁 | F-23 | Botão de remover item no resumo | 1 h | F-22 |
+| 🔁 | F-24 | Ecrã de nome + telemóvel do take away, com validação | 1 h 30 | F-16 |
+| 🔁 | F-25 | Ecrã de confirmação com o **número do pedido em destaque** e botão "copiar" | 1 h 30 | F-22 |
+| ✅ | F-26 | Estados visuais de "a carregar" e de erro de ligação | 1 h | F-15 |
+| 🔁 | F-27 | Testar e afinar tudo em telemóvel real | 2 h | F-25 |
 
-## Sprint 3 · Fluxo de reservas (Semanas 6–7: 6–19 out) — **adiantado** 🎉
+**Total do sprint: ≈ 17 h 45**
+
+## Sprint 3 · Fluxo de reservas (Semanas 6–7: 6–19 out)
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| **✅** | F-28 | ~~Reconstruir `reservas.html` como fluxo guiado~~ | 2 h | — |
-| **✅** | F-29 | ~~Seletor de nº de pessoas~~ *(ver X-05)* | 1 h | — |
-| **✅** | F-30 | ~~Ecrã de escolha do modo de ementa~~ | 1 h | — |
-| **✅** | F-31 | ~~Componente de calendário~~ — mês, navegação, seleção, legenda | 2 h 30 | — |
-| 🟨 | F-32 | Bloqueios do calendário — *segundas e passado ✅; falta limite de 60 dias e excluir hoje (**X-03**, **X-04**)* | 1 h 30 | — |
-| 🟨 | F-33 | Ecrã de período — *não há passo separado; almoço e jantar aparecem juntos com etiquetas. Funciona, decidir se fica* | 45 min | — |
-| **✅** | F-34 | ~~Grelha de horas disponíveis~~ | 1 h | — |
-| **✅** | F-35 | ~~Campos de nome e telemóvel com validação~~ *(ver X-01)* | 1 h 30 | — |
-| **✅** | F-36 | ~~Resumo da reserva + Confirmar / Recomeçar~~ | 1 h 30 | — |
-| ⬜ | F-37 | Ecrã final com o **código de reserva** em destaque + copiar — *não existe: hoje só há mensagem de sucesso, o cliente não leva nada* | 1 h 30 | B-47 |
-| 🟨 | F-38 | 4 páginas da ementa — *as 4 categorias ✅; falta o indicador de progresso `2/4`* | 2 h 30 | — |
-| 🟨 | F-39 | Steppers de quantidade — *✅; falta o total parcial visível durante a escolha* | 2 h | — |
-| 🟨 | F-40 | Navegação entre páginas — *só há "Próximo"; falta "◀ Anterior"* | 1 h 30 | — |
-| **✅** | F-41 | ~~Ecrã de observações para a cozinha~~ | 1 h | — |
-| **✅** | F-42 | ~~Resumo da ementa com aviso de valor estimado~~ | 1 h 30 | — |
-| **✅** | F-43 | ~~Resumo final combinado~~ | 1 h 30 | — |
+| ✅ | F-28 | Reconstruir `reservas.html` como fluxo guiado, reaproveitando os componentes do Sprint 2 | 2 h | F-27 |
+| ✅ | F-29 | Seletor de nº de pessoas (botões 1–9 + "10 ou mais") | 1 h | F-28 |
+| ✅ | F-30 | Ecrã de escolha do modo de ementa (dois botões grandes) | 1 h | F-28 |
+| ✅ | F-31 | Componente de calendário — mês, navegação, seleção de dia | 2 h 30 | F-28 |
+| ✅ | F-32 | Calendário: bloquear segundas-feiras, datas passadas e além de 60 dias | 1 h 30 | F-31 |
+| ✅ | F-33 | Ecrã de período (almoço / jantar) | 45 min | F-30 |
+| ✅ | F-34 | Grelha de horas disponíveis | 1 h | F-33 |
+| ✅ | F-35 | Campos de nome e telemóvel com validação visível | 1 h 30 | F-28 |
+| ✅ | F-36 | Ecrã de resumo da reserva + `✅ Confirmar` / `🔄 Recomeçar` | 1 h 30 | F-35 |
+| ✅ | F-37 | Ecrã final com o **código de reserva em destaque** e botão "copiar" | 1 h 30 | F-36 |
+| ✅ | F-38 | As 4 páginas da ementa, com indicador de progresso `2/4` | 2 h 30 | F-19 |
+| ✅ | F-39 | Seletores de quantidade nos cards, com total parcial sempre visível | 2 h | F-38 |
+| ✅ | F-40 | Navegação `◀ Anterior` / `Seguinte ▶` sem perder as escolhas | 1 h 30 | F-38 |
+| ✅ | F-41 | Ecrã de observações para a cozinha (com opção de saltar) | 1 h | F-21 |
+| ✅ | F-42 | Resumo da ementa com subtotais e **aviso claro de que o valor é estimado** | 1 h 30 | F-39 |
+| ⬜ | F-43 | Resumo final combinado (reserva + ementa + observações) | 1 h 30 | F-42, F-36 |
+
+**Total do sprint: ≈ 24 h**
 
 ## Sprint 4 · Aplicação de gestão (Semanas 8–9: 20 out – 2 nov)
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | F-44 | Layout da aplicação de gestão (barra lateral + conteúdo) | 2 h | F-14 |
-| ⬜ | F-45 | Ecrã de pedidos em colunas por estado (quadro tipo Kanban) | 2 h 30 | F-44 |
-| ⬜ | F-46 | Cartão de pedido com cor conforme a antiguidade | 1 h 30 | F-45 |
-| ⬜ | F-47 | Painel de detalhe do pedido | 2 h | F-45 |
-| ⬜ | F-48 | Botões de mudança de estado no detalhe | 1 h | F-47 |
+| ✅ | F-44 | Layout da aplicação de gestão (barra lateral + área de conteúdo) | 2 h | F-14 |
+| ✅ | F-45 | Ecrã de pedidos em colunas por estado (quadro tipo Kanban) | 2 h 30 | F-44 |
+| ✅ | F-46 | Cartão de pedido com cor a mudar conforme a antiguidade | 1 h 30 | F-45 |
+| ✅ | F-47 | Painel de detalhe do pedido (itens, observações, mesa ou nome do take away) | 2 h | F-45 |
+| ✅ | F-48 | Botões de mudança de estado — ficaram **no próprio cartão**, não num painel de detalhe: na cozinha o objetivo é avançar a ronda num toque, sem abrir nada | 1 h | F-47 |
 | ⬜ | F-49 | Tabela de produtos com pesquisa e ordenação | 2 h | F-44 |
-| ⬜ | F-50 | Formulário de produto | 2 h | F-49 |
+| ⬜ | F-50 | Formulário de produto (criar / editar / ativar / desativar) | 2 h | F-49 |
 | ⬜ | F-51 | Tabela e formulário de categorias | 1 h 30 | F-49 |
 | ⬜ | F-52 | Ecrã de stock com aviso visual de stock baixo | 2 h | F-49 |
-| ⬜ | F-53 | Ecrã de funcionários | 2 h | F-49 |
+| ⬜ | F-53 | Ecrã de funcionários (tabela + formulário) | 2 h | F-49 |
 | ⬜ | F-54 | Responsividade da aplicação de gestão | 1 h 30 | F-53 |
+
+**Total do sprint: ≈ 20 h**
 
 ## Sprint 5 · Extras (Semana 10: 3–9 nov)
 
@@ -256,10 +294,14 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 | ⬜ | F-55 | Cartões de métricas do dashboard | 1 h 30 | F-44 |
 | ⬜ | F-56 | Gráfico de faturação diária e mensal (Chart.js) | 2 h | F-55 |
 | ⬜ | F-57 | Gráfico de produtos mais vendidos | 1 h 30 | F-56 |
-| ⬜ | F-58 | Página imprimível dos QR Codes | 2 h | B-66 |
+| ✅ | F-58 | Página imprimível dos QR Codes (um por mesa, com o número bem visível) | 2 h | B-66 |
 | ⬜ | F-59 | Revisão de responsividade de todos os ecrãs do cliente | 2 h | — |
-| ⬜ | F-60 | Revisão visual final | 2 h | — |
+| ⬜ | F-60 | Revisão visual final e afinação de detalhes | 2 h | — |
 | ⬜ | F-61 | 🔁 *(recuperação)* Tabela de reservas no dashboard | 1 h 30 | B-73 |
+
+**Total do sprint: ≈ 12 h 30**
+
+### 🟠 Total Guilherme: ≈ 90 h de tarefas identificadas
 
 ---
 
@@ -302,7 +344,7 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | C-11 | *Polling* de 10 segundos no ecrã de pedidos | 1 h | F-45, B-55 |
+| **✅** | C-11 | ~~*Polling* de 10 segundos no ecrã de pedidos~~ — feito pelo Guilherme | 1 h | F-45, B-55 |
 | ⬜ | C-12 | Teste conjunto do ciclo completo: pedido → dashboard → estados → stock | 2 h | C-11, B-58 |
 
 ## Sprint 5 · Testes e entrega (Semanas 10–11)
@@ -360,5 +402,18 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 | 🔵 João | 73 | 2 | ≈ 81 h |
 | 🟠 Guilherme | 61 + 9 correções | 21 | ≈ 62 h |
 | 🟢 Os dois | 22 | 0 | ≈ 42 h |
+
+**Onde está mesmo o front-end (02/09):** 29 tarefas feitas, 19 marcadas 🔁 (a `pedido.html`,
+substituída pela `mesa.html`) e **13 por fazer**.
+
+Dessas 13, **9 estão à espera de endpoints que ainda não existem** (`docs/API.md` secção 4):
+gestão de produtos (F-49, F-50), categorias (F-51), stock (F-52), funcionários (F-53),
+métricas e gráficos do dashboard (F-55, F-56, F-57) e a tabela de reservas (F-61).
+
+**As 4 que não dependem de ninguém:** o resumo final da reserva (F-43) e o acabamento —
+responsividade da app de gestão (F-54), responsividade dos ecrãs do cliente (F-59) e a
+revisão visual final (F-60). ≈ 7 h de trabalho que dá para fazer já.
+
+**Nota honesta sobre as estimativas:** estes números contam o tempo de *escrever* cada coisa. O `PLANEAMENTO.md` fala em ~108 h para o João e ~90 h para o Gui porque inclui aquilo que nunca aparece numa lista de tarefas: procurar erros, refazer o que não ficou bem à primeira, esperar por deploys, ler documentação. **Conta com cerca de mais 25 % do que está aqui** — e não te assustes quando uma tarefa de 1 h demorar 3. Acontece a toda a gente.
 
 **Nota sobre as estimativas:** estes números contam o tempo de *escrever* cada coisa. O `PLANEAMENTO.md` aponta valores mais altos porque inclui o que nunca aparece numa lista de tarefas — procurar erros, refazer o que não ficou bem à primeira, esperar por deploys, ler documentação. Conta com cerca de mais 25 %.
