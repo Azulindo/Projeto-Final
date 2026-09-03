@@ -2,7 +2,7 @@
 
 **Projeto Final de Curso** · João Ribeiro & Guilherme Gonçalves
 **Documentos relacionados:** `CONTEXTO.md` (o quê e porquê) · `PLANEAMENTO.md` (calendário e sprints)
-**Versão:** 1.2 · **Última revisão:** 1 de setembro de 2026
+**Versão:** 1.3 · **Última revisão:** 1 de setembro de 2026
 
 ---
 
@@ -94,7 +94,7 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 | ⬜ | B-24 | Configurar CORS para o domínio do Vercel | 30 min | B-16 |
 | ⬜ | B-25 | `express-rate-limit` nos endpoints públicos | 30 min | B-16 |
 
-## Sprint 2 · Motor de fluxos e pedidos (Semanas 3–5: 15 set – 5 out)
+## Sprint 2 · Sessões de mesa e pedidos (Semanas 3–5: 15 set – 5 out)
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
@@ -103,13 +103,13 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 | ⬜ | B-28 | `motorFluxos.js`: sessão de conversa — criar, ler, gravar, expirar às 2 h | 2 h | B-16 |
 | ⬜ | B-29 | `motorFluxos.js`: ciclo de resposta — validar → guardar → calcular próximo estado | 2 h 30 | B-28 |
 | ⬜ | B-30 | `motorFluxos.js`: comandos `voltar` e `recomeçar` | 1 h | B-29 |
-| ⬜ | B-31 | `fluxoPedido.js`: estados `INICIO`, `ESCOLHA_SERVICO`, `NUMERO_MESA` | 1 h 30 | B-29, C-23 |
-| ⬜ | B-32 | `fluxoPedido.js`: estados `CATEGORIA`, `PRODUTO`, `QUANTIDADE` | 1 h 30 | B-26, B-27 |
-| ⬜ | B-33 | `fluxoPedido.js`: estados `OBSERVACOES`, `ADICIONAR_MAIS` | 1 h | B-32 |
-| ⬜ | B-34 | `fluxoPedido.js`: estado `RESUMO`, com remoção de item | 1 h 30 | B-33 |
-| ⬜ | B-35 | `fluxoPedido.js`: estado `NOME_CONTACTO` (só take away) | 1 h | B-34 |
-| ⬜ | B-36 | `POST /api/fluxo/iniciar` (aceita `tipo` e `mesaToken`) | 1 h | B-31 |
-| ⬜ | B-37 | `POST /api/fluxo/responder` | 1 h | B-29 |
+| ⬜ | B-31 | `POST /api/mesa/:token/sessao` — abre a sessão ou devolve a que já está aberta | 1 h 30 | B-26, B-27 |
+| ⬜ | B-32 | `GET /api/sessao/:codigo` — estado da sessão, rondas já pedidas e total | 1 h 30 | B-31 |
+| ⬜ | B-33 | `POST /api/sessao/:codigo/pedido` — envia uma ronda para a cozinha | 1 h | B-32 |
+| ⬜ | B-34 | `POST /api/sessao/:codigo/conta` — passa a `aguarda_pagamento` e devolve a conta | 1 h 30 | B-33 |
+| ⬜ | B-35 | `POST /api/pedidos/takeaway` — pedido único com nome e telemóvel | 1 h | B-33 |
+| ⬜ | B-36 | `PATCH /api/gestao/sessoes/:id/fechar` — funcionário fecha a conta | 1 h | B-34 |
+| ⬜ | B-37 | `POST /api/fluxo/iniciar` e `/responder` — para o fluxo de reservas | 1 h | B-29 |
 | ⬜ | B-38 | Cálculo do total no servidor + geração do `numero_pedido` | 1 h | B-34 |
 | ⬜ | B-39 | `POST /api/pedidos` — transação que grava `PEDIDO` + `ITEM_PEDIDO` | 2 h | B-38 |
 | ⬜ | B-40 | Testar no Postman/Thunder: pedido de restaurante e de take away | 1 h 30 | B-39 |
@@ -205,9 +205,9 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 | 🟨 | F-19 | Carrossel horizontal de cards — *está lista vertical; decidir se chega* | 2 h | — |
 | **✅** | F-20 | ~~Seletor de quantidade (– 1 +)~~ | 1 h | — |
 | **✅** | F-21 | ~~Campo de observações + botão "sem observações"~~ — com contador de 300 | 1 h | — |
-| 🟨 | F-22 | Ecrã de resumo — *existe para reservas, falta para pedidos* | 2 h | C-23 |
+| 🟨 | F-22 | Painel da conta em `mesa.html` — *o HTML existe, falta o CSS e ligá-lo* | 2 h | F-02 |
 | ⬜ | F-23 | Botão de remover item no resumo | 1 h | F-22 |
-| ⬜ | F-24 | Ecrã de nome + telemóvel do take away | 1 h 30 | C-23 |
+| ⬜ | F-24 | Ecrã de nome + telemóvel do take away | 1 h 30 | F-02 |
 | ⬜ | F-25 | Ecrã de confirmação com o número do pedido + botão "copiar" | 1 h 30 | F-22 |
 | 🟨 | F-26 | Estados de "a carregar" e de erro — *há bloqueio de UI, falta o erro de rede* | 1 h | — |
 | ⬜ | F-27 | Testar e afinar tudo em telemóvel real | 2 h | F-25 |
@@ -272,9 +272,9 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 | 🟨 | C-01 | Ler e aprovar o `CONTEXTO.md` v3.0 — *o João leu e decidiu; falta o Guilherme ler* | 1 h | — |
 | 🟨 | C-02 | **Fechar o diagrama ER** — *12 tabelas feitas; faltam `RESERVA`, `ITEM_RESERVA`, `SLOT_HORARIO`, `HISTORICO_ESTADO_PEDIDO`* | 1 h 30 | C-01 |
 | ⬜ | C-03 | ⭐ **Escrever o `docs/API.md`** — para cada endpoint, o que entra e o que sai, com exemplo de JSON | 2 h | C-02 |
-| ⬜ | **C-23** | 🆕 **Decidir: os pedidos são chatbot ou grelha?** O `mesa.html` foi feito como grelha com carrinho; o `CONTEXTO.md` diz chatbot. Decidir e atualizar o documento — muda o trabalho dos dois | 45 min | — |
+| **✅** | **C-23** | ~~Decidir: os pedidos são chatbot ou grelha?~~ — **decidido 1 set: grelha com carrinho + sessão de mesa.** `CONTEXTO.md` v3.2 atualizado | 45 min | — |
 
-> **C-02 e C-23 são o que bloqueia o João.** Sem o ER fechado não há `schema.sql`; sem a decisão do C-23 não há `fluxoPedido.js`.
+> C-02 e C-23 estão fechados. O que bloqueia agora é o **C-03** (`docs/API.md`) — sem ele o Guilherme constrói ecrãs contra uma API imaginada.
 
 ## Sprint 1 · Login (Semana 2)
 

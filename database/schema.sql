@@ -199,13 +199,57 @@ CREATE TABLE slot_horario (
 
 
 -- =====================================================================
---  9. PEDIDO
+--  9. SESSAO_MESA
+--  Uma refeicao completa numa mesa: abre quando o cliente le o QR Code
+--  e fecha quando pede a conta. Agrupa varias rondas de pedidos.
+-- =====================================================================
+CREATE TABLE sessao_mesa (
+  id_sessao       INT NOT NULL AUTO_INCREMENT,
+  codigo_sessao   VARCHAR(20) NOT NULL,
+  id_mesa         INT NOT NULL,
+  num_pessoas     INT NULL,
+  estado          ENUM('aberta','aguarda_pagamento','fechada','cancelada')
+                  NOT NULL DEFAULT 'aberta',
+  observacoes     TEXT NULL,
+  valor_total     DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  id_funcionario  INT NULL,
+  aberta_em       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  fechada_em      DATETIME NULL,
+  mesa_aberta     INT GENERATED ALWAYS AS
+                  (CASE WHEN estado = 'aberta' THEN id_mesa END) VIRTUAL,
+  PRIMARY KEY (id_sessao),
+  UNIQUE KEY uq_sessao_codigo (codigo_sessao),
+  UNIQUE KEY uq_sessao_mesa_aberta (mesa_aberta),
+  KEY idx_sessao_mesa (id_mesa),
+  KEY idx_sessao_estado (estado),
+  KEY idx_sessao_abertura (aberta_em),
+  CONSTRAINT fk_sessao_mesa
+    FOREIGN KEY (id_mesa) REFERENCES mesa (id_mesa)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_sessao_funcionario
+    FOREIGN KEY (id_funcionario) REFERENCES funcionario (id_funcionario)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT ck_sessao_pessoas CHECK (num_pessoas IS NULL OR num_pessoas > 0)
+) ENGINE=InnoDB;
+
+-- A coluna "mesa_aberta" e VIRTUAL: vale o numero da mesa enquanto a
+-- sessao esta aberta e NULL quando fecha. Com o UNIQUE em cima dela,
+-- fica garantido que uma mesa nunca tem duas sessoes abertas ao mesmo
+-- tempo, mas pode ter mil sessoes fechadas ao longo do tempo (o MySQL
+-- permite NULLs repetidos numa chave unica). E uma regra de negocio
+-- garantida pela base de dados, nao pelo codigo.
+
+
+-- =====================================================================
+--  10. PEDIDO
+--  Uma ronda de itens enviada para a cozinha.
 -- =====================================================================
 CREATE TABLE pedido (
   id_pedido           INT NOT NULL AUTO_INCREMENT,
   numero_pedido       VARCHAR(20) NOT NULL,
   id_cliente          INT NULL,
   id_mesa             INT NULL,
+  id_sessao           INT NULL,
   id_funcionario      INT NULL,
   tipo_pedido         ENUM('restaurante','take_away') NOT NULL,
   estado              ENUM('recebido','confirmado','em_preparacao',
@@ -225,6 +269,7 @@ CREATE TABLE pedido (
   KEY idx_pedido_data (data_hora),
   KEY idx_pedido_atualizacao (data_atualizacao),
   KEY idx_pedido_mesa (id_mesa),
+  KEY idx_pedido_sessao (id_sessao),
   KEY idx_pedido_cliente (id_cliente),
   KEY idx_pedido_funcionario (id_funcionario),
   CONSTRAINT fk_pedido_cliente
@@ -232,6 +277,9 @@ CREATE TABLE pedido (
     ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_pedido_mesa
     FOREIGN KEY (id_mesa) REFERENCES mesa (id_mesa)
+    ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT fk_pedido_sessao
+    FOREIGN KEY (id_sessao) REFERENCES sessao_mesa (id_sessao)
     ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT fk_pedido_funcionario
     FOREIGN KEY (id_funcionario) REFERENCES funcionario (id_funcionario)
@@ -259,7 +307,7 @@ CREATE TABLE pedido (
 
 
 -- =====================================================================
---  10. ITEM_PEDIDO
+--  11. ITEM_PEDIDO
 -- =====================================================================
 CREATE TABLE item_pedido (
   id_item         INT NOT NULL AUTO_INCREMENT,
@@ -290,7 +338,7 @@ CREATE TABLE item_pedido (
 
 
 -- =====================================================================
---  11. HISTORICO_ESTADO_PEDIDO
+--  12. HISTORICO_ESTADO_PEDIDO
 --  Um registo por cada mudanca de estado.
 -- =====================================================================
 CREATE TABLE historico_estado_pedido (
@@ -317,7 +365,7 @@ CREATE TABLE historico_estado_pedido (
 
 
 -- =====================================================================
---  12. RESERVA
+--  13. RESERVA
 -- =====================================================================
 CREATE TABLE reserva (
   id_reserva        INT NOT NULL AUTO_INCREMENT,
@@ -375,7 +423,7 @@ CREATE TABLE reserva (
 
 
 -- =====================================================================
---  13. ITEM_RESERVA
+--  14. ITEM_RESERVA
 --  A ementa pre-selecionada. E uma intencao, nao um pedido.
 -- =====================================================================
 CREATE TABLE item_reserva (
@@ -399,7 +447,7 @@ CREATE TABLE item_reserva (
 
 
 -- =====================================================================
---  14. FAVORITO
+--  15. FAVORITO
 --  Criada mas sem uso nesta versao.
 -- =====================================================================
 CREATE TABLE favorito (
@@ -421,7 +469,7 @@ CREATE TABLE favorito (
 
 
 -- =====================================================================
---  15. AVALIACAO
+--  16. AVALIACAO
 --  Criada mas sem uso nesta versao.
 -- =====================================================================
 CREATE TABLE avaliacao (
@@ -448,7 +496,7 @@ CREATE TABLE avaliacao (
 
 
 -- =====================================================================
---  16. NOTIFICACAO
+--  17. NOTIFICACAO
 -- =====================================================================
 CREATE TABLE notificacao (
   id_notificacao      INT NOT NULL AUTO_INCREMENT,
@@ -479,7 +527,7 @@ CREATE TABLE notificacao (
 
 -- =====================================================================
 --  VERIFICACAO
---  Depois de correr, isto deve devolver 16 linhas.
+--  Depois de correr, isto deve devolver 17 linhas.
 -- =====================================================================
 SELECT TABLE_NAME AS tabela, TABLE_ROWS AS linhas
 FROM information_schema.TABLES

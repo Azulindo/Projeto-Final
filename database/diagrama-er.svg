@@ -2,7 +2,7 @@
 <rect width="1808" height="976.0" fill="#FBF8F0"/>
 <defs><filter id="sh" x="-20%" y="-20%" width="150%" height="150%"><feDropShadow dx="1.5" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.16"/></filter></defs>
 <text x="40" y="42" font-size="24" font-weight="bold" fill="#2B2B2B">Vem Pro Abate — Diagrama Entidade-Relacionamento</text>
-<text x="40" y="66" font-size="13" fill="#8A7B4E">16 tabelas  ·  Projeto Final de Curso  ·  setembro 2026</text>
+<text x="40" y="66" font-size="13" fill="#8A7B4E">17 tabelas  ·  Projeto Final de Curso  ·  setembro 2026</text>
 <path d="M174.0,284.0 C174.0,334.0 174.0,284.0 174.0,334.0" fill="none" stroke="#7A6C42" stroke-width="1.5" opacity="0.9"/>
 <line x1="181.0" y1="293.0" x2="167.0" y2="293.0" stroke="#7A6C42" stroke-width="1.6"/><line x1="181.0" y1="300.0" x2="167.0" y2="300.0" stroke="#7A6C42" stroke-width="1.6"/>
 <line x1="167.0" y1="324.0" x2="181.0" y2="324.0" stroke="#7A6C42" stroke-width="1.6"/><circle cx="174.0" cy="315.0" r="4.2" fill="#FBF8F0" stroke="#7A6C42" stroke-width="1.6"/>
@@ -72,6 +72,15 @@
 <path d="M534.0,588.0 C534.0,661.6 1014.3,479.0 1480.0,479.0" fill="none" stroke="#7A6C42" stroke-width="1.5" opacity="0.9"/>
 <line x1="541.0" y1="598.0" x2="527.0" y2="598.0" stroke="#7A6C42" stroke-width="1.6"/><circle cx="534.0" cy="607.0" r="4.2" fill="#FBF8F0" stroke="#7A6C42" stroke-width="1.6"/>
 <line x1="1470.0" y1="486.0" x2="1470.0" y2="472.0" stroke="#7A6C42" stroke-width="1.6"/><circle cx="1461.0" cy="479.0" r="4.2" fill="#FBF8F0" stroke="#7A6C42" stroke-width="1.6"/>
+<path d="M400.0,175.0 C258.3,175.0 174.0,420.4 174.0,634.0" fill="none" stroke="#7A6C42" stroke-width="1.5" opacity="0.9"/>
+<line x1="391.0" y1="182.0" x2="391.0" y2="168.0" stroke="#7A6C42" stroke-width="1.6"/><line x1="384.0" y1="182.0" x2="384.0" y2="168.0" stroke="#7A6C42" stroke-width="1.6"/>
+<line x1="174.0" y1="621.0" x2="166.5" y2="634.0" stroke="#7A6C42" stroke-width="1.5"/><line x1="174.0" y1="621.0" x2="174.0" y2="634.0" stroke="#7A6C42" stroke-width="1.5"/><line x1="174.0" y1="621.0" x2="181.5" y2="634.0" stroke="#7A6C42" stroke-width="1.5"/><circle cx="174.0" cy="614.0" r="4.2" fill="#FBF8F0" stroke="#7A6C42" stroke-width="1.6"/>
+<path d="M308.0,743.0 C389.4,743.0 318.6,441.0 400.0,441.0" fill="none" stroke="#7A6C42" stroke-width="1.5" opacity="0.9"/>
+<line x1="318.0" y1="736.0" x2="318.0" y2="750.0" stroke="#7A6C42" stroke-width="1.6"/><circle cx="327.0" cy="743.0" r="4.2" fill="#FBF8F0" stroke="#7A6C42" stroke-width="1.6"/>
+<line x1="387.0" y1="441.0" x2="400.0" y2="448.5" stroke="#7A6C42" stroke-width="1.5"/><line x1="387.0" y1="441.0" x2="400.0" y2="441.0" stroke="#7A6C42" stroke-width="1.5"/><line x1="387.0" y1="441.0" x2="400.0" y2="433.5" stroke="#7A6C42" stroke-width="1.5"/><circle cx="380.0" cy="441.0" r="4.2" fill="#FBF8F0" stroke="#7A6C42" stroke-width="1.6"/>
+<path d="M40.0,386.0 C0.0,386.0 0.0,743.0 40.0,743.0" fill="none" stroke="#7A6C42" stroke-width="1.5" opacity="0.9"/>
+<line x1="30.0" y1="393.0" x2="30.0" y2="379.0" stroke="#7A6C42" stroke-width="1.6"/><circle cx="21.0" cy="386.0" r="4.2" fill="#FBF8F0" stroke="#7A6C42" stroke-width="1.6"/>
+<line x1="27.0" y1="743.0" x2="40.0" y2="750.5" stroke="#7A6C42" stroke-width="1.5"/><line x1="27.0" y1="743.0" x2="40.0" y2="743.0" stroke="#7A6C42" stroke-width="1.5"/><line x1="27.0" y1="743.0" x2="40.0" y2="735.5" stroke="#7A6C42" stroke-width="1.5"/><circle cx="20.0" cy="743.0" r="4.2" fill="#FBF8F0" stroke="#7A6C42" stroke-width="1.6"/>
 <g filter="url(#sh)"><rect x="40" y="104" width="268" height="180.0" rx="7" fill="#FFFFFF" stroke="#C9A227" stroke-width="1.6"/></g>
 <path d="M40,111 a7,7 0 0 1 7,-7 h254 a7,7 0 0 1 7,7 v21.0 h-268 z" fill="#F7E3A1" stroke="#C9A227" stroke-width="1.6"/>
 <text x="50" y="123" font-size="12" font-weight="bold" fill="#4A3B00">UTILIZADOR</text>
@@ -561,6 +570,48 @@
 <text x="1514" y="860.5" font-size="10" fill="#2B2B2B">subtotal</text>
 <text x="1738" y="860.5" font-size="9" fill="#8C8C8C" text-anchor="end">dec(10,2)</text>
 <line x1="1481.5" y1="847.0" x2="1746.5" y2="847.0" stroke="#EEE" stroke-width="0.7"/>
+<g filter="url(#sh)"><rect x="40" y="634" width="268" height="218.0" rx="7" fill="#FFFFFF" stroke="#C9A227" stroke-width="1.6"/></g>
+<path d="M40,641 a7,7 0 0 1 7,-7 h254 a7,7 0 0 1 7,7 v21.0 h-268 z" fill="#F7E3A1" stroke="#C9A227" stroke-width="1.6"/>
+<text x="50" y="653" font-size="12" font-weight="bold" fill="#4A3B00">SESSAO_MESA</text>
+<text x="48" y="675.5" font-size="9">🔑</text>
+<text x="74" y="675.5" font-size="10" font-weight="bold" fill="#2B2B2B">id_sessao</text>
+<text x="298" y="675.5" font-size="9" fill="#8C8C8C" text-anchor="end">int</text>
+<line x1="41.5" y1="662.0" x2="306.5" y2="662.0" stroke="#EEE" stroke-width="0.7"/>
+<rect x="41.5" y="681.0" width="265" height="19.0" fill="#FAFAF7"/>
+<text x="48" y="694.5" font-size="9">★</text>
+<text x="74" y="694.5" font-size="10" fill="#2B2B2B">codigo_sessao</text>
+<text x="298" y="694.5" font-size="9" fill="#8C8C8C" text-anchor="end">varchar(20)</text>
+<line x1="41.5" y1="681.0" x2="306.5" y2="681.0" stroke="#EEE" stroke-width="0.7"/>
+<text x="48" y="713.5" font-size="9">🔗</text>
+<text x="74" y="713.5" font-size="10" fill="#2B2B2B">id_mesa</text>
+<text x="298" y="713.5" font-size="9" fill="#8C8C8C" text-anchor="end">int</text>
+<line x1="41.5" y1="700.0" x2="306.5" y2="700.0" stroke="#EEE" stroke-width="0.7"/>
+<rect x="41.5" y="719.0" width="265" height="19.0" fill="#FAFAF7"/>
+<text x="74" y="732.5" font-size="10" fill="#2B2B2B">num_pessoas</text>
+<text x="298" y="732.5" font-size="9" fill="#8C8C8C" text-anchor="end">int</text>
+<line x1="41.5" y1="719.0" x2="306.5" y2="719.0" stroke="#EEE" stroke-width="0.7"/>
+<text x="74" y="751.5" font-size="10" fill="#2B2B2B">estado</text>
+<text x="298" y="751.5" font-size="9" fill="#8C8C8C" text-anchor="end">enum</text>
+<line x1="41.5" y1="738.0" x2="306.5" y2="738.0" stroke="#EEE" stroke-width="0.7"/>
+<rect x="41.5" y="757.0" width="265" height="19.0" fill="#FAFAF7"/>
+<text x="74" y="770.5" font-size="10" fill="#2B2B2B">observacoes</text>
+<text x="298" y="770.5" font-size="9" fill="#8C8C8C" text-anchor="end">text</text>
+<line x1="41.5" y1="757.0" x2="306.5" y2="757.0" stroke="#EEE" stroke-width="0.7"/>
+<text x="74" y="789.5" font-size="10" fill="#2B2B2B">valor_total</text>
+<text x="298" y="789.5" font-size="9" fill="#8C8C8C" text-anchor="end">dec(10,2)</text>
+<line x1="41.5" y1="776.0" x2="306.5" y2="776.0" stroke="#EEE" stroke-width="0.7"/>
+<rect x="41.5" y="795.0" width="265" height="19.0" fill="#FAFAF7"/>
+<text x="48" y="808.5" font-size="9">🔗</text>
+<text x="74" y="808.5" font-size="10" fill="#2B2B2B">id_funcionario</text>
+<text x="298" y="808.5" font-size="9" fill="#8C8C8C" text-anchor="end">int</text>
+<line x1="41.5" y1="795.0" x2="306.5" y2="795.0" stroke="#EEE" stroke-width="0.7"/>
+<text x="74" y="827.5" font-size="10" fill="#2B2B2B">aberta_em</text>
+<text x="298" y="827.5" font-size="9" fill="#8C8C8C" text-anchor="end">datetime</text>
+<line x1="41.5" y1="814.0" x2="306.5" y2="814.0" stroke="#EEE" stroke-width="0.7"/>
+<rect x="41.5" y="833.0" width="265" height="19.0" fill="#FAFAF7"/>
+<text x="74" y="846.5" font-size="10" fill="#2B2B2B">fechada_em</text>
+<text x="298" y="846.5" font-size="9" fill="#8C8C8C" text-anchor="end">datetime</text>
+<line x1="41.5" y1="833.0" x2="306.5" y2="833.0" stroke="#EEE" stroke-width="0.7"/>
 <rect x="40" y="890.0" width="1010" height="66" rx="8" fill="#FFF" stroke="#DDD"/>
 <text x="58" y="909.0" font-size="10.5" font-weight="bold" fill="#444">Notacao pe-de-galinha</text>
 <text x="250" y="909.0" font-size="10.5" fill="#444">🔑 chave primaria</text>
