@@ -2,7 +2,7 @@
 
 **Projeto Final de Curso** · João Ribeiro & Guilherme Gonçalves
 **Documentos relacionados:** `CONTEXTO.md` (o quê e porquê) · `PLANEAMENTO.md` (calendário e sprints)
-**Versão:** 2.1 · **merge das duas versões (João + Guilherme)** · **Última revisão:** 3 de setembro de 2026
+**Versão:** 2.2 · **merge das duas versões (João + Guilherme)** · **Última revisão:** 3 de setembro de 2026
 
 ---
 
@@ -11,7 +11,9 @@
 | | Feito | Parcial | 🔁 Não se aplica | Por fazer | Total |
 |---|---|---|---|---|---|
 | 🔵 **João** — back-end | **17** | 0 | 0 | 56 | 73 |
-| 🟠 **Guilherme** — front-end | **29** | 0 | 19 | 13 | 61 |
+
+> ⚠️ **O caminho crítico é agora o back-end.** Das 10 tarefas que faltam ao Guilherme, **9 esperam por endpoints que ainda não existem**. A décima é a revisão visual final. O front-end deixou de estar à espera de decisões e passou a estar à espera de código.
+| 🟠 **Guilherme** — front-end | **32** | 0 | 19 | 10 | 61 |
 | 🟢 **Os dois** | 1 | 2 | 0 | 19 | 22 |
 
 > As 19 tarefas 🔁 do Guilherme (≈22 h) descreviam a `pedido.html` — a página de conversa
@@ -45,8 +47,8 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 
 *Encontradas na revisão de 1 de setembro, com o site a correr.*
 
-**Ponto de situação a 3 de setembro: 5 das 9 fechadas.** As quatro que faltam (X-05, X-07,
-X-08, X-09) são todas do Guilherme e nenhuma é bloqueadora.
+**Ponto de situação a 3 de setembro: 8 das 9 fechadas.** Falta o X-08, que o Guilherme não
+conseguiu reproduzir — a causa foi tapada na mesma.
 
 | ✅ | ID | Correção | Est. | Quem |
 |---|---|---|---|---|
@@ -54,11 +56,11 @@ X-08, X-09) são todas do Guilherme e nenhuma é bloqueadora.
 | **✅** | **X-02** | ~~`mesa.html` não abre~~ — resolvido a 02/09: a página foi reescrita e os ficheiros antigos foram para `_obsoleto/` | — | Gui |
 | **✅** | **X-03** | ~~Calendário sem limite superior~~ — `MAX_DIAS_ANTECEDENCIA = 60`, e o botão do mês seguinte bloqueia no limite | 30 min | Gui |
 | **✅** | **X-04** | ~~Hoje é selecionável~~ — a janela começa amanhã. **Verificado a 03/09: o primeiro dia selecionável é 4** | 45 min | Gui |
-| ⬜ | **X-05** | 🟠 Botão "+6 Grupo" manda para o telefone mas a mensagem fala em "mais de 10". Quem for 7–10 fica sem caminho | 30 min | Gui |
+| **✅** | **X-05** | ~~Botão "+6 Grupo" contradizia a mensagem~~ — o botão passou a perguntar quantos são, em vez de despachar para o telefone | 30 min | Gui |
 | **✅** | **X-06** | ~~Bot diz "Pratos Principais" e mostra Entradas~~ — a mensagem é derivada de `menuCategorias[0]` | 5 min | Gui |
-| ⬜ | **X-07** | 🟡 `scrollDown()` corta o topo dos cartões altos (categoria, calendário, resumo) | 45 min | Gui |
-| ⬜ | **X-08** | 🟡 Banda branca no topo da página em desktop (1440 px) | 30 min | Gui |
-| ⬜ | **X-09** | 🟡 Input de texto fica ativo mas inerte durante os passos de categoria | 20 min | Gui |
+| **✅** | **X-07** | ~~Topo dos cartões altos cortado~~ — corrigido com teste | 45 min | Gui |
+| 🟨 | **X-08** | Banda branca no topo — **não reproduzida** pelo Guilherme em 6 páginas a 1440 e 1920. A causa que eu apontei era real (`html`/`body` sem cor de fundo) e foi tapada com `background-color` + `color-scheme: dark`. Possível artefacto do meu teste: corri em Chromium sem rede, e a fonte Nosifer não carregou | 30 min | Gui |
+| **✅** | **X-09** | ~~Caixa de escrita engolia texto sem responder~~ — corrigido com teste | 20 min | Gui |
 
 ---
 
@@ -286,7 +288,7 @@ X-08, X-09) são todas do Guilherme e nenhuma é bloqueadora.
 | ⬜ | F-51 | Tabela e formulário de categorias | 1 h 30 | F-49 |
 | ⬜ | F-52 | Ecrã de stock com aviso visual de stock baixo | 2 h | F-49 |
 | ⬜ | F-53 | Ecrã de funcionários (tabela + formulário) | 2 h | F-49 |
-| ⬜ | F-54 | Responsividade da aplicação de gestão | 1 h 30 | F-53 |
+| **✅** | F-54 | ~~Responsividade da aplicação de gestão~~ — zero alvos de toque abaixo de 44 px, medido em 4 larguras. O pior era o ✕ do painel da conta, a 24×23 | 1 h 30 | F-53 |
 
 **Total do sprint: ≈ 20 h**
 
