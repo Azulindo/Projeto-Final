@@ -53,23 +53,40 @@ O front-end (`frontend/js/api.js`) lê sempre o campo `erro` e mostra-o tal e qu
 Fonte: `database/schema.sql` na branch `back-end`. **O `schema.prisma` já não existe** — o
 Prisma saiu do projeto a 02/09.
 
-Tabelas na branch `back-end` (lidas a 03/09):
+As **17** tabelas na branch `back-end` (lidas a 03/09, commit `73d44cc`):
 
 ```
 utilizador · cliente · funcionario          ← pessoas e login
 categoria  · produto · stock                ← ementa e existências
-mesa       · slot_horario
+mesa       · slot_horario · sessao_mesa
 pedido     · item_pedido · historico_estado_pedido
 reserva    · item_reserva
 favorito   · avaliacao · notificacao
 ```
 
-> ⚠️ **Uma pergunta para o João:** são **16** e não vejo nenhuma tabela de *sessão de mesa*.
-> Tu falaste em 17, portanto a que falta é provavelmente essa — e é a mais importante para
-> este contrato, porque é o que o `GET /mesas/:token/sessao` devolve e o que segura a conta
-> aberta de uma mesa. Presumo que esteja no teu local por enviar. **Confirma o nome dela e
-> os nomes das colunas**, que eu ajusto o documento — em baixo ainda está o nome antigo
-> (`SessaoMesa`) e os campos que combinámos em setembro.
+### `sessao_mesa` — a tabela que segura a conta de uma mesa
+
+Enviada a 03/09 (commit `73d44cc`). É a 17.ª e é a que este contrato mais usa.
+
+```
+id_sessao · codigo_sessao (único) · id_mesa · num_pessoas · estado
+observacoes · valor_total · id_funcionario · aberta_em · fechada_em
+mesa_aberta  ← coluna VIRTUAL, com UNIQUE
+```
+
+**`estado`** é um `ENUM('aberta','aguarda_pagamento','fechada','cancelada')` — bate certo
+com o que está documentado, incluindo o `cancelada`.
+
+**O `mesa_aberta` merece ser explicado**, porque é a melhor ideia deste schema: é uma coluna
+virtual que vale o número da mesa enquanto a sessão está `aberta` e `NULL` quando deixa de
+estar. Com um `UNIQUE` em cima, **passa a ser impossível existirem duas sessões abertas na
+mesma mesa** — não por convenção nem por um `if` no código, mas porque a base de dados
+recusa. Dois clientes a ler o mesmo QR Code ao mesmo tempo não conseguem criar duas contas.
+
+**Nomes:** na base de dados é `snake_case` com prefixo `id_` (`id_sessao`, `aberta_em`); no
+JSON da API continua `camelCase` (`sessaoId`, `abertaEm`), como está em todo este documento
+e como combinámos a 02/09 — a regra "a API fala a linguagem da base de dados" é sobre os
+**valores** dos estados, não sobre os nomes dos campos.
 
 **`SessaoMesa.estado`** — quatro valores, **em minúsculas** (confirmado 03/09):
 
@@ -421,6 +438,23 @@ sorte" — é impossível discordarem, porque é literalmente a mesma soma.
 **Enquanto a sessão está aberta o total é calculado na hora.** Só ao fechar a conta é que o
 valor fica gravado — congela, para a conta de hoje não mudar se amanhã se alterar um preço.
 
+> ⚠️ **Dois pontos verificados na branch `back-end` a 03/09, um bom e um por fechar:**
+>
+> **Bom:** a exclusão das rondas anuladas está mesmo lá — o `seed.sql` faz
+> `SUM(p.valor_total) ... WHERE p.estado <> 'cancelado'`. Confirmado, não presumido.
+>
+> **Por fechar:** a **vista `vw_total_sessao` ainda não existe no `schema.sql`**. O que existe
+> é `sessao_mesa.valor_total`, uma coluna **gravada** (`DECIMAL(10,2) DEFAULT 0.00`),
+> preenchida uma vez por aquele `UPDATE` do seed.
+>
+> Enquanto a vista não existir, **o `total` de uma sessão aberta não pode vir dessa coluna** —
+> ela fica desatualizada assim que chegar uma ronda nova, e uma mesa acabada de abrir
+> devolveria `0.00`.
+>
+> **Do lado do front-end isto já falha de forma segura:** o `totalJaEnviado()` no `mesa.html`
+> só aceita o `total` se for um número; se vier em falta, soma as linhas ele próprio em vez de
+> mostrar zero. Mostrar `0,00 €` a um cliente que já pediu era pior do que somar à mão.
+
 **Quando uma ronda é cancelada, o stock volta automaticamente** (regra 24 do CONTEXTO). O
 front-end não tem de fazer nada: não pede reposição nem recalcula stock, só muda o estado.
 
@@ -669,7 +703,7 @@ reais documentadas acima.
 |---|---|---|
 | Base de dados | PostgreSQL + SQL à mão | **MySQL**, com `schema.sql` e `seed.sql` versionados |
 | Camada de acesso | Prisma ORM | **`mysql2` com pool de ligações** — o Prisma saiu do projeto a 02/09 |
-| Nº de tabelas | 16 | **17** |
+| Nº de tabelas | 16 | **17**, confirmado no `schema.sql` |
 | Stock | não existia | **existe**, e desce em `confirmado` / volta em `cancelado` (regra 24) |
 | Utilizadores e níveis | não existia | **existe** — é de lá que sai o `nivel` do login |
 | Reservas | não existia | **existe** |
