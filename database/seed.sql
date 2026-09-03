@@ -10,6 +10,7 @@
 --    25 produtos (nomes, descricoes e precos reais da ementa)
 --    15 registos de stock (bebidas e sobremesas)
 --    10 mesas com token de QR Code
+--    3  sessoes de mesa (uma fechada, duas abertas)
 --    12 slots horarios (5 de almoco + 7 de jantar)
 --    3  utilizadores (1 administrador + 2 funcionarios)
 --    4  pedidos de exemplo com itens e historico de estados
@@ -20,6 +21,7 @@ USE vem_pro_abate;
 
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE item_reserva;
+TRUNCATE TABLE sessao_mesa;
 TRUNCATE TABLE reserva;
 TRUNCATE TABLE historico_estado_pedido;
 TRUNCATE TABLE notificacao;
@@ -60,23 +62,27 @@ INSERT INTO categoria (id_categoria, nome, descricao, ordem, ativo) VALUES
 --  Precos e descricoes retirados da ementa real do restaurante.
 -- =====================================================================
 
+-- NOTA: as imagens sao .jpg desde 02/09. O Guilherme converteu-as de
+-- PNG para JPG e o repositorio passou de 38,6 MB para 3,6 MB. Os
+-- caminhos abaixo acompanham essa mudanca.
+
 -- ---- Entradas -------------------------------------------------------
 INSERT INTO produto
  (id_produto, id_categoria, nome, descricao, preco, imagem_url, disponivel, tempo_preparacao, controla_stock, ativo) VALUES
- (1, 1, 'Abatata Frita',    'Batatas rusticas com tempero da casa e maionese de alho', 3.90, 'assets/imagens/pratos/abatata_frita.png',   1, 10, 0, 1),
- (2, 1, 'Vem Pro Abacate',  'Entrada com abacate, guacamole ou tosta',                 5.80, 'assets/imagens/pratos/vem_pro_abacate.png', 1, 10, 0, 1),
- (3, 1, 'Vem pro Alho',     'Pao de alho no forno',                                    3.20, 'assets/imagens/pratos/vem_pro_alho.png',    1,  8, 0, 1),
- (4, 1, 'Abate-Boca',       'Mini croquetes de novilho',                               4.50, 'assets/imagens/pratos/abate_boca.png',      1, 12, 0, 1);
+ (1, 1, 'Abatata Frita',    'Batatas rusticas com tempero da casa e maionese de alho', 3.90, 'assets/imagens/pratos/abatata_frita.jpg',   1, 10, 0, 1),
+ (2, 1, 'Vem Pro Abacate',  'Entrada com abacate, guacamole ou tosta',                 5.80, 'assets/imagens/pratos/vem_pro_abacate.jpg', 1, 10, 0, 1),
+ (3, 1, 'Vem pro Alho',     'Pao de alho no forno',                                    3.20, 'assets/imagens/pratos/vem_pro_alho.jpg',    1,  8, 0, 1),
+ (4, 1, 'Abate-Boca',       'Mini croquetes de novilho',                               4.50, 'assets/imagens/pratos/abate_boca.jpg',      1, 12, 0, 1);
 
 -- ---- Pratos Principais ----------------------------------------------
 INSERT INTO produto
  (id_produto, id_categoria, nome, descricao, preco, imagem_url, disponivel, tempo_preparacao, controla_stock, ativo) VALUES
- (5,  2, 'Borrego Abatido',        'Borrego assado com batata, alecrim, alho e vinho branco', 15.50, 'assets/imagens/pratos/borrego_abatido.png',        1, 30, 0, 1),
- (6,  2, 'Francesinha em K.O.',    'Bife, enchidos, queijo e molho da casa com batata e ovo', 12.20, 'assets/imagens/pratos/francesinha_em_ko.png',      1, 20, 0, 1),
+ (5,  2, 'Borrego Abatido',        'Borrego assado com batata, alecrim, alho e vinho branco', 15.50, 'assets/imagens/pratos/borrego_abatido.jpg',        1, 30, 0, 1),
+ (6,  2, 'Francesinha em K.O.',    'Bife, enchidos, queijo e molho da casa com batata e ovo', 12.20, 'assets/imagens/pratos/francesinha_em_ko.jpg',      1, 20, 0, 1),
  (7,  2, 'Abate Misto',            'Picanha, chourico e frango na brasa com arroz e batata',  16.20, 'assets/imagens/pratos/prato_favorito.jpg',         1, 25, 0, 1),
  (8,  2, 'Prega-me Isto',          'Bife dos Acores com batata frita',                        16.90, 'assets/imagens/pratos/prego.jpg',                  1, 20, 0, 1),
- (9,  2, 'Picanha na Brasa Negra', 'Picanha grelhada com arroz e batata frita',                16.00, 'assets/imagens/pratos/picanha_na_brasa_negra.png', 1, 25, 0, 1),
- (10, 2, 'Tabua Rustica do Abate', 'Carnes mistas com migas e batata a murro',                 17.80, 'assets/imagens/pratos/tabua_rustica_do_abate.png', 1, 30, 0, 1);
+ (9,  2, 'Picanha na Brasa Negra', 'Picanha grelhada com arroz e batata frita',                16.00, 'assets/imagens/pratos/picanha_na_brasa_negra.jpg', 1, 25, 0, 1),
+ (10, 2, 'Tabua Rustica do Abate', 'Carnes mistas com migas e batata a murro',                 17.80, 'assets/imagens/pratos/tabua_rustica_do_abate.jpg', 1, 30, 0, 1);
 
 -- ---- Bebidas --------------------------------------------------------
 INSERT INTO produto
@@ -96,10 +102,10 @@ INSERT INTO produto
 -- ---- Sobremesas -----------------------------------------------------
 INSERT INTO produto
  (id_produto, id_categoria, nome, descricao, preco, imagem_url, disponivel, tempo_preparacao, controla_stock, ativo) VALUES
- (22, 4, 'Abategatoue',         'Petit gateau com gelado e chocolate', 5.20, 'assets/imagens/pratos/abategatoue.png',       1, 12, 1, 1),
- (23, 4, 'Baba do Pastor',      'Baba de camelo com bolacha',          3.90, 'assets/imagens/pratos/baba_do_pastor.png',    1,  5, 1, 1),
- (24, 4, 'Cheesecake da Casa',  'Cheesecake com frutos vermelhos',     4.60, 'assets/imagens/pratos/cheesecake_da_casa.png',1,  5, 1, 1),
- (25, 4, 'Taca Gelada da Casa', 'Gelados, chantilly e chocolate',      4.20, 'assets/imagens/pratos/taca_gelada_da_casa.png',1, 5, 1, 1);
+ (22, 4, 'Abategatoue',         'Petit gateau com gelado e chocolate', 5.20, 'assets/imagens/pratos/abategatoue.jpg',       1, 12, 1, 1),
+ (23, 4, 'Baba do Pastor',      'Baba de camelo com bolacha',          3.90, 'assets/imagens/pratos/baba_do_pastor.jpg',    1,  5, 1, 1),
+ (24, 4, 'Cheesecake da Casa',  'Cheesecake com frutos vermelhos',     4.60, 'assets/imagens/pratos/cheesecake_da_casa.jpg',1,  5, 1, 1),
+ (25, 4, 'Taca Gelada da Casa', 'Gelados, chantilly e chocolate',      4.20, 'assets/imagens/pratos/taca_gelada_da_casa.jpg',1, 5, 1, 1);
 
 -- controla_stock = 1 apenas nas bebidas e sobremesas: sao coisas que
 -- se compram feitas e podem esgotar. Um bife grelhado na hora nao tem
@@ -199,21 +205,39 @@ INSERT INTO funcionario (id_funcionario, id_utilizador, cargo, data_contratacao)
 
 
 -- =====================================================================
+--  SESSOES DE MESA
+--  Uma sessao e a refeicao inteira: abre quando o cliente le o QR Code
+--  e fecha quando pede a conta. Agrupa varias rondas de pedidos.
+-- =====================================================================
+INSERT INTO sessao_mesa
+ (id_sessao, codigo_sessao, id_mesa, num_pessoas, estado, valor_total, id_funcionario, aberta_em, fechada_em) VALUES
+ (1, 'SES-8H3K1', 3, 2, 'fechada', 0.00,    3, '2026-08-31 20:10:00', '2026-08-31 21:05:00'),
+ (2, 'SES-2M9P4', 6, 4, 'aberta',  0.00, NULL, '2026-09-01 12:38:00', NULL),
+ (3, 'SES-6R1T7', 9, 6, 'aberta',  0.00, NULL, '2026-09-01 13:00:00', NULL);
+
+-- Os valores ficam a zero aqui e sao calculados no fim, a partir dos
+-- pedidos. Assim nunca ha dois numeros diferentes para a mesma coisa.
+
+
+-- =====================================================================
 --  PEDIDOS DE EXEMPLO
 --  Quatro pedidos em estados diferentes, para o dashboard ter dados
 --  logo no primeiro dia em vez de aparecer vazio.
 -- =====================================================================
 INSERT INTO pedido
- (id_pedido, numero_pedido, id_cliente, id_mesa, id_funcionario, tipo_pedido, estado,
+ (id_pedido, numero_pedido, id_cliente, id_mesa, id_sessao, id_funcionario, tipo_pedido, estado,
   data_hora, valor_total, nome_convidado, telefone_convidado, observacoes) VALUES
- (1, 'PED-4K9M2', NULL, 3,    2, 'restaurante', 'entregue',
+ (1, 'PED-4K9M2', NULL, 3,    1,    2, 'restaurante', 'entregue',
   '2026-08-31 20:14:00', 38.80, NULL, NULL, NULL),
- (2, 'PED-7X3B8', NULL, 6,    2, 'restaurante', 'em_preparacao',
+ (2, 'PED-7X3B8', NULL, 6,    2,    2, 'restaurante', 'em_preparacao',
   '2026-09-01 12:41:00', 33.50, NULL, NULL, 'Sem cebola no prego, por favor'),
- (3, 'PED-2N5Q7', NULL, NULL, 3, 'take_away',   'pronto',
+ (3, 'PED-2N5Q7', NULL, NULL, NULL, 3, 'take_away',   'pronto',
   '2026-09-01 12:52:00', 22.00, 'Andreia Costa', '913456789', NULL),
- (4, 'PED-9H1L4', NULL, 9,    NULL, 'restaurante', 'recebido',
+ (4, 'PED-9H1L4', NULL, 9,    3, NULL, 'restaurante', 'recebido',
   '2026-09-01 13:05:00', 56.00, NULL, NULL, 'Aniversario - trazer vela na sobremesa');
+
+-- O pedido 3 e take away: nao pertence a sessao nenhuma (id_sessao NULL).
+-- Os outros tres sao rondas dentro das sessoes 1, 2 e 3.
 
 INSERT INTO item_pedido (id_pedido, id_produto, quantidade, preco_unitario, subtotal, observacoes) VALUES
  -- Pedido 1 (entregue)
@@ -251,7 +275,16 @@ INSERT INTO historico_estado_pedido (id_pedido, estado, id_funcionario, data_hor
  (3, 'pronto',           2, '2026-09-01 13:18:00'),
  (4, 'recebido',      NULL, '2026-09-01 13:05:00');
 
--- As mesas dos pedidos que ainda estao a decorrer ficam ocupadas.
+-- O valor de cada sessao e a soma das rondas dela.
+UPDATE sessao_mesa s
+SET valor_total = (
+  SELECT COALESCE(SUM(p.valor_total), 0)
+  FROM pedido p
+  WHERE p.id_sessao = s.id_sessao AND p.estado <> 'cancelado'
+)
+WHERE s.id_sessao > 0;
+
+-- As mesas com sessao aberta ficam ocupadas.
 UPDATE mesa SET estado = 'ocupada' WHERE id_mesa IN (6, 9);
 
 
@@ -297,6 +330,7 @@ SELECT 'categorias'   AS tabela, COUNT(*) AS total FROM categoria
 UNION ALL SELECT 'produtos',      COUNT(*) FROM produto
 UNION ALL SELECT 'stock',         COUNT(*) FROM stock
 UNION ALL SELECT 'mesas',         COUNT(*) FROM mesa
+UNION ALL SELECT 'sessoes',       COUNT(*) FROM sessao_mesa
 UNION ALL SELECT 'slots',         COUNT(*) FROM slot_horario
 UNION ALL SELECT 'utilizadores',  COUNT(*) FROM utilizador
 UNION ALL SELECT 'funcionarios',  COUNT(*) FROM funcionario
