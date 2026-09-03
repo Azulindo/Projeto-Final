@@ -8,7 +8,7 @@ divergem, manda o código — e a divergência está assinalada na secção 6.
 
 > ### ⚠️ Ler primeiro: a secção **3.10** é a que vale
 > A 02/09 o back-end passou de Prisma para `mysql2`, e o estado dos pedidos passou a ser
-> **por ronda** e em **minúsculas**. As secções 2, 3.7 e 3.8 descrevem o modelo Prisma antigo
+> **por ronda** e em **minúsculas**. As secções 3.7 e 3.8 descrevem o modelo antigo
 > e ficam aqui só como histórico — **a 3.10 substitui-as**. O arranque atual é o
 > `backend/src/app.js` (porta 3000, `GET /api/saude`).
 
@@ -48,18 +48,38 @@ O front-end (`frontend/js/api.js`) lê sempre o campo `erro` e mostra-o tal e qu
 
 ---
 
-## 2. Modelo de dados (Prisma · MySQL)
+## 2. Modelo de dados (MySQL)
 
-Fonte: `backend/prisma/schema.prisma`.
+Fonte: `database/schema.sql` na branch `back-end`. **O `schema.prisma` já não existe** — o
+Prisma saiu do projeto a 02/09.
+
+Tabelas na branch `back-end` (lidas a 03/09):
 
 ```
-Mesa          id, numero (único), lugares, qrToken (UUID único), ativa
-Produto       id, nome, descricao?, preco (decimal 8,2), categoria, ativo
-SessaoMesa    id, mesaId, estado, numPessoas?, observacoes?, abertaEm, fechadaEm?
-ItemPedido    id, sessaoId, produtoId, quantidade, precoUnit, observacao?, estado, criadoEm
+utilizador · cliente · funcionario          ← pessoas e login
+categoria  · produto · stock                ← ementa e existências
+mesa       · slot_horario
+pedido     · item_pedido · historico_estado_pedido
+reserva    · item_reserva
+favorito   · avaliacao · notificacao
 ```
 
-**`SessaoMesa.estado`** — `ABERTA` → `AGUARDA_PAGAMENTO` → `FECHADA`
+> ⚠️ **Uma pergunta para o João:** são **16** e não vejo nenhuma tabela de *sessão de mesa*.
+> Tu falaste em 17, portanto a que falta é provavelmente essa — e é a mais importante para
+> este contrato, porque é o que o `GET /mesas/:token/sessao` devolve e o que segura a conta
+> aberta de uma mesa. Presumo que esteja no teu local por enviar. **Confirma o nome dela e
+> os nomes das colunas**, que eu ajusto o documento — em baixo ainda está o nome antigo
+> (`SessaoMesa`) e os campos que combinámos em setembro.
+
+**`SessaoMesa.estado`** — quatro valores, **em minúsculas** (confirmado 03/09):
+
+```
+aberta → aguarda_pagamento → fechada
+       ↘ cancelada
+```
+
+`cancelada` é uma mesa anulada **sem pagar** — o cliente foi-se embora, a sessão foi aberta
+por engano. Não é o mesmo que `fechada`, que foi paga. Nenhuma das duas aceita pedidos novos.
 
 **Estado do pedido (ronda)** — `recebido` → `confirmado` → `em_preparacao` → `pronto` →
 `entregue`, mais `cancelado`. **Ver a secção 3.10**, que é a que vale.
@@ -106,7 +126,7 @@ Verificação de vida do servidor. Sem parâmetros.
 
 ### 3.2 `GET /api/mesas/:token/sessao`
 
-Chamado **quando o cliente lê o QR Code**. Devolve a sessão `ABERTA` da mesa ou, se não
+Chamado **quando o cliente lê o QR Code**. Devolve a sessão `aberta` da mesa ou, se não
 existir nenhuma, cria uma nova. É o arranque de toda a experiência do cliente.
 
 **Erros:** `404` token inválido · `403` mesa desativada
@@ -116,7 +136,7 @@ existir nenhuma, cria uma nova. É o arranque de toda a experiência do cliente.
   "mesa":   { "id": 3, "numero": 3, "lugares": 4 },
   "sessao": {
     "id": 12,
-    "estado": "ABERTA",
+    "estado": "aberta",
     "abertaEm": "2026-09-01T19:32:11.000Z",
     "itens": [
       {
@@ -124,24 +144,29 @@ existir nenhuma, cria uma nova. É o arranque de toda a experiência do cliente.
         "sessaoId": 12,
         "produtoId": 5,
         "quantidade": 2,
-        "precoUnit": "15.50",
+        "precoUnit": 15.50,
         "observacao": null,
         "estado": "PENDENTE",
         "criadoEm": "2026-09-01T19:35:02.000Z",
         "produto": {
           "id": 5, "nome": "Borrego Abatido", "descricao": "Borrego assado com…",
-          "preco": "15.50", "categoria": "Pratos Principais", "ativo": true
+          "preco": 15.50, "categoria": "Pratos Principais", "ativo": true
         }
       }
     ],
-    "total": "31.00"
+    "total": 31.00
   }
 }
 ```
 
-> **Nota sobre decimais:** o Prisma serializa `Decimal` como **string** (`"15.50"`), não como
-> número. O front-end faz `Number(...)` — mantém-se assim, mas é preciso ter isto em conta em
-> qualquer soma feita do lado do servidor.
+> **Nota sobre decimais:** `preco`, `precoUnit`, `subtotal` e `total` são **números**, não
+> strings (confirmado com o João a 03/09 — o `mysql2` devolve número). A nota antiga aqui
+> dizia o contrário porque descrevia o Prisma, que serializava `Decimal` como string e saiu
+> do projeto a 02/09.
+>
+> O front-end continua a chamar `Number(...)` antes de somar — não porque desconfie do
+> servidor, mas porque é uma linha que nunca faz mal e apanha o dia em que alguém mudar de
+> driver outra vez.
 
 ---
 
@@ -166,18 +191,18 @@ Adiciona itens à sessão ativa. É o que acontece quando o cliente carrega em *
 > 🐛 **A corrigir (backend):** um produto inválido a meio da lista rebenta com `500` e
 > mensagem técnica. Devia devolver `400` com `{"erro": "O produto X já não está disponível."}`.
 > Além disso, os itens são criados um a um sem transação — se o terceiro falhar, os dois
-> primeiros já ficaram gravados. Devia ser `prisma.$transaction`.
+> primeiros já ficaram gravados. Devia ser uma transação SQL (`START TRANSACTION` / `COMMIT`).
 
 ---
 
 ### 3.4 `GET /api/mesas/:token/conta`
 
-Conta completa da sessão (`ABERTA` **ou** `AGUARDA_PAGAMENTO`), agrupada por categoria.
+Conta completa da sessão (`aberta` **ou** `aguarda_pagamento`), agrupada por categoria.
 
 ```json
 {
   "mesa":   { "numero": 3 },
-  "sessao": { "id": 12, "estado": "ABERTA", "abertaEm": "2026-09-01T19:32:11.000Z" },
+  "sessao": { "id": 12, "estado": "aberta", "abertaEm": "2026-09-01T19:32:11.000Z" },
   "porCategoria": {
     "Pratos Principais": [
       { "id": 45, "nome": "Borrego Abatido", "quantidade": 2, "precoUnit": 15.5,
@@ -185,7 +210,7 @@ Conta completa da sessão (`ABERTA` **ou** `AGUARDA_PAGAMENTO`), agrupada por ca
         "criadoEm": "2026-09-01T19:35:02.000Z" }
     ]
   },
-  "total": "31.00",
+  "total": 31.00,
   "numItens": 2
 }
 ```
@@ -196,7 +221,7 @@ Conta completa da sessão (`ABERTA` **ou** `AGUARDA_PAGAMENTO`), agrupada por ca
 
 ### 3.5 `POST /api/mesas/:token/pedir-conta`
 
-O cliente pede a conta → a sessão passa a `AGUARDA_PAGAMENTO`.
+O cliente pede a conta → a sessão passa a `aguarda_pagamento`.
 
 ```json
 { "mensagem": "Conta pedida! Um empregado irá ter consigo em breve. 🧾" }
@@ -208,14 +233,14 @@ O cliente pede a conta → a sessão passa a `AGUARDA_PAGAMENTO`.
 
 ### 3.6 `GET /api/pedidos/ativos`
 
-Todas as mesas com sessão `ABERTA` ou `AGUARDA_PAGAMENTO`. Alimenta o painel geral da app
+Todas as mesas com sessão `aberta` ou `aguarda_pagamento`. Alimenta o painel geral da app
 de gestão (**F-45**).
 
 ```json
 [
-  { "sessaoId": 12, "estado": "ABERTA", "abertaEm": "2026-09-01T19:32:11.000Z",
+  { "sessaoId": 12, "estado": "aberta", "abertaEm": "2026-09-01T19:32:11.000Z",
     "mesa": { "id": 3, "numero": 3, "lugares": 4 },
-    "numItens": 2, "total": "31.00", "temPendentes": true }
+    "numItens": 2, "total": 31.00, "temPendentes": true }
 ]
 ```
 
@@ -255,7 +280,7 @@ Itens `PENDENTE` e `EM_PREPARACAO`, do mais antigo para o mais recente. Ecrã da
 
 ### 3.9 `POST /api/pedidos/sessao/:id/fechar`
 
-O funcionário fecha a mesa depois de receber o pagamento. `estado → FECHADA`, grava `fechadaEm`.
+O funcionário fecha a mesa depois de receber o pagamento. `estado → fechada`, grava `fechadaEm`.
 
 ```json
 { "mensagem": "Mesa fechada com sucesso! ✅", "sessao": { "...": "SessaoMesa" } }
@@ -422,13 +447,14 @@ balcão diz *"1 item"*, não *"2 itens"*.
 cliente que alguma coisa desapareceu sem dizer o quê — é pior do que não dizer nada, porque
 ele fica a perguntar-se o que foi. Com o nome à frente, a pergunta não chega a existir.
 
-#### Nota lateral: os estados da sessão
+#### Os estados da sessão — respondido a 03/09
 
-Os do *pedido* estão fechados (minúsculas). Os da *sessão* — `ABERTA`, `AGUARDA_PAGAMENTO`,
-`FECHADA` no plano original (secção 2) — nunca foram confirmados contra a base de dados.
+São **quatro** e em minúsculas: `aberta`, `aguarda_pagamento`, `fechada`, **`cancelada`**.
+O plano antigo tinha três e em maiúsculas — faltava-me o `cancelada`, que já está tratado
+no `api.js` (uma sessão cancelada não aceita pedidos nem aparece nas mesas ativas).
 
-**Não bloqueia nada:** o front-end compara-os com `estadoIgual()` (em `frontend/js/api.js`),
-que ignora maiúsculas. Funciona nos dois casos e não há nada a mudar quando se souber.
+O `estadoIgual()` continua lá, apesar de a convenção estar fechada: custa nada, e o dia em
+que alguém escrever `Aberta` numa migração, o ecrã não parte por causa de uma maiúscula.
 
 ---
 
@@ -441,7 +467,7 @@ por agora responde com dados simulados. Assim que existirem no servidor, basta p
 ### 4.1 `POST /api/auth/login` — **prioridade máxima**
 
 Sem isto, a app de gestão (`frontend/funcionarios/`) não sai do modo de demonstração.
-Requer também uma tabela de utilizadores, que **ainda não existe no `schema.prisma`**.
+A tabela de utilizadores **já existe** (`utilizador` + `funcionario`), e é de lá que sai o `nivel`.
 
 **Body:** `{ "email": "…", "password": "…" }`
 
@@ -482,7 +508,16 @@ O token vai depois em todos os pedidos no cabeçalho `Authorization: Bearer <tok
 (o `api.js` já o anexa sozinho). Validade sugerida: **8 horas** — é o valor que o front-end
 assume ao mostrar a contagem decrescente da sessão.
 
-### 4.2 `GET /api/produtos` — **bloqueia o ecrã da mesa**
+### 4.2 `GET /api/produtos` e `GET /api/categorias` — **a ser feitos agora**
+
+> **03/09 — o João está a fazer estes dois a seguir.** Quando estiverem de pé, é só pôr
+> `MODO_SIMULACAO = false` no `api.js` e o menu do `mesa.html` passa a vir da base de dados.
+>
+> Duas coisas já confirmadas, que não é preciso pedir:
+> · **`imagem_url` já existe** na tabela e está preenchida com os caminhos certos. O
+>   `mesa.html` já a lê e só usa a tabela de nomes que tem lá dentro como rede.
+> · **`categoria` vem como texto** (`"Entradas"`), não como id. Na base de dados é uma
+>   tabela; a API entrega a string, como estava escrito.
 
 **Não existe nenhum endpoint que exponha o catálogo.** Sem ele, o `mesa.html` não consegue
 mostrar o menu com dados reais — e, mais importante, não consegue saber os `produtoId` que
@@ -494,7 +529,8 @@ tem de enviar no `POST /pedir`.
 ```json
 [
   { "id": 1, "nome": "Abatata Frita", "descricao": "Batatas rústicas…",
-    "preco": "3.90", "categoria": "Entradas", "ativo": true }
+    "preco": 3.90, "categoria": "Entradas", "ativo": true,
+    "imagem_url": "assets/imagens/pratos/abatata_frita.jpg" }
 ]
 ```
 
@@ -507,10 +543,31 @@ tem de enviar no `POST /pedir`.
 Devolve os dados do funcionário da sessão a partir do token. Usado para revalidar a sessão
 ao abrir a app. `{ "nome": "…", "nivel": "…" }` · `401` se o token não prestar.
 
-### 4.4 `POST /api/mesas/:token/chamar-empregado`
+### 4.4 `POST /api/mesas/:token/chamar-empregado` — **desenho fechado a 03/09**
 
-O botão já existe no `mesa.html`. Devia criar uma notificação visível no painel de gestão.
-Resposta sugerida: `{ "mensagem": "Um empregado foi avisado." }`
+O botão já existe no `mesa.html`. Falta o sítio onde guardar o aviso.
+
+**Proposta do João, aceite:** dois campos na própria sessão em vez de uma tabela nova —
+`chamou_empregado` e a hora — que o balcão limpa quando atende.
+
+Chega, e é melhor do que uma tabela. Uma chamada não tem história: ou está por atender ou
+não está. Guardá-la numa tabela obrigava a decidir quando apagar linhas antigas, e isso era
+trabalho para não ganhar nada.
+
+**O que o front-end precisa que venha no `GET /pedidos/ativos`:** os dois campos, para o
+cartão da mesa poder acender. Já existe lá o `temPendentes` para efeito parecido.
+
+```json
+{ "sessaoId": 12, "estado": "aberta",
+  "chamou_empregado": true, "chamou_empregado_em": "2026-09-03T20:14:02.000Z", … }
+```
+
+**Do lado do balcão** o cartão passa a ter um terceiro aviso, a par de "💳 Pediu a conta" e
+"🔔 Por preparar" — e a hora interessa mesmo: uma chamada de há 30 segundos e uma de há
+oito minutos não são a mesma coisa para quem está a decidir a que mesa vai primeiro.
+
+**Limpar:** `POST /api/gestao/sessoes/:id/atendida` (ou o nome que preferires) — o balcão
+chama-o quando alguém vai à mesa.
 
 ### 4.5 Reservas — **nada disto existe ainda**
 
@@ -535,10 +592,10 @@ o token é o que dá acesso à conta da mesa, não pode andar exposto.
 ]
 ```
 
-Implementação sugerida: `prisma.mesa.findMany({ where: { ativa: true }, orderBy: { numero: 'asc' } })`.
+Implementação sugerida: `SELECT ... FROM mesa WHERE ativa = 1 ORDER BY numero`.
 
 > Existe também o caminho por terminal: `npm run qrcodes -- https://o-site.pt` gera um PNG
-> por mesa em `backend/qrcodes/` (ficheiro `backend/prisma/gerarQRCodes.js`, tarefa B-65).
+> por mesa em `backend/qrcodes/` (ficheiro `backend/prisma/gerarQRCodes.js` — o nome da pasta ficou do tempo do Prisma, tarefa B-65).
 
 ### 4.7 `GET /api/gestao/sessoes/:id/conta` — **bloqueia o detalhe no balcão**
 
@@ -555,11 +612,11 @@ A resposta é igual à do 3.4:
 ```json
 {
   "mesa":   { "numero": 5 },
-  "sessao": { "id": 12, "estado": "AGUARDA_PAGAMENTO", "abertaEm": "…" },
+  "sessao": { "id": 12, "estado": "aguarda_pagamento", "abertaEm": "…" },
   "porCategoria": { "Pratos Principais": [ { "id": 45, "nome": "…", "quantidade": 3,
                      "precoUnit": 15.5, "subtotal": 46.5, "estado": "PENDENTE",
                      "observacao": null, "criadoEm": "…" } ] },
-  "total": "46.50",
+  "total": 46.50,
   "numItens": 3
 }
 ```
@@ -599,31 +656,65 @@ reais documentadas acima.
 
 ---
 
-## 6. Divergências entre o planeamento e o código real
+## 6. Onde está o projeto (atualizado a 03/09)
 
-Ficam registadas aqui para não haver surpresas na apresentação. **Não são erros** — o código
-seguiu um caminho mais simples e coerente. O que interessa é que os documentos deixem de
-dizer o contrário.
+> **Esta secção estava a mentir.** Até 03/09 descrevia um back-end de **4 tabelas em Prisma,
+> sem stock, sem autenticação e sem reservas**, e recomendava manter o âmbito reduzido. Isso
+> era verdade em 01/09. O João reescreveu tudo entretanto e avisou: *"quem ler pensa que o
+> projeto é um quarto do que é"*. Tinha razão. Fica corrigida.
 
-| Tema | `CONTEXTO.md` / `TAREFAS.md` diziam | O que existe mesmo |
+### O que existe mesmo
+
+| Tema | O plano dizia | O que corre hoje |
 |---|---|---|
-| Base de dados | PostgreSQL (Neon/Supabase) + SQL escrito à mão | **MySQL + Prisma ORM** |
-| Nº de tabelas | 16 | **4** (`Mesa`, `Produto`, `SessaoMesa`, `ItemPedido`) |
-| Modelo de pedido | `PEDIDO` + `HISTORICO_ESTADO_PEDIDO` | **`SessaoMesa`** (uma refeição) + itens com estado próprio |
-| Interface do cliente | conversa guiada (`pedido.html`, motor de fluxos) | **menu + carrinho** (`mesa.html`) — sem motor de fluxos |
-| Categorias | tabela `CATEGORIA` com `grupo_ementa` | campo de texto em `Produto` |
-| Stock, favoritos, avaliações, notificações | tabelas próprias | **não existem** |
-| Autenticação | JWT + bcrypt + níveis | **não existe** (front-end em simulação) |
-| Reservas | tabelas + motor de fluxo | **não existem** (front-end em `localStorage`) |
+| Base de dados | PostgreSQL + SQL à mão | **MySQL**, com `schema.sql` e `seed.sql` versionados |
+| Camada de acesso | Prisma ORM | **`mysql2` com pool de ligações** — o Prisma saiu do projeto a 02/09 |
+| Nº de tabelas | 16 | **17** |
+| Stock | não existia | **existe**, e desce em `confirmado` / volta em `cancelado` (regra 24) |
+| Utilizadores e níveis | não existia | **existe** — é de lá que sai o `nivel` do login |
+| Reservas | não existia | **existe** |
+| Sessões de mesa | — | **existe** |
+| Histórico de estados | tabela planeada, não feita | **existe** |
+| Totais | cada endpoint somava por si | **vista `vw_total_sessao`** — um só cálculo para todos (3.10.4) |
+| Interface do cliente | conversa guiada (`pedido.html`) | **menu + carrinho** (`mesa.html`) |
 
-**Recomendação:** manter o âmbito reduzido que o código já tem — 4 tabelas bem feitas valem
-mais do que 16 por acabar — e atualizar o `CONTEXTO.md` para refletir isto, em vez de tentar
-construir o que lá está escrito.
+**Não há nada a recomendar reduzir.** O que falta não são tabelas, são os *endpoints* que
+expõem o que já lá está — é isso que a secção 4 lista, e é essa a fila de trabalho.
 
-### Sugestões de alterações ao schema
+### Perguntas de contrato — todas fechadas (03/09)
 
-1. **`Produto.imagem`** (`String?`) — o front-end mostra fotografias dos pratos e neste momento
-   adivinha o ficheiro a partir do nome do produto. Uma coluna com o caminho
-   (`assets/imagens/pratos/borrego_abatido.png`) resolve isto de vez.
-2. **Tabela de utilizadores** — necessária para o 4.1.
-3. **`Mesa.numero` no seed** já é único; manter assim, o front-end mostra-o ao cliente.
+| Pergunta | Resposta do João |
+|---|---|
+| `preco` é texto ou número? | **Número.** O driver devolve número; o contrato já não leva aspas |
+| A coluna da imagem existe? | **Sim, `imagem_url`**, já preenchida com os caminhos certos |
+| `categoria` vem id ou nome? | **Nome em texto** (`"Entradas"`). Na base é tabela, na API é string |
+| Estados da sessão | **Quatro, minúsculas:** `aberta`, `aguarda_pagamento`, `fechada`, `cancelada` |
+| Login por posto de trabalho? | **Aceite.** `nivel` sai do cargo: `cozinheiro`→`cozinha`, `empregado_mesa`→`balcao`, `administrador`/`gerente`→`administrador` |
+
+O `preco` **é número em todo este documento**. Onde antes aparecia `"3.90"` entre aspas, era
+por causa do Prisma, que serializava `Decimal` como string. Guardar um preço em texto e voltar
+a convertê-lo é como se ganha o clássico `"16.20" + "1.00" = "16.201.00"` — e num sistema que
+cobra dinheiro a clientes isso não é um erro de formatação, é um erro de conta.
+
+---
+
+## 7. Uma regra que nos custou caro
+
+**Antes de mudar o nome de um ficheiro em `assets/`, procura em TODAS as branches — não só
+na tua.**
+
+A 02/09 converti 12 fotografias de `.png` para `.jpg`. Antes de o fazer, procurei referências
+a esses ficheiros no código e não encontrei nenhuma fora do front-end. A busca estava certa;
+o **âmbito** é que estava errado — procurei só no meu working tree, e o `database/seed.sql`
+que referencia essas imagens vive na branch do João. Doze caminhos ficaram a apontar para
+ficheiros que já não existiam, e as fotos dos pratos iam desaparecer no merge.
+
+A busca que eu devia ter feito:
+
+```bash
+git fetch --all
+git grep -l "nome_do_ficheiro" $(git branch -r --format="%(refname:short)")
+```
+
+E, independentemente da busca: **quando um nome de ficheiro que a base de dados guarda muda,
+avisa-se a outra pessoa.** Não é a ferramenta que apanha isto, é o aviso.

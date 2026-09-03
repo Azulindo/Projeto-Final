@@ -1,0 +1,130 @@
+/* =====================================================================
+   nav.css — Barra de navegação em ecrãs pequenos
+   =====================================================================
+   Carregada DEPOIS da folha de cada página, porque é isso que lhe
+   permite corrigir as regras antigas (que usam !important).
+
+   ── O PROBLEMA QUE ISTO RESOLVE ─────────────────────────────────────
+   A barra tentava manter o menu aos lados do logótipo, como no
+   computador, encolhendo a letra até caber: 12px → 11px → 9px → 8px,
+   e 5px na página "Sobre". Medido a 320px, as ligações ficavam com
+   16×5 píxeis. Ninguém acerta num alvo desses, e ninguém lê letra de
+   5px — o menu existia mas não se podia usar.
+
+   ── O QUE FAZ AGORA ─────────────────────────────────────────────────
+   Abaixo de 768px a barra passa a ter duas linhas: o logótipo em cima,
+   o menu inteiro por baixo, centrado. Ganha-se largura suficiente para
+   a letra voltar a 15px e para cada ligação ter 44px de altura — o
+   mínimo recomendado pela Apple e pela WCAG para algo em que se toca
+   com o dedo.
+
+   Nada disto mexe no computador: acima de 768px fica tudo como estava.
+
+   ── PORQUÊ SEM MENU HAMBÚRGUER ──────────────────────────────────────
+   São cinco ligações. Cabem todas numa linha a 320px. Esconder cinco
+   coisas atrás de um botão que é preciso descobrir e tocar seria dar
+   mais trabalho ao cliente, não menos.
+   ===================================================================== */
+
+@media (max-width: 768px) {
+
+  /* A barra passa a ter duas linhas. Como a altura vem desta variável
+     e é ela que as páginas usam para se afastarem do topo, muda-se
+     aqui e tudo o resto acompanha sozinho. */
+  :root { --topbar: 108px; }
+
+  .inline-bar {
+    height: var(--topbar) !important;
+  }
+
+  .inline-content {
+    height: 100% !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    align-content: center !important;
+    padding: 6px 10px !important;
+    row-gap: 2px !important;
+    column-gap: 4px !important;
+  }
+
+  /* Logótipo sozinho na primeira linha */
+  .logo-center {
+    order: 1 !important;
+    flex: 0 0 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    position: static !important;   /* algumas folhas centravam-no em absoluto */
+    transform: none !important;
+    left: auto !important;
+    margin: 0 !important;
+  }
+
+  .logo-center img {
+    height: 40px !important;
+    width: auto !important;
+    max-width: 150px !important;
+    object-fit: contain !important;
+  }
+
+  /* Menu todo na segunda linha, os dois blocos lado a lado */
+  .inline-nav.left  { order: 2 !important; }
+  .inline-nav.right { order: 3 !important; }
+
+  .inline-nav {
+    flex: 0 0 auto !important;
+    gap: 2px !important;
+    opacity: 1 !important;
+  }
+
+  /* O que interessa: letra legível e alvo de 44px */
+  .inline-nav a {
+    font-size: 15px !important;
+    line-height: 1 !important;
+    letter-spacing: 0.2px !important;
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 0 9px !important;
+    color: #e8e8e8 !important;
+    white-space: nowrap !important;
+  }
+
+  .inline-nav a:active { color: #fff !important; }
+}
+
+/* ── Outros alvos de toque ────────────────────────────────────────
+   O mesmo problema fora da barra: ligações com 12 a 17 píxeis de
+   altura. Aumenta-se a área tocável sem mexer no tamanho do texto,
+   por isso o aspeto quase não muda — o que muda é acertar-lhes.     */
+@media (max-width: 768px) {
+
+  .logo-center      { min-height: 44px !important; }
+
+  .hero-fixo .btn,
+  a.btn             { min-height: 44px !important; display: inline-flex !important;
+                      align-items: center !important; justify-content: center !important; }
+
+  .footer-social a  { min-height: 44px !important; min-width: 44px !important;
+                      display: inline-flex !important; align-items: center !important;
+                      justify-content: center !important; padding: 0 8px !important; }
+
+  .footer-staff a   { min-height: 44px !important; display: inline-flex !important;
+                      align-items: center !important; font-size: 13px !important; }
+
+  .footer-staff     { margin: 0 !important; }
+}
+
+/* Telemóveis mesmo estreitos (iPhone SE e afins). A letra NÃO volta a
+   encolher abaixo de 14px — se não couber, prefere-se que passe para a
+   linha de baixo do que ficar ilegível. */
+@media (max-width: 380px) {
+  :root { --topbar: 112px; }
+
+  .inline-nav a {
+    font-size: 14px !important;
+    padding: 0 6px !important;
+  }
+
+  .inline-content { column-gap: 0 !important; }
+}

@@ -234,11 +234,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const CAMINHO_IMAGENS = '../../assets/imagens/pratos/';
 
+  /* O `imagem_url` que a API devolve é relativo à raiz do site
+     ("assets/imagens/..."), e esta página está dois níveis abaixo. */
+  const RAIZ_SITE = '../../';
+
   /* Imagens por nome de produto.
      Solução temporária: a tabela `Produto` ainda não tem coluna de
-     imagem (ver sugestão 1 em docs/API.md secção 6). Assim que existir
-     `produto.imagem`, esta tabela pode desaparecer — o código já
-     prefere `produto.imagem` quando ele vier preenchido. */
+     imagem no que o front-end recebe. A coluna `imagem_url` JÁ EXISTE
+     na base de dados e está preenchida; assim que o GET /produtos
+     estiver ligado, esta tabela pode desaparecer. */
   const IMAGENS_POR_NOME = {
     'Abatata Frita':            'abatata_frita.jpg',
     'Vem Pro Abacate':          'vem_pro_abacate.jpg',
@@ -431,8 +435,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function ficheiroImagem(produto) {
-    // Quando a coluna Produto.imagem existir, é ela que manda.
-    if (produto.imagem) return produto.imagem;
+    // A coluna existe e chama-se `imagem_url` (confirmado com o João a
+    // 03/09) — é ela que manda. A tabela em baixo é só a rede para
+    // enquanto o GET /produtos não estiver ligado.
+    if (produto.imagem_url) return RAIZ_SITE + produto.imagem_url;
     const ficheiro = IMAGENS_POR_NOME[produto.nome];
     return ficheiro ? CAMINHO_IMAGENS + ficheiro : null;
   }
