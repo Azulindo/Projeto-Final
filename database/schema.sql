@@ -526,8 +526,48 @@ CREATE TABLE notificacao (
 
 
 -- =====================================================================
+--  VISTA: vw_total_sessao
+--  O total de uma sessao, calculado UMA vez so.
+--
+--  PORQUE EXISTE:
+--    O total de uma mesa aparece em varios sitios — no ecra do cliente,
+--    na conta, no painel do balcao e nas estatisticas. Se cada um
+--    somasse por sua conta, mais cedo ou mais tarde dois deles davam
+--    numeros diferentes para a mesma mesa. Num restaurante nao ha erro
+--    pior: o cliente ve um valor e o balcao ve outro.
+--
+--    Com esta vista, todos leem a mesma soma. Nao e "concordam por
+--    sorte" — e impossivel discordarem, porque e literalmente o mesmo
+--    SQL a correr.
+--
+--  AS RONDAS CANCELADAS NAO CONTAM.
+--    Nem para o total, nem para o numero de itens. A cozinha nao fez o
+--    prato, o cliente nao paga, e o balcao nao ve o item na conta.
+--
+--  O LEFT JOIN e de proposito: uma sessao acabada de abrir ainda nao
+--  tem pedidos nenhuns e tem de aparecer na mesma, com total 0.
+-- =====================================================================
+CREATE OR REPLACE VIEW vw_total_sessao AS
+SELECT s.id_sessao,
+       COALESCE(SUM(i.subtotal), 0)      AS total,
+       COALESCE(SUM(i.quantidade), 0)    AS num_itens,
+       COUNT(DISTINCT p.id_pedido)       AS rondas
+FROM sessao_mesa s
+LEFT JOIN pedido p
+       ON p.id_sessao = s.id_sessao
+      AND p.estado <> 'cancelado'
+LEFT JOIN item_pedido i
+       ON i.id_pedido = p.id_pedido
+GROUP BY s.id_sessao;
+
+-- Enquanto a sessao esta aberta, e SEMPRE daqui que sai o total.
+-- A coluna sessao_mesa.valor_total so e escrita quando a conta fecha:
+-- passa a ser a fotografia do que foi pago, e nao muda mais, mesmo que
+-- os precos dos produtos mudem amanha.
+
+-- =====================================================================
 --  VERIFICACAO
---  Depois de correr, isto deve devolver 17 linhas.
+--  Depois de correr, isto deve devolver 17 linhas (a vista nao conta).
 -- =====================================================================
 SELECT TABLE_NAME AS tabela, TABLE_ROWS AS linhas
 FROM information_schema.TABLES

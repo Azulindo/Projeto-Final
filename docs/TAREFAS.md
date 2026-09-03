@@ -2,7 +2,7 @@
 
 **Projeto Final de Curso** · João Ribeiro & Guilherme Gonçalves
 **Documentos relacionados:** `CONTEXTO.md` (o quê e porquê) · `PLANEAMENTO.md` (calendário e sprints)
-**Versão:** 1.3 · **Última revisão:** 1 de setembro de 2026
+**Versão:** 1.4 · **Última revisão:** 1 de setembro de 2026
 
 ---
 
@@ -10,11 +10,11 @@
 
 | | Feito | Parcial | Por fazer | Total |
 |---|---|---|---|---|
-| 🔵 **João** — back-end | **12** | 0 | 61 | 73 |
+| 🔵 **João** — back-end | **17** | 0 | 56 | 73 |
 | 🟠 **Guilherme** — front-end | **21** | 9 | 31 | 61 |
 | 🟢 **Os dois** | 0 | 2 | 20 | 22 |
 
-**Estado do Sprint 0 (1–7 set):** o Guilherme está adiantado — já fez trabalho do Sprint 3. O João tem a **base de dados criada e populada** (B-01 a B-12); falta arrancar o projeto Express e publicá-lo (B-13 a B-16).
+**Estado a 3 de setembro:** Sprint 0 fechado menos o Render (B-16). A API responde em `localhost:3000` com o catálogo ligado à base de dados. O Guilherme escreveu o contrato (`docs/API.md`) e tem o front-end do Sprint 3 quase todo feito.
 
 **Legenda:** ✅ feito · 🟨 parcial (ver nota) · ⬜ por fazer
 
@@ -73,12 +73,12 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 | **✅** | B-10 | ~~`seed.sql`: 4 categorias + 25 produtos reais~~ | 1 h 30 | B-09 |
 | **✅** | B-11 | ~~`seed.sql`: 10 mesas + 12 slots horários~~ | 45 min | B-09 |
 | **✅** | B-12 | ~~`seed.sql`: 3 contas + stock + pedidos e reservas de exemplo~~ | 45 min | B-09 |
-| ⬜ | B-13 | `npm init` e instalar `express`, **`mysql2`**, `dotenv`, `cors`, `zod`, `bcrypt`, `jsonwebtoken` | 30 min | — |
-| ⬜ | B-14 | Estrutura de pastas + `config/bd.js` (pool de ligação) + `.env.example` | 45 min | B-13 |
-| ⬜ | B-15 | `app.js` a arrancar + endpoint `GET /api/saude` | 30 min | B-14 |
+| **✅** | B-13 | ~~`npm init` e instalar os pacotes~~ — `bcryptjs` em vez de `bcrypt` (compila sempre no Windows) | 30 min | — |
+| **✅** | B-14 | ~~Estrutura de pastas + `config/bd.js` + `.env.example`~~ | 45 min | B-13 |
+| **✅** | B-15 | ~~`app.js` + `GET /api/saude`~~ — responde com 17 tabelas e 25 produtos | 30 min | B-14 |
 | ⬜ | B-16 | Publicar no Render, configurar variáveis de ambiente, confirmar que responde do exterior | 1 h 30 | B-15 |
 
-**Sprint 0: 12 de 16 feitas · falta ≈ 3 h 15** (B-13 a B-16)
+**Sprint 0: 15 de 16 feitas · falta o B-16** (publicar no Render)
 
 ## Sprint 1 · Login de gestão (Semana 2: 8–14 set)
 
@@ -98,8 +98,8 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | B-26 | `GET /api/categorias` | 45 min | B-10 |
-| ⬜ | B-27 | `GET /api/produtos?categoria=` | 45 min | B-10 |
+| **✅** | B-26 | ~~`GET /api/categorias`~~ — 4 categorias por ordem de ementa | 45 min | B-10 |
+| **✅** | B-27 | ~~`GET /api/produtos?categoria=`~~ — 25 produtos, filtro por nome, esconde sem stock | 45 min | B-10 |
 | ⬜ | B-28 | `motorFluxos.js`: sessão de conversa — criar, ler, gravar, expirar às 2 h | 2 h | B-16 |
 | ⬜ | B-29 | `motorFluxos.js`: ciclo de resposta — validar → guardar → calcular próximo estado | 2 h 30 | B-28 |
 | ⬜ | B-30 | `motorFluxos.js`: comandos `voltar` e `recomeçar` | 1 h | B-29 |

@@ -9,6 +9,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { pool, testarLigacao } = require('./config/bd');
+const catalogoRouter = require('./routes/catalogo');
 
 const app = express();
 
@@ -38,6 +39,9 @@ app.use((req, _res, next) => {
 /* -------------------------------------------------------------------
  *  ROTAS
  * ----------------------------------------------------------------- */
+
+// Catalogo: GET /api/categorias, /api/produtos, /api/produtos/:id
+app.use('/api', catalogoRouter);
 
 /**
  * GET /api/saude
