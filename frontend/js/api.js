@@ -6,19 +6,23 @@
  * automaticamente. Usada pela app de gestão (frontend/funcionarios/) e
  * pelo ecrã de mesa do cliente (frontend/cliente/mesa.html).
  *
- * ── PARA LIGAR AO BACKEND REAL ──────────────────────────────────────
- * Só há dois valores a mexer, aqui em baixo:
- *     API_BASE       → o URL do servidor
- *     MODO_SIMULACAO → false
- * Mais nada precisa de ser alterado em nenhum outro ficheiro: todas as
- * respostas simuladas têm EXATAMENTE o mesmo formato que as reais,
- * documentado em docs/API.md.
+ * ── PARA LIGAR MAIS UM ENDPOINT AO BACKEND REAL ─────────────────────
+ * Acrescenta o caminho dele à lista ENDPOINTS_REAIS, aqui em baixo. Não
+ * é preciso mexer em mais nada em ficheiro nenhum: as respostas
+ * simuladas têm EXATAMENTE o mesmo formato que as reais, documentado em
+ * docs/API.md.
  *
- * ── ESTADO ATUAL (02/09) ────────────────────────────────────────────
- * O back-end passou de Prisma para mysql2. O novo arranque é o
- * `backend/src/app.js` e, por agora, só serve `GET /api/saude` — as
- * rotas abaixo estão a ser portadas para SQL pelo João, mantendo os
- * mesmos nomes e formatos (acordado a 02/09, docs/API.md 3.10).
+ * Quando a lista cobrir tudo, põe-se MODO_SIMULACAO = false e apaga-se
+ * a lista e tudo o que está debaixo do aviso lá em baixo.
+ *
+ * O `API_BASE` é o outro valor a mexer — muda quando o servidor sair do
+ * localhost para o Render.
+ *
+ * ── ESTADO ATUAL (03/09) ────────────────────────────────────────────
+ * O back-end corre em Express + mysql2. O catálogo (categorias e
+ * produtos) já está de pé e é servido a sério; o resto está a ser
+ * portado pelo João, mantendo os mesmos nomes e formatos (docs/API.md
+ * 3.10). Por agora o servidor só existe em localhost:3000.
  *
  * A portar (formatos já acordados, não mudam):
  *     GET   mesas/:token/sessao · POST mesas/:token/pedir
@@ -27,10 +31,10 @@
  *     PATCH pedidos/:id/estado          ← agora por RONDA, não por item
  *     POST  pedidos/sessao/:id/fechar
  *
+ * JÁ LIGADOS AO SERVIDOR REAL (03/09) — ver ENDPOINTS_REAIS:
+ *     GET   categorias · GET produtos · GET produtos/:id
+ *
  * Ainda por desenhar (simulados aqui, ver docs/API.md secção 4):
- *     GET   produtos · GET categorias       ← A SEGUIR, o João está a fazê-los.
- *                                             Quando estiverem, é só pôr
- *                                             MODO_SIMULACAO = false.
  *     POST  auth/login · GET auth/eu        ← bloqueia a app de gestão
  *     POST  mesas/:token/chamar-empregado
  *     GET   gestao/mesas/qrcodes · GET gestao/sessoes/:id/conta
@@ -38,7 +42,55 @@
  */
 
 const API_BASE = 'http://localhost:3000/api'; // porta 3000 = PORT por omissão em backend/src/app.js
+
+/**
+ * MODO_SIMULACAO — `true` enquanto houver endpoints por fazer.
+ *
+ * ── PORQUE É QUE ISTO NÃO É SÓ UM SIM/NÃO ────────────────────────────
+ * A 03/09 o catálogo passou a existir no servidor, mas o login, a
+ * cozinha, o balcão e as sessões de mesa ainda não. Desligar um
+ * interruptor global mandaria TUDO para o servidor real e partiria
+ * quatro ecrãs para ligar um.
+ *
+ * Por isso a lista em baixo: são os caminhos que já existem mesmo. Vão
+ * ao servidor mesmo com a simulação ligada; todo o resto continua
+ * simulado. À medida que o João for entregando endpoints, acrescenta-se
+ * uma linha aqui — e no dia em que a lista cobrir tudo, põe-se
+ * MODO_SIMULACAO = false e apaga-se a lista.
+ */
 const MODO_SIMULACAO = true;
+
+/* Endpoints já disponíveis no back-end real (docs/API.md 4.2) */
+const ENDPOINTS_REAIS = [
+  /^categorias$/,             // GET /api/categorias
+  /^produtos$/,               // GET /api/produtos
+  /^produtos\?/,              // GET /api/produtos?categoria=Bebidas
+  /^produtos\/\d+$/,          // GET /api/produtos/:id
+];
+
+/**
+ * `?simular=1` no URL força a simulação COMPLETA, mesmo nos endpoints já
+ * ligados. Serve para duas coisas:
+ *   · mostrar o trabalho sem ter o MySQL e o servidor a correr (numa
+ *     apresentação, ou no telemóvel de alguém);
+ *   · os testes automáticos, que correm sem rede.
+ * Sem isto, uma demonstração passava a depender de uma base de dados
+ * estar de pé — e não vale a pena arriscar isso à frente de um júri.
+ */
+function simulacaoForcada() {
+  try {
+    return new URLSearchParams(window.location.search).has('simular');
+  } catch (e) {
+    return false;   // fora de um browser (testes em Node, por exemplo)
+  }
+}
+
+/** usarServidor — Este caminho já fala com o servidor a sério? */
+function usarServidor(caminho) {
+  if (simulacaoForcada()) return false;
+  if (!MODO_SIMULACAO) return true;
+  return ENDPOINTS_REAIS.some(padrao => padrao.test(caminho));
+}
 
 const CHAVE_SESSAO = 'vpa_sessao_funcionario';
 const DURACAO_SESSAO_MS = 8 * 60 * 60 * 1000; // 8h — validade sugerida do JWT (ver docs/API.md 4.1)
@@ -130,7 +182,7 @@ function paginaInicialDoNivel(nivel) {
    ═══════════════════════════════════════════════════════════════════ */
 
 async function chamarAPI(endpoint, opcoes = {}) {
-  if (MODO_SIMULACAO) return simularEndpoint(endpoint, opcoes);
+  if (!usarServidor(endpoint)) return simularEndpoint(endpoint, opcoes);
 
   const sessao = obterSessao();
   const headers = { 'Content-Type': 'application/json', ...(opcoes.headers || {}) };
@@ -196,31 +248,31 @@ const CONTAS_DEMO = [
  * projeto a 02/09.
  */
 const PRODUTOS_DEMO = [
-  { id: 1,  nome: 'Abatata Frita',            descricao: 'Batatas rústicas com tempero da casa e maionese de alho', preco: 3.90,  categoria: 'Entradas',          ativo: true, imagem_url: 'assets/imagens/pratos/abatata_frita.jpg' },
-  { id: 2,  nome: 'Vem Pro Abacate',          descricao: 'Entrada com abacate, guacamole ou tosta',                 preco: 5.80,  categoria: 'Entradas',          ativo: true, imagem_url: 'assets/imagens/pratos/vem_pro_abacate.jpg' },
-  { id: 3,  nome: "Vem p'ro Alho",            descricao: 'Pão de alho no forno',                                    preco: 3.20,  categoria: 'Entradas',          ativo: true, imagem_url: 'assets/imagens/pratos/vem_pro_alho.jpg' },
-  { id: 4,  nome: 'Abate-Boca',               descricao: 'Mini croquetes de novilho',                               preco: 4.50,  categoria: 'Entradas',          ativo: true, imagem_url: 'assets/imagens/pratos/abate_boca.jpg' },
-  { id: 5,  nome: 'Borrego Abatido',          descricao: 'Borrego assado com batata, alecrim, alho e vinho branco', preco: 15.50, categoria: 'Pratos Principais', ativo: true, imagem_url: 'assets/imagens/pratos/borrego_abatido.jpg' },
-  { id: 6,  nome: 'Francesinha em K.O.',      descricao: 'Bife, enchidos, queijo e molho da casa com batata e ovo', preco: 12.20, categoria: 'Pratos Principais', ativo: true, imagem_url: 'assets/imagens/pratos/francesinha_em_ko.jpg' },
-  { id: 7,  nome: 'Abate Misto',              descricao: 'Picanha, chouriço e frango na brasa com arroz e batata',  preco: 16.20, categoria: 'Pratos Principais', ativo: true, imagem_url: 'assets/imagens/pratos/prato_favorito.jpg' },
-  { id: 8,  nome: 'Prega-me Isto',            descricao: 'Bife dos Açores com batata frita',                        preco: 16.90, categoria: 'Pratos Principais', ativo: true, imagem_url: 'assets/imagens/pratos/prego.jpg' },
-  { id: 9,  nome: 'Picanha na Brasa Negra',   descricao: 'Picanha grelhada com arroz e batata frita',               preco: 16.00, categoria: 'Pratos Principais', ativo: true, imagem_url: 'assets/imagens/pratos/picanha_na_brasa_negra.jpg' },
-  { id: 10, nome: 'Tábua Rústica do Abate',   descricao: 'Carnes mistas com migas e batata a murro',                preco: 17.80, categoria: 'Pratos Principais', ativo: true, imagem_url: 'assets/imagens/pratos/tabua_rustica_do_abate.jpg' },
-  { id: 11, nome: 'Cerveja (Fino/Pressão)',   descricao: 'Fino ou pressão',                                         preco: 1.70,  categoria: 'Bebidas',           ativo: true },
-  { id: 12, nome: 'Cerveja (Caneca)',         descricao: 'Caneca de cerveja',                                       preco: 2.80,  categoria: 'Bebidas',           ativo: true },
-  { id: 13, nome: 'Panaché',                  descricao: 'Cerveja com gasosa',                                      preco: 2.20,  categoria: 'Bebidas',           ativo: true },
-  { id: 14, nome: 'Sangria (Copo)',           descricao: 'Branca, tinta ou espumante — copo',                       preco: 3.20,  categoria: 'Bebidas',           ativo: true },
-  { id: 15, nome: 'Sangria (Jarro)',          descricao: 'Branca, tinta ou espumante — jarro',                      preco: 12.00, categoria: 'Bebidas',           ativo: true },
-  { id: 16, nome: 'Coca-Cola',                descricao: 'Normal ou zero',                                          preco: 1.90,  categoria: 'Bebidas',           ativo: true },
-  { id: 17, nome: 'Ice Tea',                  descricao: 'Pêssego, limão ou manga',                                 preco: 1.90,  categoria: 'Bebidas',           ativo: true },
-  { id: 18, nome: 'Sumos Naturais',           descricao: 'Laranja ou mistura de frutos',                            preco: 3.00,  categoria: 'Bebidas',           ativo: true },
-  { id: 19, nome: 'Água (Mineral)',           descricao: 'Água mineral sem gás',                                    preco: 1.30,  categoria: 'Bebidas',           ativo: true },
-  { id: 20, nome: 'Água (Com Gás)',           descricao: 'Água com gás',                                            preco: 1.60,  categoria: 'Bebidas',           ativo: true },
-  { id: 21, nome: 'Abate Pingado',            descricao: 'Café ou descafeinado',                                    preco: 1.00,  categoria: 'Bebidas',           ativo: true },
-  { id: 22, nome: 'Abategatoue',              descricao: 'Petit gâteau com gelado e chocolate',                     preco: 5.20,  categoria: 'Sobremesas',        ativo: true, imagem_url: 'assets/imagens/pratos/abategatoue.jpg' },
-  { id: 23, nome: 'Baba do Pastor',           descricao: 'Baba de camelo com bolacha',                              preco: 3.90,  categoria: 'Sobremesas',        ativo: true, imagem_url: 'assets/imagens/pratos/baba_do_pastor.jpg' },
-  { id: 24, nome: 'Cheesecake da Casa',       descricao: 'Cheesecake com frutos vermelhos',                         preco: 4.60,  categoria: 'Sobremesas',        ativo: true, imagem_url: 'assets/imagens/pratos/cheesecake_da_casa.jpg' },
-  { id: 25, nome: 'Taça Gelada da Casa',      descricao: 'Gelados, chantilly e chocolate',                          preco: 4.20,  categoria: 'Sobremesas',        ativo: true, imagem_url: 'assets/imagens/pratos/taca_gelada_da_casa.jpg' },
+  { id: 1,  nome: 'Abatata Frita',            descricao: 'Batatas rústicas com tempero da casa e maionese de alho', preco: 3.90,  categoria: 'Entradas',          ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/abatata_frita.jpg' },
+  { id: 2,  nome: 'Vem Pro Abacate',          descricao: 'Entrada com abacate, guacamole ou tosta',                 preco: 5.80,  categoria: 'Entradas',          ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/vem_pro_abacate.jpg' },
+  { id: 3,  nome: "Vem p'ro Alho",            descricao: 'Pão de alho no forno',                                    preco: 3.20,  categoria: 'Entradas',          ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/vem_pro_alho.jpg' },
+  { id: 4,  nome: 'Abate-Boca',               descricao: 'Mini croquetes de novilho',                               preco: 4.50,  categoria: 'Entradas',          ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/abate_boca.jpg' },
+  { id: 5,  nome: 'Borrego Abatido',          descricao: 'Borrego assado com batata, alecrim, alho e vinho branco', preco: 15.50, categoria: 'Pratos Principais', ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/borrego_abatido.jpg' },
+  { id: 6,  nome: 'Francesinha em K.O.',      descricao: 'Bife, enchidos, queijo e molho da casa com batata e ovo', preco: 12.20, categoria: 'Pratos Principais', ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/francesinha_em_ko.jpg' },
+  { id: 7,  nome: 'Abate Misto',              descricao: 'Picanha, chouriço e frango na brasa com arroz e batata',  preco: 16.20, categoria: 'Pratos Principais', ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/prato_favorito.jpg' },
+  { id: 8,  nome: 'Prega-me Isto',            descricao: 'Bife dos Açores com batata frita',                        preco: 16.90, categoria: 'Pratos Principais', ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/prego.jpg' },
+  { id: 9,  nome: 'Picanha na Brasa Negra',   descricao: 'Picanha grelhada com arroz e batata frita',               preco: 16.00, categoria: 'Pratos Principais', ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/picanha_na_brasa_negra.jpg' },
+  { id: 10, nome: 'Tábua Rústica do Abate',   descricao: 'Carnes mistas com migas e batata a murro',                preco: 17.80, categoria: 'Pratos Principais', ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/tabua_rustica_do_abate.jpg' },
+  { id: 11, nome: 'Cerveja (Fino/Pressão)',   descricao: 'Fino ou pressão',                                         preco: 1.70,  categoria: 'Bebidas',           ativo: true, disponivel: true },
+  { id: 12, nome: 'Cerveja (Caneca)',         descricao: 'Caneca de cerveja',                                       preco: 2.80,  categoria: 'Bebidas',           ativo: true, disponivel: true },
+  { id: 13, nome: 'Panaché',                  descricao: 'Cerveja com gasosa',                                      preco: 2.20,  categoria: 'Bebidas',           ativo: true, disponivel: true },
+  { id: 14, nome: 'Sangria (Copo)',           descricao: 'Branca, tinta ou espumante — copo',                       preco: 3.20,  categoria: 'Bebidas',           ativo: true, disponivel: true },
+  { id: 15, nome: 'Sangria (Jarro)',          descricao: 'Branca, tinta ou espumante — jarro',                      preco: 12.00, categoria: 'Bebidas',           ativo: true, disponivel: true },
+  { id: 16, nome: 'Coca-Cola',                descricao: 'Normal ou zero',                                          preco: 1.90,  categoria: 'Bebidas',           ativo: true, disponivel: true },
+  { id: 17, nome: 'Ice Tea',                  descricao: 'Pêssego, limão ou manga',                                 preco: 1.90,  categoria: 'Bebidas',           ativo: true, disponivel: true },
+  { id: 18, nome: 'Sumos Naturais',           descricao: 'Laranja ou mistura de frutos',                            preco: 3.00,  categoria: 'Bebidas',           ativo: true, disponivel: true },
+  { id: 19, nome: 'Água (Mineral)',           descricao: 'Água mineral sem gás',                                    preco: 1.30,  categoria: 'Bebidas',           ativo: true, disponivel: true },
+  { id: 20, nome: 'Água (Com Gás)',           descricao: 'Água com gás',                                            preco: 1.60,  categoria: 'Bebidas',           ativo: true, disponivel: true },
+  { id: 21, nome: 'Abate Pingado',            descricao: 'Café ou descafeinado',                                    preco: 1.00,  categoria: 'Bebidas',           ativo: true, disponivel: true },
+  { id: 22, nome: 'Abategatoue',              descricao: 'Petit gâteau com gelado e chocolate',                     preco: 5.20,  categoria: 'Sobremesas',        ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/abategatoue.jpg' },
+  { id: 23, nome: 'Baba do Pastor',           descricao: 'Baba de camelo com bolacha',                              preco: 3.90,  categoria: 'Sobremesas',        ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/baba_do_pastor.jpg' },
+  { id: 24, nome: 'Cheesecake da Casa',       descricao: 'Cheesecake com frutos vermelhos',                         preco: 4.60,  categoria: 'Sobremesas',        ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/cheesecake_da_casa.jpg' },
+  { id: 25, nome: 'Taça Gelada da Casa',      descricao: 'Gelados, chantilly e chocolate',                          preco: 4.20,  categoria: 'Sobremesas',        ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/taca_gelada_da_casa.jpg' },
 ];
 
 /* Mesas de demonstração. Na base de dados real o qrToken é um UUID

@@ -542,35 +542,48 @@ O token vai depois em todos os pedidos no cabeçalho `Authorization: Bearer <tok
 (o `api.js` já o anexa sozinho). Validade sugerida: **8 horas** — é o valor que o front-end
 assume ao mostrar a contagem decrescente da sessão.
 
-### 4.2 `GET /api/produtos` e `GET /api/categorias` — **a ser feitos agora**
+### 4.2 `GET /api/categorias` e `GET /api/produtos` — ✅ **FEITOS (03/09)**
 
-> **03/09 — o João está a fazer estes dois a seguir.** Quando estiverem de pé, é só pôr
-> `MODO_SIMULACAO = false` no `api.js` e o menu do `mesa.html` passa a vir da base de dados.
->
-> Duas coisas já confirmadas, que não é preciso pedir:
-> · **`imagem_url` já existe** na tabela e está preenchida com os caminhos certos. O
->   `mesa.html` já a lê e só usa a tabela de nomes que tem lá dentro como rede.
-> · **`categoria` vem como texto** (`"Entradas"`), não como id. Na base de dados é uma
->   tabela; a API entrega a string, como estava escrito.
+Commit `2659d4f` na branch `back-end`. Quatro caminhos:
 
-**Não existe nenhum endpoint que exponha o catálogo.** Sem ele, o `mesa.html` não consegue
-mostrar o menu com dados reais — e, mais importante, não consegue saber os `produtoId` que
-tem de enviar no `POST /pedir`.
-
-**Query opcional:** `?categoria=Bebidas`
-
-**Resposta:** lista de produtos ativos.
-```json
-[
-  { "id": 1, "nome": "Abatata Frita", "descricao": "Batatas rústicas…",
-    "preco": 3.90, "categoria": "Entradas", "ativo": true,
-    "imagem_url": "assets/imagens/pratos/abatata_frita.jpg" }
-]
+```
+GET /api/categorias
+GET /api/produtos
+GET /api/produtos?categoria=Bebidas
+GET /api/produtos/:id
 ```
 
-> **Regra importante para o front-end:** os `id` são autoincremento e mudam se a base de
-> dados for repopulada. O front-end **nunca** deve ter `id` escritos à mão — usa sempre os
-> que vêm desta resposta. O código atual já respeita isto.
+**Formato de um produto** (lido do `formatarProduto()` em `backend/src/routes/catalogo.js`,
+não presumido):
+
+```json
+{ "id": 1, "nome": "Abatata Frita", "descricao": "Batatas rústicas…",
+  "preco": 3.90, "categoria": "Entradas",
+  "imagem": "assets/imagens/pratos/abatata_frita.jpg",
+  "ativo": true, "disponivel": true }
+```
+
+> ⚠️ **No JSON o campo chama-se `imagem`, não `imagem_url`.** Na base de dados a coluna é
+> `imagem_url`; o servidor converte antes de responder. Eu tinha escrito `imagem_url` aqui e
+> estava errado — fui ler o código para ter a certeza em vez de escolher entre duas
+> mensagens que se contradiziam.
+
+**Uma categoria** traz `id`, `nome`, `descricao` e **`ordem`** — e é essa ordem que manda na
+ementa (entradas primeiro, sobremesas no fim). O `mesa.html` passou a usá-la em vez da lista
+fixa que tinha lá dentro, que ia ficando desatualizada sempre que se mexesse na carta. Se a
+chamada falhar, volta a derivar as categorias dos produtos.
+
+**Duas regras do servidor que o front-end respeita:**
+
+- **Produto sem stock não aparece** (regra 25 do `CONTEXTO.md`). O filtro é
+  `controla_stock = 0 OR quantidade_atual > 0` — um bife que não controle stock aparece
+  sempre; um vinho que controle e esteja a zero desaparece.
+- **Categoria que não existe dá `404`**, não lista vazia — para distinguir "escrevi mal" de
+  "não há nada aqui". Boa decisão: uma lista vazia esconde erros de escrita.
+
+**`ativo` e `disponivel` são coisas diferentes:** `ativo` é *"está na carta"*, `disponivel` é
+*"há hoje"*. O `mesa.html` esconde o que vier com `disponivel: false` — não vale a pena
+deixar alguém pedir o que não vai receber.
 
 ### 4.3 `GET /api/auth/eu`
 
@@ -662,33 +675,45 @@ Implementação sugerida: é a mesma query do 3.4, trocando o `findFirst` pela m
 
 ## 5. Como ligar o front-end ao backend real
 
-Está tudo concentrado num sítio só: **`frontend/js/api.js`**.
+**Não é um interruptor.** É uma lista.
 
-1. Confirmar que o backend responde: `GET http://localhost:3001/api/health`
-2. Nesse ficheiro, mudar duas constantes:
-   ```js
-   const API_BASE       = 'http://localhost:3001/api'; // ou o URL do Render
-   const MODO_SIMULACAO = false;                        // ← o interruptor
-   ```
-3. Garantir que `FRONTEND_URL` está no `.env` do backend (CORS).
+O `MODO_SIMULACAO` é global: desligá-lo mandaria para o servidor **tudo** — o login, a
+cozinha, o balcão e as sessões de mesa —, e desses só o catálogo existe. Ligar uma coisa
+partia quatro ecrãs.
 
-Nenhum outro ficheiro do front-end precisa de ser alterado: todas as chamadas passam pela
-função `chamarAPI()`, e as respostas simuladas têm **exatamente o mesmo formato** que as
-reais documentadas acima.
+Por isso o `frontend/js/api.js` tem uma lista dos caminhos que já existem mesmo:
 
-### Quem consome o quê
+```js
+const ENDPOINTS_REAIS = [
+  /^categorias$/,             // GET /api/categorias
+  /^produtos$/,               // GET /api/produtos
+  /^produtos\?/,              // GET /api/produtos?categoria=Bebidas
+  /^produtos\/\d+$/,          // GET /api/produtos/:id
+];
+```
 
-| Ficheiro do front-end | Endpoints que usa |
-|---|---|
-| `cliente/mesa.html` | `mesas/:token/sessao`, `produtos`, `mesas/:token/pedir`, `mesas/:token/pedir-conta`, `mesas/:token/chamar-empregado` |
-| `funcionarios/login.html` | `auth/login` |
-| `funcionarios/dashboard.html` | `auth/eu` (revalidação de sessão) |
-| `funcionarios/qrcodes.html` | `gestao/mesas/qrcodes` |
-| `funcionarios/cozinha.html` | `pedidos/cozinha`, `pedidos/item/:id/estado` |
-| `funcionarios/balcao.html` | `pedidos/ativos`, `gestao/sessoes/:id/conta`, `pedidos/sessao/:id/fechar` |
-| `cliente/reservas.html` | *(nenhum — ainda em `localStorage`)* |
+Vão ao servidor mesmo com a simulação ligada; **todo o resto continua simulado**. À medida
+que cada endpoint for ficando pronto, acrescenta-se uma linha. No dia em que a lista cobrir
+tudo, põe-se `MODO_SIMULACAO = false` e apaga-se a lista e a simulação inteira.
 
----
+### `?simular=1` — ver tudo sem base de dados nenhuma
+
+`mesa.html?simular=1&mesa=…` força a simulação completa, mesmo nos endpoints já ligados.
+
+Serve para mostrar o trabalho sem ter o MySQL e o servidor a correr — numa apresentação, ou
+no telemóvel de alguém. **Não vale a pena uma demonstração depender de uma base de dados
+estar de pé à frente de um júri.** Os testes automáticos usam o mesmo mecanismo.
+
+### Onde é que o servidor está
+
+`API_BASE = 'http://localhost:3000/api'`.
+
+**Isto só funciona para quem tenha o back-end a correr na própria máquina.** Um telemóvel na
+mesa do restaurante não chega ao `localhost` de ninguém. Enquanto o servidor não estiver
+publicado (o João vai pô-lo no Render), o menu ligado à base de dados só se vê em quem o
+corra localmente — para todo o resto, existe o `?simular=1`.
+
+Quando houver endereço público, muda-se **uma linha**: o `API_BASE`.
 
 ## 6. Onde está o projeto (atualizado a 03/09)
 

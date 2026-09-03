@@ -234,15 +234,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const CAMINHO_IMAGENS = '../../assets/imagens/pratos/';
 
-  /* O `imagem_url` que a API devolve é relativo à raiz do site
+  /* O `imagem` que a API devolve é relativo à raiz do site
      ("assets/imagens/..."), e esta página está dois níveis abaixo. */
   const RAIZ_SITE = '../../';
 
   /* Imagens por nome de produto.
      Solução temporária: a tabela `Produto` ainda não tem coluna de
-     imagem no que o front-end recebe. A coluna `imagem_url` JÁ EXISTE
-     na base de dados e está preenchida; assim que o GET /produtos
-     estiver ligado, esta tabela pode desaparecer. */
+     imagem no que o front-end recebe. Desde 03/09 o `GET /produtos`
+     traz o campo `imagem` preenchido, por isso esta tabela é só rede. */
   const IMAGENS_POR_NOME = {
     'Abatata Frita':            'abatata_frita.jpg',
     'Vem Pro Abacate':          'vem_pro_abacate.jpg',
@@ -341,18 +340,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     mostrarCarregamento(true);
     try {
-      const [dadosSessao, produtos] = await Promise.all([
+      // As categorias vêm à parte porque trazem a ORDEM da ementa,
+      // definida na base de dados (coluna `ordem`) — entradas primeiro,
+      // sobremesas no fim. Melhor do que a lista fixa que estava aqui,
+      // que ia ficando desatualizada sempre que se mexesse na carta.
+      // Se falhar, deriva-se das categorias dos produtos, como antes.
+      const [dadosSessao, produtos, categorias] = await Promise.all([
         chamarAPI(`mesas/${encodeURIComponent(state.token)}/sessao`),
         chamarAPI('produtos'),
+        chamarAPI('categorias').catch(() => null),
       ]);
 
       state.mesa   = dadosSessao.mesa;
       state.sessao = dadosSessao.sessao;
-      state.produtos = produtos;
+      // `ativo` é "está na carta"; `disponivel` é "há hoje". O servidor
+      // já esconde o que está sem stock, mas um produto pode estar na
+      // carta e indisponível — nesse caso não se mostra, para ninguém
+      // pedir o que não vai receber.
+      state.produtos = produtos.filter(p => p.disponivel !== false);
       state.produtosPorId = {};
-      produtos.forEach(p => { state.produtosPorId[p.id] = p; });
+      state.produtos.forEach(p => { state.produtosPorId[p.id] = p; });
 
-      state.categorias = ordenarCategorias([...new Set(produtos.map(p => p.categoria))]);
+      const comProdutos = new Set(state.produtos.map(p => p.categoria));
+      state.categorias = Array.isArray(categorias) && categorias.length
+        // Só as que têm alguma coisa para mostrar: uma categoria vazia
+        // é um separador em que o cliente toca e não acontece nada.
+        ? categorias.filter(c => comProdutos.has(c.nome)).map(c => c.nome)
+        : ordenarCategorias([...comProdutos]);
       state.categoriaAtiva = state.categorias[0] || '';
 
       mesaNumeroEl.textContent = `Mesa ${String(state.mesa.numero).padStart(2, '0')}`;
@@ -435,10 +449,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function ficheiroImagem(produto) {
-    // A coluna existe e chama-se `imagem_url` (confirmado com o João a
-    // 03/09) — é ela que manda. A tabela em baixo é só a rede para
-    // enquanto o GET /produtos não estiver ligado.
-    if (produto.imagem_url) return RAIZ_SITE + produto.imagem_url;
+    // No JSON o campo chama-se `imagem` (na base de dados é `imagem_url`,
+    // mas o servidor converte antes de responder — lido do
+    // formatarProduto() em backend/src/routes/catalogo.js, 03/09).
+    // A tabela em baixo já só serve de rede se algum produto vier sem
+    // imagem preenchida.
+    if (produto.imagem) return RAIZ_SITE + produto.imagem;
     const ficheiro = IMAGENS_POR_NOME[produto.nome];
     return ficheiro ? CAMINHO_IMAGENS + ficheiro : null;
   }
