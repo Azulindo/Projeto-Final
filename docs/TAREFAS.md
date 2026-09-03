@@ -409,7 +409,12 @@ engolia o texto sem responder). O X-08 não consegui reproduzir, mas tapei a cau
 apontou. O X-02, X-03, X-04 e X-06 já estavam resolvidos de antes.
 
 **Falta uma só coisa que não depende de ninguém: a revisão visual final (F-60)** — e essa é
-a única tarefa desta lista sem critério de medida. As outras tinham um: píxeis, totais que
+quase toda sem critério de medida.
+
+*Quase:* uma parte dela é aritmética e já está feita. O contraste entre texto e fundo é uma
+razão, e a WCAG diz onde está o limite — o `contraste.js` mede-o nas seis páginas. Encontrou
+um problema (o link "Área de funcionários" a 3,54:1 quando o mínimo é 4,5:1) e está
+corrigido. O que **não** dá para medir é texto sobre gradientes, e o resto — As outras tinham um: píxeis, totais que
 batem certo, um elemento que aparece ou não. "Revisão visual" é gosto, e o gosto é de quem
 faz o projeto. Precisa de alguém a olhar para os ecrãs, não de mais um teste.
 
@@ -428,6 +433,7 @@ Os testes estão em `frontend/testes/` e correm com Playwright:
 | `auditoria-responsiva.js` | Scroll horizontal, alvos de toque abaixo de 44px, texto abaixo de 12px e peso das imagens, em 11 páginas × 5 larguras | — |
 | `xss-nome.js` | Que um nome com etiquetas HTML não vira código na página (o X-01 da lista do João) | 2 |
 | `grupo-7a10.js` | Que quem for 7 a 10 pessoas consegue reservar, e que acima de 10 vai mesmo para o telefone (X-05) | 4 |
+| `contraste.js` | Que o contraste do texto passa o mínimo da WCAG (4,5:1 normal, 3:1 grande) nas seis páginas | — |
 
 ```bash
 npm install playwright        # uma vez
@@ -436,6 +442,7 @@ node frontend/testes/reserva-resumo.js
 node frontend/testes/auditoria-responsiva.js
 node frontend/testes/xss-nome.js
 node frontend/testes/grupo-7a10.js
+node frontend/testes/contraste.js
 ```
 
 > **Um aviso sobre a auditoria:** a `mesa.html` vai buscar o Tailwind a um CDN, e num
