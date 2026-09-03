@@ -2,7 +2,7 @@
 
 **Projeto Final de Curso** · João Ribeiro & Guilherme Gonçalves
 **Documentos relacionados:** `CONTEXTO.md` (o quê e porquê) · `PLANEAMENTO.md` (calendário e sprints)
-**Versão:** 2.0 · **merge das duas versões (João + Guilherme)** · **Última revisão:** 3 de setembro de 2026
+**Versão:** 2.1 · **merge das duas versões (João + Guilherme)** · **Última revisão:** 3 de setembro de 2026
 
 ---
 
@@ -43,16 +43,19 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 
 # 🐞 CORREÇÕES — prioridade sobre tudo o resto
 
-*Encontradas na revisão de 1 de setembro, com o site a correr. Detalhes e reprodução no fim do documento.*
+*Encontradas na revisão de 1 de setembro, com o site a correr.*
+
+**Ponto de situação a 3 de setembro: 5 das 9 fechadas.** As quatro que faltam (X-05, X-07,
+X-08, X-09) são todas do Guilherme e nenhuma é bloqueadora.
 
 | ✅ | ID | Correção | Est. | Quem |
 |---|---|---|---|---|
-| ⬜ | **X-01** | 🔴 **XSS no campo do nome** — `botReply()` usa `innerHTML` com `state.nome` interpolado. Testado: um nome com `<iframe/srcdoc="…">` executa código. Corrigir com `textContent` ou escapando o valor | 1 h | Gui |
+| **✅** | **X-01** | ~~XSS no campo do nome~~ — corrigido a 03/09 com `escaparHTML()` nos dois pontos de injeção, mais teste em `frontend/testes/xss-nome.js`. **Reverificado com o payload original: já não executa** | 1 h | Gui |
 | **✅** | **X-02** | ~~`mesa.html` não abre~~ — resolvido a 02/09: a página foi reescrita e os ficheiros antigos foram para `_obsoleto/` | — | Gui |
-| ⬜ | **X-03** | 🟠 Calendário sem limite superior — dá para reservar em Setembro de 2028. Limitar a 60 dias | 30 min | Gui |
-| ⬜ | **X-04** | 🟠 Hoje é selecionável e não há validação de hora — às 23h ainda se reserva hoje ao meio-dia. Só a partir de amanhã | 45 min | Gui |
+| **✅** | **X-03** | ~~Calendário sem limite superior~~ — `MAX_DIAS_ANTECEDENCIA = 60`, e o botão do mês seguinte bloqueia no limite | 30 min | Gui |
+| **✅** | **X-04** | ~~Hoje é selecionável~~ — a janela começa amanhã. **Verificado a 03/09: o primeiro dia selecionável é 4** | 45 min | Gui |
 | ⬜ | **X-05** | 🟠 Botão "+6 Grupo" manda para o telefone mas a mensagem fala em "mais de 10". Quem for 7–10 fica sem caminho | 30 min | Gui |
-| ⬜ | **X-06** | 🟡 O bot diz "Começa pelos **Pratos Principais**" e mostra **Entradas** | 5 min | Gui |
+| **✅** | **X-06** | ~~Bot diz "Pratos Principais" e mostra Entradas~~ — a mensagem é derivada de `menuCategorias[0]` | 5 min | Gui |
 | ⬜ | **X-07** | 🟡 `scrollDown()` corta o topo dos cartões altos (categoria, calendário, resumo) | 45 min | Gui |
 | ⬜ | **X-08** | 🟡 Banda branca no topo da página em desktop (1440 px) | 30 min | Gui |
 | ⬜ | **X-09** | 🟡 Input de texto fica ativo mas inerte durante os passos de categoria | 20 min | Gui |
