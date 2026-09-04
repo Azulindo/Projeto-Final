@@ -19,6 +19,18 @@ jspm_packages/
 .env.*
 !.env.example
 *.pem
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credenciais.json
+
+# O ca.pem do Aiven NAO e segredo: e a assinatura publica que prova
+# que o servidor do outro lado e mesmo o Aiven. Tem de ir para o
+# repositorio porque o Render precisa dele. A regra *.pem acima
+# apanhava-o, por isso abre-se aqui uma excecao so para este.
+!backend/certs/ca.pem
 *.key
 credenciais.json
 

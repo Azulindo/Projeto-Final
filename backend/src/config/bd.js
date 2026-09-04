@@ -15,9 +15,9 @@ require('dotenv').config();
 const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({
-  host:     process.env.DB_HOST,
-  port:     Number(process.env.DB_PORT) || 3306,
-  user:     process.env.DB_USER,
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT) || 3306,
+  user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
 
@@ -28,6 +28,15 @@ const pool = mysql.createPool({
   timezone: 'Z',              // guarda e le datas em UTC, sem surpresas de fuso
   decimalNumbers: true,       // ver nota abaixo
   charset: 'utf8mb4',
+
+  // O Aiven so aceita ligacoes cifradas. Sem isto rebenta com
+  // "Connections using insecure transport are prohibited".
+  // O ca.pem prova que o servidor do outro lado e mesmo o Aiven.
+  // Sem DB_SSL_CA no .env, liga sem SSL — assim o mesmo codigo
+  // serve o MySQL de casa e o da nuvem.
+  ssl: process.env.DB_SSL_CA
+    ? { ca: require('fs').readFileSync(require('path').resolve(process.env.DB_SSL_CA)) }
+    : undefined,
 });
 
 /*
