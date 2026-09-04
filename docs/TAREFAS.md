@@ -2,29 +2,65 @@
 
 **Projeto Final de Curso** · João Ribeiro & Guilherme Gonçalves
 **Documentos relacionados:** `CONTEXTO.md` (o quê e porquê) · `PLANEAMENTO.md` (calendário e sprints)
-**Versão:** 1.0 · Baseada no `CONTEXTO.md` v3.0
+**Versão:** 2.2 · **merge das duas versões (João + Guilherme)** · **Última revisão:** 3 de setembro de 2026
+
+---
+
+## Ponto de situação
+
+| | Feito | Parcial | 🔁 Não se aplica | Por fazer | Total |
+|---|---|---|---|---|---|
+| 🔵 **João** — back-end | **17** | 0 | 0 | 56 | 73 |
+
+> ⚠️ **O caminho crítico é agora o back-end.** Das 10 tarefas que faltam ao Guilherme, **9 esperam por endpoints que ainda não existem**. A décima é a revisão visual final. O front-end deixou de estar à espera de decisões e passou a estar à espera de código.
+| 🟠 **Guilherme** — front-end | **32** | 0 | 19 | 10 | 61 |
+| 🟢 **Os dois** | 1 | 2 | 0 | 19 | 22 |
+
+> As 19 tarefas 🔁 do Guilherme (≈22 h) descreviam a `pedido.html` — a página de conversa
+> com um bot, substituída pela `mesa.html`. **Não estão em falta**: o que garantiam está
+> feito noutra forma. Não as contes no que falta.
+
+**Estado a 4 de setembro:** Sprint 0 fechado menos o Render (B-16). A base de dados está alojada no Aiven e a API já lê de lá — o `GET /api/saude` responde com 17 tabelas e 25 produtos. O histórico do repositório foi reescrito para remover um `.env` que lá tinha ido parar, e as três branches foram juntas no `main`. O Guilherme escreveu o contrato (`docs/API.md`) e tem o front-end do Sprint 3 quase todo feito. **O que bloqueia agora: o B-19 (login)** — sem ele quatro ecrãs de gestão dele não abrem.
+
+**Legenda:** ✅ feito · 🟨 parcial (ver nota) · ⬜ por fazer · 🔁 **já não se aplica** — o plano mudou pelo caminho e a tarefa deixou de fazer sentido. Fica à vista, marcada, em vez de apagada: uma tarefa apagada parece esquecida, uma marcada mostra que houve uma decisão.
 
 ---
 
 ## Como usar esta lista
 
-Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 horas**. A ideia é que se consiga acabar pelo menos uma por sessão de trabalho e riscá-la. Tarefas grandes desmotivam e escondem atrasos; tarefas pequenas mostram progresso todos os dias.
-
-**Códigos:**
+Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 horas**. A ideia é que se consiga acabar pelo menos uma por sessão de trabalho e riscá-la.
 
 | Prefixo | Quem |
 |---|---|
 | **B-** | **João** — back-end, base de dados, API |
 | **F-** | **Guilherme** — front-end, design, interface |
 | **C-** | **Os dois** — integração, testes, documentação |
-
-**Estado de cada tarefa:** ⬜ por fazer · ✅ feita · 🔁 **já não se aplica** — o plano mudou
-pelo caminho e a tarefa deixou de fazer sentido. Ficam à vista, marcadas, em vez de apagadas:
-uma tarefa apagada parece esquecida, uma tarefa marcada mostra que houve uma decisão.
+| **X-** | **Correções** — erros encontrados em revisão |
 
 **Coluna "Depende de":** se estiver vazia, **podes começar já**. Se tiver um código, essa tarefa tem de estar feita primeiro (ou pelo menos combinada).
 
-**Regra importante para o Guilherme:** quase nada do front-end precisa de esperar pela API. Enquanto o João constrói o back-end, o Gui constrói os ecrãs com **dados falsos escritos à mão** (um JSON de exemplo no próprio ficheiro). Quando a API existir, troca-se a origem dos dados e mais nada. É por isso que o `docs/API.md` (tarefa **C-03**) é a primeira coisa da semana 1.
+**Regra para o Guilherme:** quase nada do front-end precisa de esperar pela API. Constrói os ecrãs com dados falsos escritos à mão; quando a API existir, troca-se a origem dos dados e mais nada.
+
+---
+
+# 🐞 CORREÇÕES — prioridade sobre tudo o resto
+
+*Encontradas na revisão de 1 de setembro, com o site a correr.*
+
+**Ponto de situação a 3 de setembro: 8 das 9 fechadas.** Falta o X-08, que o Guilherme não
+conseguiu reproduzir — a causa foi tapada na mesma.
+
+| ✅ | ID | Correção | Est. | Quem |
+|---|---|---|---|---|
+| **✅** | **X-01** | ~~XSS no campo do nome~~ — corrigido a 03/09 com `escaparHTML()` nos dois pontos de injeção, mais teste em `frontend/testes/xss-nome.js`. **Reverificado com o payload original: já não executa** | 1 h | Gui |
+| **✅** | **X-02** | ~~`mesa.html` não abre~~ — resolvido a 02/09: a página foi reescrita e os ficheiros antigos foram para `_obsoleto/` | — | Gui |
+| **✅** | **X-03** | ~~Calendário sem limite superior~~ — `MAX_DIAS_ANTECEDENCIA = 60`, e o botão do mês seguinte bloqueia no limite | 30 min | Gui |
+| **✅** | **X-04** | ~~Hoje é selecionável~~ — a janela começa amanhã. **Verificado a 03/09: o primeiro dia selecionável é 4** | 45 min | Gui |
+| **✅** | **X-05** | ~~Botão "+6 Grupo" contradizia a mensagem~~ — o botão passou a perguntar quantos são, em vez de despachar para o telefone | 30 min | Gui |
+| **✅** | **X-06** | ~~Bot diz "Pratos Principais" e mostra Entradas~~ — a mensagem é derivada de `menuCategorias[0]` | 5 min | Gui |
+| **✅** | **X-07** | ~~Topo dos cartões altos cortado~~ — corrigido com teste | 45 min | Gui |
+| 🟨 | **X-08** | Banda branca no topo — **não reproduzida** pelo Guilherme em 6 páginas a 1440 e 1920. A causa que eu apontei era real (`html`/`body` sem cor de fundo) e foi tapada com `background-color` + `color-scheme: dark`. Possível artefacto do meu teste: corri em Chromium sem rede, e a fonte Nosifer não carregou | 30 min | Gui |
+| **✅** | **X-09** | ~~Caixa de escrita engolia texto sem responder~~ — corrigido com teste | 20 min | Gui |
 
 ---
 
@@ -34,31 +70,31 @@ uma tarefa apagada parece esquecida, uma tarefa marcada mostra que houve uma dec
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | B-01 | Preencher o `.gitignore` (`node_modules/`, `.env`, `*.log`) — está vazio | 15 min | — |
-| ⬜ | B-02 | Escrever o `README.md` base (o que é, como instalar, como correr) | 30 min | — |
-| ⬜ | B-03 | Criar conta Neon ou Supabase e guardar a string de ligação | 30 min | — |
-| ⬜ | B-04 | `schema.sql`: tabelas de utilizadores — `UTILIZADOR`, `FUNCIONARIO`, `CLIENTE` | 1 h | C-02 |
-| ⬜ | B-05 | `schema.sql`: catálogo — `CATEGORIA` (com `grupo_ementa`), `PRODUTO` (com `controla_stock`), `STOCK` | 1 h | C-02 |
-| ⬜ | B-06 | `schema.sql`: pedidos — `MESA`, `PEDIDO`, `ITEM_PEDIDO`, `HISTORICO_ESTADO_PEDIDO` | 1 h 30 | C-02 |
-| ⬜ | B-07 | `schema.sql`: reservas — `SLOT_HORARIO`, `RESERVA`, `ITEM_RESERVA` | 1 h | C-02 |
-| ⬜ | B-08 | `schema.sql`: restantes — `FAVORITO`, `AVALIACAO`, `NOTIFICACAO` | 30 min | C-02 |
-| ⬜ | B-09 | Correr o schema na base de dados e confirmar as 16 tabelas | 30 min | B-04…B-08 |
-| ⬜ | B-10 | `seed.sql`: 6 categorias + ~15 produtos, com os caminhos das imagens de `assets/imagens/pratos/` | 1 h 30 | B-09 |
-| ⬜ | B-11 | `seed.sql`: 10 mesas com token aleatório + 12 slots horários | 45 min | B-09 |
-| ⬜ | B-12 | `seed.sql`: 1 administrador + 2 funcionários (hashes bcrypt) + stock inicial | 45 min | B-09 |
-| ⬜ | B-13 | `npm init` e instalar `express`, `pg`, `dotenv`, `cors`, `zod`, `bcrypt`, `jsonwebtoken` | 30 min | — |
-| ⬜ | B-14 | Estrutura de pastas + `config/bd.js` (pool de ligação) + `.env.example` | 45 min | B-13 |
-| ⬜ | B-15 | `app.js` a arrancar + endpoint `GET /api/saude` | 30 min | B-14 |
-| ⬜ | B-16 | Publicar no Render, configurar variáveis de ambiente, confirmar que responde do exterior | 1 h 30 | B-15 |
+| **✅** | B-01 | ~~Preencher o `.gitignore`~~ — **feito 1 set**, commit `8357a2a`, já no `main` | 15 min | — |
+| **✅** | B-02 | ~~Escrever o `README.md` base~~ — **feito 1 set**, mesmo commit | 30 min | — |
+| **✅** | B-03 | ~~Instalar o MySQL 8 e o Workbench~~ — **feito 1 set**, base de dados local `vem_pro_abate` | 30 min | — |
+| **✅** | B-04 | ~~`schema.sql`: utilizadores~~ — `utilizador`, `cliente`, `funcionario` | 1 h | C-02 |
+| **✅** | B-05 | ~~`schema.sql`: catálogo~~ — `categoria`, `produto`, `stock` | 1 h | C-02 |
+| **✅** | B-06 | ~~`schema.sql`: pedidos~~ — `mesa`, `pedido`, `item_pedido`, `historico_estado_pedido` | 1 h 30 | C-02 |
+| **✅** | B-07 | ~~`schema.sql`: reservas~~ — `slot_horario`, `reserva`, `item_reserva` | 1 h | C-02 |
+| **✅** | B-08 | ~~`schema.sql`: restantes~~ — `favorito`, `avaliacao`, `notificacao` | 30 min | C-02 |
+| **✅** | B-09 | ~~Correr o schema e confirmar as 16 tabelas~~ — 16/16 ✔ | 30 min | B-04…B-08 |
+| **✅** | B-10 | ~~`seed.sql`: 4 categorias + 25 produtos reais~~ | 1 h 30 | B-09 |
+| **✅** | B-11 | ~~`seed.sql`: 10 mesas + 12 slots horários~~ | 45 min | B-09 |
+| **✅** | B-12 | ~~`seed.sql`: 3 contas + stock + pedidos e reservas de exemplo~~ | 45 min | B-09 |
+| **✅** | B-13 | ~~`npm init` e instalar os pacotes~~ — `bcryptjs` em vez de `bcrypt` (compila sempre no Windows) | 30 min | — |
+| **✅** | B-14 | ~~Estrutura de pastas + `config/bd.js` + `.env.example`~~ | 45 min | B-13 |
+| **✅** | B-15 | ~~`app.js` + `GET /api/saude`~~ — responde com 17 tabelas e 25 produtos | 30 min | B-14 |
+| 🟨 | B-16 | Publicar no Render, configurar variáveis de ambiente, confirmar que responde do exterior — *base de dados já alojada (Aiven, MySQL 8.4, SSL obrigatório com `backend/certs/ca.pem`); `schema.sql` e `seed.sql` já correram lá. Falta o Render* | 1 h 30 | B-15 |
 
-**Total do sprint: ≈ 12 h 30**
+**Sprint 0: 15 de 16 feitas · falta metade do B-16** — a base de dados já está na nuvem; falta publicar a API no Render
 
 ## Sprint 1 · Login de gestão (Semana 2: 8–14 set)
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
 | ⬜ | B-17 | `middleware/erros.js` — tratamento centralizado, mensagens em português, nunca expor o SQL | 45 min | B-16 |
-| ⬜ | B-18 | `middleware/validar.js` — wrapper do zod para validar body e query | 30 min | B-16 |
+| ⬜ | B-18 | `middleware/validar.js` — wrapper do zod para body e query | 30 min | B-16 |
 | ⬜ | B-19 | `POST /api/auth/login` — verifica bcrypt, devolve JWT com `id` e `nivel` | 1 h 30 | B-18 |
 | ⬜ | B-20 | `middleware/autenticar.js` — lê e valida o JWT | 1 h | B-19 |
 | ⬜ | B-21 | `middleware/exigirNivel.js` — `funcionario` / `administrador` | 30 min | B-20 |
@@ -67,29 +103,25 @@ uma tarefa apagada parece esquecida, uma tarefa marcada mostra que houve uma dec
 | ⬜ | B-24 | Configurar CORS para o domínio do Vercel | 30 min | B-16 |
 | ⬜ | B-25 | `express-rate-limit` nos endpoints públicos | 30 min | B-16 |
 
-**Total do sprint: ≈ 6 h 45**
-
-## Sprint 2 · Motor de fluxos e pedidos (Semanas 3–5: 15 set – 5 out)
+## Sprint 2 · Sessões de mesa e pedidos (Semanas 3–5: 15 set – 5 out)
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | B-26 | `GET /api/categorias?grupo=` | 45 min | B-10 |
-| ⬜ | B-27 | `GET /api/produtos?categoria=&grupo=` | 45 min | B-10 |
+| **✅** | B-26 | ~~`GET /api/categorias`~~ — 4 categorias por ordem de ementa | 45 min | B-10 |
+| **✅** | B-27 | ~~`GET /api/produtos?categoria=`~~ — 25 produtos, filtro por nome, esconde sem stock | 45 min | B-10 |
 | ⬜ | B-28 | `motorFluxos.js`: sessão de conversa — criar, ler, gravar, expirar às 2 h | 2 h | B-16 |
 | ⬜ | B-29 | `motorFluxos.js`: ciclo de resposta — validar → guardar → calcular próximo estado | 2 h 30 | B-28 |
 | ⬜ | B-30 | `motorFluxos.js`: comandos `voltar` e `recomeçar` | 1 h | B-29 |
-| ⬜ | B-31 | `fluxoPedido.js`: estados `INICIO`, `ESCOLHA_SERVICO`, `NUMERO_MESA` | 1 h 30 | B-29 |
-| ⬜ | B-32 | `fluxoPedido.js`: estados `CATEGORIA`, `PRODUTO`, `QUANTIDADE` | 1 h 30 | B-26, B-27 |
-| ⬜ | B-33 | `fluxoPedido.js`: estados `OBSERVACOES`, `ADICIONAR_MAIS` | 1 h | B-32 |
-| ⬜ | B-34 | `fluxoPedido.js`: estado `RESUMO`, com remoção de item | 1 h 30 | B-33 |
-| ⬜ | B-35 | `fluxoPedido.js`: estado `NOME_CONTACTO` (só take away) | 1 h | B-34 |
-| ⬜ | B-36 | `POST /api/fluxo/iniciar` (aceita `tipo` e `mesaToken`) | 1 h | B-31 |
-| ⬜ | B-37 | `POST /api/fluxo/responder` | 1 h | B-29 |
+| ⬜ | B-31 | `POST /api/mesa/:token/sessao` — abre a sessão ou devolve a que já está aberta | 1 h 30 | B-26, B-27 |
+| ⬜ | B-32 | `GET /api/sessao/:codigo` — estado da sessão, rondas já pedidas e total | 1 h 30 | B-31 |
+| ⬜ | B-33 | `POST /api/sessao/:codigo/pedido` — envia uma ronda para a cozinha | 1 h | B-32 |
+| ⬜ | B-34 | `POST /api/sessao/:codigo/conta` — passa a `aguarda_pagamento` e devolve a conta | 1 h 30 | B-33 |
+| ⬜ | B-35 | `POST /api/pedidos/takeaway` — pedido único com nome e telemóvel | 1 h | B-33 |
+| ⬜ | B-36 | `PATCH /api/gestao/sessoes/:id/fechar` — funcionário fecha a conta | 1 h | B-34 |
+| ⬜ | B-37 | `POST /api/fluxo/iniciar` e `/responder` — para o fluxo de reservas | 1 h | B-29 |
 | ⬜ | B-38 | Cálculo do total no servidor + geração do `numero_pedido` | 1 h | B-34 |
 | ⬜ | B-39 | `POST /api/pedidos` — transação que grava `PEDIDO` + `ITEM_PEDIDO` | 2 h | B-38 |
-| ⬜ | B-40 | Testar no Postman/Thunder: pedido de restaurante e de take away, ponta a ponta | 1 h 30 | B-39 |
-
-**Total do sprint: ≈ 20 h**
+| ⬜ | B-40 | Testar no Postman/Thunder: pedido de restaurante e de take away | 1 h 30 | B-39 |
 
 ## Sprint 3 · Reservas (Semanas 6–7: 6–19 out)
 
@@ -97,20 +129,20 @@ uma tarefa apagada parece esquecida, uma tarefa marcada mostra que houve uma dec
 |---|---|---|---|---|
 | ⬜ | B-41 | `GET /api/reservas/horarios?data=` — slots ativos para aquele dia da semana | 1 h | B-11 |
 | ⬜ | B-42 | `fluxoReserva.js`: estados `NUM_PESSOAS`, `MODO_EMENTA` | 1 h | B-29 |
-| ⬜ | B-43 | `fluxoReserva.js`: estado `DATA` — validar terça a domingo, de amanhã até 60 dias | 1 h 30 | B-42 |
+| ⬜ | B-43 | `fluxoReserva.js`: estado `DATA` — terça a domingo, de amanhã até 60 dias | 1 h 30 | B-42 |
 | ⬜ | B-44 | `fluxoReserva.js`: estados `PERIODO`, `HORA` | 1 h | B-41, B-43 |
 | ⬜ | B-45 | `fluxoReserva.js`: estados `NOME`, `TELEMOVEL` (9 dígitos, formato PT) | 1 h | B-44 |
 | ⬜ | B-46 | `fluxoReserva.js`: estado `RESUMO` | 1 h | B-45 |
 | ⬜ | B-47 | Gerador de `codigo_reserva` único (ex.: `RSV-7K2M9`) | 30 min | — |
 | ⬜ | B-48 | `POST /api/reservas` — cria a reserva do ramo A em estado `pendente` | 1 h 30 | B-46, B-47 |
 | ⬜ | B-49 | Limite de 3 reservas por telemóvel por dia | 45 min | B-48 |
-| ⬜ | B-50 | `fluxoReserva.js`: os 4 estados da ementa, filtrados por `grupo_ementa` | 2 h 30 | B-27, B-42 |
+| ⬜ | B-50 | `fluxoReserva.js`: os 4 estados da ementa | 2 h 30 | B-27, B-42 |
 | ⬜ | B-51 | Carrinho de reserva que preserva quantidades ao navegar para trás | 1 h 30 | B-50 |
-| ⬜ | B-52 | Estado `OBSERVACOES` + `RESUMO_EMENTA` com valor estimado calculado no servidor | 1 h 30 | B-51 |
+| ⬜ | B-52 | `OBSERVACOES` + `RESUMO_EMENTA` com valor estimado calculado no servidor | 1 h 30 | B-51 |
 | ⬜ | B-53 | `POST /api/reservas` estendido — grava `ITEM_RESERVA` com `preco_unitario` à data | 1 h 30 | B-52 |
 | ⬜ | B-54 | Testes de API dos dois ramos | 1 h 30 | B-53 |
 
-**Total do sprint: ≈ 17 h 45**
+> 💡 **Nota:** o Guilherme já construiu este fluxo todo do lado do ecrã. Quando chegares aqui, a tua parte é sobretudo replicar no servidor a lógica que já existe em `reservas.js` — usa esse ficheiro como especificação.
 
 ## Sprint 4 · Aplicação de gestão (Semanas 8–9: 20 out – 2 nov)
 
@@ -122,12 +154,10 @@ uma tarefa apagada parece esquecida, uma tarefa marcada mostra que houve uma dec
 | ⬜ | B-58 | `services/stock.js` — descontar stock ao confirmar pedido | 1 h 30 | B-56 |
 | ⬜ | B-59 | `services/stock.js` — repor stock ao cancelar pedido confirmado | 45 min | B-58 |
 | ⬜ | B-60 | Atualizar automaticamente o estado da mesa (`livre` / `ocupada`) | 1 h | B-56 |
-| ⬜ | B-61 | CRUD de produtos (criar, editar, ativar/desativar, marcar disponível) | 2 h | B-21 |
+| ⬜ | B-61 | CRUD de produtos | 2 h | B-21 |
 | ⬜ | B-62 | CRUD de categorias | 1 h 30 | B-21 |
 | ⬜ | B-63 | Consultar e ajustar stock + endpoint de produtos com stock baixo — *(ideia nova, 04/09)* acessível também ao nível `cozinha`, não só `administrador` (ver tabela de contas em `docs/API.md`) | 1 h 30 | B-21 |
 | ⬜ | B-64 | CRUD de funcionários (só administrador) | 2 h | B-21 |
-
-**Total do sprint: ≈ 14 h**
 
 ## Sprint 5 · Extras (Semana 10: 3–9 nov)
 
@@ -135,17 +165,13 @@ uma tarefa apagada parece esquecida, uma tarefa marcada mostra que houve uma dec
 |---|---|---|---|---|
 | ⬜ | B-65 | Gerar os QR Codes das mesas com a biblioteca `qrcode` | 1 h 30 | B-11 |
 | ⬜ | B-66 | `GET /api/gestao/mesas/qrcodes` — dados para a página de impressão | 45 min | B-65 |
-| ⬜ | B-67 | Entrada por token de mesa: `/pedido?mesa=<token>` salta a pergunta do serviço | 1 h | B-36 |
+| ⬜ | B-67 | Entrada por token de mesa: `/mesa?t=<token>` | 1 h | B-36 |
 | ⬜ | B-68 | `estatisticas.js`: nº de pedidos, faturação diária e mensal, média por pedido | 2 h | B-39 |
 | ⬜ | B-69 | `estatisticas.js`: produtos mais vendidos + tempo médio de preparação | 1 h 30 | B-57 |
 | ⬜ | B-70 | `GET /api/admin/estatisticas` | 45 min | B-68, B-69 |
-| ⬜ | B-71 | `services/email.js` com Nodemailer + Brevo/Resend, remetente verificado | 1 h 30 | B-16 |
+| ⬜ | B-71 | `services/email.js` com Nodemailer + Brevo/Resend | 1 h 30 | B-16 |
 | ⬜ | B-72 | Email de novo pedido para o restaurante + registo em `NOTIFICACAO` | 1 h | B-71 |
 | ⬜ | B-73 | 🔁 *(recuperação)* `GET /api/gestao/reservas` — lista só de leitura | 1 h 30 | B-48 |
-
-**Total do sprint: ≈ 11 h 30**
-
-### 🔵 Total João: ≈ 82 h de tarefas identificadas
 
 ---
 
@@ -262,7 +288,7 @@ uma tarefa apagada parece esquecida, uma tarefa marcada mostra que houve uma dec
 | ⬜ | F-51 | Tabela e formulário de categorias | 1 h 30 | F-49 |
 | ⬜ | F-52 | Ecrã de stock com aviso visual de stock baixo | 2 h | F-49 |
 | ⬜ | F-53 | Ecrã de funcionários (tabela + formulário) | 2 h | F-49 |
-| ✅ | F-54 | Responsividade da aplicação de gestão — *zero alvos abaixo de 44px e zero scroll horizontal, em 4 larguras* | 1 h 30 | F-53 |
+| ✅ | F-54 | Responsividade da aplicação de gestão — *zero alvos de toque abaixo de 44 px e zero scroll horizontal, medido em 4 larguras; o pior era o ✕ do painel da conta, a 24×23* | 1 h 30 | F-53 |
 
 **Total do sprint: ≈ 20 h**
 
@@ -293,106 +319,106 @@ uma tarefa apagada parece esquecida, uma tarefa marcada mostra que houve uma dec
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | C-01 | Ler e aprovar o `CONTEXTO.md` v3.0 — cada um lê sozinho, depois discutem as dúvidas | 1 h | — |
-| ⬜ | C-02 | Fechar o diagrama ER: 16 tabelas, com as 4 novas e as 7 alterações | 1 h 30 | C-01 |
-| ✅ | C-03 | ⭐ **Escrever o `docs/API.md`** — para cada endpoint, o que entra e o que sai, com exemplo de JSON | 2 h | C-02 |
+| 🟨 | C-01 | Ler e aprovar o `CONTEXTO.md` v3.2 — *o João leu e decidiu; falta o Guilherme ler* | 1 h | — |
+| ✅ | C-02 | **Fechar o diagrama ER** — *17 tabelas, notação pé-de-galinha, em `database/diagrama-er.pdf`* | 1 h 30 | C-01 |
+| ✅ | C-03 | ⭐ **Escrever o `docs/API.md`** — escrito pelo Guilherme; a secção 3.10 é o contrato em vigor | 2 h | C-02 |
+| ✅ | C-23 | Decidir: os pedidos são chatbot ou grelha? — **decidido 1 set: grelha com carrinho + sessão de mesa.** `CONTEXTO.md` v3.2 atualizado | 45 min | — |
 
-> **C-03 é a tarefa mais importante da semana 1.** É o contrato que permite ao Gui construir ecrãs sem esperar pela API, e ao João construir a API sem esperar pelos ecrãs. Sem ela, os dois ficam à espera um do outro ou constroem coisas que não encaixam.
+> C-02, C-03 e C-23 estão fechados; do C-01 falta só o Guilherme ler. O que bloqueia agora é o **B-19** (login) — sem ele
+> quatro ecrãs de gestão do Guilherme não abrem — e os endpoints de gestão (B-63 e seguintes),
+> de que dependem 9 das tarefas dele por fazer.
 
 ## Sprint 1 · Login (Semana 2)
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | C-04 | Integração do login de ponta a ponta, **no site publicado** (não em `localhost`) | 1 h 30 | B-19, F-13 |
-| ⬜ | C-05 | Acordar o formato exato das mensagens do fluxo (que JSON o servidor devolve a cada passo) | 1 h | C-03 |
+| ⬜ | C-04 | Integração do login de ponta a ponta, **no site publicado** | 1 h 30 | B-19, F-13 |
+| ⬜ | C-05 | Acordar o formato exato das mensagens do fluxo | 1 h | C-03 |
 
 ## Sprint 2 · Pedidos (Semanas 3–5)
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | C-06 | Escrever juntos os textos do bot — português de Portugal, com o tom da marca | 1 h 30 | C-05 |
-| ⬜ | C-07 | Integração do fluxo de pedidos (front a falar com o motor real) | 2 h | B-37, F-16 |
+| ⬜ | C-06 | Escrever juntos os textos do bot — pt-PT, com o tom da marca | 1 h 30 | C-05 |
+| ⬜ | C-07 | Integração do fluxo de pedidos | 2 h | B-37, F-16 |
 | ⬜ | C-08 | Teste conjunto: pedido de restaurante e de take away, em telemóvel | 1 h 30 | C-07 |
 
 ## Sprint 3 · Reservas (Semanas 6–7)
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | C-09 | Integração do fluxo de reservas | 2 h | B-48, F-36 |
-| ⬜ | C-10 | Teste conjunto: ramos A e B em telemóvel, confirmando os dados na base de dados | 1 h 30 | C-09, B-53 |
+| ⬜ | C-09 | Integração do fluxo de reservas (trocar o `localStorage` pela API) | 2 h | B-48, F-36 |
+| ⬜ | C-10 | Teste conjunto: ramos A e B em telemóvel, confirmando os dados na BD | 1 h 30 | C-09, B-53 |
 
 ## Sprint 4 · Gestão (Semanas 8–9)
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ✅ | C-11 | *Polling* de 10 segundos no ecrã de pedidos | 1 h | F-45, B-55 |
+| ✅ | C-11 | *Polling* de 10 segundos no ecrã de pedidos — feito pelo Guilherme | 1 h | F-45, B-55 |
 | ⬜ | C-12 | Teste conjunto do ciclo completo: pedido → dashboard em <15 s → todos os estados → stock desceu | 2 h | C-11, B-58 |
 
 ## Sprint 5 · Testes e entrega (Semanas 10–11)
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | C-13 | Escrever a lista de testes (todos os fluxos, todos os papéis, todos os estados) | 1 h 30 | — |
+| ⬜ | C-13 | Escrever a lista de testes | 1 h 30 | — |
 | ⬜ | C-14 | Sessão de testes de robustez — a lista de casos-limite abaixo | 3 h | C-13 |
-| ⬜ | C-15 | Testar em Chrome, Edge, Firefox e Safari + dois telemóveis diferentes | 2 h | C-14 |
+| ⬜ | C-15 | Testar em Chrome, Edge, Firefox e Safari + dois telemóveis | 2 h | C-14 |
 | ⬜ | C-16 | Corrigir os erros encontrados, por ordem de prioridade | 4 h | C-15 |
-| ⬜ | C-17 | Relatório final (o `Relatório Inicial` serve de base) | 5 h | — |
-| ⬜ | C-18 | Documentação técnica: `README.md`, `docs/API.md` final, diagrama ER exportado | 2 h | — |
-| ⬜ | C-19 | Manual de utilização curto (um para cliente, um para funcionário) | 1 h 30 | — |
+| ⬜ | C-17 | Relatório final | 5 h | — |
+| ⬜ | C-18 | Documentação técnica: `README.md`, `docs/API.md`, diagrama ER | 2 h | — |
+| ⬜ | C-19 | Manual de utilização (cliente e funcionário) | 1 h 30 | — |
 | ⬜ | C-20 | Apresentação — 12 a 15 diapositivos | 3 h | C-17 |
-| ⬜ | C-21 | Dois ensaios cronometrados da apresentação | 2 h | C-20 |
-| ⬜ | C-22 | Preparar a demonstração: dados limpos, QR impresso, contas de teste, **vídeo de 3 min como plano B** | 2 h | C-16 |
-
-### 🟢 Total conjunto: ≈ 41 h
+| ⬜ | C-21 | Dois ensaios cronometrados | 2 h | C-20 |
+| ⬜ | C-22 | Preparar a demonstração + **vídeo de 3 min como plano B** | 2 h | C-16 |
 
 ---
 
 ## 📋 Lista de casos-limite para o C-14
 
-Copiar para o `docs/` e ir riscando. São os testes que apanham os erros que aparecem sempre na demonstração:
-
 **Fluxo de pedidos**
 - [ ] Quantidade `0`, `-1` e `999`
-- [ ] Mesa `999` e mesa `0`
-- [ ] Token de mesa inválido ou inventado
+- [ ] Mesa `999` e mesa `0` · token de mesa inválido
 - [ ] Produto marcado como indisponível a meio do pedido
 - [ ] Confirmar um pedido vazio
 - [ ] Take away sem nome ou com telemóvel com letras
 - [ ] Observações com 5000 caracteres
 - [ ] Dois separadores abertos com pedidos diferentes
-- [ ] Sessão de conversa deixada aberta mais de 2 horas
+- [ ] Sessão deixada aberta mais de 2 horas
 - [ ] Carregar em "voltar" no primeiro passo
 
 **Fluxo de reservas**
-- [ ] Reserva para ontem
-- [ ] Reserva para uma segunda-feira
-- [ ] Reserva para daqui a 2 anos
-- [ ] 12 pessoas
-- [ ] Telemóvel com 8 dígitos e com letras
-- [ ] Nome com 1 caractere
+- [ ] Reserva para ontem · para uma segunda-feira · para daqui a 2 anos
+- [ ] 12 pessoas · nome com 1 caractere · telemóvel com 8 dígitos ou com letras
+- [ ] **Nome com HTML lá dentro** *(ver X-01)*
 - [ ] Percorrer as 4 páginas da ementa sem escolher nada
-- [ ] Voltar atrás da página 4 para a 1 e confirmar que as quantidades ficaram
+- [ ] Voltar da página 4 para a 1 e confirmar que as quantidades ficaram
 - [ ] Fazer 4 reservas com o mesmo telemóvel no mesmo dia
 
 **Aplicação de gestão**
 - [ ] Login com 6 tentativas erradas seguidas
-- [ ] Aceder ao dashboard sem sessão iniciada
-- [ ] Aceder a um ecrã de administrador com conta de funcionário
+- [ ] Aceder ao dashboard sem sessão · a ecrã de administrador com conta de funcionário
 - [ ] Tentar recuar o estado de um pedido (`entregue` → `pronto`)
-- [ ] Cancelar um pedido já confirmado e verificar que o stock voltou
-- [ ] Desativar uma categoria com produtos lá dentro
-- [ ] Apagar um produto que já apareceu em pedidos
-- [ ] Deixar o dashboard aberto 9 horas (token expira às 8 h)
+- [ ] Cancelar um pedido confirmado e verificar que o stock voltou
+- [ ] Desativar uma categoria com produtos · apagar um produto já usado em pedidos
+- [ ] Deixar o dashboard aberto 9 horas (o token expira às 8 h)
 
 ---
 
 ## Resumo de esforço
 
-| | Tarefas identificadas | Estimativa |
-|---|---|---|
-| 🔵 João | 74 | ≈ 83 h |
-| 🟠 Guilherme | 64 | ≈ 94 h 15 *(dos quais ≈ 22 h marcadas 🔁 — ver abaixo)* |
-| 🟢 Os dois | 22 | ≈ 41 h |
+*Contagens a 4 de setembro, tiradas das próprias tabelas acima — se uma linha mudar de
+estado, esta tabela fica errada até ser refeita.*
+
+| | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
+|---|---|---|---|---|---|
+| 🔵 João (B-) | 73 | 17 | — | 56 | ≈ 70 h |
+| 🟠 Guilherme (F-) | 64 | 35 | 19 | 10 | ≈ 18 h 15 |
+| 🟢 Os dois (C-) | 23 | 4 | — | 19 | ≈ 40 h |
+| 🐞 Correções (X-) | 9 | 8 | — | 1 | ≈ 30 min |
+
+**Total por fazer: ≈ 128 h 45.** As tarefas 🟨 (C-01, à espera de o Guilherme ler o
+`CONTEXTO.md`, e X-08, que não se conseguiu reproduzir) contam como por fazer.
 
 **Onde está mesmo o front-end (04/09):** 35 tarefas feitas, 19 marcadas 🔁 (a `pedido.html`,
 substituída pela `mesa.html`) e **10 por fazer**.
@@ -497,3 +523,5 @@ node frontend/testes/contraste.js
 > Um ✅ que ninguém verificou não vale nada num documento de entrega.
 
 **Nota honesta sobre as estimativas:** estes números contam o tempo de *escrever* cada coisa. O `PLANEAMENTO.md` fala em ~108 h para o João e ~90 h para o Gui porque inclui aquilo que nunca aparece numa lista de tarefas: procurar erros, refazer o que não ficou bem à primeira, esperar por deploys, ler documentação. **Conta com cerca de mais 25 % do que está aqui** — e não te assustes quando uma tarefa de 1 h demorar 3. Acontece a toda a gente.
+
+**Nota sobre as estimativas:** estes números contam o tempo de *escrever* cada coisa. O `PLANEAMENTO.md` aponta valores mais altos porque inclui o que nunca aparece numa lista de tarefas — procurar erros, refazer o que não ficou bem à primeira, esperar por deploys, ler documentação. Conta com cerca de mais 25 %.

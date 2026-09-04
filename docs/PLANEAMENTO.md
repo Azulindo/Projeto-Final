@@ -3,9 +3,11 @@
 **Projeto Final de Curso** · João Ribeiro & Guilherme Gonçalves
 **Documento complementar:** `CONTEXTO.md` (o quê e porquê) — este trata do **quando** e **por quem**
 **Período:** 1 de setembro a 16 de novembro de 2026 (11 semanas)
-**Versão:** 3.0
+**Versão:** 3.1 · **Revisto a 3 de setembro de 2026**
 
 **Alterações desde a v2.0:** corte de âmbito (sem login de cliente, sem acompanhamento de estado, sem lotação, sem agenda de reservas). Sprints reorganizados, prazos com folga real e nova estimativa de esforço.
+
+**Alterações da v3.1 (3 set):** base de dados passou a **MySQL 8** (era PostgreSQL); o esquema tem **17 tabelas** (era 16 — entrou a `sessao_mesa`); o pedido à mesa deixou de ser chatbot e passou a **grelha com carrinho e sessões** (decisão C-23), portanto o Sprint 2 mudou de conteúdo. O chatbot ficou só para as reservas.
 
 ---
 
@@ -80,7 +82,7 @@ Contas de cliente · acompanhamento do estado pelo cliente · histórico · favo
 |---|---|---|---|---|
 | **0** | 1 | 1 – 7 set | Fundações | Base de dados a correr online com dados reais |
 | **1** | 2 | 8 – 14 set | Login de gestão | Entrar no back-office, no site publicado |
-| **2** | 3 – 5 | 15 set – 5 out | Motor de fluxos + pedidos | Fazer um pedido completo que fica na BD |
+| **2** | 3 – 5 | 15 set – 5 out | Sessões de mesa e pedidos | Fazer um pedido completo que fica na BD |
 | **3** | 6 – 7 | 6 – 19 out | Reservas (ramos A e B) | Reservar mesa, com e sem pré-seleção |
 | **4** | 8 – 9 | 20 out – 2 nov | Aplicação de gestão | Gerir pedidos, produtos, categorias e stock |
 | **5** | 10 – 11 | 3 – 16 nov | Extras, testes e entrega | Sistema testado, documentado e apresentado |
@@ -107,14 +109,14 @@ Contas de cliente · acompanhamento do estado pelo cliente · histórico · favo
 
 **Em conjunto (2–3 h, uma sessão)**
 - [ ] Rever e aprovar o `CONTEXTO.md` v3.0
-- [ ] Fechar o diagrama ER: 16 tabelas, com as 4 novas e as 7 alterações de §7.4
+- [x] ~~Fechar o diagrama ER~~ — **feito**, 17 tabelas (`database/diagrama-er.png`)
 - [ ] Escrever `docs/API.md` — **o contrato**: para cada endpoint, o que entra e o que sai, com exemplo de JSON
 
 > Este contrato é o passo mais valioso da semana. Com ele escrito, o Guilherme constrói ecrãs com dados falsos enquanto a API ainda não existe, e nada tem de ser refeito.
 
 **João**
-- [ ] `database/schema.sql` — as 16 tabelas
-- [ ] Criar conta Neon/Supabase e correr o schema
+- [x] ~~`database/schema.sql`~~ — **feito**, as 17 tabelas a correr em MySQL
+- [x] ~~Instalar MySQL 8 + Workbench e correr o schema~~ — **feito** (Aiven fica para quando for preciso alojar)
 - [ ] `database/seed.sql`: 6 categorias com `grupo_ementa`, ~15 produtos com as imagens de `assets/imagens/pratos/`, 10 mesas com token, 12 slots horários (5 almoço + 7 jantar, terça a domingo), 1 administrador, 2 funcionários, stock inicial, alguns pedidos e reservas de exemplo
 - [ ] Arrancar o Express: `npm init`, estrutura de pastas, ligação à BD, `GET /api/saude`
 - [ ] Publicar a API no Render e confirmar que responde do exterior
@@ -154,14 +156,14 @@ Contas de cliente · acompanhamento do estado pelo cliente · histórico · favo
 
 ---
 
-### Sprint 2 — Motor de fluxos e pedidos (Semanas 3–5: 15 set – 5 out)
+### Sprint 2 — Sessões de mesa e pedidos (Semanas 3–5: 15 set – 5 out)
 
 *O coração do projeto, com três semanas em vez de duas. Se algum sprint precisar de mais tempo, tira-se do Sprint 5, nunca deste.*
 
 **João**
 - [ ] `GET /api/categorias?grupo=` e `GET /api/produtos?categoria=&grupo=`
 - [ ] **`services/motorFluxos.js`** — o motor genérico de máquina de estados (usado depois também pelas reservas)
-- [ ] **`services/fluxoPedido.js`** — definição do fluxo de pedidos (§5A.4 do contexto)
+- [ ] Endpoints de sessão de mesa: abrir, consultar, enviar ronda, pedir conta (ver `docs/API.md` §3.10)
 - [ ] `POST /api/fluxo/iniciar` e `POST /api/fluxo/responder`
 - [ ] Carrinho guardado no servidor por sessão de conversa; expiração ao fim de 2 h
 - [ ] Validação de cada resposta + comandos "voltar" e "recomeçar"
@@ -300,7 +302,7 @@ Guilherme
 |---|---|---|
 | Base de dados e SQL | João | Guilherme (revisão) |
 | API e lógica de negócio | João | — |
-| Motor de fluxos (pedidos + reservas) | João | Guilherme (textos e tom das mensagens) |
+| Motor de fluxos (só reservas) | João | Guilherme (textos e tom das mensagens) |
 | Stock, QR Code, emails, estatísticas | João | Guilherme (gráficos) |
 | Site do cliente, fluxo de pedidos e de reservas (interface) | Guilherme | — |
 | Calendário e seleção de horários (interface) | Guilherme | João (regras de datas) |
@@ -342,7 +344,7 @@ Guilherme
 | Sinal de alarme | O que fazer |
 |---|---|
 | 5 out sem pedido a funcionar | Parar tudo o resto; as duas pessoas no fluxo de pedidos; adiar o Sprint 3 uma semana |
-| Motor de fluxos ficou colado ao pedido | Refatorizar no início do Sprint 3, antes de escrever o fluxo de reservas — custa 4 h agora e 15 h depois |
+| Contrato da API e código a divergirem | O `docs/API.md` é o documento vivo: muda-se lá **primeiro**, depois no código |
 | 19 out sem ramo B fechado | Cortar o ramo B. A reserva simples cumpre o requisito; a pré-seleção é o extra |
 | Sprint 4 atrasado | Adiar as estatísticas para o Sprint 5 e entregar o dashboard com números simples |
 | Alojamento gratuito instável | Ter o projeto a correr também em `localhost` como plano de demonstração |

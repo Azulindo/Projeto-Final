@@ -3,7 +3,7 @@
 **Projeto Final de Curso** — Técnico Especialista de Tecnologias e Programação de Sistemas de Informação
 **Equipa:** João Ribeiro (back-end, base de dados, aplicação de gestão) · Guilherme Gonçalves (front-end, design, UX)
 **Repositório:** `Projeto-Final` (Git) · **Site atual:** alojado em Vercel
-**Versão do documento:** 3.0 · **Data:** setembro de 2026
+**Versão do documento:** 3.2 · **Data:** setembro de 2026
 
 **Alterações desde a v2.0 — redução deliberada de âmbito:**
 - ❌ Sai o **login e registo de clientes** (a autenticação de funcionários e administradores mantém-se)
@@ -11,6 +11,11 @@
 - ❌ Sai a **verificação de lotação** nas reservas
 - ❌ Sai a **agenda de reservas no back-office**
 - ✅ Tudo o resto mantém-se
+
+**Alteração da v3.2 — decisão C-23, acordada pelos dois:**
+- O pedido à mesa **deixa de ser um chatbot** e passa a ser uma **grelha de produtos com carrinho**, como o Guilherme já tinha desenhado em `mesa.html`
+- Introduz-se o conceito de **sessão de mesa**: uma refeição inteira, que abre ao ler o QR Code e fecha ao pedir a conta, agrupando várias rondas de pedidos
+- O **chatbot passa a ser exclusivo das reservas**
 
 ---
 
@@ -123,67 +128,57 @@ Pagamentos online · programa de pontos e cupões · aplicação móvel nativa �
 
 ## 5. Fluxos guiados
 
-O sistema tem **dois fluxos guiados** — pedidos e reservas — e ambos correm sobre o **mesmo motor**.
+O sistema tem **um fluxo guiado**: as **reservas**. Os pedidos usam uma grelha de produtos com carrinho (ver §5A).
 
 O motor **não é inteligência artificial**. É uma **máquina de estados determinística**: o servidor sabe em que passo a conversa está, devolve a pergunta seguinte e as opções possíveis, e valida sempre a resposta recebida. É previsível, demonstrável na apresentação, não depende de serviços externos e não tem custos.
 
-> **Decisão técnica importante:** o motor é escrito **uma vez** (`services/motorFluxos.js`) e os dois fluxos são apenas **definições de dados** diferentes (que estados existem, que pergunta cada um faz, que validação aplica, para onde vai a seguir). Escrever dois motores separados para pedidos e reservas seria duplicar trabalho e duplicar erros.
+> **Decisão técnica:** o motor fica separado da definição do fluxo (`services/motorFluxos.js` + `services/fluxoReserva.js`). Mesmo servindo só as reservas, essa separação mantém a lógica de estados legível e permite acrescentar outro fluxo mais tarde sem reescrever nada.
 
 ---
 
-## 5A. Fluxo de PEDIDOS
+## 5A. PEDIDOS — sessão de mesa
 
-### 5A.1 Entrada por QR Code (cliente já na mesa)
+O pedido **não é um chatbot**. É uma grelha de produtos com carrinho, na página `mesa.html`.
 
-O cliente aponta a câmara ao código da mesa e abre `.../pedido?mesa=<token>`.
+### 5A.1 O conceito de sessão
 
-1. Sistema valida o token e identifica a mesa → **indicador fixo no topo: `📍 Mesa 04`**
-2. Saudação
-3. Salta diretamente para as **categorias** — não pergunta serviço nem número de mesa
-
-### 5A.2 Entrada pelo site ("Fazer Pedido")
-
-1. Saudação
-2. Escolha de serviço: `🍽️ Comer no Restaurante` | `🥡 Take Away`
-3. **Ramo A (Restaurante):** pede o número da mesa (validado contra a tabela `MESA`) → confirma → categorias
-4. **Ramo B (Take Away):** vai direto para categorias
-
-### 5A.3 Fluxo comum
+Uma refeição não é um pedido só. O cliente senta-se, pede bebidas, mais à frente pede os pratos, no fim pede sobremesa. São várias **rondas** que vão para a cozinha em momentos diferentes mas que dão **uma conta só**.
 
 ```
-Categorias  →  Produtos (cards com imagem, nome, preço)  →  Quantidade
-     ↑                                                          ↓
-     └──────────  "Adicionar mais?" ← Observações  ←────────────┘
-                          │
-                          ▼ (não)
-                    Resumo do pedido
-                          │
-                          ▼
-              (só take away) Nome + telemóvel
-                          │
-                          ▼
-                  Confirmar → Nº de pedido
+SESSÃO DE MESA  (abre no QR Code, fecha ao pedir a conta)
+   ├── Pedido 1  ·  bebidas          → cozinha/bar
+   ├── Pedido 2  ·  pratos           → cozinha
+   └── Pedido 3  ·  sobremesas       → cozinha
+                     ↓
+                 UMA conta
 ```
 
-### 5A.4 Estados da conversa (pedidos)
+Cada **ronda continua a ser um `PEDIDO`** com o seu próprio estado (recebido → confirmado → em preparação → pronto → entregue). Isso resolve sozinho o problema de as bebidas ficarem prontas antes dos pratos: são rondas diferentes, cada uma com o seu ritmo.
 
-| Estado | Espera do cliente | Vai para |
-|---|---|---|
-| `INICIO` | — (saudação automática) | `ESCOLHA_SERVICO` ou `CATEGORIA` (se veio de QR) |
-| `ESCOLHA_SERVICO` | botão restaurante / take away | `NUMERO_MESA` ou `CATEGORIA` |
-| `NUMERO_MESA` | número inteiro válido | `CATEGORIA` |
-| `CATEGORIA` | id de categoria ativa | `PRODUTO` |
-| `PRODUTO` | id de produto disponível | `QUANTIDADE` |
-| `QUANTIDADE` | inteiro 1–20 | `OBSERVACOES` |
-| `OBSERVACOES` | texto livre (máx. 255) ou "sem observações" | `ADICIONAR_MAIS` |
-| `ADICIONAR_MAIS` | sim / não | `CATEGORIA` ou `RESUMO` |
-| `RESUMO` | confirmar / recomeçar / remover item | `NOME_CONTACTO` (take away) ou `CONFIRMADO` |
-| `NOME_CONTACTO` | nome + telemóvel | `CONFIRMADO` |
-| `CONFIRMADO` | — | fim (mostra o número do pedido) |
+### 5A.2 Fluxo do cliente à mesa
 
-> **Porquê pedir nome e telemóvel no take away:** um pedido de take away sem nome não se consegue entregar a ninguém — o balcão não sabe de quem é. Num pedido de restaurante isso não é preciso, porque a mesa identifica-o. São dois campos, num único passo, e evitam um problema óbvio na demonstração.
+1. Lê o QR Code → abre `/mesa?t=<token>`
+2. O sistema identifica a mesa e **abre uma sessão** (ou entra na que já está aberta, se outra pessoa da mesa já leu o código)
+3. **Indicador fixo no topo: `📍 Mesa 04`**
+4. Navega pelas categorias em separadores e vê os produtos em grelha
+5. Adiciona ao carrinho, ajusta quantidades, escreve observações
+6. **"Enviar Pedido para a Cozinha"** → cria um `PEDIDO` dentro da sessão
+7. Pode repetir os passos 4 a 6 as vezes que quiser
+8. **"Pedir a Conta"** → a sessão passa a `aguarda_pagamento`; o painel mostra tudo o que foi pedido e o total
+9. O funcionário cobra e **fecha a sessão**
 
----
+### 5A.3 Take away
+
+Pelo site, sem QR Code e sem mesa. Usa a mesma grelha, mas em vez de sessão cria **um pedido único**, e no fim pede **nome e telemóvel** — sem eles, o balcão não sabe a quem entregar.
+
+### 5A.4 Estados da sessão
+
+```
+aberta → aguarda_pagamento → fechada
+   └──────────────┴──────────→ cancelada
+```
+
+**Uma mesa só pode ter uma sessão aberta de cada vez.** Esta regra está garantida pela própria base de dados (ver §7.3), não pelo código: se duas pessoas lerem o QR da mesma mesa ao mesmo tempo, a segunda entra na sessão que já existe em vez de criar outra.
 
 ## 5B. Fluxo de RESERVAS
 
@@ -275,6 +270,16 @@ recebido → confirmado → em_preparacao → pronto → entregue
 8. Só um funcionário autenticado pode mudar o estado. Fica registado **quem** e **quando** em `HISTORICO_ESTADO_PEDIDO`.
 9. Um pedido `entregue` ou `cancelado` é final.
 
+### 6.1b Sessões de mesa
+
+5b. Ler o QR Code de uma mesa **abre uma sessão** nessa mesa, ou entra na que já estiver aberta.
+5c. Uma mesa só pode ter **uma sessão aberta** de cada vez — garantido pela base de dados.
+5d. Uma sessão agrupa **um ou mais pedidos**. Cada pedido é uma ronda enviada à cozinha, com estado próprio.
+5e. O `valor_total` da sessão é a soma dos pedidos não cancelados, calculado no servidor.
+5f. "Pedir a conta" passa a sessão a `aguarda_pagamento`. Só um funcionário a pode `fechar`.
+5g. Enquanto a sessão está aberta, a mesa fica `ocupada`. Ao fechar, volta a `livre`.
+5h. Pedidos de take away não pertencem a sessão nenhuma (`id_sessao` a `NULL`).
+
 ### 6.2 Reservas
 
 10. A reserva **não exige conta**. Guarda `nome`, `telemovel`, `num_pessoas`, data, hora e, opcionalmente, ementa pré-selecionada e observações.
@@ -320,11 +325,11 @@ recebido → confirmado → em_preparacao → pronto → entregue
 
 ## 7. Modelo de dados
 
-O diagrama ER (`database/diagrama er projeto (4).pdf`) é a base. O esquema final tem **16 tabelas**.
+O diagrama está em `database/diagrama-er.png`. O esquema final tem **17 tabelas**.
 
 **Do diagrama original:** `UTILIZADOR` · `CLIENTE` · `FUNCIONARIO` · `CATEGORIA` · `PRODUTO` · `STOCK` · `MESA` · `PEDIDO` · `ITEM_PEDIDO` · `FAVORITO` · `AVALIACAO` · `NOTIFICACAO`
 
-**Acrescentadas:** `RESERVA` · `ITEM_RESERVA` · `SLOT_HORARIO` · `HISTORICO_ESTADO_PEDIDO`
+**Acrescentadas:** `RESERVA` · `ITEM_RESERVA` · `SLOT_HORARIO` · `HISTORICO_ESTADO_PEDIDO` · `SESSAO_MESA`
 
 ### 7.1 Tabelas criadas mas não usadas nesta versão
 
@@ -378,6 +383,25 @@ O diagrama ER (`database/diagrama er projeto (4).pdf`) é a base. O esquema fina
 | Campo | Tipo |
 |---|---|
 | `id_item_reserva` PK · `id_reserva` FK · `id_produto` FK · `quantidade` · `preco_unitario` · `subtotal` |
+
+**`SESSAO_MESA`** — a refeição inteira numa mesa
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `id_sessao` | Integer PK | |
+| `codigo_sessao` | Varchar(20) UQ | |
+| `id_mesa` | Integer FK NOT NULL | |
+| `num_pessoas` | Integer NULL | |
+| `estado` | Enum(`aberta`,`aguarda_pagamento`,`fechada`,`cancelada`) | |
+| `observacoes` | Text NULL | |
+| `valor_total` | Decimal(10,2) | Soma dos pedidos da sessão |
+| `id_funcionario` | Integer FK NULL | Quem fechou a conta |
+| `aberta_em` · `fechada_em` | Datetime | |
+| `mesa_aberta` | Integer — **coluna virtual** | Ver a nota abaixo |
+
+> **A coluna `mesa_aberta`** vale o número da mesa enquanto a sessão está aberta e `NULL` quando fecha, e tem um índice único em cima. Como o MySQL permite `NULL` repetido numa chave única, isto garante que **uma mesa nunca tem duas sessões abertas**, mas pode ter mil sessões fechadas ao longo do tempo. É a regra de negócio garantida pela base de dados em vez do código — nem que dois pedidos cheguem no mesmo milissegundo.
+
+A tabela `PEDIDO` ganha um campo `id_sessao` (nulo nos pedidos de take away).
 
 **`HISTORICO_ESTADO_PEDIDO`** — auditoria e estatísticas
 
@@ -438,7 +462,7 @@ Mais: **10 mesas** com token e QR, **12 slots horários** (5 almoço + 7 jantar,
             └───────────────┬────────────────┘
                             ▼
             ┌────────────────────────────────┐
-            │  PostgreSQL → Neon / Supabase  │
+            │   MySQL 8  →  local / Aiven    │
             └────────────────────────────────┘
 ```
 
@@ -446,7 +470,7 @@ Mais: **10 mesas** com token e QR, **12 slots horários** (5 almoço + 7 jantar,
 |---|---|---|
 | Front-end | HTML5, CSS3, JavaScript (sem framework) | É o que já existe; introduzir React a meio seria risco desnecessário |
 | Back-end | **Node.js + Express** | Mesma linguagem do front-end — o Guilherme consegue ler e ajudar |
-| Base de dados | **PostgreSQL** (Neon ou Supabase, gratuito) | Relacional, com backup automático e acessível de qualquer sítio |
+| Base de dados | **MySQL 8** — local no desenvolvimento, [Aiven](https://aiven.io/free-mysql-database) (gratuito) quando for preciso alojar | É o que a equipa já conhece; o MySQL Workbench junta na mesma ferramenta a gestão da base de dados e o diagrama ER |
 | Autenticação | `jsonwebtoken` + `bcrypt` | Padrão da indústria, simples de explicar |
 | Validação | `zod` | Valida tudo o que entra na API |
 | Datas | `date-fns` | Dias da semana, slots e limites de antecedência |
@@ -468,7 +492,7 @@ Projeto-Final/
 │   └── funcionarios/          (dashboard — a criar)
 ├── backend/
 │   ├── src/
-│   │   ├── config/ · middleware/ · routes/ · controllers/
+│   │   ├── config/ · middleware/ · routes/ · controllers/   (driver: mysql2)
 │   │   ├── services/
 │   │   │   ├── motorFluxos.js       (o motor, escrito uma vez)
 │   │   │   ├── fluxoPedido.js       (definição do fluxo de pedidos)
