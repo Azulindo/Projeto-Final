@@ -38,6 +38,7 @@
  *     POST  auth/login · GET auth/eu        ← bloqueia a app de gestão
  *     POST  mesas/:token/chamar-empregado
  *     GET   gestao/mesas/qrcodes · GET gestao/sessoes/:id/conta
+ *     GET   gestao/stock                    ← F-62 (04/09); B-63 no João
  * =====================================================================
  */
 
@@ -246,23 +247,31 @@ const CONTAS_DEMO = [
  * converter — é assim que aparece o clássico "16.20" + "1.00" a dar
  * "16.201.00". O Prisma, que serializava Decimal como string, saiu do
  * projeto a 02/09.
+ *
+ * `controla_stock` + `quantidade_atual` + `quantidade_minima` — só nos
+ * 4 produtos onde faz sentido ter existência limitada por dia (regra
+ * 6.3 do CONTEXTO.md). Os restantes não têm estes campos, o que aqui e
+ * no servidor real quer dizer o mesmo que `controla_stock = 0`: nunca
+ * ficam sem stock (regra 25 — só desaparecem se `ativo` for `false`).
+ * Duas entradas ficam propositadamente abaixo do mínimo (F-62, 04/09),
+ * para o aviso na cozinha e o contador do gerente terem o que mostrar.
  */
 const PRODUTOS_DEMO = [
   { id: 1,  nome: 'Abatata Frita',            descricao: 'Batatas rústicas com tempero da casa e maionese de alho', preco: 3.90,  categoria: 'Entradas',          ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/abatata_frita.jpg' },
   { id: 2,  nome: 'Vem Pro Abacate',          descricao: 'Entrada com abacate, guacamole ou tosta',                 preco: 5.80,  categoria: 'Entradas',          ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/vem_pro_abacate.jpg' },
   { id: 3,  nome: "Vem p'ro Alho",            descricao: 'Pão de alho no forno',                                    preco: 3.20,  categoria: 'Entradas',          ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/vem_pro_alho.jpg' },
   { id: 4,  nome: 'Abate-Boca',               descricao: 'Mini croquetes de novilho',                               preco: 4.50,  categoria: 'Entradas',          ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/abate_boca.jpg' },
-  { id: 5,  nome: 'Borrego Abatido',          descricao: 'Borrego assado com batata, alecrim, alho e vinho branco', preco: 15.50, categoria: 'Pratos Principais', ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/borrego_abatido.jpg' },
+  { id: 5,  nome: 'Borrego Abatido',          descricao: 'Borrego assado com batata, alecrim, alho e vinho branco', preco: 15.50, categoria: 'Pratos Principais', ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/borrego_abatido.jpg', controla_stock: true, quantidade_atual: 3,  quantidade_minima: 5 },
   { id: 6,  nome: 'Francesinha em K.O.',      descricao: 'Bife, enchidos, queijo e molho da casa com batata e ovo', preco: 12.20, categoria: 'Pratos Principais', ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/francesinha_em_ko.jpg' },
   { id: 7,  nome: 'Abate Misto',              descricao: 'Picanha, chouriço e frango na brasa com arroz e batata',  preco: 16.20, categoria: 'Pratos Principais', ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/prato_favorito.jpg' },
   { id: 8,  nome: 'Prega-me Isto',            descricao: 'Bife dos Açores com batata frita',                        preco: 16.90, categoria: 'Pratos Principais', ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/prego.jpg' },
-  { id: 9,  nome: 'Picanha na Brasa Negra',   descricao: 'Picanha grelhada com arroz e batata frita',               preco: 16.00, categoria: 'Pratos Principais', ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/picanha_na_brasa_negra.jpg' },
-  { id: 10, nome: 'Tábua Rústica do Abate',   descricao: 'Carnes mistas com migas e batata a murro',                preco: 17.80, categoria: 'Pratos Principais', ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/tabua_rustica_do_abate.jpg' },
+  { id: 9,  nome: 'Picanha na Brasa Negra',   descricao: 'Picanha grelhada com arroz e batata frita',               preco: 16.00, categoria: 'Pratos Principais', ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/picanha_na_brasa_negra.jpg', controla_stock: true, quantidade_atual: 12, quantidade_minima: 6 },
+  { id: 10, nome: 'Tábua Rústica do Abate',   descricao: 'Carnes mistas com migas e batata a murro',                preco: 17.80, categoria: 'Pratos Principais', ativo: true, disponivel: true, imagem: 'assets/imagens/pratos/tabua_rustica_do_abate.jpg', controla_stock: true, quantidade_atual: 2,  quantidade_minima: 4 },
   { id: 11, nome: 'Cerveja (Fino/Pressão)',   descricao: 'Fino ou pressão',                                         preco: 1.70,  categoria: 'Bebidas',           ativo: true, disponivel: true },
   { id: 12, nome: 'Cerveja (Caneca)',         descricao: 'Caneca de cerveja',                                       preco: 2.80,  categoria: 'Bebidas',           ativo: true, disponivel: true },
   { id: 13, nome: 'Panaché',                  descricao: 'Cerveja com gasosa',                                      preco: 2.20,  categoria: 'Bebidas',           ativo: true, disponivel: true },
   { id: 14, nome: 'Sangria (Copo)',           descricao: 'Branca, tinta ou espumante — copo',                       preco: 3.20,  categoria: 'Bebidas',           ativo: true, disponivel: true },
-  { id: 15, nome: 'Sangria (Jarro)',          descricao: 'Branca, tinta ou espumante — jarro',                      preco: 12.00, categoria: 'Bebidas',           ativo: true, disponivel: true },
+  { id: 15, nome: 'Sangria (Jarro)',          descricao: 'Branca, tinta ou espumante — jarro',                      preco: 12.00, categoria: 'Bebidas',           ativo: true, disponivel: true, controla_stock: true, quantidade_atual: 8,  quantidade_minima: 3 },
   { id: 16, nome: 'Coca-Cola',                descricao: 'Normal ou zero',                                          preco: 1.90,  categoria: 'Bebidas',           ativo: true, disponivel: true },
   { id: 17, nome: 'Ice Tea',                  descricao: 'Pêssego, limão ou manga',                                 preco: 1.90,  categoria: 'Bebidas',           ativo: true, disponivel: true },
   { id: 18, nome: 'Sumos Naturais',           descricao: 'Laranja ou mistura de frutos',                            preco: 3.00,  categoria: 'Bebidas',           ativo: true, disponivel: true },
@@ -395,6 +404,27 @@ async function simularEndpoint(endpoint, opcoes) {
     const categoria = query.get('categoria');
     const lista = PRODUTOS_DEMO.filter(p => p.ativo && (!categoria || p.categoria === categoria));
     return lista.map(p => ({ ...p }));
+  }
+
+  /* ── stock (docs/CONTEXTO.md §6.3, regra 21 — F-62, 04/09) ───────
+     Endpoint ainda por construir no servidor (B-63); enquanto isso não
+     acontece, simula-se aqui com o MESMO formato já combinado com o
+     João em `docs/CONTEXTO.md §8.2` (`/api/gestao/stock`), para não
+     ser preciso mexer em mais nada quando a API real existir.
+     Só os produtos que controlam stock — os outros nunca acabam. O
+     campo `baixo` já vem calculado: nem a cozinha nem o gerente têm de
+     saber a regra (quantidade_atual <= quantidade_minima), só olhar. */
+  if (caminho === 'gestao/stock') {
+    return PRODUTOS_DEMO
+      .filter(p => p.controla_stock)
+      .map(p => ({
+        id: p.id,
+        nome: p.nome,
+        categoria: p.categoria,
+        quantidade_atual: p.quantidade_atual,
+        quantidade_minima: p.quantidade_minima,
+        baixo: p.quantidade_atual <= p.quantidade_minima,
+      }));
   }
 
   /* ── mesas + tokens para imprimir os QR Codes (docs/API.md 4.6) ── */

@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * cozinha.js — Ecrã da cozinha · "Vem Pro Abate"  (F-45, F-46, C-11)
+ * cozinha.js — Ecrã da cozinha · "Vem Pro Abate"  (F-45, F-46, C-11, F-62)
  * =====================================================================
  * Mostra as RONDAS que a cozinha tem em mãos, uma coluna por estado:
  *
@@ -24,6 +24,16 @@
  * ficheiro: os seis que existem estão em ESTADOS.
  *
  * Endpoints: GET pedidos/cozinha · PATCH pedidos/:id/estado
+ *
+ * ── STOCK (F-62, 04/09) ──────────────────────────────────────────────
+ * A cozinha vê aqui o stock dos produtos com existência limitada
+ * (leitura — quem ajusta continua a ser o gerente, quando o F-52
+ * existir). Ideia do Guilherme: quem confirma as rondas é quem primeiro
+ * repara no que está a acabar, por isso faz sentido ver isto aqui e não
+ * só num ecrã de administração que a cozinha nem sequer acede.
+ *
+ * Endpoint: GET gestao/stock (simulado — ver frontend/js/api.js; B-63
+ * ainda por fazer no back-end)
  * =====================================================================
  */
 
@@ -66,6 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const textoLigacao = document.getElementById('textoLigacao');
   const btnAtualizar = document.getElementById('btnAtualizar');
   const contadores   = document.getElementById('contadores');
+  const painelStock  = document.getElementById('painelStock');
+  const listaStock   = document.getElementById('painelStockLista');
 
   if (!grelha) return;
 
@@ -82,6 +94,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Relógio próprio: as cores dependem do tempo, não só de haver dados novos
     setInterval(desenhar, 30000);
     btnAtualizar.addEventListener('click', () => atualizar(true));
+
+    // Stock (F-62): pedido à parte, com o próprio intervalo — uma
+    // falha aqui não deve acender a luz de "sem ligação" das rondas,
+    // nem o contrário.
+    if (painelStock && listaStock) {
+      await atualizarStock();
+      setInterval(atualizarStock, INTERVALO_ATUALIZACAO_MS);
+    }
   }
 
   /** construirColunas — Cria o esqueleto uma vez; depois só se enchem. */
@@ -119,6 +139,39 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       if (manual) btnAtualizar.disabled = false;
     }
+  }
+
+  /**
+   * atualizarStock — F-62: leitura do stock dos produtos com
+   * existência limitada, para a cozinha ver o que está a acabar sem
+   * ter de perguntar ao gerente. Falha em silêncio: sem stock não há
+   * nada para mostrar, mas as rondas continuam a funcionar na mesma.
+   */
+  async function atualizarStock() {
+    try {
+      const stock = await chamarAPI('gestao/stock');
+      desenharStock(stock);
+    } catch (erro) {
+      // Não mexe na barra de ligação das rondas — são pedidos independentes.
+    }
+  }
+
+  function desenharStock(stock) {
+    if (!stock || !stock.length) {
+      painelStock.classList.add('hidden');
+      return;
+    }
+
+    painelStock.classList.remove('hidden');
+    listaStock.innerHTML = '';
+
+    // Os que estão a acabar primeiro — é isso que a cozinha precisa de ver já.
+    [...stock].sort((a, b) => Number(b.baixo) - Number(a.baixo)).forEach(p => {
+      const item = document.createElement('span');
+      item.className = `stock-item${p.baixo ? ' baixo' : ''}`;
+      item.innerHTML = `${p.baixo ? '⚠️ ' : ''}${p.nome} <span class="stock-item-qtd">${p.quantidade_atual}</span>`;
+      listaStock.appendChild(item);
+    });
   }
 
   function marcarLigacao(ok, mensagem) {

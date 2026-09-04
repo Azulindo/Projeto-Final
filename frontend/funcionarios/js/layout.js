@@ -3,6 +3,9 @@
  * layout.js — Barra lateral + topo da app de gestão · "Vem Pro Abate"
  * =====================================================================
  * F-44: monta o "esqueleto" partilhado por todos os ecrãs protegidos.
+ * F-62 (04/09): também é aqui que mora o aviso de stock baixo para o
+ * gerente — ver avisarStockBaixo() lá em baixo — precisamente porque
+ * a barra lateral é a única coisa comum a todas as páginas.
  *
  * ── NÍVEIS DE ACESSO ────────────────────────────────────────────────
  * O login é por POSTO DE TRABALHO, não por pessoa (o monitor da cozinha
@@ -76,6 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderSidebar(sidebarEl, sessao, paginaAtual);
   renderTopbar(topbarEl, sessao, tituloPagina);
   ligarInteracoes(sidebarEl, overlayEl);
+  avisarStockBaixo(sidebarEl, sessao);
 });
 
 function renderSidebar(sidebarEl, sessao, paginaAtual) {
@@ -87,19 +91,22 @@ function renderSidebar(sidebarEl, sessao, paginaAtual) {
     const classes = ['nav-item', ativo ? 'nav-ativo' : '', desativado ? 'nav-desativado' : ''].filter(Boolean).join(' ');
     const tag = desativado && item.tag ? `<span class="nav-tag">${item.tag}</span>` : '';
 
-    if (desativado) {
-      return `
-        <button type="button" class="${classes}" disabled title="Ainda por construir">
+    const conteudo = desativado
+      ? `<button type="button" class="${classes}" disabled title="Ainda por construir">
           <span class="nav-icon" aria-hidden="true">${item.icone}</span>
           <span>${item.label}</span>
           ${tag}
-        </button>`;
-    }
-    return `
-      <a href="${item.href}" class="${classes}">
-        <span class="nav-icon" aria-hidden="true">${item.icone}</span>
-        <span>${item.label}</span>
-      </a>`;
+        </button>`
+      : `<a href="${item.href}" class="${classes}">
+          <span class="nav-icon" aria-hidden="true">${item.icone}</span>
+          <span>${item.label}</span>
+        </a>`;
+
+    // O wrapper (com o id do item) é o que deixa o avisarStockBaixo
+    // encontrar o sítio certo para pendurar o aviso — e é ele, não o
+    // botão desativado, que fica com `position: relative`, para o
+    // aviso não herdar a opacidade esbatida do "F-52 por construir".
+    return `<div class="nav-item-wrap" data-nav-id="${item.id}">${conteudo}</div>`;
   }).join('');
 
   sidebarEl.innerHTML = `
@@ -162,4 +169,41 @@ function ligarInteracoes(sidebarEl, overlayEl) {
 function podeVer(item, nivel) {
   if (!item.niveis || item.niveis.length === 0) return true;
   return item.niveis.includes(nivel);
+}
+
+/**
+ * avisarStockBaixo — F-62 (04/09).
+ *
+ * A ideia era simples: dar à cozinha acesso ao stock (feito em
+ * cozinha.js) e, a partir daí, arranjar uma forma de o gerente também
+ * ficar a saber, sem depender de abrir um ecrã de stock que nem sequer
+ * existe ainda (F-52 continua por construir). A barra lateral é a
+ * única coisa comum a todas as páginas da app de gestão — por isso o
+ * aviso mora aqui, e não dentro de um ecrã só.
+ *
+ * Só corre para `administrador` (é o "gerente" da conversa) — a
+ * cozinha já vê o stock em detalhe na própria página dela, e o balcão
+ * não tem ação nenhuma a tomar por causa disto.
+ */
+async function avisarStockBaixo(sidebarEl, sessao) {
+  if (sessao.nivel !== 'administrador') return;
+  if (typeof chamarAPI !== 'function') return;
+
+  try {
+    const stock = await chamarAPI('gestao/stock');
+    const baixos = stock.filter(p => p.baixo);
+    if (!baixos.length) return;
+
+    const item = sidebarEl.querySelector('[data-nav-id="stock"]');
+    if (!item) return;
+
+    const aviso = document.createElement('span');
+    aviso.className = 'nav-aviso';
+    aviso.textContent = String(baixos.length);
+    aviso.title = `Stock baixo: ${baixos.map(p => p.nome).join(', ')}`;
+    item.appendChild(aviso);
+  } catch (erro) {
+    // Um aviso que falha a carregar não deve impedir o resto da app de
+    // funcionar — fica só sem o número, como se não houvesse stock baixo.
+  }
 }

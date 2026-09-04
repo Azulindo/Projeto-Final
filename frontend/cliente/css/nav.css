@@ -51,6 +51,21 @@ html, body {
   background-color: #0a0a0a;
 }
 
+/* ── Tipo de letra do corpo de texto (04/09) ───────────────────────
+   Nenhuma das seis páginas define font-family no body — o texto
+   normal (a história em "Sobre", a morada em "Contactos", as
+   mensagens do chat em "Reservas") estava a cair no serifado por
+   omissão do browser, tipicamente Times New Roman. Ao lado dos
+   títulos incendiados (Metal Mania/Nosifer) e do fundo escuro, um
+   serifado do Word parece saído de outro site — e lê-se pior no
+   ecrã, com traços finos que desaparecem em telas pequenas. Os
+   títulos decorativos continuam como estão; isto só toca o texto
+   corrido. A mesma família (Inter) da app de gestão, por coerência
+   de marca — só a voz muda entre as duas apps, não a legibilidade. */
+body {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
 /* ── Contraste do link do rodapé ──────────────────────────────────
    O "Área de funcionários" estava em #6a6a6a sobre fundo escuro: 3,54:1,
    quando o mínimo da WCAG para texto normal é 4,5:1. É um link discreto

@@ -276,12 +276,14 @@ uma tarefa apagada parece esquecida, uma tarefa marcada mostra que houve uma dec
 | ✅ | F-58 | Página imprimível dos QR Codes (um por mesa, com o número bem visível) | 2 h | B-66 |
 | ✅ | F-59 | Revisão de responsividade de todos os ecrãs do cliente — *menu de 5px→15px, alvos a 44px, imagens 38,6→3,6 MB; medido em 5 larguras* | 2 h | — |
 | ⬜ | F-60 | Revisão visual final e afinação de detalhes | 2 h | — |
-| ⬜ | F-61 | 🔁 *(recuperação)* Tabela de reservas no dashboard | 1 h 30 | B-73 |
-| ⬜ | F-62 | *(ideia nova, 04/09)* Aviso de stock baixo também na página da cozinha (leitura, mesmo destaque visual do F-52) + contador desse aviso sempre visível para o gerente, não só dentro do ecrã de stock | 1 h 30 | B-63 |
+| ⬜ | F-61 | 🔁 *(recuperação)* Tabela de reservas no dashboard — *(nota 04/09, ver F-62)* na linha de cada reserva de HOJE, avisar se algum prato pré-selecionado já estiver no `gestao/stock` como baixo; não descontar nem reservar stock nenhum — a pré-seleção já está definida no `CONTEXTO.md` §5B.3 como valor estimado, não vinculativo (o cliente pode mudar de ideias à mesa), por isso o aviso é só para o gerente decidir, nunca automático | 1 h 45 | B-73 |
+| ✅ | F-62 | Aviso de stock baixo na página da cozinha (leitura) + contador do mesmo aviso sempre visível para o gerente, em qualquer ecrã da app — construído com dados simulados (`gestao/stock`), como o resto do front-end; troca-se a origem quando o B-63 existir a sério — *verificado, `frontend/testes/stock-cozinha.js`* | 1 h 30 | B-63 |
+| ✅ | F-63 | Galeria: fotos dos pratos sempre visíveis + lightbox — *queixa de clientes: "não é intuitivo ter de passar com o rato por cima".* Tinham razão e era mais do que gosto: as fotos estavam a `height: 0; opacity: 0` até ao `:hover`, e num telemóvel **nunca apareciam**. Agora a foto está no cartão desde que a página abre, e clicar/tocar abre-a maior (setas, teclado ←/→, Esc, deslizar o dedo). `frontend/cliente/js/galeria.js` | 1 h 30 | — |
+| ✅ | F-64 | Tipografia do site do cliente — dois problemas silenciosos: (1) nenhuma das seis páginas definia `font-family` no `body`, por isso **todo o texto corrido do site estava em Times New Roman** (a história do "Sobre", a morada, as mensagens do chat das reservas); (2) o `@font-face` da "Metal Mania" apontava para `../fontes/MetalMania-Regular.ttf`, ficheiro que **não existe no repositório** — 5 das 6 páginas nunca chegaram a mostrar a fonte dos títulos. Corpo em Inter, títulos com a Metal Mania vinda do Google Fonts | 1 h | — |
 
-**Total do sprint: ≈ 14 h**
+**Total do sprint: ≈ 16 h 45**
 
-### 🟠 Total Guilherme: ≈ 91 h 30 de tarefas identificadas
+### 🟠 Total Guilherme: ≈ 94 h 15 de tarefas identificadas
 
 ---
 
@@ -389,26 +391,53 @@ Copiar para o `docs/` e ir riscando. São os testes que apanham os erros que apa
 | | Tarefas identificadas | Estimativa |
 |---|---|---|
 | 🔵 João | 74 | ≈ 83 h |
-| 🟠 Guilherme | 62 | ≈ 91 h 30 *(dos quais ≈ 22 h marcadas 🔁 — ver abaixo)* |
+| 🟠 Guilherme | 64 | ≈ 94 h 15 *(dos quais ≈ 22 h marcadas 🔁 — ver abaixo)* |
 | 🟢 Os dois | 22 | ≈ 41 h |
 
-**Onde está mesmo o front-end (02/09):** 29 tarefas feitas, 19 marcadas 🔁 (a `pedido.html`,
-substituída pela `mesa.html`) e **14 por fazer**.
+**Onde está mesmo o front-end (04/09):** 35 tarefas feitas, 19 marcadas 🔁 (a `pedido.html`,
+substituída pela `mesa.html`) e **10 por fazer**.
 
-Dessas 14, **10 estão à espera de endpoints que ainda não existem** (`docs/API.md` secção 4):
-gestão de produtos (F-49, F-50), categorias (F-51), stock (F-52, F-62), funcionários (F-53),
-métricas e gráficos do dashboard (F-55, F-56, F-57) e a tabela de reservas (F-61).
+Dessas 10, **9 estão à espera de endpoints que ainda não existem** (`docs/API.md` secção 4):
+gestão de produtos (F-49, F-50), categorias (F-51), stock (F-52), funcionários (F-53),
+métricas e gráficos do dashboard (F-55, F-56, F-57) e a tabela de reservas (F-61). A décima é
+a revisão visual final (F-60), que não depende de ninguém — ver o fim desta secção.
 
-**Ideia nova, ainda por decidir com o João (04/09):** dar à página da cozinha acesso de leitura
-ao stock, para os cozinheiros verem o que está a acabar em tempo real, e usar isso para um
-aviso que chegue ao gerente sem ele ter de abrir o ecrã de stock — ficou registada como F-62,
-à espera do B-63 (que já estava planeado, só que hoje é pensado só para o `administrador`). A
-outra ideia da mesma conversa — melhoramentos visuais ao site — fica de propósito fora desta
-lista até haver algo mais concreto do que "melhorar".
+**Ideia nova, construída no mesmo dia (04/09):** dar à página da cozinha acesso de leitura ao
+stock, para os cozinheiros verem o que está a acabar em tempo real, e usar isso para um aviso
+que chegue ao gerente sem ele ter de abrir um ecrã de stock que nem existe ainda. Ficou
+registada e construída como **F-62** — com dados simulados, tal como o resto do front-end à
+espera de endpoints, por isso não teve de esperar pelo B-63 (que continua por fazer: hoje o
+stock só seria pensado para o `administrador`, e é o B-63 que tem de abrir o acesso também ao
+nível `cozinha`).
 
-**Feitas desde então:** a F-43 (resumo final da reserva) ficou verificada a 03/09, e a F-59
-(responsividade dos ecrãs do cliente) também — o menu deixou de encolher a letra até 5px e
-as imagens passaram de 38,6 MB para 3,6 MB.
+**A parte visual, que era "melhorar" e passou a ter nome (04/09):** a outra ideia da mesma
+conversa estava aqui de propósito fora da lista até haver algo mais concreto. Passou a haver,
+e por duas vias diferentes:
+
+*Uma veio dos clientes.* Disseram que na galeria não é intuitivo ter de passar com o rato por
+cima dos pratos para ver as fotos. Ao ir ver porquê, o problema era maior do que a queixa: as
+fotos estavam escondidas com `height: 0; opacity: 0` e só apareciam no `:hover` — que num
+telemóvel **não existe**. Metade dos visitantes nunca tinha visto foto nenhuma. Ficou **F-63**.
+
+*A outra apareceu ao medir.* A pergunta era sobre tamanhos de letra, e o que se encontrou foi
+mais básico: nenhuma das seis páginas do cliente definia `font-family` no `body`, por isso
+todo o texto corrido do site — incluindo as mensagens do chat das reservas — estava a ser
+desenhado em **Times New Roman**, a fonte por omissão do browser. E a "Metal Mania" dos
+títulos apontava para um ficheiro que não está no repositório, por isso em 5 das 6 páginas
+também nunca apareceu. Nada disto dava erro nem aparecia em teste nenhum: o site parecia
+apenas "estranho". Ficou **F-64**.
+
+Fica de fora, ainda sem nome, a ideia de mexer no `menu.html`: a ementa ali é uma **imagem**
+(`menu_abate.png`, 800×519 px) esticada até 800px de largura, o que em qualquer ecrã moderno
+(2× ou 3×) sai desfocada — e nenhuma folha de estilo resolve isso. Passá-la a texto real
+resolvia a nitidez, a acessibilidade e a pesquisa, mas obriga a ter os pratos e os **preços**
+verdadeiros escritos algures. Não se inventam preços de um restaurante real, por isso isto
+espera pelo Guilherme e pelo João, não por código.
+
+**Feitas desde então:** a F-43 (resumo final da reserva) ficou verificada a 03/09, a F-59
+(responsividade dos ecrãs do cliente) também — o menu deixou de encolher a letra até 5px e as
+imagens passaram de 38,6 MB para 3,6 MB — e, a 04/09, a F-62 (stock na cozinha + aviso ao
+gerente), a F-63 (galeria) e a F-64 (tipografia do site).
 
 **Problemas da lista do João, todos fechados a 03/09:** X-01 (o nome do cliente podia virar
 código na página), X-05 (quem fosse 7 a 10 ficava sem caminho para reservar), X-07 (o topo
@@ -417,7 +446,11 @@ engolia o texto sem responder). O X-08 não consegui reproduzir, mas tapei a cau
 apontou. O X-02, X-03, X-04 e X-06 já estavam resolvidos de antes.
 
 **Falta uma só coisa que não depende de ninguém: a revisão visual final (F-60)** — e essa é
-quase toda sem critério de medida.
+quase toda sem critério de medida. Começou a andar a 04/09 pelo lado da app de gestão: o
+login, o logótipo da barra lateral e o cartão do dashboard ganharam o brilho de brasa da
+marca (ver o cabeçalho do `funcionarios/css/base.css`), sempre fora de tabelas e formulários
+— a decisão da F-08 de manter os dados planos e legíveis continua de pé. Falta decidir até
+onde levar isso nos restantes ecrãs.
 
 *Quase:* uma parte dela é aritmética e já está feita. O contraste entre texto e fundo é uma
 razão, e a WCAG diz onde está o limite — o `contraste.js` mede-o nas seis páginas. Encontrou
@@ -442,12 +475,14 @@ Os testes estão em `frontend/testes/` e correm com Playwright:
 | `xss-nome.js` | Que um nome com etiquetas HTML não vira código na página (o X-01 da lista do João) | 2 |
 | `grupo-7a10.js` | Que quem for 7 a 10 pessoas consegue reservar, e que acima de 10 vai mesmo para o telefone (X-05) | 4 |
 | `contraste.js` | Que o contraste do texto passa o mínimo da WCAG (4,5:1 normal, 3:1 grande) nas seis páginas | — |
+| `stock-cozinha.js` | Que a cozinha vê o stock baixo destacado (e só os produtos que controlam stock), e que o gerente vê o mesmo aviso em qualquer página da app — não só num ecrã de stock (F-62) | 11 |
 
 ```bash
 npm install playwright        # uma vez
 node frontend/testes/estados-pedido.js
 node frontend/testes/reserva-resumo.js
 node frontend/testes/auditoria-responsiva.js
+node frontend/testes/stock-cozinha.js
 node frontend/testes/xss-nome.js
 node frontend/testes/grupo-7a10.js
 node frontend/testes/contraste.js

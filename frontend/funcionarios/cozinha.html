@@ -38,6 +38,14 @@
           <button type="button" class="btn btn-secundario btn-atualizar" id="btnAtualizar">↻ Atualizar</button>
         </div>
 
+        <!-- Stock dos produtos com existência limitada (F-62). Só
+             aparece quando há algo a controlar; escondida por omissão
+             para não ocupar espaço num turno sem nada em baixo. -->
+        <section class="painel-stock hidden" id="painelStock" aria-live="polite">
+          <h2 class="painel-stock-titulo">📦 Stock de hoje</h2>
+          <div class="painel-stock-lista" id="painelStockLista"></div>
+        </section>
+
         <!-- Uma coluna por estado. Construídas por cozinha.js. -->
         <div class="colunas-cozinha" id="colunasCozinha"></div>
 
@@ -46,6 +54,7 @@
           Ao <strong>aceitar</strong>, o stock desce; ao <strong>anular</strong> (✕), volta.
           As rondas saem do ecrã quando são marcadas como entregues.
           Atualiza-se sozinho a cada 10 segundos.
+          O painel de stock acima só mostra os produtos com existência limitada.
         </p>
 
       </main>

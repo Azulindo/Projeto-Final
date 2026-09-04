@@ -1,7 +1,8 @@
-﻿@font-face {
-  font-family: "Metal Mania";
-  src: url("../fontes/MetalMania-Regular.ttf") format("truetype");
-}
+﻿/* A "Metal Mania" vem agora do Google Fonts, pedida no <head> de cada
+   página. Havia aqui um @font-face a apontar para
+   ../fontes/MetalMania-Regular.ttf — um ficheiro que não existe no
+   repositório —, por isso TODOS os títulos desta página estavam a cair
+   na fonte por omissão do browser sem ninguém dar por isso. */
 
 /* RESET */
 * {
@@ -113,7 +114,7 @@
 
 /* TEXTO HERO MENU */
 .h1-menu {
-  font-family: "Metal Mania";
+  font-family: "Metal Mania", sans-serif;
   font-size: 3rem;
   text-align: center;
   background: linear-gradient(180deg, #ffcc00 10%, #ff4500 50%, #7a0000 90%);
@@ -176,7 +177,7 @@
 }
 
 .section-title {
-  font-family: "Metal Mania";
+  font-family: "Metal Mania", sans-serif;
   font-size: 2rem;
   text-align: center;
   margin-bottom: 25px;
@@ -201,40 +202,41 @@
   max-width: 1000px;
 }
 
+/* Fotos das comidas — ANTES só apareciam ao pairar o rato em cima do
+   cartão (min-height 80→320 + opacity 0→1 no :hover), o que não existe
+   em ecrãs de toque: em telemóvel/tablet a foto nunca aparecia. Vários
+   clientes disseram que nem sabiam que dava para as ver. Agora a foto
+   está sempre visível; o único papel do :hover/:focus é um realce
+   subtil, e um clique/toque abre-a maior num lightbox (ver galeria.js). */
 .dish-card {
   position: relative;
   background: linear-gradient(145deg, #1a1a1a, #0d0d0d);
   border: 2px solid #333;
   border-radius: 12px;
-  padding: 20px;
   cursor: pointer;
   overflow: hidden;
-  transition: all 0.4s ease;
-  min-height: 80px;
+  transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
   width: 280px;
+  max-width: 100%;
 }
 
-.dish-card:hover {
+.dish-card:hover,
+.dish-card:focus-visible {
   border-color: #ff4500;
-  min-height: 320px;
-  box-shadow: 0 8px 25px rgba(255, 69, 0, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 28px rgba(255, 69, 0, 0.3);
+}
+
+.dish-card:focus-visible {
+  outline: 2px solid #ffcc00;
+  outline-offset: 2px;
 }
 
 .dish-image {
-  position: absolute;
-  bottom: 0;
-  left: 0;
+  position: relative;
   width: 100%;
-  height: 0;
-  opacity: 0;
-  transition: all 0.4s ease;
-  z-index: 1;
+  height: 190px;
   overflow: hidden;
-}
-
-.dish-card:hover .dish-image {
-  height: 220px;
-  opacity: 1;
 }
 
 .dish-image img {
@@ -242,22 +244,194 @@
   height: 100%;
   object-fit: cover;
   object-position: center;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.dish-card:hover .dish-image img,
+.dish-card:focus-visible .dish-image img {
+  transform: scale(1.08);
 }
 
 .dish-name {
+  position: relative;
+  z-index: 2;
   font-family: "Metal Mania", sans-serif;
   font-size: 1.1rem;
   text-align: center;
   color: #fff;
-  position: relative;
-  z-index: 2;
-  transition: all 0.3s ease;
+  padding: 14px 14px 16px;
+  background: linear-gradient(180deg, #171717, #0d0d0d);
+  transition: color 0.3s ease;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
 }
 
-.dish-card:hover .dish-name {
+.dish-card:hover .dish-name,
+.dish-card:focus-visible .dish-name {
   color: #ffcc00;
   text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+}
+
+/* Pista de que o cartão abre uma vista maior — só some a dúvida de
+   "isto é clicável?" que a foto sempre visível, por si, não resolve. */
+.dish-zoom-hint {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(15, 15, 15, 0.68);
+  color: #ffcc00;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.dish-card:hover .dish-zoom-hint,
+.dish-card:focus-visible .dish-zoom-hint {
+  opacity: 1;
+}
+
+/* Em ecrã de toque não há :hover — a pista fica sempre visível, mas
+   discreta, para não competir com a foto. */
+@media (hover: none) {
+  .dish-zoom-hint { opacity: 0.85; }
+}
+
+/* ── LIGHTBOX (ver galeria.js) ───────────────────────────────────── */
+
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 5, 5, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 26px;
+  opacity: 0;
+  /* visibility, não só opacity/pointer-events: sem isto, os botões
+     "fechar"/"‹"/"›" ficavam invisíveis mas continuavam alcançáveis
+     por Tab — alguém a navegar por teclado ia parar num botão que não
+     via nem fazia nada. visibility:hidden tira-os da ordem de
+     tabulação por completo enquanto o lightbox está fechado. */
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.lightbox-overlay.aberto {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.lightbox-caixa {
+  position: relative;
+  width: 100%;
+  max-width: 880px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: scale(0.94);
+  transition: transform 0.25s ease;
+}
+
+.lightbox-overlay.aberto .lightbox-caixa {
+  transform: scale(1);
+}
+
+.lightbox-imagem-wrap {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid #ff4500;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  background: #0d0d0d;
+}
+
+.lightbox-imagem-wrap img {
+  width: 100%;
+  max-height: 62vh;
+  object-fit: contain;
+  display: block;
+  background: #0d0d0d;
+}
+
+.lightbox-nome {
+  margin-top: 18px;
+  font-family: "Metal Mania", sans-serif;
+  font-size: 1.6rem;
+  text-align: center;
+  background: linear-gradient(180deg, #ffcc00 10%, #ff4500 50%, #7a0000 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.8));
+}
+
+.lightbox-contador {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: #999;
+  letter-spacing: 0.05em;
+}
+
+.lightbox-fechar,
+.lightbox-seta {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 20, 20, 0.75);
+  border: 1px solid #444;
+  color: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+/* 44×44 — alvo de dedo mínimo (Apple/WCAG), como o resto do site. Um
+   botão de fechar pequeno de mais era exatamente o género de detalhe
+   que faz um ecrã parecer feito à pressa. */
+.lightbox-fechar {
+  top: -18px;
+  right: -18px;
+  width: 44px;
+  height: 44px;
+  font-size: 17px;
+  z-index: 3;
+}
+
+.lightbox-seta {
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  font-size: 20px;
+}
+
+.lightbox-seta.anterior { left: -20px; }
+.lightbox-seta.seguinte { right: -20px; }
+
+.lightbox-fechar:hover,
+.lightbox-seta:hover {
+  border-color: #ff4500;
+  background: rgba(255, 69, 0, 0.25);
+}
+
+@media (max-width: 640px) {
+  /* Nas margens apertadas do telemóvel as setas ficavam em cima da
+     imagem — em vez disso, o lightbox desliza com o dedo (ver galeria.js). */
+  .lightbox-seta { display: none; }
+  .lightbox-fechar { top: -8px; right: 2px; width: 44px; height: 44px; }
+  .lightbox-nome { font-size: 1.3rem; }
 }
 
 .site-footer {
@@ -338,6 +512,8 @@
     grid-template-columns: repeat(1, 1fr);
     max-width: 100%;
   }
+
+  .dish-card { width: 100%; }
 }
 
 /* Pequenos ajustes para tablet menor */

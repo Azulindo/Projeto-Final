@@ -8,7 +8,12 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: radial-gradient(circle at top, #1c1f26 0%, var(--bg) 60%);
+  /* Duas brasas, não uma: mais profundidade do que um único radial, sem
+     custar nada em legibilidade — é fundo, o formulário fica por cima. */
+  background:
+    radial-gradient(ellipse 900px 500px at 20% -10%, rgba(255, 85, 0, 0.10), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 110%, rgba(232, 179, 79, 0.08), transparent 60%),
+    radial-gradient(circle at top, #1c1f26 0%, var(--bg) 60%);
 }
 
 .login-card {
@@ -20,6 +25,18 @@
   padding: 38px 30px 30px;
   box-shadow: var(--sombra);
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Fio de brasa no topo do cartão — a única linha "acesa" do ecrã,
+   para o olhar pousar aí primeiro. */
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--brasa), var(--dourado), transparent);
 }
 
 .login-logo {
@@ -28,7 +45,8 @@
   border-radius: 50%;
   object-fit: cover;
   margin-bottom: 14px;
-  box-shadow: 0 0 0 3px rgba(201, 131, 47, 0.25);
+  box-shadow: var(--glow-logo);
+  animation: pulseEmber 3.2s ease-in-out infinite;
 }
 
 .login-card h1 {
@@ -67,11 +85,19 @@
   width: 100%;
   padding: 13px;
   font-size: 15px;
+  /* O único botão do ecrã — pode ter o brilho que o .btn-primario das
+     tabelas não devia ter (lá, muitos ao mesmo tempo, cansava). */
+  box-shadow: 0 6px 20px -6px rgba(255, 85, 0, 0.45);
 }
 
+.btn-entrar:hover { box-shadow: 0 8px 26px -6px rgba(255, 85, 0, 0.6); }
+
+/* 12px é o mínimo que a auditoria (frontend/testes/auditoria-responsiva.js)
+   aceita — e esta nota é precisamente a que diz a quem abre a app pela
+   primeira vez quais são as contas de demonstração. Estava a 11,5/11px. */
 .nota-demo {
   margin-top: 24px;
-  font-size: 11.5px;
+  font-size: 12.5px;
   color: var(--texto-fraco);
   line-height: 1.6;
 }
@@ -81,7 +107,7 @@
   padding: 1px 6px;
   border-radius: 5px;
   color: var(--dourado);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 @media (max-width: 400px) {

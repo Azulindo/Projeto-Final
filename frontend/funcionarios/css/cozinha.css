@@ -61,6 +61,55 @@
 
 .btn-atualizar { white-space: nowrap; }
 
+/* ── Stock (F-62) ────────────────────────────────────────────────── */
+
+.painel-stock {
+  background: var(--bg-elevada);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 13px 16px;
+  margin-bottom: 18px;
+}
+
+.painel-stock-titulo {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--texto-suave);
+  margin: 0 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.painel-stock-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stock-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  padding: 7px 12px;
+  min-height: 44px;         /* alvo de dedo, como o resto da app */
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--texto-suave);
+}
+
+/* Só o que está a acabar ganha destaque — o resto do stock não
+   precisa de gritar por atenção, só de estar visível. */
+.stock-item.baixo {
+  border-color: var(--perigo);
+  color: var(--texto);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.stock-item-qtd { font-weight: 700; color: var(--texto); }
+.stock-item.baixo .stock-item-qtd { color: var(--perigo); }
+
 /* ── Colunas ─────────────────────────────────────────────────────── */
 
 .colunas-cozinha {

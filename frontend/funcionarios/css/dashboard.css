@@ -16,6 +16,20 @@ body[data-pagina="dashboard"] #conteudoPagina {
   border: 1px dashed var(--border);
   border-radius: var(--radius-lg);
   padding: 40px 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Mesmo fio de brasa do login — este cartão é provisório (some quando
+   o F-55 chegar), mas enquanto cá está não devia parecer um alerta de
+   "por fazer" e nada mais. */
+.placeholder-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--brasa), var(--dourado), transparent);
+  opacity: 0.7;
 }
 
 .placeholder-icone {

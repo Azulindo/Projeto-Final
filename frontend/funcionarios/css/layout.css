@@ -35,6 +35,9 @@
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
+  /* O mesmo anel do login, mas sem o pulsar — aqui está à vista o
+     turno inteiro, e uma coisa a piscar sem parar cansa. */
+  box-shadow: var(--glow-logo);
 }
 
 .sidebar-brand .brand-texto {
@@ -94,6 +97,30 @@
 .nav-item.nav-desativado {
   opacity: 0.42;
   cursor: default;
+}
+
+/* F-62: o aviso pendura-se no wrapper, não no botão — se estivesse
+   dentro do botão "por construir", herdava o opacity: 0.42 dele e um
+   aviso de stock baixo esbatido não é aviso nenhum. */
+.nav-item-wrap {
+  position: relative;
+}
+
+.nav-aviso {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--perigo);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
 }
 
 .nav-icon {

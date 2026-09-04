@@ -13,6 +13,16 @@
 
    Todos os ecrãs da app de gestão (login, dashboard, pedidos,
    produtos, etc.) devem importar este ficheiro primeiro.
+
+   ── AQUECIMENTO DA MARCA (04/09) ─────────────────────────────────────
+   A regra acima continua válida: NADA disto entra em tabelas, linhas de
+   dados ou formulários — é aí que a legibilidade manda. Mas a app
+   inteira estava plana a mais, sem nada da personalidade do site
+   (comparar com `frontend/cliente/css/reservas.css` — o brilho do
+   avatar do chat, o glow dos chips). Estas variáveis e a keyframe
+   `pulseEmber` existem para dar esse toque só onde não há dados por
+   perto: o logótipo, o cartão de login, cabeçalhos de página, estados
+   vazios. Zero texto por cima destes brilhos — só moldura.
    ===================================================================== */
 
 * {
@@ -32,6 +42,12 @@
   /* Marca — usar com moderação (ações, estados ativos, destaques) */
   --cobre:       #c9832f;
   --dourado:     #e8b34f;
+  --brasa:       #ff5500;  /* o laranja vivo do site de cliente — só brilhos, nunca texto/fundo de tabela */
+
+  /* Brilho de marca — anel em volta do logótipo, halo por trás de
+     cartões de destaque. Duas camadas (dourado por dentro, brasa por
+     fora) para o mesmo efeito do avatar do chat em reservas.css. */
+  --glow-logo: 0 0 0 3px rgba(232, 179, 79, 0.35), 0 0 22px rgba(255, 85, 0, 0.28);
 
   /* Texto */
   --texto:        #eef0f3;
@@ -51,6 +67,15 @@
   --sombra:     0 10px 26px -10px rgba(0, 0, 0, 0.55);
   --topbar-h:   64px;
   --sidebar-w:  220px;
+}
+
+/* Pulsar suave do brilho de marca — mesmo espírito do ponto "Online"
+   do chat (`pulseGreen`, reservas.css), mas para o logótipo. Usada só
+   em pontos de entrada calmos (login) — nunca à volta de dados que
+   mudam sozinhos, para não competir por atenção com um pedido novo. */
+@keyframes pulseEmber {
+  0%, 100% { box-shadow: var(--glow-logo); }
+  50%      { box-shadow: 0 0 0 3px rgba(232, 179, 79, 0.5), 0 0 30px rgba(255, 85, 0, 0.4); }
 }
 
 html, body {

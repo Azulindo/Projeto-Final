@@ -1,7 +1,8 @@
-﻿@font-face {
-  font-family: "Metal Mania";
-  src: url("../fontes/MetalMania-Regular.ttf") format("truetype");
-}
+﻿/* A "Metal Mania" vem agora do Google Fonts, pedida no <head> de cada
+   página. Havia aqui um @font-face a apontar para
+   ../fontes/MetalMania-Regular.ttf — um ficheiro que não existe no
+   repositório —, por isso TODOS os títulos desta página estavam a cair
+   na fonte por omissão do browser sem ninguém dar por isso. */
 
 /* RESET */
 * {
@@ -113,7 +114,7 @@
 
 /* TEXTO HERO SOBRE */
 .h1-sobre {
-  font-family: "Metal Mania";
+  font-family: "Metal Mania", sans-serif;
   font-size: 3rem;
   text-align: center;
   background: linear-gradient(180deg, #ffcc00 10%, #ff4500 50%, #7a0000 90%);
@@ -181,7 +182,7 @@
 }
 
 .sobre-content h2 {
-  font-family: "Metal Mania";
+  font-family: "Metal Mania", sans-serif;
   font-size: 2.5rem;
   margin-bottom: 20px;
   color: #ff4500;
