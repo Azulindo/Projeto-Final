@@ -115,3 +115,6 @@ notas-pessoais.md
 
 # Capturas de ecrã geradas pelos testes
 frontend/testes/_capturas/
+
+# Pasta criada por ferramentas de apoio, nao faz parte do projeto
+Claude outputs/
