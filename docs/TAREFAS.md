@@ -124,7 +124,7 @@ uma tarefa apagada parece esquecida, uma tarefa marcada mostra que houve uma dec
 | ⬜ | B-60 | Atualizar automaticamente o estado da mesa (`livre` / `ocupada`) | 1 h | B-56 |
 | ⬜ | B-61 | CRUD de produtos (criar, editar, ativar/desativar, marcar disponível) | 2 h | B-21 |
 | ⬜ | B-62 | CRUD de categorias | 1 h 30 | B-21 |
-| ⬜ | B-63 | Consultar e ajustar stock + endpoint de produtos com stock baixo | 1 h 30 | B-21 |
+| ⬜ | B-63 | Consultar e ajustar stock + endpoint de produtos com stock baixo — *(ideia nova, 04/09)* acessível também ao nível `cozinha`, não só `administrador` (ver tabela de contas em `docs/API.md`) | 1 h 30 | B-21 |
 | ⬜ | B-64 | CRUD de funcionários (só administrador) | 2 h | B-21 |
 
 **Total do sprint: ≈ 14 h**
@@ -277,10 +277,11 @@ uma tarefa apagada parece esquecida, uma tarefa marcada mostra que houve uma dec
 | ✅ | F-59 | Revisão de responsividade de todos os ecrãs do cliente — *menu de 5px→15px, alvos a 44px, imagens 38,6→3,6 MB; medido em 5 larguras* | 2 h | — |
 | ⬜ | F-60 | Revisão visual final e afinação de detalhes | 2 h | — |
 | ⬜ | F-61 | 🔁 *(recuperação)* Tabela de reservas no dashboard | 1 h 30 | B-73 |
+| ⬜ | F-62 | *(ideia nova, 04/09)* Aviso de stock baixo também na página da cozinha (leitura, mesmo destaque visual do F-52) + contador desse aviso sempre visível para o gerente, não só dentro do ecrã de stock | 1 h 30 | B-63 |
 
-**Total do sprint: ≈ 12 h 30**
+**Total do sprint: ≈ 14 h**
 
-### 🟠 Total Guilherme: ≈ 90 h de tarefas identificadas
+### 🟠 Total Guilherme: ≈ 91 h 30 de tarefas identificadas
 
 ---
 
@@ -387,16 +388,23 @@ Copiar para o `docs/` e ir riscando. São os testes que apanham os erros que apa
 
 | | Tarefas identificadas | Estimativa |
 |---|---|---|
-| 🔵 João | 73 | ≈ 82 h |
-| 🟠 Guilherme | 61 | ≈ 90 h *(dos quais ≈ 22 h marcadas 🔁 — ver abaixo)* |
+| 🔵 João | 74 | ≈ 83 h |
+| 🟠 Guilherme | 62 | ≈ 91 h 30 *(dos quais ≈ 22 h marcadas 🔁 — ver abaixo)* |
 | 🟢 Os dois | 22 | ≈ 41 h |
 
 **Onde está mesmo o front-end (02/09):** 29 tarefas feitas, 19 marcadas 🔁 (a `pedido.html`,
-substituída pela `mesa.html`) e **13 por fazer**.
+substituída pela `mesa.html`) e **14 por fazer**.
 
-Dessas 13, **9 estão à espera de endpoints que ainda não existem** (`docs/API.md` secção 4):
-gestão de produtos (F-49, F-50), categorias (F-51), stock (F-52), funcionários (F-53),
+Dessas 14, **10 estão à espera de endpoints que ainda não existem** (`docs/API.md` secção 4):
+gestão de produtos (F-49, F-50), categorias (F-51), stock (F-52, F-62), funcionários (F-53),
 métricas e gráficos do dashboard (F-55, F-56, F-57) e a tabela de reservas (F-61).
+
+**Ideia nova, ainda por decidir com o João (04/09):** dar à página da cozinha acesso de leitura
+ao stock, para os cozinheiros verem o que está a acabar em tempo real, e usar isso para um
+aviso que chegue ao gerente sem ele ter de abrir o ecrã de stock — ficou registada como F-62,
+à espera do B-63 (que já estava planeado, só que hoje é pensado só para o `administrador`). A
+outra ideia da mesma conversa — melhoramentos visuais ao site — fica de propósito fora desta
+lista até haver algo mais concreto do que "melhorar".
 
 **Feitas desde então:** a F-43 (resumo final da reserva) ficou verificada a 03/09, e a F-59
 (responsividade dos ecrãs do cliente) também — o menu deixou de encolher a letra até 5px e
