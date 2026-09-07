@@ -28,7 +28,10 @@ const ECRAS = [
 
 const PAGINAS = [
   { url: 'cliente/index.html',      nome: 'Início' },
-  { url: 'cliente/menu.html',       nome: 'Ementa' },
+  /* `?simular=1` porque a ementa passou a vir do `GET produtos`. Sem
+     isto o que se media era o aviso "não foi possível carregar a
+     ementa", nunca a ementa. */
+  { url: 'cliente/menu.html?simular=1', nome: 'Ementa' },
   { url: 'cliente/galeria.html',    nome: 'Galeria' },
   { url: 'cliente/sobre.html',      nome: 'Sobre' },
   { url: 'cliente/contactos.html',  nome: 'Contactos' },

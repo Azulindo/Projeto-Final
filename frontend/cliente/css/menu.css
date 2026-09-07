@@ -170,12 +170,134 @@
   animation: fadeInUp 1.5s ease-out;
 }
 
-/* IMAGEM DO MENU */
+/* IMAGEM DO MENU — a `menu_abate.png` já não é usada por esta página (a
+   ementa passou a vir do servidor, ver js/menu.js). A regra fica porque
+   o ficheiro continua no repositório. */
 .menu-image {
   width: 100%;
   height: auto;
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   margin-bottom: 20px;
+}
+
+/* ── EMENTA (04/09) ───────────────────────────────────────────────
+   Desenhada pelo js/menu.js a partir do GET produtos. Alinhada à
+   esquerda de propósito: uma ementa lê-se por linhas, e nome centrado
+   com preço centrado obriga o olho a saltar de um lado para o outro. */
+
+.ementa {
+  text-align: left;
+  margin-bottom: 40px;
+}
+
+.ementa-seccao + .ementa-seccao {
+  margin-top: 45px;
+}
+
+.ementa-titulo {
+  font-family: "Metal Mania", sans-serif;
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 22px;
+  background: linear-gradient(180deg, #ffcc00 10%, #ff4500 50%, #7a0000 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.8));
+}
+
+.ementa-lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ementa-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.ementa-item:hover {
+  background: rgba(255, 69, 0, 0.06);
+  border-color: rgba(255, 69, 0, 0.35);
+}
+
+.ementa-foto {
+  width: 68px;
+  height: 68px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #333;
+}
+
+.ementa-texto {
+  flex: 1;
+  min-width: 0;      /* deixa a descrição partir a linha em vez de esticar */
+}
+
+.ementa-nome {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 3px;
+}
+
+.ementa-desc {
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #b3b3b3;
+}
+
+/* O preço é a segunda coisa que se procura, logo a seguir ao nome —
+   por isso à direita, em dourado, e com `tabular-nums` para as vírgulas
+   ficarem todas na mesma coluna. */
+.ementa-preco {
+  flex-shrink: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffcc00;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Estado: a carregar · ementa vazia · erro */
+.ementa-estado {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 20px;
+  color: #9a9a9a;
+  font-size: 0.95rem;
+}
+
+.ementa-estado.hidden { display: none; }
+
+.ementa-estado-aviso { color: #d8b06a; }
+
+.ementa-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 69, 0, 0.25);
+  border-top-color: #ff4500;
+  border-radius: 50%;
+  animation: ementaGira 0.8s linear infinite;
+}
+
+@keyframes ementaGira {
+  to { transform: rotate(360deg); }
+}
+
+/* Quem preferir menos movimento não leva um spinner a girar sem parar. */
+@media (prefers-reduced-motion: reduce) {
+  .ementa-spinner { animation: none; }
 }
 
 /* BOTÃO GALERIA */
@@ -324,6 +446,44 @@ html { scroll-behavior: smooth; }
     width: 100%;
     max-width: 100%;
     height: auto;
+  }
+
+  /* Ementa em telemóvel. O preço sobe para a linha do NOME em vez de
+     ficar por baixo da descrição: solto lá em baixo ficava mais perto do
+     prato seguinte do que do seu, e lia-se o preço errado. Ao alinhar
+     tudo pelo topo, cada preço fica ao lado do nome a que pertence. */
+  .ementa-item {
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 8px;
+    /* Uma linha fina entre pratos: em ecrã estreito é o que separa um
+       prato do outro sem precisar de mais espaço em branco. */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 0;
+  }
+
+  .ementa-lista { gap: 0; }
+
+  .ementa-item:last-child { border-bottom: none; }
+
+  .ementa-foto {
+    width: 56px;
+    height: 56px;
+  }
+
+  .ementa-desc {
+    font-size: 0.85rem;
+  }
+
+  .ementa-preco {
+    font-size: 1rem;
+    /* Encosta ao topo, à altura do nome. */
+    align-self: flex-start;
+    padding-top: 1px;
+  }
+
+  .ementa-titulo {
+    font-size: 1.6rem;
   }
 
   .site-footer {

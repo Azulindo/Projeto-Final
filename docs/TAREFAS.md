@@ -306,10 +306,12 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | F-62 | Aviso de stock baixo na página da cozinha (leitura) + contador do mesmo aviso sempre visível para o gerente, em qualquer ecrã da app — construído com dados simulados (`gestao/stock`), como o resto do front-end; troca-se a origem quando o B-63 existir a sério — *verificado, `frontend/testes/stock-cozinha.js`* | 1 h 30 | B-63 |
 | ✅ | F-63 | Galeria: fotos dos pratos sempre visíveis + lightbox — *queixa de clientes: "não é intuitivo ter de passar com o rato por cima".* Tinham razão e era mais do que gosto: as fotos estavam a `height: 0; opacity: 0` até ao `:hover`, e num telemóvel **nunca apareciam**. Agora a foto está no cartão desde que a página abre, e clicar/tocar abre-a maior (setas, teclado ←/→, Esc, deslizar o dedo). `frontend/cliente/js/galeria.js` | 1 h 30 | — |
 | ✅ | F-64 | Tipografia do site do cliente — dois problemas silenciosos: (1) nenhuma das seis páginas definia `font-family` no `body`, por isso **todo o texto corrido do site estava em Times New Roman** (a história do "Sobre", a morada, as mensagens do chat das reservas); (2) o `@font-face` da "Metal Mania" apontava para `../fontes/MetalMania-Regular.ttf`, ficheiro que **não existe no repositório** — 5 das 6 páginas nunca chegaram a mostrar a fonte dos títulos. Corpo em Inter, títulos com a Metal Mania vinda do Google Fonts | 1 h | — |
+| ✅ | F-65 | Ementa da `menu.html` lida do servidor (`GET produtos`) em vez de uma imagem — a carta era o `menu_abate.png`, 800×519 px esticado até 800 px de largura: desfocado em qualquer ecrã 2×/3×, ilegível ao telemóvel, e com os preços a viver ao mesmo tempo dentro da imagem e no `reservas.js`. Agora há uma fonte de verdade só (a base de dados) e mudar um preço no back-office muda o site. Construída com os dados simulados, como o resto do front-end. **O `categorias` e o `produtos` foram comentados no `ENDPOINTS_REAIS`:** existem no servidor, mas o `API_BASE` ainda é `localhost:3000`, por isso só respondem no portátil do João — e como o site está publicado no Vercel com o `/menu` como rota pública (`vercel.json`), a página começou a mostrar "não foi possível carregar a ementa" a quem lá entrasse. Estar naquela lista não é *"o endpoint existe"*, é *"o front-end consegue lá chegar"*. **Quando o endereço do Render chegar são duas linhas:** trocar o `API_BASE` e descomentar os quatro padrões. *Ao fazer isto apareceu um buraco: o `categorias` estava no `ENDPOINTS_REAIS` sem resposta simulada nenhuma, por isso com `?simular=1` a chamada rebentava sempre e as páginas caíam no plano B sem ninguém saber — corrigido no `api.js`.* | 2 h | B-27 |
+| ✅ | F-66 | Barra de navegação do site — *queixa: "está muito estática no modo responsivo e fica feia"*. Duas coisas: (1) abaixo dos 480 px os cinco links partem-se em 3 + 2, mas eram dois blocos com espaçamentos diferentes (2 px dentro de cada, 4 px entre eles), o que fazia a quebra parecer um acidente em vez de uma escolha — agora é o mesmo ritmo nas duas filas; (2) nada indicava em que página se estava e nada reagia a nada — um risco de brasa cresce do centro ao passar por cima e fica fixo na página atual, marcada com `aria-current` pelo novo `js/nav.js` (é o atributo que os leitores de ecrã anunciam, por isso o mesmo trabalho serve para quem vê e para quem não vê) | 1 h 15 | — |
 
-**Total do sprint: ≈ 16 h 45**
+**Total do sprint: ≈ 20 h**
 
-### 🟠 Total Guilherme: ≈ 94 h 15 de tarefas identificadas
+### 🟠 Total Guilherme: ≈ 97 h 30 de tarefas identificadas
 
 ---
 
@@ -413,7 +415,7 @@ estado, esta tabela fica errada até ser refeita.*
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
 | 🔵 João (B-) | 73 | 17 | — | 56 | ≈ 70 h |
-| 🟠 Guilherme (F-) | 64 | 35 | 19 | 10 | ≈ 18 h 15 |
+| 🟠 Guilherme (F-) | 66 | 37 | 19 | 10 | ≈ 18 h 15 |
 | 🟢 Os dois (C-) | 23 | 4 | — | 19 | ≈ 40 h |
 | 🐞 Correções (X-) | 9 | 8 | — | 1 | ≈ 30 min |
 

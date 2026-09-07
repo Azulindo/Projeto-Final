@@ -61,12 +61,33 @@ const API_BASE = 'http://localhost:3000/api'; // porta 3000 = PORT por omissão 
  */
 const MODO_SIMULACAO = true;
 
-/* Endpoints já disponíveis no back-end real (docs/API.md 4.2) */
+/* Endpoints já disponíveis no back-end real (docs/API.md 4.2).
+ *
+ * ── VAZIA DE PROPÓSITO ATÉ O RENDER ESTAR NO AR (04/09) ──────────────
+ * O `categorias` e o `produtos` existem mesmo — o João construiu-os — mas
+ * o `API_BASE` aqui em baixo ainda é `localhost:3000`. Isso quer dizer
+ * que só respondem no portátil dele, com o servidor a correr.
+ *
+ * Para toda a gente resto — incluindo o site publicado no Vercel, onde
+ * o `/menu` é uma rota pública (ver `vercel.json`) — a chamada morre e a
+ * página fica sem ementa. Foi o que aconteceu: a `menu.html` passou a
+ * ler do servidor (F-65) e o site publicado começou a mostrar "não foi
+ * possível carregar a ementa" a quem lá entrasse.
+ *
+ * Estar nesta lista não é "o endpoint existe", é "o front-end consegue
+ * lá chegar". Enquanto não conseguir, ficam de fora e usam-se os dados
+ * simulados — que são os mesmos 25 produtos, conferidos um a um contra
+ * o `database/seed.sql` (nomes e preços iguais ao cêntimo).
+ *
+ * QUANDO O ENDEREÇO DO RENDER CHEGAR, são duas linhas:
+ *   1. trocar o `API_BASE` aqui em baixo pelo endereço do Render;
+ *   2. descomentar os quatro padrões aqui em baixo.
+ */
 const ENDPOINTS_REAIS = [
-  /^categorias$/,             // GET /api/categorias
-  /^produtos$/,               // GET /api/produtos
-  /^produtos\?/,              // GET /api/produtos?categoria=Bebidas
-  /^produtos\/\d+$/,          // GET /api/produtos/:id
+  // /^categorias$/,          // GET /api/categorias
+  // /^produtos$/,            // GET /api/produtos
+  // /^produtos\?/,           // GET /api/produtos?categoria=Bebidas
+  // /^produtos\/\d+$/,       // GET /api/produtos/:id
 ];
 
 /**
@@ -404,6 +425,20 @@ async function simularEndpoint(endpoint, opcoes) {
     const categoria = query.get('categoria');
     const lista = PRODUTOS_DEMO.filter(p => p.ativo && (!categoria || p.categoria === categoria));
     return lista.map(p => ({ ...p }));
+  }
+
+  /* ── categorias (docs/API.md 4.2) ──────────────────────────────────
+     Faltava aqui: o `categorias` estava na lista ENDPOINTS_REAIS mas não
+     tinha resposta simulada nenhuma. Com `?simular=1` — que é como
+     correm os testes e as demonstrações sem servidor — a chamada
+     rebentava e as páginas caíam sempre no plano B (derivar a ordem dos
+     produtos). Funcionava, mas escondia o caminho que corre a sério.
+     O que importa aqui é o campo `ordem`: é ele que manda na ementa. */
+  if (caminho === 'categorias') {
+    const ordem = ['Entradas', 'Pratos Principais', 'Bebidas', 'Sobremesas'];
+    return ordem
+      .filter(nome => PRODUTOS_DEMO.some(p => p.ativo && p.categoria === nome))
+      .map((nome, i) => ({ id: i + 1, nome, descricao: '', ordem: i + 1 }));
   }
 
   /* ── stock (docs/CONTEXTO.md §6.3, regra 21 — F-62, 04/09) ───────

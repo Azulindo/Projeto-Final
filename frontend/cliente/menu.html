@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Metal+Mania&family=Nosifer&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/nav.css">
+  <script src="js/nav.js" defer></script>
 </head>
 <body>
 
@@ -47,13 +48,27 @@
     <!-- CONTEÚDO PRINCIPAL -->
     <main class="page-menu">
         <section class="menu-content">
-            <img src="../../assets/imagens/pratos/menu_abate.png" alt="Menu Vem Pro Abate" class="menu-image">
+            <!-- A ementa é desenhada pelo js/menu.js a partir do GET produtos.
+                 Aqui estava uma imagem (menu_abate.png, 800×519 px) esticada até
+                 800 px de largura: desfocada em qualquer ecrã moderno, ilegível
+                 num telemóvel, e com os preços a viver em dois sítios ao mesmo
+                 tempo. Agora há uma só fonte de verdade — a base de dados — e
+                 mudar um preço no back-office muda o site sem tocar em ficheiro
+                 nenhum. -->
+            <div class="ementa-estado" id="ementaEstado" role="status" aria-live="polite">
+                <span class="ementa-spinner" aria-hidden="true"></span>
+                <span id="ementaEstadoTexto">A carregar a ementa…</span>
+            </div>
+
+            <div class="ementa" id="ementa"></div>
+
             <button id="galeriaBtn" class="galeria-btn">Ver Galeria</button>
             <p class="galeria-text">Descubra os nossos pratos incríveis! Clique no botão e explore a nossa galeria de delícias irresistíveis.</p>
         </section>
     </main>
 
     <!-- Script -->
+    <script src="../js/api.js"></script>
     <script src="js/menu.js"></script>
      <footer class="site-footer">
     <div class="footer-content">

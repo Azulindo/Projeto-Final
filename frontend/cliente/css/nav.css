@@ -95,7 +95,9 @@ body {
     align-content: center !important;
     padding: 6px 10px !important;
     row-gap: 2px !important;
-    column-gap: 4px !important;
+    /* O mesmo valor do `gap` dos blocos (ver acima): é isso que faz as
+       duas filas terem o mesmo ritmo. */
+    column-gap: 6px !important;
   }
 
   /* Logótipo sozinho na primeira linha */
@@ -122,9 +124,19 @@ body {
   .inline-nav.left  { order: 2 !important; }
   .inline-nav.right { order: 3 !important; }
 
+  /* ── ESPAÇAMENTO (04/09) ──────────────────────────────────────
+     Os cinco links partem-se em 3 + 2 abaixo dos 480px — não há
+     largura para mais, e 3 + 2 é a divisão mais equilibrada (tentei
+     pô-los todos a fluir como uma lista só e saiu 4 + 1, com uma
+     ligação sozinha na segunda fila, pior).
+     O que fazia aquilo parecer um acidente era o espaçamento: 2px
+     entre links do mesmo bloco e 4px entre blocos, por isso a fila
+     de cima e a de baixo tinham ritmos diferentes. Agora é o mesmo
+     valor nos dois sítios, e as duas filas lêem-se como uma coisa
+     só, quebrada de propósito. */
   .inline-nav {
     flex: 0 0 auto !important;
-    gap: 2px !important;
+    gap: 6px !important;
     opacity: 1 !important;
   }
 
@@ -142,6 +154,61 @@ body {
   }
 
   .inline-nav a:active { color: #fff !important; }
+
+  /* O risco fica mais afastado do texto porque aqui a ligação tem
+     44px de altura e o texto está centrado no meio dela. */
+  .inline-nav a::after { bottom: 7px !important; }
+}
+
+/* ── A barra deixa de estar parada (04/09) ────────────────────────
+   Queixa: "está muito estática e fica feia". Estava — as ligações
+   mudavam de cinzento para branco e mais nada, e nada dizia em que
+   página se estava. Duas coisas resolvem isso sem transformar a barra
+   num circo: um risco de brasa que cresce do centro ao passar por
+   cima, e o mesmo risco fixo na página atual.
+
+   As cores são as do resto do site (o par dourado→laranja dos
+   títulos), para isto não parecer colado de outro lado. */
+
+.inline-nav a {
+  position: relative;
+  transition: color 0.18s ease;
+}
+
+.inline-nav a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #ffcc00, #ff4500);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.22s ease;
+}
+
+.inline-nav a:hover::after,
+.inline-nav a:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* Página atual — marcada pelo js/nav.js. O risco fica sempre aceso e
+   o texto acende: quem chega à página sabe onde está sem ler o URL. */
+.inline-nav a[aria-current="page"] {
+  color: #fff !important;
+  opacity: 1;
+}
+
+.inline-nav a[aria-current="page"]::after {
+  transform: scaleX(1);
+}
+
+/* Quem pediu menos movimento não leva o risco a crescer — aparece e
+   pronto. O estado continua a ver-se, que é o que interessa. */
+@media (prefers-reduced-motion: reduce) {
+  .inline-nav a::after { transition: none; }
 }
 
 /* ── Outros alvos de toque ────────────────────────────────────────
