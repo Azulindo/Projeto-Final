@@ -20,7 +20,7 @@
 > com um bot, substituída pela `mesa.html`. **Não estão em falta**: o que garantiam está
 > feito noutra forma. Não as contes no que falta.
 
-**Estado a 4 de setembro:** Sprint 0 fechado menos o Render (B-16). A base de dados está alojada no Aiven e a API já lê de lá — o `GET /api/saude` responde com 17 tabelas e 25 produtos. O histórico do repositório foi reescrito para remover um `.env` que lá tinha ido parar, e as três branches foram juntas no `main`. O Guilherme escreveu o contrato (`docs/API.md`) e tem o front-end do Sprint 3 quase todo feito. **O que bloqueia agora: o B-19 (login)** — sem ele quatro ecrãs de gestão dele não abrem.
+**Estado a 7 de setembro:** **Sprint 0 e Sprint 1 fechados.** A base está no Aiven, a API em `https://vem-pro-abate-api.onrender.com` (Render, Frankfurt, plano gratuito) e o login funciona de ponta a ponta contra a nuvem. O histórico do repositório foi reescrito para remover um `.env` que lá tinha ido parar, as três branches foram juntas no `main`, e o repositório passou a privado. O Guilherme ligou a ementa à API (F-65) e tem o front-end do Sprint 3 quase todo feito. **O que bloqueia agora: o F-67** — o site nunca chegou a ser publicado, e sem endereço público não há QR Codes de mesa nem CORS para fechar.
 
 **Legenda:** ✅ feito · 🟨 parcial (ver nota) · ⬜ por fazer · 🔁 **já não se aplica** — o plano mudou pelo caminho e a tarefa deixou de fazer sentido. Fica à vista, marcada, em vez de apagada: uma tarefa apagada parece esquecida, uma marcada mostra que houve uma decisão.
 
@@ -85,22 +85,22 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | **✅** | B-13 | ~~`npm init` e instalar os pacotes~~ — `bcryptjs` em vez de `bcrypt` (compila sempre no Windows) | 30 min | — |
 | **✅** | B-14 | ~~Estrutura de pastas + `config/bd.js` + `.env.example`~~ | 45 min | B-13 |
 | **✅** | B-15 | ~~`app.js` + `GET /api/saude`~~ — responde com 17 tabelas e 25 produtos | 30 min | B-14 |
-| 🟨 | B-16 | Publicar no Render, configurar variáveis de ambiente, confirmar que responde do exterior — *base de dados já alojada (Aiven, MySQL 8.4, SSL obrigatório com `backend/certs/ca.pem`); `schema.sql` e `seed.sql` já correram lá. Falta o Render* | 1 h 30 | B-15 |
+| ✅ | B-16 | Publicar no Render, configurar variáveis de ambiente, confirmar que responde do exterior — *base no Aiven (MySQL 8.4, SSL com `backend/certs/ca.pem`) e API em `https://vem-pro-abate-api.onrender.com`, região Frankfurt, plano Free. Deploy automático a cada push no `main`* | 1 h 30 | B-15 |
 
-**Sprint 0: 15 de 16 feitas · falta metade do B-16** — a base de dados já está na nuvem; falta publicar a API no Render
+**Sprint 0: 16 de 16 feitas ✅** — a base está no Aiven, a API no Render, e o `/api/saude` responde do exterior.
 
 ## Sprint 1 · Login de gestão (Semana 2: 8–14 set)
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
 | ⬜ | B-17 | `middleware/erros.js` — tratamento centralizado, mensagens em português, nunca expor o SQL | 45 min | B-16 |
-| ⬜ | B-18 | `middleware/validar.js` — wrapper do zod para body e query | 30 min | B-16 |
-| ⬜ | B-19 | `POST /api/auth/login` — verifica bcrypt, devolve JWT com `id` e `nivel` | 1 h 30 | B-18 |
-| ⬜ | B-20 | `middleware/autenticar.js` — lê e valida o JWT | 1 h | B-19 |
-| ⬜ | B-21 | `middleware/exigirNivel.js` — `funcionario` / `administrador` | 30 min | B-20 |
-| ⬜ | B-22 | `GET /api/auth/eu` — devolve os dados do funcionário da sessão | 30 min | B-20 |
-| ⬜ | B-23 | Limite de 5 tentativas de login falhadas por email em 15 minutos | 1 h | B-19 |
-| ⬜ | B-24 | Configurar CORS para o domínio do Vercel | 30 min | B-16 |
+| ✅ | B-18 | `middleware/validar.js` — wrapper do zod para body e query — *devolve 400 com a lista de campos que falham, e substitui o original pelo resultado limpo do zod* | 30 min | B-16 |
+| ✅ | B-19 | `POST /api/auth/login` — verifica bcrypt, devolve JWT com `id` e `nivel` — *o `nivel` sai do `funcionario.cargo` (`cozinheiro`→`cozinha`, `empregado_mesa`→`balcao`, `administrador`/`gerente`→`administrador`), traduzido num sítio só. Mesma resposta e mesmo tempo para email inexistente e password errada* | 1 h 30 | B-18 |
+| ✅ | B-20 | `middleware/autenticar.js` — lê e valida o JWT — *distingue token expirado de token inválido na mensagem* | 1 h | B-19 |
+| ✅ | B-21 | `exigirNivel()` — *ficou dentro do `middleware/autenticar.js`, ao lado do `autenticar`: são a mesma ideia em dois passos e separá-los em ficheiros não ganhava nada. Aceita os três níveis (`cozinha`, `balcao`, `administrador`)* | 30 min | B-20 |
+| ✅ | B-22 | `GET /api/auth/eu` — devolve os dados do funcionário da sessão — *vai à base em vez de responder com o conteúdo do token, para que uma conta desativada perca o acesso na hora e não só quando o token expirar* | 30 min | B-20 |
+| ✅ | B-23 | Limite de 5 tentativas de login falhadas por email em 15 minutos — *conta por email e não por IP: cozinha, balcão e escritório saem todos pelo mesmo IP do restaurante* | 1 h | B-19 |
+| ⬜ | B-24 | Configurar CORS para o domínio do Vercel — *🚧 à espera do F-67: o site nunca chegou a ser publicado, não há domínio para pôr na `ORIGEM_PERMITIDA`. Até lá o CORS fica aberto de propósito. Testar a partir do site publicado, não do localhost* | 30 min | B-16, F-67 |
 | ⬜ | B-25 | `express-rate-limit` nos endpoints públicos | 30 min | B-16 |
 
 ## Sprint 2 · Sessões de mesa e pedidos (Semanas 3–5: 15 set – 5 out)
@@ -411,17 +411,17 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 ## Resumo de esforço
 
-*Contagens a 4 de setembro, tiradas das próprias tabelas acima — se uma linha mudar de
+*Contagens a 7 de setembro, tiradas das próprias tabelas acima — se uma linha mudar de
 estado, esta tabela fica errada até ser refeita.*
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 73 | 17 | — | 56 | ≈ 70 h |
-| 🟠 Guilherme (F-) | 67 | 37 | 19 | 11 | ≈ 18 h 15 |
+| 🔵 João (B-) | 73 | 24 | — | 49 | ≈ 63 h 30 |
+| 🟠 Guilherme (F-) | 67 | 37 | 19 | 11 | ≈ 19 h 15 |
 | 🟢 Os dois (C-) | 23 | 4 | — | 19 | ≈ 40 h |
 | 🐞 Correções (X-) | 9 | 8 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 128 h 45.** As tarefas 🟨 (C-01, à espera de o Guilherme ler o
+**Total por fazer: ≈ 123 h 15.** As tarefas 🟨 (C-01, à espera de o Guilherme ler o
 `CONTEXTO.md`, e X-08, que não se conseguiu reproduzir) contam como por fazer.
 
 **Onde está mesmo o front-end (04/09):** 35 tarefas feitas, 19 marcadas 🔁 (a `pedido.html`,
