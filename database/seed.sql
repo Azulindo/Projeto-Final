@@ -205,9 +205,9 @@ INSERT INTO slot_horario (id_slot, hora, periodo, lotacao_maxima, dias_semana, a
 -- =====================================================================
 INSERT INTO utilizador
  (id_utilizador, nome, email, password_hash, telefone, tipo_utilizador, ativo) VALUES
- (1, 'João Ribeiro', 'admin@vemproabate.pt', '$2b$12$bt6Eb1qsb2hizrgN.kOVzu2N27kZNRmuw8KmY8spPUX.ta694uQU.', '912000001', 'funcionario', 1),
- (2, 'Maria Fernandes', 'cozinha@vemproabate.pt', '$2b$12$CzcnhaZ1OU0NxehaaOMcf.1yAjeLRv5o7OpBGM5Ac8Sdbt8M.tu7u', '912000002', 'funcionario', 1),
- (3, 'Ricardo Nogueira', 'balcao@vemproabate.pt', '$2b$12$Zdwvv2wM8WCVZKjINlm0f.7Ebkq3FYE6DVRcA3e87rrdte.Je.dWC', '912000003', 'funcionario', 1);
+ (1, 'João Ribeiro', 'admin@vemproabate.pt', '$2b$12$ZCdVIDUSLCGC9e0upW9PYO/WAc2I107ZX2fusTTXx3eE4yCfxLrjq', '912000001', 'funcionario', 1),
+ (2, 'Maria Fernandes', 'cozinha@vemproabate.pt', '$2b$12$CfUwvSppG7O/HDNilLoAUec8p9EsjTvNule7gng012WhvgsbEUCiS', '912000002', 'funcionario', 1),
+ (3, 'Ricardo Nogueira', 'balcao@vemproabate.pt', '$2b$12$6YpWk8jy8HyVrJh1ns2gkeBOXTOfD4LjsDO54RIL8EYKN/Tr0GOSK', '912000003', 'funcionario', 1);
 
 INSERT INTO funcionario (id_funcionario, id_utilizador, cargo, data_contratacao) VALUES
  (1, 1, 'administrador',  '2026-01-05'),
