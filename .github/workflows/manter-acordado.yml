@@ -1,0 +1,60 @@
+# =====================================================================
+#  Manter a base de dados acordada
+# =====================================================================
+#  O plano gratuito do Aiven desliga o servico ao fim de uns dias sem
+#  ligacoes — e quando desliga, retira o nome do DNS. A partir daí a
+#  API deixa de ligar e a ementa publica fica em branco sem ninguem
+#  dar por isso. Aconteceu a 7 de setembro.
+#
+#  Isto chama o /api/saude de 6 em 6 horas. Obriga a API a abrir uma
+#  ligacao a base, o que conta como atividade e impede o Aiven de
+#  adormecer.
+#
+#  6 horas e nao 10 minutos de proposito: manter o Render sempre
+#  acordado gastaria as 750 horas gratuitas por mes. Quatro chamadas
+#  por dia chegam.
+#
+#  Bonus: se a API cair, o trabalho falha e o GitHub manda email.
+# =====================================================================
+
+name: Manter a base de dados acordada
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  acordar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar /api/saude
+        run: |
+          URL="https://vem-pro-abate-api.onrender.com/api/saude"
+
+          # O Render adormece ao fim de 15 min e o primeiro pedido
+          # demora ~50s a acorda-lo. Daí o limite de 120s e as tres
+          # tentativas: uma falha isolada e normal, tres seguidas nao.
+          for tentativa in 1 2 3; do
+            codigo=$(curl -s -o resposta.json -m 120 -w '%{http_code}' "$URL") || codigo=000
+            echo "Tentativa $tentativa  ->  HTTP $codigo"
+            [ "$codigo" = "200" ] && break
+            sleep 30
+          done
+
+          echo "--- resposta ---"
+          cat resposta.json 2>/dev/null || echo "(sem resposta)"
+          echo
+
+          if [ "$codigo" != "200" ]; then
+            echo "::error::A API nao respondeu 200 (codigo $codigo)."
+            exit 1
+          fi
+
+          # Nao basta responder: tem de ter falado com a base de dados.
+          if ! grep -q '"ligada":true' resposta.json; then
+            echo "::error::A API respondeu mas nao esta ligada a base de dados."
+            exit 1
+          fi
+
+          echo "OK — API de pe e base de dados ligada."
