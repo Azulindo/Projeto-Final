@@ -70,7 +70,7 @@ Sistema web para o restaurante *Vem Pro Abate* (Amadora), composto por duas apli
 | Validação | zod |
 | Email | Nodemailer + Brevo / Resend |
 | QR Code | qrcode |
-| Alojamento (site) | Vercel |
+| Alojamento (site) | ⚠️ **por publicar** — ver F-67 |
 | Alojamento (API) | Render |
 
 ---

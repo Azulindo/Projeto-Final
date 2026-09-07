@@ -290,7 +290,9 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ⬜ | F-53 | Ecrã de funcionários (tabela + formulário) | 2 h | F-49 |
 | ✅ | F-54 | Responsividade da aplicação de gestão — *zero alvos de toque abaixo de 44 px e zero scroll horizontal, medido em 4 larguras; o pior era o ✕ do painel da conta, a 24×23* | 1 h 30 | F-53 |
 
-**Total do sprint: ≈ 20 h 30**
+| ⬜ | F-67 | **Publicar o site.** Descoberto a 04/09: não há nada publicado. O `vercel.json` está no repositório desde julho e o `CONTEXTO.md` dizia *"Vercel (já configurado) — já está a funcionar"*, mas `vemproabate.vercel.app` responde `DEPLOYMENT_NOT_FOUND` — era um plano escrito como se estivesse feito, e o João estava a preparar o CORS (B-24) para um domínio que não existe. Bloqueia três coisas: a apresentação com o site no ar, os QR Codes das mesas (o `gerarQRCodes.js` precisa de um endereço público) e o próprio B-24. *Nota: se o repositório passar a privado, o GitHub Pages deixa de servir (exige plano pago); o Vercel funciona com repositórios privados no plano gratuito.* | 1 h | — |
+
+**Total do sprint: ≈ 21 h 30**
 
 ## Sprint 5 · Extras (Semana 10: 3–9 nov)
 
@@ -311,7 +313,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 **Total do sprint: ≈ 20 h 30**
 
-### 🟠 Total Guilherme: ≈ 98 h de tarefas identificadas
+### 🟠 Total Guilherme: ≈ 99 h de tarefas identificadas
 
 ---
 
@@ -415,7 +417,7 @@ estado, esta tabela fica errada até ser refeita.*
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
 | 🔵 João (B-) | 73 | 17 | — | 56 | ≈ 70 h |
-| 🟠 Guilherme (F-) | 66 | 37 | 19 | 10 | ≈ 18 h 15 |
+| 🟠 Guilherme (F-) | 67 | 37 | 19 | 11 | ≈ 18 h 15 |
 | 🟢 Os dois (C-) | 23 | 4 | — | 19 | ≈ 40 h |
 | 🐞 Correções (X-) | 9 | 8 | — | 1 | ≈ 30 min |
 

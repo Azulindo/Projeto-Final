@@ -2,7 +2,7 @@
 
 **Projeto Final de Curso** — Técnico Especialista de Tecnologias e Programação de Sistemas de Informação
 **Equipa:** João Ribeiro (back-end, base de dados, aplicação de gestão) · Guilherme Gonçalves (front-end, design, UX)
-**Repositório:** `Projeto-Final` (Git) · **Site atual:** alojado em Vercel
+**Repositório:** `Projeto-Final` (Git) · **Site:** ⚠️ **ainda não publicado** (ver F-67)
 **Versão do documento:** 3.2 · **Data:** setembro de 2026
 
 **Alterações desde a v2.0 — redução deliberada de âmbito:**
@@ -476,7 +476,7 @@ Mais: **10 mesas** com token e QR, **12 slots horários** (5 almoço + 7 jantar,
 | Datas | `date-fns` | Dias da semana, slots e limites de antecedência |
 | Email | `nodemailer` + **Brevo** ou **Resend** (gratuito) | O Gmail SMTP bloqueia envios automáticos |
 | QR Code | `qrcode` (npm) | Gera PNG do token da mesa, pronto a imprimir |
-| Alojamento front | **Vercel** (já configurado) | Já está a funcionar |
+| Alojamento front | **por decidir e publicar** | ⚠️ **Nada publicado.** Isto dizia "Vercel (já configurado) — já está a funcionar". Verificado a 04/09: `vemproabate.vercel.app` responde `DEPLOYMENT_NOT_FOUND`. O `vercel.json` existe no repositório desde julho, mas nunca chegou a haver deployment — era um plano escrito como se estivesse feito. Ver F-67 |
 | Alojamento API | **Render** (gratuito) | O Express corre como servidor normal, sem reescrever para *serverless* |
 | Versionamento | Git + GitHub | Já em uso |
 
