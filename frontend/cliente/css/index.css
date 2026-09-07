@@ -302,7 +302,12 @@ section{
   position: absolute;
   background: linear-gradient(45deg, #ff4500, #957806);
   text-decoration: none;
-  color:#7f0d0d;
+  /* #7f0d0d dava 2,53:1 sobre o extremo dourado deste gradiente — o
+   minimo da WCAG e 4,5:1. O `contraste.js` nao apanhava porque nao
+   sabia medir texto sobre gradientes; passou a saber (04/09).
+   #0d0b07 da 4,65:1 no pior ponto sem mexer no gradiente. O
+   #16130d da marca ficava a 4,38 — falhava por pouco. */
+  color: #0d0b07;
   border-radius: 25px;
   box-shadow: 0 4px 15px rgba(255,69,0,0.6);
   font-family: "Nosifer", cursive;
@@ -321,7 +326,12 @@ section{
   /* position: absolute; */
   background: linear-gradient(45deg, #ff4500, #957806);
   text-decoration: none;
-  color:#7f0d0d;
+  /* #7f0d0d dava 2,53:1 sobre o extremo dourado deste gradiente — o
+   minimo da WCAG e 4,5:1. O `contraste.js` nao apanhava porque nao
+   sabia medir texto sobre gradientes; passou a saber (04/09).
+   #0d0b07 da 4,65:1 no pior ponto sem mexer no gradiente. O
+   #16130d da marca ficava a 4,38 — falhava por pouco. */
+  color: #0d0b07;
   border-radius: 25px;
   box-shadow: 0 4px 15px rgba(255,69,0,0.6);
   font-family: "Nosifer", cursive;
