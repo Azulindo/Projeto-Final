@@ -6,11 +6,9 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "seed": "node prisma/seed.js",
-    "qrcodes": "node prisma/gerarQRCodes.js"
+    "qrcodes": "node scripts/gerarQRCodes.js"
   },
   "dependencies": {
-    "@prisma/client": "^5.0.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
@@ -22,7 +20,6 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.14",
-    "prisma": "^5.0.0",
     "qrcode": "^1.5.3"
   },
   "keywords": [],

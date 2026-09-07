@@ -67,11 +67,15 @@ INSERT INTO categoria (id_categoria, nome, descricao, ordem, ativo) VALUES
 -- caminhos abaixo acompanham essa mudanca.
 
 -- ---- Entradas -------------------------------------------------------
+-- Nota sobre o "Vem p''ro Alho": a plica dentro do nome escreve-se
+-- DUPLICADA. Uma plica sozinha fecharia o texto ali e o resto da linha
+-- passaria a ser lido como comandos SQL. E a mesma razao por que a API
+-- usa "?" em vez de juntar valores as consultas.
 INSERT INTO produto
  (id_produto, id_categoria, nome, descricao, preco, imagem_url, disponivel, tempo_preparacao, controla_stock, ativo) VALUES
- (1, 1, 'Abatata Frita',    'Batatas rusticas com tempero da casa e maionese de alho', 3.90, 'assets/imagens/pratos/abatata_frita.jpg',   1, 10, 0, 1),
+ (1, 1, 'Abatata Frita',    'Batatas rústicas com tempero da casa e maionese de alho', 3.90, 'assets/imagens/pratos/abatata_frita.jpg',   1, 10, 0, 1),
  (2, 1, 'Vem Pro Abacate',  'Entrada com abacate, guacamole ou tosta',                 5.80, 'assets/imagens/pratos/vem_pro_abacate.jpg', 1, 10, 0, 1),
- (3, 1, 'Vem pro Alho',     'Pao de alho no forno',                                    3.20, 'assets/imagens/pratos/vem_pro_alho.jpg',    1,  8, 0, 1),
+ (3, 1, 'Vem p''ro Alho',   'Pão de alho no forno',                                    3.20, 'assets/imagens/pratos/vem_pro_alho.jpg',    1,  8, 0, 1),
  (4, 1, 'Abate-Boca',       'Mini croquetes de novilho',                               4.50, 'assets/imagens/pratos/abate_boca.jpg',      1, 12, 0, 1);
 
 -- ---- Pratos Principais ----------------------------------------------
@@ -79,33 +83,33 @@ INSERT INTO produto
  (id_produto, id_categoria, nome, descricao, preco, imagem_url, disponivel, tempo_preparacao, controla_stock, ativo) VALUES
  (5,  2, 'Borrego Abatido',        'Borrego assado com batata, alecrim, alho e vinho branco', 15.50, 'assets/imagens/pratos/borrego_abatido.jpg',        1, 30, 0, 1),
  (6,  2, 'Francesinha em K.O.',    'Bife, enchidos, queijo e molho da casa com batata e ovo', 12.20, 'assets/imagens/pratos/francesinha_em_ko.jpg',      1, 20, 0, 1),
- (7,  2, 'Abate Misto',            'Picanha, chourico e frango na brasa com arroz e batata',  16.20, 'assets/imagens/pratos/prato_favorito.jpg',         1, 25, 0, 1),
- (8,  2, 'Prega-me Isto',          'Bife dos Acores com batata frita',                        16.90, 'assets/imagens/pratos/prego.jpg',                  1, 20, 0, 1),
+ (7,  2, 'Abate Misto',            'Picanha, chouriço e frango na brasa com arroz e batata',  16.20, 'assets/imagens/pratos/prato_favorito.jpg',         1, 25, 0, 1),
+ (8,  2, 'Prega-me Isto',          'Bife dos Açores com batata frita',                        16.90, 'assets/imagens/pratos/prego.jpg',                  1, 20, 0, 1),
  (9,  2, 'Picanha na Brasa Negra', 'Picanha grelhada com arroz e batata frita',                16.00, 'assets/imagens/pratos/picanha_na_brasa_negra.jpg', 1, 25, 0, 1),
- (10, 2, 'Tabua Rustica do Abate', 'Carnes mistas com migas e batata a murro',                 17.80, 'assets/imagens/pratos/tabua_rustica_do_abate.jpg', 1, 30, 0, 1);
+ (10, 2, 'Tábua Rústica do Abate', 'Carnes mistas com migas e batata a murro',                 17.80, 'assets/imagens/pratos/tabua_rustica_do_abate.jpg', 1, 30, 0, 1);
 
 -- ---- Bebidas --------------------------------------------------------
 INSERT INTO produto
  (id_produto, id_categoria, nome, descricao, preco, imagem_url, disponivel, tempo_preparacao, controla_stock, ativo) VALUES
- (11, 3, 'Cerveja (Fino/Pressao)', 'Fino ou pressao',                     1.70, NULL, 1, 2, 1, 1),
+ (11, 3, 'Cerveja (Fino/Pressão)', 'Fino ou pressão',                     1.70, NULL, 1, 2, 1, 1),
  (12, 3, 'Cerveja (Caneca)',       'Caneca de cerveja',                   2.80, NULL, 1, 2, 1, 1),
- (13, 3, 'Panache',                'Cerveja com gasosa',                  2.20, NULL, 1, 2, 1, 1),
- (14, 3, 'Sangria (Copo)',         'Branca, tinta ou espumante - copo',   3.20, NULL, 1, 3, 1, 1),
- (15, 3, 'Sangria (Jarro)',        'Branca, tinta ou espumante - jarro', 12.00, NULL, 1, 5, 1, 1),
+ (13, 3, 'Panaché',                'Cerveja com gasosa',                  2.20, NULL, 1, 2, 1, 1),
+ (14, 3, 'Sangria (Copo)',         'Branca, tinta ou espumante — copo',   3.20, NULL, 1, 3, 1, 1),
+ (15, 3, 'Sangria (Jarro)',        'Branca, tinta ou espumante — jarro', 12.00, NULL, 1, 5, 1, 1),
  (16, 3, 'Coca-Cola',              'Normal ou zero',                      1.90, NULL, 1, 1, 1, 1),
- (17, 3, 'Ice Tea',                'Pessego, limao ou manga',             1.90, NULL, 1, 1, 1, 1),
+ (17, 3, 'Ice Tea',                'Pêssego, limão ou manga',             1.90, NULL, 1, 1, 1, 1),
  (18, 3, 'Sumos Naturais',         'Laranja ou mistura de frutos',        3.00, NULL, 1, 5, 1, 1),
- (19, 3, 'Agua (Mineral)',         'Agua mineral sem gas',                1.30, NULL, 1, 1, 1, 1),
- (20, 3, 'Agua (Com Gas)',         'Agua com gas',                        1.60, NULL, 1, 1, 1, 1),
- (21, 3, 'Abate Pingado',          'Cafe ou descafeinado',                1.00, NULL, 1, 3, 1, 1);
+ (19, 3, 'Água (Mineral)',         'Água mineral sem gás',                1.30, NULL, 1, 1, 1, 1),
+ (20, 3, 'Água (Com Gás)',         'Água com gás',                        1.60, NULL, 1, 1, 1, 1),
+ (21, 3, 'Abate Pingado',          'Café ou descafeinado',                1.00, NULL, 1, 3, 1, 1);
 
 -- ---- Sobremesas -----------------------------------------------------
 INSERT INTO produto
  (id_produto, id_categoria, nome, descricao, preco, imagem_url, disponivel, tempo_preparacao, controla_stock, ativo) VALUES
- (22, 4, 'Abategatoue',         'Petit gateau com gelado e chocolate', 5.20, 'assets/imagens/pratos/abategatoue.jpg',       1, 12, 1, 1),
+ (22, 4, 'Abategatoue',         'Petit gâteau com gelado e chocolate', 5.20, 'assets/imagens/pratos/abategatoue.jpg',       1, 12, 1, 1),
  (23, 4, 'Baba do Pastor',      'Baba de camelo com bolacha',          3.90, 'assets/imagens/pratos/baba_do_pastor.jpg',    1,  5, 1, 1),
  (24, 4, 'Cheesecake da Casa',  'Cheesecake com frutos vermelhos',     4.60, 'assets/imagens/pratos/cheesecake_da_casa.jpg',1,  5, 1, 1),
- (25, 4, 'Taca Gelada da Casa', 'Gelados, chantilly e chocolate',      4.20, 'assets/imagens/pratos/taca_gelada_da_casa.jpg',1, 5, 1, 1);
+ (25, 4, 'Taça Gelada da Casa', 'Gelados, chantilly e chocolate',      4.20, 'assets/imagens/pratos/taca_gelada_da_casa.jpg',1, 5, 1, 1);
 
 -- controla_stock = 1 apenas nas bebidas e sobremesas: sao coisas que
 -- se compram feitas e podem esgotar. Um bife grelhado na hora nao tem
@@ -194,9 +198,9 @@ INSERT INTO slot_horario (id_slot, hora, periodo, lotacao_maxima, dias_semana, a
 -- =====================================================================
 INSERT INTO utilizador
  (id_utilizador, nome, email, password_hash, telefone, tipo_utilizador, ativo) VALUES
- (1, 'Joao Ribeiro',       'admin@vemproabate.pt',   '$2b$12$ZQpxOt2BP2SV.NxNkzx8fuEorySNjFpjUlmxaMWxEaYhpa.U3x1sS', '912000001', 'funcionario', 1),
+ (1, 'João Ribeiro',       'admin@vemproabate.pt',   '$2b$12$ZQpxOt2BP2SV.NxNkzx8fuEorySNjFpjUlmxaMWxEaYhpa.U3x1sS', '912000001', 'funcionario', 1),
  (2, 'Maria Fernandes',    'cozinha@vemproabate.pt', '$2b$12$HyrdnReDslGgV5QO2UHt3On954DnLUVvKmQJFmBgZqOTcpr.QBQa.', '912000002', 'funcionario', 1),
- (3, 'Ricardo Nogueira',   'sala@vemproabate.pt',    '$2b$12$GNRXO3/hognQ5LHPXY/5A.JwhVBVFbTskxRx9Qu3WFa2rXTE.JZKC', '912000003', 'funcionario', 1);
+ (3, 'Ricardo Nogueira',   'balcao@vemproabate.pt',    '$2b$12$GNRXO3/hognQ5LHPXY/5A.JwhVBVFbTskxRx9Qu3WFa2rXTE.JZKC', '912000003', 'funcionario', 1);
 
 INSERT INTO funcionario (id_funcionario, id_utilizador, cargo, data_contratacao) VALUES
  (1, 1, 'administrador',  '2026-01-05'),
@@ -234,7 +238,7 @@ INSERT INTO pedido
  (3, 'PED-2N5Q7', NULL, NULL, NULL, 3, 'take_away',   'pronto',
   '2026-09-01 12:52:00', 22.00, 'Andreia Costa', '913456789', NULL),
  (4, 'PED-9H1L4', NULL, 9,    3, NULL, 'restaurante', 'recebido',
-  '2026-09-01 13:05:00', 56.00, NULL, NULL, 'Aniversario - trazer vela na sobremesa');
+  '2026-09-01 13:05:00', 56.00, NULL, NULL, 'Aniversário — trazer vela na sobremesa');
 
 -- O pedido 3 e take away: nao pertence a sessao nenhuma (id_sessao NULL).
 -- Os outros tres sao rondas dentro das sessoes 1, 2 e 3.
@@ -295,8 +299,8 @@ INSERT INTO reserva
  (id_reserva, codigo_reserva, nome, telemovel, num_pessoas, data_reserva, id_slot,
   modo_ementa, observacoes, valor_estimado, estado) VALUES
  (1, 'RSV-7K2M9', 'Sara Londreira',  '914112233', 2, '2026-09-05',  8, 'no_restaurante',  NULL, NULL, 'pendente'),
- (2, 'RSV-3B8X1', 'Tatiana Salsa',   '926778899', 6, '2026-09-06', 10, 'pre_selecionada', 'Uma pessoa e alergica a frutos secos', 97.20, 'pendente'),
- (3, 'RSV-5Q4W2', 'Gabriel Martins', '937221144', 4, '2026-09-12',  3, 'no_restaurante',  'Mesa perto da janela, se possivel', NULL, 'pendente');
+ (2, 'RSV-3B8X1', 'Tatiana Salsa',   '926778899', 6, '2026-09-06', 10, 'pre_selecionada', 'Uma pessoa é alérgica a frutos secos', 97.20, 'pendente'),
+ (3, 'RSV-5Q4W2', 'Gabriel Martins', '937221144', 4, '2026-09-12',  3, 'no_restaurante',  'Mesa perto da janela, se possível', NULL, 'pendente');
 
 INSERT INTO item_reserva (id_reserva, id_produto, quantidade, preco_unitario, subtotal) VALUES
  (2, 10, 2, 17.80, 35.60),
