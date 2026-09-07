@@ -44,6 +44,19 @@ async function carregarEmenta() {
   const estado = document.getElementById('ementaEstado');
   if (!caixa || !estado) return;
 
+  // A API está no plano gratuito do Render: adormece ao fim de 15
+  // minutos sem pedidos, e o pedido que a acorda demora à volta de 50
+  // segundos. Meio minuto a olhar para "A carregar a ementa…" sem
+  // explicação nenhuma parece uma página avariada, e as pessoas saem.
+  // Ao fim de 4s dizemos o que se passa — a espera é a mesma, mas
+  // deixa de ser um mistério.
+  const avisoLento = setTimeout(function () {
+    const texto = document.getElementById('ementaEstadoTexto');
+    if (texto) {
+      texto.textContent = 'A ligar ao servidor — a primeira visita do dia pode demorar até um minuto.';
+    }
+  }, 4000);
+
   try {
     // As categorias vêm à parte porque trazem a ORDEM da ementa. Se
     // essa chamada falhar, derivam-se dos próprios produtos — a ementa
@@ -52,6 +65,7 @@ async function carregarEmenta() {
       chamarAPI('produtos'),
       chamarAPI('categorias').catch(() => null),
     ]);
+    clearTimeout(avisoLento);
 
     // `ativo` é "está na carta"; `disponivel` é "há hoje" (docs/API.md
     // 4.2). Um prato que hoje não há não se anuncia — ninguém gosta de
@@ -59,6 +73,9 @@ async function carregarEmenta() {
     const lista = (produtos || []).filter(p => p.disponivel !== false);
 
     if (!lista.length) {
+      // Sem o clearTimeout, o aviso dos 4s aparecia por cima desta
+      // mensagem quatro segundos depois de ela já estar no ecrã.
+      clearTimeout(avisoLento);
       mostrarEstado('A ementa está a ser atualizada. Volte dentro de momentos.');
       return;
     }
@@ -74,8 +91,9 @@ async function carregarEmenta() {
     estado.classList.add('hidden');
 
   } catch (erro) {
-    // Sem servidor e sem simulação, o cliente não pode ficar a olhar
-    // para um vazio sem explicação. A galeria continua a funcionar.
+    clearTimeout(avisoLento);
+    // Sem servidor, o cliente não pode ficar a olhar para um vazio sem
+    // explicação. A galeria continua a funcionar.
     mostrarEstado('Não foi possível carregar a ementa neste momento. Veja a nossa galeria de pratos aqui em baixo.');
   }
 }
