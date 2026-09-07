@@ -186,21 +186,28 @@ INSERT INTO slot_horario (id_slot, hora, periodo, lotacao_maxima, dias_semana, a
 -- =====================================================================
 --  UTILIZADORES E FUNCIONARIOS
 --
---  Password de TODAS as contas: abate2026
---  Os hashes abaixo sao bcrypt reais (custo 12) e funcionam com a
---  biblioteca bcrypt do Node. Repara que os tres sao diferentes apesar
---  de a password ser a mesma: o bcrypt junta um "sal" aleatorio a cada
---  um. E por isso que nao se consegue descobrir que duas pessoas usam
---  a mesma password so por olhar para a base de dados.
+--  As palavras-passe NAO estao escritas aqui, nem em ficheiro nenhum
+--  do projeto. O que esta abaixo sao hashes bcrypt (custo 12): um hash
+--  pode ir para o repositorio sem perigo, porque nao ha maneira de
+--  voltar atras e descobrir a palavra a partir dele.
 --
---  ATENCAO: sao contas de teste. Antes de por o projeto a serio,
---  troca as passwords.
+--  Repara que os tres hashes sao diferentes mesmo quando as palavras
+--  sao parecidas: o bcrypt junta um "sal" aleatorio a cada um. E por
+--  isso que nem se consegue perceber se duas contas usam a mesma
+--  palavra so por olhar para a base de dados.
+--
+--  Para trocar as palavras-passe:
+--      cd backend
+--      node scripts/gerarHash.js
+--  Ele pergunta as tres sem as mostrar no ecra e imprime estas linhas
+--  ja prontas a colar aqui. As palavras ficam com voces, num gestor de
+--  passwords — nunca num ficheiro dentro da pasta do projeto.
 -- =====================================================================
 INSERT INTO utilizador
  (id_utilizador, nome, email, password_hash, telefone, tipo_utilizador, ativo) VALUES
- (1, 'João Ribeiro',       'admin@vemproabate.pt',   '$2b$12$ZQpxOt2BP2SV.NxNkzx8fuEorySNjFpjUlmxaMWxEaYhpa.U3x1sS', '912000001', 'funcionario', 1),
- (2, 'Maria Fernandes',    'cozinha@vemproabate.pt', '$2b$12$HyrdnReDslGgV5QO2UHt3On954DnLUVvKmQJFmBgZqOTcpr.QBQa.', '912000002', 'funcionario', 1),
- (3, 'Ricardo Nogueira',   'balcao@vemproabate.pt',    '$2b$12$GNRXO3/hognQ5LHPXY/5A.JwhVBVFbTskxRx9Qu3WFa2rXTE.JZKC', '912000003', 'funcionario', 1);
+ (1, 'João Ribeiro', 'admin@vemproabate.pt', '$2b$12$bt6Eb1qsb2hizrgN.kOVzu2N27kZNRmuw8KmY8spPUX.ta694uQU.', '912000001', 'funcionario', 1),
+ (2, 'Maria Fernandes', 'cozinha@vemproabate.pt', '$2b$12$CzcnhaZ1OU0NxehaaOMcf.1yAjeLRv5o7OpBGM5Ac8Sdbt8M.tu7u', '912000002', 'funcionario', 1),
+ (3, 'Ricardo Nogueira', 'balcao@vemproabate.pt', '$2b$12$Zdwvv2wM8WCVZKjINlm0f.7Ebkq3FYE6DVRcA3e87rrdte.Je.dWC', '912000003', 'funcionario', 1);
 
 INSERT INTO funcionario (id_funcionario, id_utilizador, cargo, data_contratacao) VALUES
  (1, 1, 'administrador',  '2026-01-05'),
