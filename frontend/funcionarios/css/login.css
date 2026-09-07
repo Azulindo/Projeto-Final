@@ -113,3 +113,17 @@
 @media (max-width: 400px) {
   .login-card { padding: 30px 22px 24px; }
 }
+
+/* Nota neutra do arranque a frio do Render (04/09) — ver login.js.
+   Cinzento e discreta de proposito: a caixa vermelha do erro ao lado
+   quer dizer "correu mal"; isto quer dizer so "espera um bocado". */
+.nota-lenta {
+  font-size: 12.5px;
+  color: var(--texto-suave);
+  line-height: 1.5;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  text-align: left;
+}

@@ -51,7 +51,7 @@ const contaDe  = (p, estado) => p.textContent(`[data-conta="${estado}"]`);
   /* ── 2. Cozinha: quatro colunas ─────────────────────────────────── */
   const coz = await ctx.newPage();
   coz.on('pageerror', e => { console.log('[pageerror cozinha]', e.message); falhas.push('pageerror cozinha'); });
-  await coz.goto(`${GESTAO}/login.html`);
+  await coz.goto(`${GESTAO}/login.html?simular=1`);
   await coz.fill('#email', 'cozinha@vemproabate.pt');
   await coz.fill('#password', 'abate2026');
   await coz.click('#btnEntrar');
@@ -143,14 +143,14 @@ const contaDe  = (p, estado) => p.textContent(`[data-conta="${estado}"]`);
   /* ── 6. Balcão: estados traduzidos ──────────────────────────────── */
   const bal = await ctx.newPage();
   bal.on('pageerror', e => { console.log('[pageerror balcao]', e.message); falhas.push('pageerror balcao'); });
-  await bal.goto(`${GESTAO}/login.html`);
+  await bal.goto(`${GESTAO}/login.html?simular=1`);
   await bal.evaluate(() => localStorage.removeItem('vpa_sessao_funcionario'));
-  await bal.goto(`${GESTAO}/login.html`);
+  await bal.goto(`${GESTAO}/login.html?simular=1`);
   await bal.fill('#email', 'balcao@vemproabate.pt');
   await bal.fill('#password', 'abate2026');
   await bal.click('#btnEntrar');
   await bal.waitForTimeout(1200);
-  await bal.goto(`${GESTAO}/balcao.html`);
+  await bal.goto(`${GESTAO}/balcao.html?simular=1`);
   await bal.waitForSelector('.cartao-mesa', { timeout: 8000 });
   const cartaoItens = await bal.innerText('.mesa-itens');
   check('O cartão da mesa conta só os itens cobrados', /^1 item$/.test(cartaoItens.trim()), cartaoItens);

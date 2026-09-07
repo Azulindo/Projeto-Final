@@ -145,7 +145,14 @@
   color: var(--dourado);
 }
 
+/* Estado vazio (F-60, 04/09) — o mesmo tratamento das colunas vazias da
+   cozinha, para os dois ecrãs parecerem o mesmo sistema. Ícone esbatido:
+   isto é moldura, e não pode competir com uma mesa que abra a seguir. */
 .sem-mesas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   text-align: center;
   color: var(--texto-suave);
   font-size: 14px;
@@ -153,6 +160,15 @@
   border: 1px dashed var(--border);
   border-radius: var(--radius-md);
   line-height: 1.6;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.sem-mesas-icone {
+  font-size: 30px;
+  line-height: 1;
+  opacity: 0.34;
+  filter: grayscale(0.4);
 }
 
 .nota-rodape {

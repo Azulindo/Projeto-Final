@@ -12,6 +12,12 @@
  *      não tem o aviso — não faz sentido pendurar um número num link
  *      que a pessoa nem vê.
  */
+/* Todas as páginas de gestão são abertas com `?simular=1`.
+   NÃO é decoração: a partir de 04/09 o `auth/login` fala com o servidor
+   a sério (B-19), e sem este parâmetro o teste tentava chegar ao Render
+   — falhava sem rede, e passaria a depender de uma API de pé para dizer
+   se o front-end está bem. Um teste que precisa da nuvem para correr
+   deixa de se poder correr antes de um commit. */
 const { chromium } = require('playwright');
 const path = require('path');
 
@@ -26,9 +32,9 @@ async function login(ctx, email) {
   // Duas contas no mesmo contexto de browser partilham localStorage (mesma
   // origem file://): limpa a sessão anterior antes de entrar com a nova,
   // senão o login.html vê sessão válida e manda logo para o ecrã de outrem.
-  await p.goto(`${GESTAO}/login.html`);
+  await p.goto(`${GESTAO}/login.html?simular=1`);
   await p.evaluate(() => localStorage.removeItem('vpa_sessao_funcionario'));
-  await p.goto(`${GESTAO}/login.html`);
+  await p.goto(`${GESTAO}/login.html?simular=1`);
   await p.fill('#email', email);
   await p.fill('#password', 'abate2026');
   await p.click('#btnEntrar');
@@ -42,7 +48,7 @@ async function login(ctx, email) {
 
   /* ── 1. Cozinha: painel de stock ─────────────────────────────────── */
   const coz = await login(ctx, 'cozinha@vemproabate.pt');
-  await coz.goto(`${GESTAO}/cozinha.html`);
+  await coz.goto(`${GESTAO}/cozinha.html?simular=1`);
   await coz.waitForSelector('#painelStock:not(.hidden)', { timeout: 8000 });
 
   const itensStock = await coz.$$eval('.stock-item', els => els.map(e => e.textContent.trim()));
@@ -67,7 +73,7 @@ async function login(ctx, email) {
 
   /* ── 2. Gerente: aviso na barra lateral, em qualquer página ──────── */
   const admin = await login(ctx, 'admin@vemproabate.pt');
-  await admin.goto(`${GESTAO}/dashboard.html`);
+  await admin.goto(`${GESTAO}/dashboard.html?simular=1`);
   await admin.waitForSelector('[data-nav-id="stock"]', { timeout: 8000 });
   await admin.waitForTimeout(700); // avisarStockBaixo() é assíncrono
 
@@ -76,7 +82,7 @@ async function login(ctx, email) {
         avisoDashboard === '2', `viu: ${avisoDashboard}`);
 
   // A prova a sério do F-62: o aviso segue o gerente, não fica preso a um ecrã.
-  await admin.goto(`${GESTAO}/balcao.html`);
+  await admin.goto(`${GESTAO}/balcao.html?simular=1`);
   await admin.waitForSelector('[data-nav-id="stock"]', { timeout: 8000 });
   await admin.waitForTimeout(700);
   const avisoBalcao = await admin.locator('[data-nav-id="stock"] .nav-aviso').textContent().catch(() => null);

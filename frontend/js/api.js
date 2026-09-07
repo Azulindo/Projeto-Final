@@ -83,11 +83,13 @@ const MODO_SIMULACAO = true;
  * sessão de mesa, que o João está a portar para mysql2.
  */
 const ENDPOINTS_REAIS = [
-  /^saude$/,                  // GET /api/saude
-  /^categorias$/,             // GET /api/categorias
-  /^produtos$/,               // GET /api/produtos
-  /^produtos\?/,              // GET /api/produtos?categoria=Bebidas
-  /^produtos\/\d+$/,          // GET /api/produtos/:id
+  /^saude$/,                  // GET  /api/saude
+  /^categorias$/,             // GET  /api/categorias
+  /^produtos$/,               // GET  /api/produtos
+  /^produtos\?/,              // GET  /api/produtos?categoria=Bebidas
+  /^produtos\/\d+$/,          // GET  /api/produtos/:id
+  /^auth\/login$/,            // POST /api/auth/login   ← B-19 (04/09)
+  /^auth\/eu$/,               // GET  /api/auth/eu      ← B-22 (04/09)
 ];
 
 /**

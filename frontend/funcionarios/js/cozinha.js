@@ -61,6 +61,20 @@ const COLUNAS = [
   { estado: 'pronto',        alvo: 'entregue',      accao: 'Entregue' },
 ];
 
+/* Coluna vazia — o que se lê quando ali não há nada (F-60, 04/09).
+   As quatro diziam "Nada aqui.", e num turno que começa o ecrã INTEIRO
+   é isso: é a primeira coisa que alguém vê deste sistema. Além de plano,
+   não dizia nada — quem chega novo não fica a saber para que serve cada
+   coluna. Agora cada uma diz o que lhe falta, na linguagem da casa.
+   Calmo de propósito, sem brilho nem animação: quando entrar um pedido
+   é PARA ELE que o olhar tem de ir, não para a decoração ao lado. */
+const VAZIO_COLUNA = {
+  recebido:      { icone: '🔔', texto: 'À espera de pedidos' },
+  confirmado:    { icone: '✋', texto: 'Nada aceite ainda' },
+  em_preparacao: { icone: '🔥', texto: 'Nada ao lume' },
+  pronto:        { icone: '🍽️', texto: 'Nada à espera de sair' },
+};
+
 /* Ícone por categoria — ajuda a separar de relance o que é do bar do
    que é da grelha, dentro da mesma ronda. */
 const ICONE_CATEGORIA = {
@@ -117,7 +131,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="coluna-conta" data-conta="${col.estado}">0</span>
         </header>
         <div class="coluna-lista" data-lista="${col.estado}"></div>
-        <p class="coluna-vazia" data-vazio="${col.estado}">Nada aqui.</p>
+        <p class="coluna-vazia" data-vazio="${col.estado}">
+          <span class="coluna-vazia-icone" aria-hidden="true">${(VAZIO_COLUNA[col.estado] || {}).icone || '·'}</span>
+          <span>${(VAZIO_COLUNA[col.estado] || {}).texto || 'Nada aqui'}</span>
+        </p>
       `;
       grelha.appendChild(seccao);
     });

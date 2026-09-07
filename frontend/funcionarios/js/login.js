@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const erroGeral      = document.getElementById('erroGeral');
   const btnEntrar       = document.getElementById('btnEntrar');
   const btnEntrarTexto  = document.getElementById('btnEntrarTexto');
+  const notaLenta       = document.getElementById('notaLenta');
 
   if (!form) return;
 
@@ -63,11 +64,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function tentarLogin(email, password) {
     definirCarregamento(true);
+    esconderNota();
+
+    /* A API está no plano gratuito do Render: adormece ao fim de 15
+       minutos sem pedidos, e o pedido que a acorda demora à volta de 50
+       segundos. O login é a PRIMEIRA coisa que se faz ao abrir a app —
+       se o botão ficar meio minuto a dizer "A entrar…" sem explicação,
+       quem está ao balcão às sete da tarde conclui que avariou e carrega
+       outra vez. Ao fim de 4 segundos diz-se o que se passa. */
+    const avisoLento = setTimeout(function () {
+      mostrarNota('A ligar ao servidor — a primeira entrada do dia pode demorar até um minuto.');
+    }, 4000);
+
     try {
       const resposta = await chamarAPI('auth/login', {
         method: 'POST',
         body: { email, password },
       });
+      clearTimeout(avisoLento);
+      esconderNota();
 
       const sessao = guardarSessao({
         token: resposta.token,
@@ -78,7 +93,19 @@ document.addEventListener('DOMContentLoaded', () => {
       window.location.href = paginaInicialDoNivel(sessao.nivel);
       // Não desliga o "a carregar": a página vai navegar já a seguir.
     } catch (erro) {
-      mostrarErroGeral(erro.message || 'Não foi possível iniciar sessão.');
+      clearTimeout(avisoLento);
+      esconderNota();
+
+      /* O 429 é o erro em que a pessoa está mais convencida de que o
+         sistema está avariado: a password até pode estar certa agora, e
+         mesmo assim não entra. Sem dizer que são 15 minutos, fica a
+         tentar e a estender o bloqueio. (B-23, cinco tentativas.) */
+      let mensagem = erro.message || 'Não foi possível iniciar sessão.';
+      if (erro.status === 429) {
+        mensagem = 'Demasiadas tentativas falhadas. Por segurança, esta conta fica bloqueada durante 15 minutos.';
+      }
+
+      mostrarErroGeral(mensagem);
       definirCarregamento(false);
       inputPassword.focus();
       inputPassword.select();
@@ -97,6 +124,21 @@ document.addEventListener('DOMContentLoaded', () => {
   function esconderErroGeral() {
     erroGeral.classList.add('hidden');
     erroGeral.textContent = '';
+  }
+
+  /* Nota neutra — não é erro nenhum, é só informação enquanto se espera.
+     Por isso não usa a caixa vermelha do erro: dizer "a ligar ao
+     servidor" a vermelho fazia a pessoa pensar que já correu mal. */
+  function mostrarNota(mensagem) {
+    if (!notaLenta) return;
+    notaLenta.textContent = mensagem;
+    notaLenta.classList.remove('hidden');
+  }
+
+  function esconderNota() {
+    if (!notaLenta) return;
+    notaLenta.classList.add('hidden');
+    notaLenta.textContent = '';
   }
 
   function definirCarregamento(aCarregar) {

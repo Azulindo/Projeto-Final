@@ -159,11 +159,26 @@
   gap: 12px;
 }
 
+/* Coluna vazia (F-60, 04/09) — ver a nota no `cozinha.js`.
+   Discreta de propósito: isto é moldura, não conteúdo. O ícone fica
+   esbatido para dar alguma vida sem puxar o olho — o que tem de puxar
+   o olho é o cartão que aparece aqui quando entra um pedido. */
 .coluna-vazia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
   text-align: center;
   color: var(--texto-fraco);
   font-size: 13px;
-  padding: 26px 0;
+  padding: 30px 0;
+}
+
+.coluna-vazia-icone {
+  font-size: 26px;
+  line-height: 1;
+  opacity: 0.34;
+  filter: grayscale(0.4);
 }
 
 /* ── Cartão de item ──────────────────────────────────────────────── */
