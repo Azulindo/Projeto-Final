@@ -10,8 +10,23 @@ const express = require('express');
 const cors = require('cors');
 const { pool, testarLigacao } = require('./config/bd');
 const catalogoRouter = require('./routes/catalogo');
+const authRouter = require('./routes/auth');
 
 const app = express();
+
+/*
+ *  No Render (e em qualquer alojamento deste genero) os pedidos nao
+ *  chegam diretos: passam por um servidor da casa que os reencaminha.
+ *  Sem esta linha, o Express ve sempre o endereco desse intermediario
+ *  em vez do endereco de quem chamou — e o express-rate-limit recusa-se
+ *  a arrancar, porque um limite por endereco que ve toda a gente como
+ *  a mesma pessoa nao limita nada.
+ *
+ *  O 1 quer dizer "confia num intermediario, o mais proximo". Nao se
+ *  poe true: isso mandava confiar em qualquer cabecalho que chegasse,
+ *  e ai qualquer pessoa podia inventar o endereco que quisesse.
+ */
+app.set('trust proxy', 1);
 
 /* -------------------------------------------------------------------
  *  MIDDLEWARE GLOBAL
@@ -40,6 +55,9 @@ app.use((req, _res, next) => {
  *  ROTAS
  * ----------------------------------------------------------------- */
 
+// Sessao: POST /api/auth/login, GET /api/auth/eu
+app.use('/api', authRouter);
+
 // Catalogo: GET /api/categorias, /api/produtos, /api/produtos/:id
 app.use('/api', catalogoRouter);
 
@@ -50,7 +68,8 @@ app.use('/api', catalogoRouter);
  * E o primeiro endpoint a existir de proposito: serve para confirmar
  * que a ligacao funciona antes de haver logica nenhuma. Depois de o
  * projeto estar publicado, e tambem por aqui que se verifica se o
- * servidor adormeceu.
+ * servidor adormeceu — e o que o trabalho agendado do GitHub chama de
+ * 6 em 6 horas para o Aiven nao se desligar.
  */
 app.get('/api/saude', async (_req, res, next) => {
   try {
@@ -120,6 +139,13 @@ app.use((erro, _req, res, _next) => {
 const PORTA = process.env.PORT || 3000;
 
 (async () => {
+  if (!process.env.JWT_SECRET) {
+    console.error('FALTA O JWT_SECRET NO .env');
+    console.error('Sem ele nao se assinam sessoes. Gera um com:');
+    console.error('  node -e "console.log(require(\'crypto\').randomBytes(48).toString(\'hex\'))"');
+    process.exit(1);
+  }
+
   try {
     await testarLigacao();
     console.log(`Base de dados "${process.env.DB_NAME}" ligada.`);
