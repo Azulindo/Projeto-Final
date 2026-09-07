@@ -42,7 +42,17 @@
  * =====================================================================
  */
 
-const API_BASE = 'http://localhost:3000/api'; // porta 3000 = PORT por omissão em backend/src/app.js
+/* A API está publicada no Render (04/09). Deixou de ser preciso ter o
+   servidor do João a correr para o site funcionar.
+   Notas do plano gratuito, para ninguém andar à procura de erros que
+   não existem:
+     · a raiz (sem /api/...) responde "not found" — é suposto;
+     · o serviço adormece ao fim de 15 minutos sem pedidos, e o pedido
+       que o acorda demora à volta de 50 segundos. Não é a rede nem o
+       código. Ver o aviso que a menu.html mostra a partir dos 4s;
+     · cada push no main faz deploy automático — durante dois ou três
+       minutos a seguir a um push, a API pode estar a meio da troca. */
+const API_BASE = 'https://vem-pro-abate-api.onrender.com/api';
 
 /**
  * MODO_SIMULACAO — `true` enquanto houver endpoints por fazer.
@@ -61,33 +71,23 @@ const API_BASE = 'http://localhost:3000/api'; // porta 3000 = PORT por omissão 
  */
 const MODO_SIMULACAO = true;
 
-/* Endpoints já disponíveis no back-end real (docs/API.md 4.2).
+/* Endpoints que o front-end consegue mesmo alcançar (docs/API.md 4.2).
  *
- * ── VAZIA DE PROPÓSITO ATÉ O RENDER ESTAR NO AR (04/09) ──────────────
- * O `categorias` e o `produtos` existem mesmo — o João construiu-os — mas
- * o `API_BASE` aqui em baixo ainda é `localhost:3000`. Isso quer dizer
- * que só respondem no portátil dele, com o servidor a correr.
+ * A regra desta lista: não é "o endpoint existe", é "o front-end chega
+ * lá". Estiveram comentados umas horas exatamente por causa disso — o
+ * João já os tinha construído, mas o `API_BASE` era `localhost:3000`,
+ * portanto só respondiam no portátil dele, e o site publicado no Vercel
+ * ficava sem ementa. Com a API no Render, respondem a toda a gente.
  *
- * Para toda a gente resto — incluindo o site publicado no Vercel, onde
- * o `/menu` é uma rota pública (ver `vercel.json`) — a chamada morre e a
- * página fica sem ementa. Foi o que aconteceu: a `menu.html` passou a
- * ler do servidor (F-65) e o site publicado começou a mostrar "não foi
- * possível carregar a ementa" a quem lá entrasse.
- *
- * Estar nesta lista não é "o endpoint existe", é "o front-end consegue
- * lá chegar". Enquanto não conseguir, ficam de fora e usam-se os dados
- * simulados — que são os mesmos 25 produtos, conferidos um a um contra
- * o `database/seed.sql` (nomes e preços iguais ao cêntimo).
- *
- * QUANDO O ENDEREÇO DO RENDER CHEGAR, são duas linhas:
- *   1. trocar o `API_BASE` aqui em baixo pelo endereço do Render;
- *   2. descomentar os quatro padrões aqui em baixo.
+ * O resto continua simulado até ao B-19 (login) e aos endpoints de
+ * sessão de mesa, que o João está a portar para mysql2.
  */
 const ENDPOINTS_REAIS = [
-  // /^categorias$/,          // GET /api/categorias
-  // /^produtos$/,            // GET /api/produtos
-  // /^produtos\?/,           // GET /api/produtos?categoria=Bebidas
-  // /^produtos\/\d+$/,       // GET /api/produtos/:id
+  /^saude$/,                  // GET /api/saude
+  /^categorias$/,             // GET /api/categorias
+  /^produtos$/,               // GET /api/produtos
+  /^produtos\?/,              // GET /api/produtos?categoria=Bebidas
+  /^produtos\/\d+$/,          // GET /api/produtos/:id
 ];
 
 /**

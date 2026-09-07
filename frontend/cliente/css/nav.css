@@ -205,10 +205,25 @@ body {
   transform: scaleX(1);
 }
 
-/* Quem pediu menos movimento não leva o risco a crescer — aparece e
-   pronto. O estado continua a ver-se, que é o que interessa. */
+/* ── A barra recolhe ao descer (04/09) ────────────────────────────
+   Ver `js/nav.js`. O `transform` não mexe no espaço que a barra ocupa
+   — ela é `position: fixed` —, por isso a página não salta quando ela
+   sai e volta. */
+.inline-bar {
+  transition: transform 0.3s ease;
+  will-change: transform;
+}
+
+.inline-bar.barra-recolhida {
+  transform: translateY(-100%);
+}
+
+/* Quem pediu menos movimento não leva o risco a crescer nem a barra a
+   deslizar — as duas coisas continuam a acontecer, mas sem animação.
+   O estado continua a ver-se, que é o que interessa. */
 @media (prefers-reduced-motion: reduce) {
-  .inline-nav a::after { transition: none; }
+  .inline-nav a::after,
+  .inline-bar { transition: none; }
 }
 
 /* ── Outros alvos de toque ────────────────────────────────────────
