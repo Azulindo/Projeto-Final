@@ -233,5 +233,12 @@ tr:hover td { background: var(--bg-hover); }
 
 .badge-sucesso { background: rgba(62, 207, 142, 0.15); color: var(--sucesso); }
 .badge-aviso   { background: rgba(245, 165, 36, 0.15); color: var(--aviso); }
-.badge-perigo  { background: rgba(239, 68, 68, 0.15);  color: var(--perigo); }
+/* O texto deste distintivo NÃO é o --perigo puro: sobre o próprio fundo
+   dele dava 3,80:1, abaixo dos 4,5:1 da WCAG, e ainda por cima a 12 px
+   e a negrito. Este vermelho mais claro dá 4,85:1 e continua a ler-se
+   como vermelho. Medido a 08/09 ao construir a F-52 — a produtos.html,
+   que usa o mesmo distintivo, também estava abaixo do limite.
+   O --perigo continua a ser o vermelho das molduras e dos avisos, onde
+   o limite é 3:1 e passa com folga. */
+.badge-perigo  { background: rgba(239, 68, 68, 0.15);  color: #f87171; }
 .badge-info    { background: rgba(79, 157, 222, 0.15); color: var(--info); }

@@ -7,10 +7,25 @@
  *      destacados — os produtos sem controlo de stock nem aparecem.
  *   2. O gerente (administrador) vê um contador de stock baixo na barra
  *      lateral, e esse contador aparece em QUALQUER página da app, não
- *      só se existisse um ecrã de stock — que ainda nem existe (F-52).
- *   3. A cozinha, que não tem o item "Stock" na barra lateral, também
- *      não tem o aviso — não faz sentido pendurar um número num link
- *      que a pessoa nem vê.
+ *      só no ecrã de stock.
+ *   3. A cozinha vê o item "Stock" mas NÃO vê o contador.
+ *
+ * ── ALTERADO A 08/09, COM A F-52 ────────────────────────────────────
+ * Este ficheiro afirmava, no ponto 3, que a cozinha não tinha sequer o
+ * item "Stock" na barra lateral. Era verdade e era a decisão certa em
+ * 04/09, por uma razão que já não se aplica: nessa altura o item era um
+ * botão morto, com a etiqueta "F-52", e não fazia sentido mostrar à
+ * cozinha um link que não abria nada.
+ *
+ * O ecrã existe desde hoje, e quem parte uma garrafa ou deita fora um
+ * lombo fora de validade é quem está na cozinha — obrigar a passar pelo
+ * gerente para registar uma quebra é a maneira mais certa de a quebra
+ * nunca ser registada. Por isso a cozinha passou a ter o item.
+ *
+ * O que NÃO mudou, e continua verificado aqui, é o contador: esse é só
+ * do gerente. A cozinha já vê o stock em detalhe no ecrã dela, e um
+ * número vermelho a mais num monitor de cozinha em hora de ponta é
+ * ruído, não informação.
  */
 /* Todas as páginas de gestão são abertas com `?simular=1`.
    NÃO é decoração: a partir de 04/09 o `auth/login` fala com o servidor
@@ -93,10 +108,21 @@ async function login(ctx, email) {
   check('O aviso diz QUAIS produtos, não só um número',
         /Borrego Abatido/.test(tooltip || '') && /Tábua Rústica/.test(tooltip || ''), tooltip);
 
-  /* ── 3. Cozinha: sem o item "Stock", sem aviso nenhum ────────────── */
-  const semStockNaCozinha = await coz.locator('[data-nav-id="stock"]').count();
-  check('A cozinha nem sequer tem o item "Stock" na barra lateral (é só do gerente)',
-        semStockNaCozinha === 0);
+  /* ── 3. Cozinha: tem o item "Stock" (F-52), mas não tem o contador ── */
+  await coz.waitForSelector('.sidebar-nav', { timeout: 8000 });
+  await coz.waitForTimeout(700);   // o mesmo tempo que o avisarStockBaixo levaria
+
+  const stockNaCozinha = await coz.locator('[data-nav-id="stock"]').count();
+  check('A cozinha tem o item "Stock" na barra lateral (desde a F-52)',
+        stockNaCozinha === 1, `contou ${stockNaCozinha}`);
+
+  const linkStockCozinha = await coz.locator('[data-nav-id="stock"] a').getAttribute('href').catch(() => null);
+  check('E é um link que abre mesmo, não o botão morto que era antes',
+        linkStockCozinha === 'stock.html', `href: ${linkStockCozinha}`);
+
+  const avisoCozinha = await coz.locator('[data-nav-id="stock"] .nav-aviso').count();
+  check('Mas o CONTADOR continua a ser só do gerente — a cozinha já vê o stock no ecrã dela',
+        avisoCozinha === 0, `contou ${avisoCozinha}`);
 
   await coz.screenshot({ path: '/tmp/site10-stock-cozinha.png' }).catch(() => {});
   await admin.screenshot({ path: '/tmp/site10-stock-aviso-gerente.png' }).catch(() => {});

@@ -39,6 +39,9 @@
  *     POST  mesas/:token/chamar-empregado
  *     GET   gestao/mesas/qrcodes · GET gestao/sessoes/:id/conta
  *     GET   gestao/stock                    ← F-62 (04/09); B-63 no João
+ *     POST  gestao/stock/:id/movimento      ← F-52 (08/09); B-63 no João
+ *     PATCH gestao/stock/:id/minimo         ←  "     "        "     "
+ *           (formato proposto em docs/API.md 4.8 — a discutir com ele)
  * =====================================================================
  */
 
@@ -408,6 +411,188 @@ function gravarSessoesDemo(sessoes) {
   catch (e) { /* segue sem persistir */ }
 }
 
+/* ── Movimentos de stock simulados (F-52) ──────────────────────────────
+   O PRODUTOS_DEMO é uma constante: sem isto, ajustar o stock no ecrã
+   funcionava até ao refresh seguinte e depois desfazia-se sozinho, o
+   que numa demonstração é pior do que não ter o botão.
+
+   Guarda-se o AJUSTE ACUMULADO por produto, não a quantidade final. É
+   a mesma razão pela qual o endpoint real deve receber movimentos e não
+   valores absolutos (ver docs/API.md 4.8): o stock também se mexe
+   sozinho de cada vez que a cozinha confirma uma ronda, por isso quem
+   grava um valor absoluto apaga sem dar por isso o que aconteceu entre
+   o momento em que leu o ecrã e o momento em que carregou em gravar.
+
+   Formato: { "<id>": { ajuste: <inteiro>, minimo: <inteiro|null> } } */
+const CHAVE_STOCK_DEMO = 'vpa_stock_demo';
+
+function lerStockDemo() {
+  try { return JSON.parse(localStorage.getItem(CHAVE_STOCK_DEMO) || '{}'); }
+  catch (e) { return {}; }
+}
+
+function gravarStockDemo(ajustes) {
+  try { localStorage.setItem(CHAVE_STOCK_DEMO, JSON.stringify(ajustes)); }
+  catch (e) { /* segue sem persistir */ }
+}
+
+/* Apaga os ajustes de um produto. Usado quando o formulário do catálogo
+   (F-50) grava uma existência: a partir daí é ELA a base, e um ajuste
+   antigo por cima somava-se em silêncio. */
+function limparAjusteStockDemo(id) {
+  const ajustes = lerStockDemo();
+  if (ajustes[String(id)]) { delete ajustes[String(id)]; gravarStockDemo(ajustes); }
+}
+
+/* Aplica os ajustes guardados a um produto do PRODUTOS_DEMO e devolve
+   as duas quantidades já corrigidas. Nunca deixa a quantidade abaixo de
+   zero — no servidor real essa garantia é do lado de lá. */
+function stockAtualDemo(produto) {
+  const guardado = lerStockDemo()[String(produto.id)] || {};
+  const base = Number(produto.quantidade_atual) || 0;
+  const atual = Math.max(0, base + (Number(guardado.ajuste) || 0));
+  const minimo = guardado.minimo == null
+    ? (Number(produto.quantidade_minima) || 0)
+    : Number(guardado.minimo);
+  return { quantidade_atual: atual, quantidade_minima: minimo };
+}
+
+/* ── Catálogo editável simulado (F-50) ─────────────────────────────────
+   O PRODUTOS_DEMO continua a ser a lista de origem, intocada. Por cima
+   dela vivem as edições e os produtos criados no ecrã, guardados no
+   browser — a mesma razão da F-52: um formulário que grava e desfaz no
+   refresh seguinte é pior do que não ter formulário nenhum.
+
+   TUDO o que lê produtos passa por aqui, e é de propósito: mudar o
+   preço de um prato na gestão tem de o mudar também na ementa do site
+   e no ecrã da mesa. Dois sítios a mostrar preços diferentes do mesmo
+   prato é o género de erro que só se descobre com o cliente à frente.
+
+   Formato: { edicoes: { "<id>": {campos alterados} }, novos: [ {...} ] } */
+const CHAVE_PRODUTOS_DEMO = 'vpa_produtos_demo';
+
+function lerCatalogoDemo() {
+  try {
+    const guardado = JSON.parse(localStorage.getItem(CHAVE_PRODUTOS_DEMO) || '{}');
+    return { edicoes: guardado.edicoes || {}, novos: guardado.novos || [] };
+  } catch (e) { return { edicoes: {}, novos: [] }; }
+}
+
+function gravarCatalogoDemo(estado) {
+  try { localStorage.setItem(CHAVE_PRODUTOS_DEMO, JSON.stringify(estado)); }
+  catch (e) { /* segue sem persistir */ }
+}
+
+/** catalogoDemo — a lista de origem com as edições e os novos aplicados. */
+function catalogoDemo() {
+  const { edicoes, novos } = lerCatalogoDemo();
+  const base = PRODUTOS_DEMO.map(p => {
+    const alterado = edicoes[String(p.id)];
+    return alterado ? { ...p, ...alterado } : { ...p };
+  });
+  return base.concat(novos.map(p => ({ ...p })));
+}
+
+/* O próximo id livre. Nunca reaproveita um id apagado — no servidor
+   real quem os dá é o AUTO_INCREMENT, e um id reaproveitado ligaria
+   pedidos antigos ao produto errado. */
+function proximoIdDemo() {
+  const todos = catalogoDemo().map(p => Number(p.id) || 0);
+  return Math.max(0, ...todos) + 1;
+}
+
+/* Uma linha do `gestao/produtos` (docs/API.md 4.9). As quantidades
+   passam pelo stockAtualDemo para o catálogo (F-49) e o ecrã de stock
+   (F-52) nunca mostrarem números diferentes do mesmo produto. */
+function linhaProdutoDemo(p) {
+  const stock = p.controla_stock ? stockAtualDemo(p) : null;
+  return {
+    id: p.id,
+    nome: p.nome,
+    descricao: p.descricao || '',
+    preco: p.preco,
+    categoria: p.categoria,
+    imagem: p.imagem || null,
+    ativo: p.ativo !== false,
+    disponivel: p.disponivel !== false,
+    controla_stock: !!p.controla_stock,
+    quantidade_atual:  stock ? stock.quantidade_atual  : null,
+    quantidade_minima: stock ? stock.quantidade_minima : null,
+  };
+}
+
+/* Valida o corpo de um POST/PATCH de produto e devolve só os campos
+   aceites. `completo` distingue criar (o nome, o preço e a categoria
+   são obrigatórios) de editar (só se valida o que vier).
+
+   Esta validação é a MESMA que o servidor tem de fazer, não um
+   substituto dela: o front-end valida para dar uma mensagem útil de
+   imediato, o servidor valida porque é ele que decide. */
+function validarProdutoDemo(corpo, completo) {
+  const out = {};
+  const tem = c => Object.prototype.hasOwnProperty.call(corpo, c);
+
+  if (completo || tem('nome')) {
+    const nome = String(corpo.nome || '').trim();
+    if (!nome) throw erroSimulado('O nome é obrigatório.', 400);
+    if (nome.length > 80) throw erroSimulado('O nome não pode passar dos 80 caracteres.', 400);
+    out.nome = nome;
+  }
+
+  if (completo || tem('preco')) {
+    const preco = Number(corpo.preco);
+    if (!isFinite(preco) || preco <= 0) throw erroSimulado('O preço tem de ser maior do que zero.', 400);
+    // Duas casas, sempre. Um preço com três casas entra na base e sai
+    // arredondado noutro sítio qualquer, e as contas deixam de fechar.
+    out.preco = Math.round(preco * 100) / 100;
+  }
+
+  if (completo || tem('categoria')) {
+    const cat = String(corpo.categoria || '').trim();
+    if (!cat) throw erroSimulado('A categoria é obrigatória.', 400);
+    out.categoria = cat;
+  }
+
+  if (tem('descricao')) out.descricao = String(corpo.descricao || '').trim().slice(0, 300);
+  if (tem('imagem'))    out.imagem    = String(corpo.imagem || '').trim() || null;
+  if (tem('ativo'))      out.ativo      = corpo.ativo !== false;
+  if (tem('disponivel')) out.disponivel = corpo.disponivel !== false;
+
+  if (tem('controla_stock')) {
+    out.controla_stock = !!corpo.controla_stock;
+    if (out.controla_stock) {
+      const atual  = Number(corpo.quantidade_atual);
+      const minimo = Number(corpo.quantidade_minima);
+      if (!Number.isInteger(atual) || atual < 0)   throw erroSimulado('A existência tem de ser um inteiro não negativo.', 400);
+      if (!Number.isInteger(minimo) || minimo < 0) throw erroSimulado('O mínimo tem de ser um inteiro não negativo.', 400);
+      out.quantidade_atual = atual;
+      out.quantidade_minima = minimo;
+    } else {
+      // Deixar de controlar stock não guarda uma quantidade órfã: o
+      // produto passa a "nunca acaba", que é o que a bandeira quer dizer.
+      out.quantidade_atual = null;
+      out.quantidade_minima = null;
+    }
+  }
+
+  return out;
+}
+
+/* Uma linha do `gestao/stock`, no formato combinado no docs/API.md 4.8.
+   O `baixo` vem calculado de propósito: nem a cozinha nem o gerente têm
+   de saber a regra (regra 21 do CONTEXTO), só olhar. */
+function linhaStockDemo(produto) {
+  const { quantidade_atual, quantidade_minima } = stockAtualDemo(produto);
+  return {
+    id: produto.id,
+    nome: produto.nome,
+    categoria: produto.categoria,
+    quantidade_atual,
+    quantidade_minima,
+    baixo: quantidade_atual <= quantidade_minima,
+  };
+}
+
 function erroSimulado(mensagem, status) {
   const erro = new Error(mensagem);
   erro.status = status;
@@ -502,7 +687,7 @@ async function simularEndpoint(endpoint, opcoes) {
   /* ── produtos (docs/API.md 4.2) ────────────────────────────────── */
   if (caminho === 'produtos') {
     const categoria = query.get('categoria');
-    const lista = PRODUTOS_DEMO.filter(p => p.ativo && (!categoria || p.categoria === categoria));
+    const lista = catalogoDemo().filter(p => p.ativo && (!categoria || p.categoria === categoria));
     return lista.map(p => ({ ...p }));
   }
 
@@ -522,20 +707,56 @@ async function simularEndpoint(endpoint, opcoes) {
      isso as colunas de estado mostram sempre "ativo/disponível"; a
      lógica que desenha os outros estados está lá e acende sozinha
      quando os dados reais os trouxerem. */
-  if (caminho === 'gestao/produtos') {
-    return PRODUTOS_DEMO.map(p => ({
-      id: p.id,
-      nome: p.nome,
-      descricao: p.descricao,
-      preco: p.preco,
-      categoria: p.categoria,
-      imagem: p.imagem,
-      ativo: p.ativo !== false,
-      disponivel: p.disponivel !== false,
-      controla_stock: !!p.controla_stock,
-      quantidade_atual: p.controla_stock ? p.quantidade_atual : null,
-      quantidade_minima: p.controla_stock ? p.quantidade_minima : null,
-    }));
+  if (caminho === 'gestao/produtos' && metodo === 'GET') {
+    return catalogoDemo().map(p => linhaProdutoDemo(p));
+  }
+
+  /* ── Escrita no catálogo — F-50 / B-61 (docs/API.md 4.9) ───────────
+     Criar e editar. NÃO há apagar, e é de propósito: um produto que já
+     apareceu num pedido não pode desaparecer sem levar consigo o
+     histórico — a linha do `item_pedido` ficava a apontar para o nada,
+     e as estatísticas do F-57 passavam a mentir. Quem sai da carta
+     fica `ativo: false`: continua a existir para o passado e deixa de
+     aparecer para o futuro. */
+  if (caminho === 'gestao/produtos' && metodo === 'POST') {
+    const campos = validarProdutoDemo(opcoes.body || {}, true);
+    const estado = lerCatalogoDemo();
+    const novo = { id: proximoIdDemo(), ...campos };
+    estado.novos.push(novo);
+    gravarCatalogoDemo(estado);
+    limparAjusteStockDemo(novo.id);
+    return linhaProdutoDemo(novo);
+  }
+
+  const prodMatch = caminho.match(/^gestao\/produtos\/(\d+)$/);
+  if (prodMatch && metodo === 'PATCH') {
+    const id = Number(prodMatch[1]);
+    const atual = catalogoDemo().find(p => p.id === id);
+    if (!atual) throw erroSimulado('Produto não encontrado.', 404);
+
+    // Só valida o que vem — um PATCH que só muda o `disponivel` não tem
+    // de reenviar o nome e o preço.
+    const campos = validarProdutoDemo(opcoes.body || {}, false);
+    const estado = lerCatalogoDemo();
+
+    const indiceNovo = estado.novos.findIndex(p => p.id === id);
+    if (indiceNovo !== -1) {
+      estado.novos[indiceNovo] = { ...estado.novos[indiceNovo], ...campos };
+    } else {
+      estado.edicoes[String(id)] = { ...(estado.edicoes[String(id)] || {}), ...campos };
+    }
+    gravarCatalogoDemo(estado);
+
+    /* Se o formulário gravou uma existência, ela passa a ser a base — os
+       ajustes que o ecrã de stock tinha por cima têm de sair, senão os
+       dois somavam-se e o número ficava errado sem ninguém perceber
+       porquê. É a mesma armadilha que se evita no B-63 ao mandar
+       movimentos em vez de totais, vista do outro lado. */
+    if (Object.prototype.hasOwnProperty.call(campos, 'quantidade_atual')) {
+      limparAjusteStockDemo(id);
+    }
+
+    return linhaProdutoDemo(catalogoDemo().find(p => p.id === id));
   }
 
   /* ── categorias (docs/API.md 4.2) ──────────────────────────────────
@@ -548,7 +769,7 @@ async function simularEndpoint(endpoint, opcoes) {
   if (caminho === 'categorias') {
     const ordem = ['Entradas', 'Pratos Principais', 'Bebidas', 'Sobremesas'];
     return ordem
-      .filter(nome => PRODUTOS_DEMO.some(p => p.ativo && p.categoria === nome))
+      .filter(nome => catalogoDemo().some(p => p.ativo && p.categoria === nome))
       .map((nome, i) => ({ id: i + 1, nome, descricao: '', ordem: i + 1 }));
   }
 
@@ -560,17 +781,92 @@ async function simularEndpoint(endpoint, opcoes) {
      Só os produtos que controlam stock — os outros nunca acabam. O
      campo `baixo` já vem calculado: nem a cozinha nem o gerente têm de
      saber a regra (quantidade_atual <= quantidade_minima), só olhar. */
-  if (caminho === 'gestao/stock') {
-    return PRODUTOS_DEMO
+  if (caminho === 'gestao/stock' && metodo === 'GET') {
+    return catalogoDemo()
       .filter(p => p.controla_stock)
-      .map(p => ({
-        id: p.id,
-        nome: p.nome,
-        categoria: p.categoria,
-        quantidade_atual: p.quantidade_atual,
-        quantidade_minima: p.quantidade_minima,
-        baixo: p.quantidade_atual <= p.quantidade_minima,
-      }));
+      .map(p => linhaStockDemo(p));
+  }
+
+  /* ── Escrita no stock — F-52 / B-63 (docs/API.md 4.8) ──────────────
+     Três motivos em vez de um campo "quantidade" que se sobrepõe:
+
+       entrada  → chegou mercadoria         (+)
+       quebra   → partiu-se, estragou-se    (−)
+       acerto   → contámos e é este o número (=)
+
+     Porquê separar: um campo único perde o PORQUÊ, e sem o porquê não
+     há forma de distinguir mais tarde uma encomenda de uma perda. E
+     porque `entrada` e `quebra` somam do lado do servidor em vez de
+     gravarem um total, duas pessoas a ajustar ao mesmo tempo — ou um
+     ajuste feito enquanto a cozinha confirma uma ronda — somam-se em
+     vez de se apagarem. O `acerto` é o único absoluto, e é suposto
+     ser: é uma contagem física, manda sobre o que o sistema julgava.
+
+     Enquanto o B-63 não existir, isto corre aqui e guarda no browser. */
+  const movMatch = caminho.match(/^gestao\/stock\/(\d+)\/movimento$/);
+  if (movMatch && metodo === 'POST') {
+    const produto = catalogoDemo().find(p => p.id === Number(movMatch[1]) && p.controla_stock);
+    if (!produto) throw erroSimulado('Produto sem controlo de stock.', 404);
+
+    const { tipo, quantidade } = opcoes.body || {};
+    const qtd = Number(quantidade);
+    if (!Number.isInteger(qtd) || qtd < 0) {
+      throw erroSimulado('A quantidade tem de ser um número inteiro não negativo.', 400);
+    }
+    if (!['entrada', 'quebra', 'acerto'].includes(tipo)) {
+      throw erroSimulado('Tipo de movimento desconhecido.', 400);
+    }
+
+    /* O `acerto` é só do administrador — decisão do João, 08/09, e é a
+       certa. A `entrada` e a `quebra` são factos que quem está na
+       cozinha vê acontecer; o `acerto` é o único que apaga a
+       contabilidade e a substitui por uma afirmação. E é precisamente a
+       diferença entre o que o sistema julgava e o que lá está que
+       interessa à gestão — deixar quem está mais perto do stock apagar
+       essa diferença é retirar o único controlo que existe.
+
+       Esta verificação está aqui e não só no ecrã de propósito:
+       esconder um botão não impede ninguém de chamar o endpoint. No
+       servidor real (B-63) tem de ser repetida, e é lá que manda. */
+    const sessaoStock = typeof obterSessao === 'function' ? obterSessao() : null;
+    if (tipo === 'acerto' && (!sessaoStock || sessaoStock.nivel !== 'administrador')) {
+      throw erroSimulado('Só a administração pode fazer acertos de inventário.', 403);
+    }
+
+    const ajustes = lerStockDemo();
+    const chave = String(produto.id);
+    const guardado = ajustes[chave] || { ajuste: 0, minimo: null };
+    const base = Number(produto.quantidade_atual) || 0;
+    const antes = Math.max(0, base + (Number(guardado.ajuste) || 0));
+
+    let depois;
+    if (tipo === 'entrada')      depois = antes + qtd;
+    else if (tipo === 'quebra')  depois = Math.max(0, antes - qtd);
+    else                         depois = qtd;          // acerto
+
+    guardado.ajuste = depois - base;
+    ajustes[chave] = guardado;
+    gravarStockDemo(ajustes);
+
+    return linhaStockDemo(produto);
+  }
+
+  const minMatch = caminho.match(/^gestao\/stock\/(\d+)\/minimo$/);
+  if (minMatch && metodo === 'PATCH') {
+    const produto = catalogoDemo().find(p => p.id === Number(minMatch[1]) && p.controla_stock);
+    if (!produto) throw erroSimulado('Produto sem controlo de stock.', 404);
+
+    const novo = Number((opcoes.body || {}).quantidade_minima);
+    if (!Number.isInteger(novo) || novo < 0) {
+      throw erroSimulado('O mínimo tem de ser um número inteiro não negativo.', 400);
+    }
+
+    const ajustes = lerStockDemo();
+    const chave = String(produto.id);
+    ajustes[chave] = { ...(ajustes[chave] || { ajuste: 0 }), minimo: novo };
+    gravarStockDemo(ajustes);
+
+    return linhaStockDemo(produto);
   }
 
   /* ── mesas + tokens para imprimir os QR Codes (docs/API.md 4.6) ── */
@@ -631,7 +927,7 @@ async function simularEndpoint(endpoint, opcoes) {
       };
 
       const criados = itens.map(({ produtoId, quantidade = 1, observacao }) => {
-        const produto = PRODUTOS_DEMO.find(p => p.id === Number(produtoId));
+        const produto = catalogoDemo().find(p => p.id === Number(produtoId));
         if (!produto || !produto.ativo) throw erroSimulado(`Produto #${produtoId} não disponível.`, 400);
         return {
           id: Math.floor(Math.random() * 1e6),

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<!-- data-niveis tem de bater certo com o `niveis` deste item no
+     layout.js: a barra lateral esconde o que não interessa, mas quem
+     faz cumprir a regra é o auth-guard.js. -->
+<html lang="pt" data-niveis="cozinha administrador">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock — Vem Pro Abate</title>
+<meta name="description" content="Existências de cada produto, com entradas, quebras e acertos de inventário.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/produtos.css">
+<link rel="stylesheet" href="css/stock.css">
+
+<script src="../js/api.js"></script>
+<script src="js/auth-guard.js"></script>
+</head>
+<body data-pagina="stock" data-titulo="Stock">
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="content-area">
+      <header class="content-topbar" id="contentTopbar"></header>
+
+      <main class="content-main" id="conteudoPagina">
+
+        <!-- ── Resumo ──────────────────────────────────────────────────
+             Uma linha, no topo, antes da tabela. Quem abre este ecrã abre-o
+             quase sempre por causa do contador da barra lateral — a
+             primeira coisa que precisa de ler é quantos e quais. -->
+        <section class="resumo-stock" id="resumoStock" aria-live="polite" hidden>
+          <span class="resumo-icone" aria-hidden="true">📦</span>
+          <span id="resumoTexto"></span>
+        </section>
+
+        <!-- ── Barra de filtros ────────────────────────────────────── -->
+        <section class="barra-filtros">
+          <div class="campo campo-pesquisa">
+            <label for="pesquisa" class="sr-so-leitor">Pesquisar produto</label>
+            <input type="search" id="pesquisa" placeholder="Pesquisar por nome…"
+                   autocomplete="off" spellcheck="false">
+          </div>
+
+          <div class="campo campo-categoria">
+            <label for="filtroCategoria" class="sr-so-leitor">Filtrar por categoria</label>
+            <select id="filtroCategoria">
+              <option value="">Todas as categorias</option>
+            </select>
+          </div>
+
+          <!-- Um interruptor, não um terceiro select: a pergunta é sim/não
+               e é a que se faz mais vezes neste ecrã. -->
+          <label class="alternar">
+            <input type="checkbox" id="soBaixos">
+            <span>Só os que estão baixos</span>
+          </label>
+
+          <span class="contagem" id="contagem" aria-live="polite"></span>
+        </section>
+
+        <!-- ── Estados ────────────────────────────────────────────── -->
+        <p class="estado-msg" id="estadoMsg" role="status">
+          <span class="estado-spinner" aria-hidden="true"></span>
+          <span id="estadoTexto">A carregar o stock…</span>
+        </p>
+
+        <!-- ── Tabela ─────────────────────────────────────────────── -->
+        <div class="tabela-envolve hidden" id="tabelaEnvolve">
+          <table class="tabela-produtos tabela-stock">
+            <thead>
+              <tr>
+                <th scope="col" aria-sort="ascending">
+                  <button type="button" class="ordenar" data-campo="nome">Produto</button>
+                </th>
+                <th scope="col">
+                  <button type="button" class="ordenar" data-campo="categoria">Categoria</button>
+                </th>
+                <th scope="col" class="col-num">
+                  <button type="button" class="ordenar" data-campo="atual">Existência</button>
+                </th>
+                <th scope="col" class="col-num">Mínimo</th>
+                <th scope="col" class="col-accoes"><span class="sr-so-leitor">Ações</span></th>
+              </tr>
+            </thead>
+            <tbody id="corpoTabela"></tbody>
+          </table>
+        </div>
+
+        <p class="sem-resultados hidden" id="semResultados">
+          <span class="sem-resultados-icone" aria-hidden="true">🔍</span>
+          <span id="semResultadosTexto"></span>
+        </p>
+
+        <p class="nota-rodape">
+          Só aparecem aqui os produtos que <strong>controlam stock</strong> — um café ou
+          uma imperial não têm existência limitada e nunca acabam. Quem decide isso é o
+          catálogo (<strong>F-50</strong>), não este ecrã.
+          <br>
+          As saídas por venda são automáticas: o stock desce quando a cozinha
+          <strong>aceita</strong> a ronda e volta a subir se a ronda for anulada. Aqui
+          registam-se só as entradas de mercadoria, as quebras e os acertos de contagem.
+        </p>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ── Painel de ajuste ──────────────────────────────────────────────
+       <dialog> nativo: traz o fecho com Esc, o foco preso lá dentro e o
+       fundo inerte sem uma linha de JavaScript para isso. -->
+  <dialog class="painel-ajuste" id="painelAjuste" aria-labelledby="ajusteTitulo">
+    <form method="dialog" id="formAjuste">
+      <header class="ajuste-cabecalho">
+        <h2 id="ajusteTitulo">Ajustar stock</h2>
+        <button type="button" class="btn-fechar" id="btnFecharAjuste" aria-label="Fechar">✕</button>
+      </header>
+
+      <p class="ajuste-produto">
+        <strong id="ajusteNome"></strong>
+        <span class="ajuste-actual">Existência atual: <b id="ajusteAtual">—</b></span>
+      </p>
+
+      <fieldset class="ajuste-tipos">
+        <legend>O que aconteceu</legend>
+
+        <label class="tipo">
+          <input type="radio" name="tipo" value="entrada" checked>
+          <span class="tipo-corpo">
+            <span class="tipo-nome">＋ Entrada</span>
+            <span class="tipo-desc">Chegou mercadoria</span>
+          </span>
+        </label>
+
+        <label class="tipo">
+          <input type="radio" name="tipo" value="quebra">
+          <span class="tipo-corpo">
+            <span class="tipo-nome">− Quebra</span>
+            <span class="tipo-desc">Partiu-se, estragou-se, fora de validade</span>
+          </span>
+        </label>
+
+        <!-- Só administrador (ver stock.js). Fica à vista e desativado
+             em vez de desaparecer: uma opção que some sem explicação é
+             comunicada como avaria, uma opção desativada com o motivo
+             escrito ensina quem a tem de pedir. -->
+        <label class="tipo" id="tipoAcerto">
+          <input type="radio" name="tipo" value="acerto">
+          <span class="tipo-corpo">
+            <span class="tipo-nome">＝ Acerto</span>
+            <span class="tipo-desc" id="acertoDesc">Contámos e é este o número</span>
+          </span>
+        </label>
+      </fieldset>
+
+      <div class="ajuste-quantidade">
+        <label for="ajusteQtd" id="ajusteQtdLabel">Quantidade a acrescentar</label>
+        <div class="passo">
+          <button type="button" class="btn-passo" id="btnMenos" aria-label="Menos um">−</button>
+          <input type="number" id="ajusteQtd" inputmode="numeric" min="0" step="1" value="1">
+          <button type="button" class="btn-passo" id="btnMais" aria-label="Mais um">+</button>
+        </div>
+      </div>
+
+      <!-- Fica sempre visível, sem esperar por um clique em "gravar": é a
+           frase que evita o engano de somar quando se queria acertar. -->
+      <p class="ajuste-previsao" id="ajustePrevisao" aria-live="polite"></p>
+
+      <p class="ajuste-erro" id="ajusteErro" role="alert" hidden></p>
+
+      <footer class="ajuste-rodape">
+        <button type="button" class="btn btn-secundario" id="btnCancelarAjuste">Cancelar</button>
+        <button type="button" class="btn btn-primario" id="btnGravarAjuste">Gravar</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- ── Painel do mínimo ─────────────────────────────────────────── -->
+  <dialog class="painel-ajuste painel-minimo" id="painelMinimo" aria-labelledby="minimoTitulo">
+    <form method="dialog" id="formMinimo">
+      <header class="ajuste-cabecalho">
+        <h2 id="minimoTitulo">Alterar o mínimo</h2>
+        <button type="button" class="btn-fechar" id="btnFecharMinimo" aria-label="Fechar">✕</button>
+      </header>
+
+      <p class="ajuste-produto"><strong id="minimoNome"></strong></p>
+
+      <p class="ajuste-explica">
+        Abaixo deste número o produto passa a contar para o aviso de stock baixo — o que
+        a cozinha vê no ecrã dela e o contador na barra lateral. Não impede ninguém de
+        vender nem esconde o produto da ementa; é só quando avisar.
+      </p>
+
+      <div class="ajuste-quantidade">
+        <label for="minimoQtd">Avisar quando ficar em ou abaixo de</label>
+        <div class="passo">
+          <button type="button" class="btn-passo" id="btnMinMenos" aria-label="Menos um">−</button>
+          <input type="number" id="minimoQtd" inputmode="numeric" min="0" step="1" value="0">
+          <button type="button" class="btn-passo" id="btnMinMais" aria-label="Mais um">+</button>
+        </div>
+      </div>
+
+      <p class="ajuste-erro" id="minimoErro" role="alert" hidden></p>
+
+      <footer class="ajuste-rodape">
+        <button type="button" class="btn btn-secundario" id="btnCancelarMinimo">Cancelar</button>
+        <button type="button" class="btn btn-primario" id="btnGravarMinimo">Gravar</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <script src="js/layout.js"></script>
+  <script src="js/stock.js"></script>
+</body>
+</html>

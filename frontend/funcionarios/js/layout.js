@@ -49,7 +49,14 @@ const NAV_ITEMS = [
   { id: 'qrcodes',      icone: '🔳', label: 'QR Codes',       href: 'qrcodes.html',   niveis: ['balcao', 'administrador'] },
   { id: 'produtos',     icone: '🍽️', label: 'Produtos',       href: 'produtos.html',  niveis: ['administrador'] },
   { id: 'categorias',   icone: '🏷️', label: 'Categorias',     href: null, tag: 'F-51', niveis: ['administrador'] },
-  { id: 'stock',        icone: '📦', label: 'Stock',          href: null, tag: 'F-52', niveis: ['administrador'] },
+  /* F-52 (08/09): a cozinha entra aqui, o balcão não. Quem parte uma
+     garrafa ou deita fora um lombo fora de validade é quem está lá
+     dentro — obrigar a passar pelo gerente para registar uma quebra é
+     a maneira mais certa de a quebra nunca ser registada. É também o
+     que o João já tinha previsto para o B-63 ("acessível também ao
+     nível cozinha"). O balcão fica de fora: não tem ação nenhuma a
+     tomar sobre existências. */
+  { id: 'stock',        icone: '📦', label: 'Stock',          href: 'stock.html', niveis: ['cozinha', 'administrador'] },
   { id: 'funcionarios', icone: '👥', label: 'Funcionários',   href: null, tag: 'F-53', niveis: ['administrador'] },
   { id: 'estatisticas', icone: '📊', label: 'Estatísticas',   href: null, tag: 'F-55', niveis: ['administrador'] },
 ];

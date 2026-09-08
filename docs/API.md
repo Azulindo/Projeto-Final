@@ -671,6 +671,159 @@ A resposta é igual à do 3.4:
 Implementação sugerida: é a mesma query do 3.4, trocando o `findFirst` pela mesa por um
 `findUnique` na sessão. Deve exigir sessão de funcionário.
 
+### 4.8 Stock — ler e ajustar (**B-63**) · *proposta, 08/09*
+
+O `GET` já estava combinado e está a ser usado desde a F-62. O que é novo aqui são os dois
+endpoints de **escrita**, propostos ao construir o ecrã de stock (F-52) e já simulados no
+`api.js` com este formato exato. Se concordares, é implementar; se preferires outra coisa,
+diz antes de escreveres o B-63 — mudar agora custa uma linha, mudar depois custa um ecrã.
+
+Níveis: `administrador` e **`cozinha`**. O balcão não entra.
+
+#### `GET /api/gestao/stock`
+
+Só os produtos com `controla_stock = 1`. O `baixo` vem **calculado do servidor** — nem a
+cozinha nem o gerente têm de saber a regra (regra 21 do CONTEXTO), só olhar.
+
+```json
+[ { "id": 5, "nome": "Borrego Abatido", "categoria": "Pratos Principais",
+    "quantidade_atual": 3, "quantidade_minima": 5, "baixo": true } ]
+```
+
+#### `POST /api/gestao/stock/:produtoId/movimento`
+
+```json
+{ "tipo": "entrada" | "quebra" | "acerto", "quantidade": 10, "nota": "opcional" }
+```
+
+| `tipo` | O que faz | Sinal | Quem escreve |
+|---|---|---|---|
+| `entrada` | Chegou mercadoria | soma | `cozinha` · `administrador` |
+| `quebra` | Partiu-se, estragou-se, fora de validade | subtrai (nunca abaixo de 0) | `cozinha` · `administrador` |
+| `acerto` | Contagem física: passa a ser este o número | absoluto | **só `administrador`** |
+| `consumo` | Ronda confirmada (B-58) | subtrai | **só o servidor** |
+| `reposicao` | Ronda anulada (B-59) | soma | **só o servidor** |
+
+Responde `200` com a linha atualizada, **no mesmo formato do `GET`** — é o que o ecrã usa
+para se redesenhar sem ter de recarregar tudo.
+
+Erros: `400` se a `quantidade` não for um inteiro ≥ 0, se o `tipo` for desconhecido, ou se
+for `consumo`/`reposicao` (esses não se pedem, acontecem); `403` se for `acerto` e o nível
+não for `administrador`; `404` se o produto não existir ou não controlar stock.
+
+**Cada linha gravada leva:** `tipo`, `quantidade`, `quantidade_antes`, `quantidade_depois`,
+`id_utilizador`, `data` e a `nota`. O `id_utilizador` sai do token, não do corpo do pedido —
+o cliente não escolhe em nome de quem grava.
+
+> **Porque `quantidade_antes` e `quantidade_depois`, e não só o delta.** Um acerto sem o
+> valor anterior não conta a história: *"acertou para 14"* não diz se corrigiu 2 ou 40. E com
+> os dois campos o histórico verifica-se sozinho — o `antes` de cada linha tem de bater com o
+> `depois` da anterior, para o mesmo produto. No dia em que não bater, alguém escreveu na
+> tabela por fora.
+>
+> ⚠️ Esse encadeamento só se aguenta se as escritas do mesmo produto forem **serializadas**:
+> a leitura do `antes`, o cálculo e a gravação têm de correr dentro da mesma transação, com
+> a linha do produto bloqueada — exatamente como o B-58 já faz ao descontar. Sem isso, dois
+> movimentos simultâneos leem o mesmo `antes`, e a cadeia parte-se sozinha sem ninguém ter
+> escrito por fora. Um alarme que dispara sem motivo deixa de ser lido ao fim de duas vezes.
+
+> **Porque o `consumo` e a `reposicao` também são movimentos.** Se as descidas automáticas da
+> cozinha não passarem pela tabela, a `quantidade_atual` é mexida por dois mecanismos e só um
+> fica registado — e o histórico deixa de reconstruir o saldo, que é a única coisa que o torna
+> uma prova em vez de um diário incompleto. Ficam escritos só pelo servidor: o endpoint
+> recusa-os, para ninguém poder inventar consumos à mão.
+
+> **Porque o `acerto` é só do administrador.** A `entrada` e a `quebra` são factos que quem
+> está na cozinha vê acontecer. O `acerto` é o único que apaga a contabilidade e a substitui
+> por uma afirmação — e é justamente a diferença entre o que o sistema julgava e o que lá
+> está que interessa à gestão. Quem vê a diferença e sabe a causa continua a ter para onde ir:
+> se se deitou fora, é uma `quebra`, e fica no histórico com o motivo. O `acerto` é para
+> quando **não se sabe porquê**, e é esse caso que a gestão tem de ver.
+>
+> O ecrã já o mostra desativado à cozinha, com o motivo escrito em vez de o esconder — uma
+> opção que desaparece sem explicação é comunicada como avaria.
+
+> **Porque um movimento e não um `PATCH` que grava `quantidade_atual`.** Este stock mexe-se
+> sozinho (B-58/B-59). Entre o gerente abrir o ecrã e carregar em gravar podem ter saído três
+> pratos. Se ele gravar "24", os três pratos vendidos desaparecem da contabilidade — e ninguém
+> dá por isso, porque o ecrã fica a mostrar um número com todo o ar de estar certo. Com
+> movimentos, o servidor soma e as duas coisas coexistem.
+>
+> O `acerto` é o único absoluto, e é suposto ser: uma contagem física manda sobre o que o
+> sistema julgava saber.
+
+> 📐 **Consequência a não esquecer:** a tabela de movimentos é a **18.ª**. O `/api/saude`
+> passou a dizer *"17 tabelas + 1 vista"* precisamente porque o diagrama ER é entregável e
+> alguém ia contar. Quando esta tabela entrar, há três sítios a acertar: o `/api/saude`, o
+> diagrama ER, e as três menções a "17 tabelas" no `README.md`.
+
+> **Porque é um movimento e não um campo `quantidade_atual` que se grava por cima.**
+> Esta foi a decisão de desenho do ecrã, e é a única parte que vale mesmo a pena discutir.
+>
+> **1. Um valor absoluto apaga trabalho alheio.** Este stock mexe-se sozinho: desce quando a
+> cozinha aceita uma ronda (B-58) e sobe quando uma ronda é anulada (B-59). Entre o gerente
+> abrir o ecrã e carregar em gravar podem ter saído três pratos. Se ele gravar "24", os três
+> pratos vendidos desaparecem da contabilidade — e ninguém dá por isso, porque o ecrã fica
+> a mostrar um número com todo o ar de estar certo. Com movimentos, o servidor soma e as
+> duas coisas coexistem.
+>
+> **2. Perde o porquê.** Uma existência que desce de 20 para 14 pode ser uma encomenda que
+> veio incompleta ou seis garrafas partidas, e são conversas diferentes com o fornecedor.
+> Guardando o `tipo`, fica lá para quando quiserem um histórico de movimentos — que é
+> praticamente de graça se a tabela for criada desde já, e caríssimo de reconstruir depois.
+>
+> O `acerto` é o único absoluto, e é suposto ser: uma contagem física manda sobre o que o
+> sistema julgava saber.
+
+#### `PATCH /api/gestao/stock/:produtoId/minimo`
+
+```json
+{ "quantidade_minima": 4 }
+```
+
+Responde `200` com a mesma linha do `GET`. Muda **só** o limiar do aviso — não toca na
+existência, não esconde o produto da ementa, não impede ninguém de vender. Separado do
+movimento de propósito: é uma **definição**, não um facto sobre a quantidade, e misturá-los
+poria uma configuração dentro do histórico de existências.
+
+### 4.9 Catálogo — criar e editar produtos (**B-61**) · *proposta, 08/09*
+
+Simulado no `api.js` com este formato, para o F-50.
+
+#### `POST /api/gestao/produtos` · `PATCH /api/gestao/produtos/:id`
+
+```json
+{ "nome": "Bitoque do Abate", "descricao": "Bife com ovo a cavalo…",
+  "preco": 13.40, "categoria": "Pratos Principais",
+  "imagem": "assets/imagens/pratos/bitoque.jpg",
+  "ativo": true, "disponivel": true,
+  "controla_stock": true, "quantidade_atual": 12, "quantidade_minima": 4 }
+```
+
+No `POST`, `nome`, `preco` e `categoria` são obrigatórios. No `PATCH` valida-se só o que vier
+— um pedido que só desliga o `disponivel` não tem de reenviar o nome e o preço. Respondem
+`200`/`201` com o produto no formato do `GET /api/gestao/produtos`.
+
+**Não há `DELETE`, e é de propósito.** Um produto que já apareceu num pedido não pode
+desaparecer sem levar o histórico atrás: a linha do `item_pedido` ficaria a apontar para o
+nada e as estatísticas do F-57 passavam a mentir. Quem sai da carta fica `ativo: false` —
+continua a existir para o passado e deixa de aparecer para o futuro.
+
+**O preço arredonda a duas casas no servidor.** Um preço com três casas entra na base e sai
+arredondado noutro sítio qualquer, e as contas deixam de fechar. O front-end aceita vírgula
+ou ponto (num teclado português escreve-se `16,20`) e envia sempre número.
+
+> ⚠️ **Onde este endpoint toca no stock.** Se o `PATCH` trouxer `quantidade_atual`, isso passa
+> a ser a base — e os movimentos anteriores desse produto deixam de fazer sentido por cima
+> dela. Sugiro que o servidor trate isso como um **`acerto`** (com `quantidade_antes` e
+> `quantidade_depois` gravados como qualquer outro), em vez de escrever a coluna em silêncio:
+> assim o histórico continua a reconstruir o saldo, que é o teu ponto 1.
+>
+> Do lado do ecrã já evitei o caso comum: ao editar um produto que **já** controla stock, o
+> formulário não deixa escrever a existência e diz que quem manda nela é o ecrã de Stock. A
+> `quantidade_atual` só vai no corpo ao criar um produto ou ao ligar o controlo de stock pela
+> primeira vez.
+
 ---
 
 ## 5. Como ligar o front-end ao backend real

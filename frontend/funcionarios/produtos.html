@@ -45,14 +45,8 @@
 
           <span class="contagem" id="contagem" aria-live="polite"></span>
 
-          <!-- Botão desativado de propósito: o formulário de criação é o
-               F-50 e o endpoint de escrita é o B-61. Fica à vista, com a
-               etiqueta da tarefa, como os itens por construir da barra
-               lateral — esconder o que falta faz o ecrã parecer acabado
-               quando não está. -->
-          <button type="button" class="btn btn-primario btn-novo" disabled
-                  title="Chega com o F-50, quando existir o endpoint de escrita (B-61)">
-            ＋ Novo produto <span class="etiqueta-tarefa">F-50</span>
+          <button type="button" class="btn btn-primario btn-novo" id="btnNovo">
+            ＋ Novo produto
           </button>
         </section>
 
@@ -83,6 +77,7 @@
                 <th scope="col" class="col-estado">
                   <button type="button" class="ordenar" data-campo="estado">Estado</button>
                 </th>
+                <th scope="col" class="col-accoes"><span class="sr-so-leitor">Ações</span></th>
               </tr>
             </thead>
             <tbody id="corpoTabela"></tbody>
@@ -98,12 +93,143 @@
         <p class="nota-rodape">
           Esta lista mostra o catálogo <strong>completo</strong>, incluindo o que está
           inativo ou esgotado — ao contrário da ementa do site, que só mostra o que o
-          cliente pode pedir hoje. Criar e editar chega com o <strong>F-50</strong>.
+          cliente pode pedir hoje.
+          <br>
+          Não há apagar, e é de propósito: um prato que já apareceu em pedidos não pode
+          desaparecer sem levar o histórico atrás. Quem sai da carta fica
+          <strong>fora da carta</strong> — continua a existir para o passado e deixa de
+          aparecer para o futuro.
         </p>
 
       </main>
     </div>
   </div>
+
+  <!-- ── Formulário de produto (F-50) ────────────────────────────────── -->
+  <dialog class="painel-form" id="painelProduto" aria-labelledby="formTitulo">
+    <form method="dialog" id="formProduto">
+      <header class="form-cabecalho">
+        <h2 id="formTitulo">Novo produto</h2>
+        <button type="button" class="btn-fechar" id="btnFecharForm" aria-label="Fechar">✕</button>
+      </header>
+
+      <div class="form-corpo">
+
+        <div class="campo-form">
+          <label for="fNome">Nome <span class="obrigatorio" aria-hidden="true">*</span></label>
+          <input type="text" id="fNome" maxlength="80" autocomplete="off" required>
+        </div>
+
+        <div class="campo-form">
+          <label for="fDescricao">Descrição</label>
+          <textarea id="fDescricao" rows="2" maxlength="300"
+                    placeholder="O que leva o prato — é isto que o cliente lê na ementa"></textarea>
+        </div>
+
+        <div class="form-linha">
+          <div class="campo-form">
+            <label for="fPreco">Preço <span class="obrigatorio" aria-hidden="true">*</span></label>
+            <!-- type="text" e não "number": num teclado português escreve-se
+                 "16,20" com vírgula, e um input numérico devolve string
+                 vazia para o que considera inválido — o preço desaparecia
+                 sem dizer porquê. Aceitamos os dois e convertemos no JS. -->
+            <div class="com-sufixo">
+              <input type="text" id="fPreco" inputmode="decimal" autocomplete="off"
+                     placeholder="0,00" required>
+              <span class="sufixo" aria-hidden="true">€</span>
+            </div>
+          </div>
+
+          <div class="campo-form">
+            <label for="fCategoria">Categoria <span class="obrigatorio" aria-hidden="true">*</span></label>
+            <select id="fCategoria" required></select>
+          </div>
+        </div>
+
+        <div class="campo-form">
+          <label for="fImagem">Fotografia <span class="opcional">(caminho no repositório)</span></label>
+          <input type="text" id="fImagem" autocomplete="off"
+                 placeholder="assets/imagens/pratos/nome_do_prato.jpg">
+          <p class="ajuda">
+            Só o caminho — o ficheiro tem de ser posto na pasta à mão. Sem fotografia o
+            produto aparece à mesma, só sem imagem.
+          </p>
+        </div>
+
+        <!-- ── Os dois estados, que NÃO são a mesma coisa ─────────────
+             É a confusão mais provável deste ecrã, por isso está
+             explicada aqui e não num manual que ninguém lê. -->
+        <fieldset class="grupo-estados">
+          <legend>Onde é que este produto aparece</legend>
+
+          <label class="interruptor">
+            <input type="checkbox" id="fAtivo" checked>
+            <span class="interruptor-corpo">
+              <span class="interruptor-nome">Está na carta</span>
+              <span class="interruptor-desc">
+                Decisão permanente. Desligar tira-o da ementa até alguém voltar a ligar.
+              </span>
+            </span>
+          </label>
+
+          <label class="interruptor">
+            <input type="checkbox" id="fDisponivel" checked>
+            <span class="interruptor-corpo">
+              <span class="interruptor-nome">Há hoje</span>
+              <span class="interruptor-desc">
+                Decisão do dia. Acabou o borrego? Desliga aqui e volta a ligar amanhã,
+                sem mexer na carta.
+              </span>
+            </span>
+          </label>
+        </fieldset>
+
+        <fieldset class="grupo-estados">
+          <legend>Existências</legend>
+
+          <label class="interruptor">
+            <input type="checkbox" id="fControlaStock">
+            <span class="interruptor-corpo">
+              <span class="interruptor-nome">Controlar stock</span>
+              <span class="interruptor-desc">
+                Para o que tem existência limitada. Um café ou uma imperial não precisam —
+                nunca acabam.
+              </span>
+            </span>
+          </label>
+
+          <div class="stock-campos" id="stockCampos" hidden>
+            <div class="form-linha">
+              <div class="campo-form" id="campoExistencia">
+                <label for="fQtdAtual">Existência inicial</label>
+                <input type="number" id="fQtdAtual" min="0" step="1" inputmode="numeric" value="0">
+              </div>
+              <div class="campo-form">
+                <label for="fQtdMinima">Avisar em ou abaixo de</label>
+                <input type="number" id="fQtdMinima" min="0" step="1" inputmode="numeric" value="0">
+              </div>
+            </div>
+            <!-- Ao EDITAR um produto que já controla stock, a existência
+                 deixa de ser editável aqui: quem manda nela é o ecrã de
+                 Stock, que sabe distinguir uma entrada de uma quebra. Dois
+                 ecrãs a escrever o mesmo número é como se perdem vendas. -->
+            <p class="ajuda" id="notaStock" hidden>
+              A existência atual é gerida no ecrã de <strong>Stock</strong>, onde se
+              distingue uma entrada de mercadoria de uma quebra. Aqui muda-se só o
+              limiar do aviso.
+            </p>
+          </div>
+        </fieldset>
+
+        <p class="form-erro" id="formErro" role="alert" hidden></p>
+      </div>
+
+      <footer class="form-rodape">
+        <button type="button" class="btn btn-secundario" id="btnCancelarForm">Cancelar</button>
+        <button type="button" class="btn btn-primario" id="btnGravarForm">Gravar</button>
+      </footer>
+    </form>
+  </dialog>
 
   <script src="js/layout.js"></script>
   <script src="js/produtos.js"></script>

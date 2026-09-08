@@ -21,6 +21,23 @@
   border: 0;
 }
 
+/* Isto não é decoração — corrige um erro apanhado a medir a F-52.
+   O `.sr-so-leitor` é `position: absolute` e, sem nenhum ancestral
+   posicionado, o bloco que o contém passa a ser a página inteira. Não
+   fica preso ao `overflow-x: auto` da `.tabela-envolve`: aterra na
+   posição estática — dentro da tabela, que tem 560 px de largura
+   mínima — e estica o DOCUMENTO até lá, dando scroll horizontal num
+   telemóvel de 360 px.
+
+   No `produtos.html` nunca se viu porque lá a etiqueta está na PRIMEIRA
+   coluna, em x≈0; na `stock.html` está na ÚLTIMA, e o documento passou
+   a 567 px. O mesmo erro, escondido pela ordem das colunas.
+
+   Dar um contexto de posicionamento à célula prende-a à tabela, e a
+   tabela já sabe deslizar dentro da caixa dela. Sem efeito visual
+   nenhum, e a etiqueta continua a ser anunciada. */
+.tabela-produtos th { position: relative; }
+
 /* ── Barra de filtros ─────────────────────────────────────────────── */
 
 .barra-filtros {
@@ -219,10 +236,248 @@
   line-height: 1.6;
 }
 
+/* ═════════════════════════════════════════════════════════════════════
+   FORMULÁRIO DE PRODUTO — F-50
+   ═════════════════════════════════════════════════════════════════════
+   Partilha a linguagem dos painéis do ecrã de stock (stock.css): mesmo
+   <dialog>, mesmo ✕ de 44×44, mesmo rodapé. Não se importa o stock.css
+   para aqui porque são ecrãs diferentes e uma folha não deve depender
+   da outra — o que se repete são umas dezenas de linhas, o que se
+   evitava era um enredo. */
+
+.col-accoes { width: 100px; text-align: right; }
+.btn-editar { min-height: 36px; padding: 7px 14px; }
+
+.painel-form {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 40px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevada);
+  color: var(--texto);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;     /* o corpo é que desliza, não o painel inteiro */
+}
+
+.painel-form::backdrop { background: rgba(0, 0, 0, 0.6); }
+
+.painel-form form {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 40px);
+}
+
+.form-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+
+.form-cabecalho h2 { margin: 0; font-size: 17px; font-weight: 700; }
+
+/* O cabeçalho e o rodapé ficam fixos e é o meio que desliza: num
+   telemóvel deitado, um formulário com nove campos não cabe, e o botão
+   "Gravar" não pode ficar a três dedadas de distância. */
+.form-corpo {
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1 1 auto;
+}
+
+.form-rodape {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+
+.form-rodape .btn { min-height: 44px; padding: 11px 20px; }
+
+.btn-fechar {
+  background: none;
+  border: none;
+  color: var(--texto-suave);
+  font-size: 17px;
+  line-height: 1;
+  /* 44×44 medidos, não declarados — foi um `transform: scale()` que pôs
+     o ✕ do lightbox a 41 px na F-63. */
+  width: 44px; height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.btn-fechar:hover { color: var(--texto); background: rgba(255, 255, 255, 0.06); }
+.btn-fechar:focus-visible { outline: 2px solid var(--cobre); outline-offset: 2px; }
+
+/* ── Campos ───────────────────────────────────────────────────────── */
+
+.campo-form { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+.campo-form label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  /* --texto-fraco dava 2,72:1 aqui, abaixo dos 4,5:1 da WCAG e ainda por
+     cima a 12 px em maiúsculas. Medido ao construir a F-52. */
+  color: var(--texto-suave);
+}
+
+.obrigatorio { color: var(--dourado); }
+.opcional { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--texto-suave); }
+
+.campo-form input[type="text"],
+.campo-form input[type="number"],
+.campo-form select,
+.campo-form textarea {
+  width: 100%;
+  min-height: 44px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px 13px;
+  color: var(--texto);
+  font: inherit;
+  font-size: 16px;      /* 16px+ evita o zoom automático do iOS ao focar */
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.campo-form textarea { resize: vertical; line-height: 1.5; }
+
+.campo-form input:focus,
+.campo-form select:focus,
+.campo-form textarea:focus {
+  border-color: var(--cobre);
+  box-shadow: 0 0 0 3px rgba(201, 131, 47, 0.18);
+}
+
+/* Duas colunas em ecrã largo, uma em ecrã estreito. */
+.form-linha { display: flex; gap: 12px; }
+.form-linha .campo-form { flex: 1 1 0; }
+
+.com-sufixo { position: relative; }
+.com-sufixo input { padding-right: 34px; }
+
+.sufixo {
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--texto-suave);
+  pointer-events: none;
+}
+
+.ajuda {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--texto-suave);
+}
+
+.ajuda[hidden] { display: none; }
+
+/* ── Interruptores ────────────────────────────────────────────────── */
+
+.grupo-estados {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.grupo-estados legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.interruptor {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 11px 13px;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.interruptor:hover { border-color: var(--texto-fraco); }
+.interruptor:focus-within { outline: 2px solid var(--cobre); outline-offset: 2px; }
+
+.interruptor input[type="checkbox"] {
+  margin-top: 2px;
+  width: 18px; height: 18px;
+  accent-color: var(--cobre);
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+
+.interruptor:has(input:checked) {
+  border-color: var(--cobre);
+  background: rgba(201, 131, 47, 0.09);
+}
+
+.interruptor-corpo { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.interruptor-nome { font-weight: 600; font-size: 14px; }
+.interruptor-desc { font-size: 12.5px; color: var(--texto-suave); line-height: 1.45; }
+
+.stock-campos { display: flex; flex-direction: column; gap: 12px; padding-top: 4px; }
+
+/* `display: flex` acima vence o `[hidden]` da folha do navegador — sem
+   esta linha, os campos de stock apareciam sempre. O mesmo erro que
+   apanhei no resumo do ecrã de stock. */
+.stock-campos[hidden] { display: none; }
+.campo-form[hidden] { display: none; }
+
+.form-erro {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--perigo);
+  background: rgba(190, 58, 34, 0.1);
+  color: var(--texto);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.form-erro[hidden] { display: none; }
+
 /* ── Ecrãs estreitos ──────────────────────────────────────────────── */
 
 @media (max-width: 700px) {
   .btn-novo { margin-left: 0; width: 100%; }
   .contagem { order: 3; }
   .produto-desc { display: none; }   /* a descrição rouba a largura toda */
+
+  .painel-form { width: calc(100vw - 24px); }
+  .form-linha { flex-direction: column; }
+  .form-rodape { flex-direction: column-reverse; }
+  .form-rodape .btn { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interruptor, .campo-form input, .campo-form select, .campo-form textarea { transition: none; }
 }

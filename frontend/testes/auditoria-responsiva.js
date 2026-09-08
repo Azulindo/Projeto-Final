@@ -28,10 +28,7 @@ const ECRAS = [
 
 const PAGINAS = [
   { url: 'cliente/index.html',      nome: 'Início' },
-  /* `?simular=1` porque a ementa passou a vir do `GET produtos`. Sem
-     isto o que se media era o aviso "não foi possível carregar a
-     ementa", nunca a ementa. */
-  { url: 'cliente/menu.html?simular=1', nome: 'Ementa' },
+  { url: 'cliente/menu.html',       nome: 'Ementa' },
   { url: 'cliente/galeria.html',    nome: 'Galeria' },
   { url: 'cliente/sobre.html',      nome: 'Sobre' },
   { url: 'cliente/contactos.html',  nome: 'Contactos' },
@@ -44,7 +41,13 @@ const PAGINAS_GESTAO = [
   { url: 'funcionarios/cozinha.html',   nome: 'Cozinha' },
   { url: 'funcionarios/balcao.html',    nome: 'Balcão' },
   { url: 'funcionarios/qrcodes.html',   nome: 'QR Codes' },
+  // Faltavam aqui: a produtos.html (F-49) nunca chegou a ser
+  // acrescentada. A auditoria mede o que está nesta lista e mais nada —
+  // uma página fora dela passa sem ninguém reparar, e é justamente uma
+  // página nova a que tem mais probabilidade de trazer um alvo pequeno
+  // ou um scroll horizontal.
   { url: 'funcionarios/produtos.html',  nome: 'Produtos' },
+  { url: 'funcionarios/stock.html',     nome: 'Stock' },
 ];
 
 /* Corre dentro da página. Devolve factos, não juízos. */

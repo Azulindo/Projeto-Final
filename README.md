@@ -197,7 +197,7 @@ Fazer isto na **manhã** do dia, não cinco minutos antes.
 
 **3. Acordar o Render cinco minutos antes de entrar na sala.** No plano gratuito adormece ao fim de 15 minutos sem pedidos e o primeiro pedido a seguir demora ~50 segundos. Não é avaria, mas parece uma.
 
-**4. Ter os QR Codes impressos** (`npm run qrcodes -- https://projeto-final-vpa.vercel.app`), e o `?simular=1` como plano B se a rede da sala falhar.
+**4. Ter os QR Codes impressos** (`npm run qrcodes -- https://vemproabate.vercel.app`), e o `?simular=1` como plano B se a rede da sala falhar.
 
 > ⚠️ **Reimprimir os QR Codes se o endereço mudar.** O endereço vai dentro do
 > código impresso — um QR gerado para um endereço antigo leva o cliente a uma
@@ -259,14 +259,17 @@ ORIGEM_PERMITIDA=
 
 | | Endereço |
 |---|---|
-| **Site** | https://projeto-final-vpa.vercel.app |
+| **Site** | https://vemproabate.vercel.app |
 | **API** | https://vem-pro-abate-api.onrender.com/api/saude |
 
-> O nome `projeto-final-vpa` é **temporário**. Passa a `vemproabate` assim que
-> o projeto vazio com esse nome for apagado do Vercel. Quando isso acontecer,
-> há três sítios a mexer: esta tabela, o comando dos QR Codes acima, e a
-> variável `ORIGEM_PERMITIDA` do back-end (B-24) — e os QR Codes já impressos
-> deixam de servir.
+> `projeto-final-vpa.vercel.app` foi o nome temporário usado no dia da
+> publicação e ainda responde. O endereço bom é o de cima — é o que vai
+> dentro dos QR Codes e o que o back-end autoriza no CORS.
+>
+> **Se algum dia o endereço mudar outra vez**, há três sítios a mexer, e
+> nenhum deles avisa quando fica desatualizado: esta tabela, o comando dos
+> QR Codes na secção da demonstração, e a variável `ORIGEM_PERMITIDA` do
+> back-end. Os QR Codes já impressos passam a apontar para o vazio.
 
 - [Instagram](https://www.instagram.com/restaurante_vem_pro_abate/)
 - [Facebook](https://www.facebook.com/profile.php?id=61588364957173)

@@ -34,7 +34,7 @@
 > com um bot, substituída pela `mesa.html`. **Não estão em falta**: o que garantiam está
 > feito noutra forma. Não as contes no que falta.
 
-**Estado a 8 de setembro:** **Sprints 0, 1 e o núcleo do 2 fechados.** A base está no Aiven, a API em `https://vem-pro-abate-api.onrender.com` e o ciclo completo de uma refeição funciona ponta a ponta: ler o QR Code abre a sessão, o cliente envia rondas, a cozinha aceita (e o stock desce), o cliente pede a conta e o balcão fecha (e o total congela). Testado a 08/09 contra a base na nuvem. O login está ligado nos dois lados e cada nível cai no ecrã certo. **O que bloqueia agora: o F-67** — o site nunca chegou a ser publicado, e sem endereço público não há QR Codes de mesa (B-65), não há CORS para fechar (B-24) nem demonstração de cliente na apresentação.
+**Estado a 8 de setembro:** **Sprints 0, 1 e o núcleo do 2 fechados.** A base está no Aiven, a API em `https://vem-pro-abate-api.onrender.com` e o ciclo completo de uma refeição funciona ponta a ponta: ler o QR Code abre a sessão, o cliente envia rondas, a cozinha aceita (e o stock desce), o cliente pede a conta e o balcão fecha (e o total congela). Testado a 08/09 contra a base na nuvem. O login está ligado nos dois lados e cada nível cai no ecrã certo. **O F-67 fechou a 08/09:** o site está no ar em `https://vemproabate.vercel.app`, o que desbloqueia os QR Codes das mesas (B-65) e o CORS (B-24). **O que bloqueia agora são os endpoints de escrita da gestão** — B-61 (produtos), B-62 (categorias), B-63 (stock) e B-64 (funcionários). Os ecrãs que dependem deles já existem ou podem ser construídos com os formatos simulados; o que falta é gravarem na base em vez de no browser.
 
 **Legenda:** ✅ feito · 🟨 parcial (ver nota) · ⬜ por fazer · 🔁 **já não se aplica** — o plano mudou pelo caminho e a tarefa deixou de fazer sentido. Fica à vista, marcada, em vez de apagada: uma tarefa apagada parece esquecida, uma marcada mostra que houve uma decisão.
 
@@ -114,7 +114,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | B-21 | `exigirNivel()` — *ficou dentro do `middleware/autenticar.js`, ao lado do `autenticar`: são a mesma ideia em dois passos e separá-los em ficheiros não ganhava nada. Aceita os três níveis (`cozinha`, `balcao`, `administrador`)* | 30 min | B-20 |
 | ✅ | B-22 | `GET /api/auth/eu` — devolve os dados do funcionário da sessão — *vai à base em vez de responder com o conteúdo do token, para que uma conta desativada perca o acesso na hora e não só quando o token expirar* | 30 min | B-20 |
 | ✅ | B-23 | Limite de 5 tentativas de login falhadas por email em 15 minutos — *conta por email e não por IP: cozinha, balcão e escritório saem todos pelo mesmo IP do restaurante* | 1 h | B-19 |
-| ⬜ | B-24 | Configurar CORS para o domínio do Vercel — *🚧 à espera do F-67: o site nunca chegou a ser publicado, não há domínio para pôr na `ORIGEM_PERMITIDA`. Até lá o CORS fica aberto de propósito. Testar a partir do site publicado, não do localhost* | 30 min | B-16, F-67 |
+| ⬜ | B-24 | Configurar CORS para o domínio do Vercel — *desbloqueado a 08/09: `ORIGEM_PERMITIDA=https://vemproabate.vercel.app`, **com `https://` e sem barra no fim** (o CORS compara a origem tal e qual). Só o domínio de produção no Render; o `localhost` vive no `.env` local, que é para isso que a variável é de ambiente. Nota: as pré-visualizações do Vercel (ramos que não o `main`) têm endereços próprios e vão falhar o CORS — é aceitável, mas convém saber antes de se perder uma hora com isso. Testar a partir do site publicado, não do localhost* | 30 min | B-16, F-67 |
 | ⬜ | B-25 | `express-rate-limit` nos endpoints públicos | 30 min | B-16 |
 
 ## Sprint 2 · Sessões de mesa e pedidos (Semanas 3–5: 15 set – 5 out)
@@ -170,14 +170,14 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | B-60 | Atualizar automaticamente o estado da mesa (`livre` / `ocupada`) | 1 h | B-56 |
 | ⬜ | B-61 | CRUD de produtos | 2 h | B-21 |
 | ⬜ | B-62 | CRUD de categorias | 1 h 30 | B-21 |
-| ⬜ | B-63 | Consultar e ajustar stock + endpoint de produtos com stock baixo — *(ideia nova, 04/09)* acessível também ao nível `cozinha`, não só `administrador` (ver tabela de contas em `docs/API.md`) | 1 h 30 | B-21 |
+| ⬜ | B-63 | Consultar e ajustar stock + endpoint de produtos com stock baixo — *formato fechado a 08/09 entre os dois, em `docs/API.md` 4.8: **movimentos** (`entrada`/`quebra`/`acerto`), nunca um total gravado por cima. Acrescentado pelo João e aceite: o `consumo` e a `reposicao` automáticos (B-58/B-59) também gravam movimento, escritos só pelo servidor; cada linha leva `quantidade_antes`, `quantidade_depois`, `id_utilizador` e `data`; o `acerto` fica só para `administrador` (a `entrada` e a `quebra` continuam acessíveis à `cozinha`). **Serializar as escritas do mesmo produto** dentro da transação, ou a cadeia antes/depois parte-se sozinha. Cria a 18.ª tabela — ver nota do diagrama ER* | 2 h 30 | B-21 |
 | ⬜ | B-64 | CRUD de funcionários (só administrador) | 2 h | B-21 |
 
 ## Sprint 5 · Extras (Semana 10: 3–9 nov)
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| 🟨 | B-65 | Gerar os QR Codes das mesas com a biblioteca `qrcode` — *o `backend/scripts/gerarQRCodes.js` está escrito e passado para mysql2 (era do Guilherme, em Prisma). Não se pode correr sem endereço público — à espera do F-67* | 1 h 30 | B-11 |
+| 🟨 | B-65 | Gerar os QR Codes das mesas com a biblioteca `qrcode` — *o `backend/scripts/gerarQRCodes.js` está escrito e passado para mysql2 (era do Guilherme, em Prisma). Desbloqueado a 08/09: `npm run qrcodes -- https://vemproabate.vercel.app`. ⚠️ **O endereço vai dentro do código impresso.** Se o endereço mudar depois de imprimir, todos os QR Codes em papel passam a apontar para uma página que já não existe — e não se dá por isso a olhar para o papel. Só imprimir com o endereço final confirmado* | 1 h 30 | B-11 |
 | ⬜ | B-66 | `GET /api/gestao/mesas/qrcodes` — dados para a página de impressão | 45 min | B-65 |
 | ⬜ | B-67 | Entrada por token de mesa: `/mesa?t=<token>` | 1 h | B-36 |
 | ⬜ | B-68 | `estatisticas.js`: nº de pedidos, faturação diária e mensal, média por pedido | 2 h | B-39 |
@@ -298,13 +298,13 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | F-47 | Painel de detalhe do pedido (itens, observações, mesa ou nome do take away) | 2 h | F-45 |
 | ✅ | F-48 | Botões de mudança de estado — ficaram **no próprio cartão**, não num painel de detalhe: na cozinha o objetivo é avançar a ronda num toque, sem abrir nada | 1 h | F-47 |
 | ✅ | F-49 | Tabela de produtos com pesquisa e ordenação — pesquisa por nome e descrição **sem acentos** (quem escreve "acores" encontra os "Açores"), filtro por categoria derivado dos próprios produtos, e ordenação por qualquer coluna com `aria-sort` a acompanhar a seta. *Lê do `gestao/produtos`, não do `produtos`: o `produtos` é a vista do CLIENTE e esconde os inativos e os que estão sem stock (`docs/API.md` 4.2) — num ecrã de administração era ao contrário do que faz falta, porque é a ver os inativos que se reativa um produto. Endpoint simulado no `api.js` com o formato acordado, à espera do **B-61**.* Só leitura; criar e editar são o F-50 | 2 h | F-44 |
-| ⬜ | F-50 | Formulário de produto (criar / editar / ativar / desativar) | 2 h | F-49 |
+| ✅ | F-50 | Formulário de produto (criar / editar / ativar / desativar) — *criar e editar num `<dialog>`, com as duas bandeiras explicadas no próprio formulário porque são a confusão mais provável do ecrã: **"está na carta"** (`ativo`, decisão permanente) e **"há hoje"** (`disponivel`, decisão do dia). **Sem apagar, de propósito:** um produto que já apareceu num pedido não pode desaparecer sem levar o histórico atrás. O preço aceita vírgula — num teclado português escreve-se "16,20", e um `input type=number` devolve string vazia para o que considera inválido, fazendo o preço desaparecer sem dizer porquê. A existência só é editável ao criar ou ao ligar o controlo de stock; a partir daí manda o ecrã de Stock, senão eram dois ecrãs a escrever o mesmo número. Formato proposto em `docs/API.md` 4.9, simulado no `api.js` à espera do **B-61**. Verificado: `frontend/testes/produtos-form.js`* | 2 h | F-49 |
 | ⬜ | F-51 | Tabela e formulário de categorias | 1 h 30 | F-49 |
-| ⬜ | F-52 | Ecrã de stock com aviso visual de stock baixo | 2 h | F-49 |
+| ✅ | F-52 | Ecrã de stock: ler, ajustar e mudar o mínimo — *o aviso de stock baixo existia desde a F-62 em dois sítios (cozinha e contador do gerente), mas quem o via não tinha para onde ir. Três operações em vez de um campo que se grava por cima: **entrada** (+), **quebra** (−) e **acerto** (=), porque um valor absoluto perde o porquê e apaga as vendas que a cozinha registou entretanto — este stock mexe-se sozinho (B-58/B-59). Formato proposto ao João em `docs/API.md` 4.8, simulado no `api.js` à espera do **B-63**; até lá os ajustes ficam no browser. A cozinha entra (é quem dá pelas quebras), o balcão não. Verificado: `frontend/testes/stock-ecra.js`* | 2 h | F-49 |
 | ⬜ | F-53 | Ecrã de funcionários (tabela + formulário) | 2 h | F-49 |
 | ✅ | F-54 | Responsividade da aplicação de gestão — *zero alvos de toque abaixo de 44 px e zero scroll horizontal, medido em 4 larguras; o pior era o ✕ do painel da conta, a 24×23* | 1 h 30 | F-53 |
 
-| ⬜ | F-67 | **Publicar o site.** Descoberto a 04/09: não há nada publicado. O `vercel.json` está no repositório desde julho e o `CONTEXTO.md` dizia *"Vercel (já configurado) — já está a funcionar"*, mas `vemproabate.vercel.app` responde `DEPLOYMENT_NOT_FOUND` — era um plano escrito como se estivesse feito, e o João estava a preparar o CORS (B-24) para um domínio que não existe. Bloqueia três coisas: a apresentação com o site no ar, os QR Codes das mesas (o `gerarQRCodes.js` precisa de um endereço público) e o próprio B-24. *Nota: se o repositório passar a privado, o GitHub Pages deixa de servir (exige plano pago); o Vercel funciona com repositórios privados no plano gratuito.* | 1 h | — |
+| ✅ | F-67 | **Publicar o site — no ar em https://vemproabate.vercel.app (08/09).** Descoberto a 04/09 que não havia nada publicado: o `vercel.json` estava no repositório desde julho e o `CONTEXTO.md` dizia *"Vercel (já configurado) — já está a funcionar"*, mas o endereço respondia `DEPLOYMENT_NOT_FOUND`. A causa apareceu só a 08/09: existia mesmo um projeto com esse nome na conta do João, criado em março e **sem deployment nenhum** — não era "não existe", era "existe e está vazio", e enquanto existisse ninguém podia usar o endereço. **O `vercel.json` também estava errado:** usava `rewrites`, que mantêm `/menu` na barra de endereços, e por isso os caminhos relativos resolviam mal (o `css/menu.css` ia parar a `/css/menu.css` e o `../js/api.js` a `/js/api.js`) — teria dado um site sem estilos e sem API. Trocado por um redirecionamento único da raiz. Verificados no endereço final: a raiz, os estilos e o `api.js`. *Contas: a Aiven e o Render são do João, o Vercel é do Guilherme — o plano gratuito do Vercel não permite membros. Desbloqueia o B-24 e o B-65.* | 1 h | — |
 
 **Total do sprint: ≈ 21 h 30**
 
@@ -432,12 +432,14 @@ refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 73 | 37 | — | 36 | ≈ 47 h |
-| 🟠 Guilherme (F-) | 67 | 38 | 19 | 10 | ≈ 17 h 15 |
+| 🔵 João (B-) | 73 | 37 | — | 36 | ≈ 48 h |
+| 🟠 Guilherme (F-) | 67 | 41 | 19 | 7 | ≈ 12 h 15 |
 | 🟢 Os dois (C-) | 23 | 4 | — | 19 | ≈ 40 h |
 | 🐞 Correções (X-) | 9 | 8 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 104 h 45.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
+**Total por fazer: ≈ 100 h 45.** *(O B-63 passou de 1 h 30 a 2 h 30 a 08/09: a tabela de
+movimentos, os campos antes/depois e a serialização das escritas não estavam na estimativa
+original.)* As tarefas 🟨 contam como por fazer: B-40 (falta testar o
 take away), B-65 (QR Codes, à espera de endereço público), C-01 (falta o Guilherme ler o
 `CONTEXTO.md`) e X-08 (não se conseguiu reproduzir).
 
@@ -445,9 +447,17 @@ take away), B-65 (QR Codes, à espera de endereço público), C-01 (falta o Guil
 foi por aí que as tabelas se desencontraram — passou a não ter nenhuma. Os números estão na
 tabela acima.)*
 
-Só as tarefas que **guardam** alguma coisa é que precisam de endpoints: F-50 (B-61),
-F-51 (B-62), F-52 (B-63), F-53 (B-64) e F-61 (B-73). **Ler já se pode hoje** — o catálogo,
+Só as tarefas que **guardam** alguma coisa é que precisam de endpoints: F-51 (B-62),
+F-53 (B-64) e F-61 (B-73). A F-50 saiu desta lista a 08/09, pela mesma razão da F-52. **Ler já se pode hoje** — o catálogo,
 as sessões, a fila da cozinha e o balcão já respondem a sério.
+
+A F-52 saiu desta lista a 08/09 e vale a pena dizer porquê, porque é o padrão a seguir nas
+outras três: o ecrã foi construído inteiro, com os endpoints de escrita simulados no
+`api.js` no formato que se propõe ao João (`docs/API.md` 4.8). Funciona de ponta a ponta e
+dá para demonstrar; o que falta é o **B-63** guardar os ajustes na base em vez de no
+browser, e isso é uma linha no `ENDPOINTS_REAIS`. Esperar pelo endpoint para começar o ecrã
+era perder o tempo todo à espera, e ainda por cima entregava-se ao João um formato decidido
+por ele sozinho em vez de um discutido pelos dois.
 
 A ideia de que "9 das 10 esperam por endpoints" andou aqui escrita e era falsa: a coluna
 *Depende de* dessas tarefas aponta para a **F-44**, a barra lateral, feita há muito. Estava a
