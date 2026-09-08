@@ -192,8 +192,10 @@ Fazer isto na **manhã** do dia, não cinco minutos antes.
 | Serviço | Verificar | Se estiver em baixo |
 |---|---|---|
 | **GitHub Actions** | O trabalho *Manter a base de dados acordada* correu nas últimas 6 h | Reativar. O GitHub desliga agendamentos em repositórios sem commits há 60 dias, e não avisa |
-| **Aiven** | O serviço `vem-pro-abate` diz **Running** | *Power on*, esperar, e **voltar ao passo 1** — o plano gratuito não guarda cópias e a base pode vir vazia |
+| **Aiven** | O serviço `vem-pro-abate` diz **Running** | *Power on* e esperar. Os dados sobrevivem ao ciclo (verificado a 08/09: voltou com os 25 produtos), mas **voltar ao passo 1** para as horas ficarem recentes |
 | **Render** | `.../api/saude` responde `"ligada": true` | Nada a fazer, só esperar |
+
+> **O que sabemos mesmo sobre o Aiven se desligar** *(observado, não documentado)*: aconteceu duas vezes em quatro dias — 7 e 8 de setembro. À segunda, o serviço estava ligado às 04:15 (o trabalho agendado passou) e desligado às 11:20, ou seja **menos de 7 horas depois de uma chamada bem-sucedida**. A Aiven diz que avisa por email antes de desligar; não chegou email nenhum. Não sabemos a regra. O que se sabe é que **um ping de 6 em 6 horas não chega** — daí ter passado para de hora a hora — e que **os dados não se perdem**.
 
 **3. Acordar o Render cinco minutos antes de entrar na sala.** No plano gratuito adormece ao fim de 15 minutos sem pedidos e o primeiro pedido a seguir demora ~50 segundos. Não é avaria, mas parece uma.
 
