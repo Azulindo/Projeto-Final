@@ -8,11 +8,16 @@
 
 ## Ponto de situação
 
-| | Feito | Parcial | 🔁 Não se aplica | Por fazer | Total |
-|---|---|---|---|---|---|
-| 🔵 **João** — back-end | **37** | 2 | 0 | 34 | 73 |
-| 🟠 **Guilherme** — front-end | **38** | 0 | 19 | 10 | 67 |
-| 🟢 **Os dois** | 4 | 1 | 0 | 18 | 23 |
+> **As contagens vivem num sítio só: o [Resumo de esforço](#resumo-de-esforço), no fim
+> deste ficheiro.** Aqui em cima não há números de propósito.
+>
+> A razão é experiência própria: houve duas tabelas de resumo neste documento e
+> desencontraram-se três vezes — a última dizia 24 tarefas feitas em cima e 37 em baixo.
+> Nenhuma das vezes foi distração; é o que acontece sempre a duas contagens da mesma coisa
+> mantidas à mão. E a que ninguém atualiza é justamente a que alguém abre no dia da
+> apresentação.
+>
+> **Antes de escrever qualquer número lá em baixo, conta as linhas das tabelas reais.**
 
 > ⚠️ **Correção a uma ideia que andou aqui escrita (07/09).** Esta secção dizia que "das 10
 > tarefas que faltam ao Guilherme, 9 esperam por endpoints que ainda não existem". Não é
@@ -420,27 +425,33 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 ## Resumo de esforço
 
-*Contagens a 8 de setembro, tiradas das próprias tabelas acima — se uma linha mudar de
-estado, esta tabela fica errada até ser refeita.*
+*Contagens a 8 de setembro.* **Esta é a única tabela de contagens do documento.** Os
+números saem de contar as linhas das tabelas de tarefas acima, uma a uma — não de somar ao
+que aqui estava. Se mudares uma linha lá em cima, esta tabela fica errada até alguém a
+refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
 | 🔵 João (B-) | 73 | 37 | — | 36 | ≈ 47 h |
-| 🟠 Guilherme (F-) | 67 | 38 | 19 | 10 | ≈ 19 h 15 |
+| 🟠 Guilherme (F-) | 67 | 38 | 19 | 10 | ≈ 17 h 15 |
 | 🟢 Os dois (C-) | 23 | 4 | — | 19 | ≈ 40 h |
 | 🐞 Correções (X-) | 9 | 8 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 106 h 45.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
+**Total por fazer: ≈ 104 h 45.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
 take away), B-65 (QR Codes, à espera de endereço público), C-01 (falta o Guilherme ler o
 `CONTEXTO.md`) e X-08 (não se conseguiu reproduzir).
 
-**Onde está mesmo o front-end (04/09):** 35 tarefas feitas, 19 marcadas 🔁 (a `pedido.html`,
-substituída pela `mesa.html`) e **10 por fazer**.
+**O que do front-end espera mesmo pelo back-end.** *(Este bloco tinha contagens próprias e
+foi por aí que as tabelas se desencontraram — passou a não ter nenhuma. Os números estão na
+tabela acima.)*
 
-Dessas 10, **9 estão à espera de endpoints que ainda não existem** (`docs/API.md` secção 4):
-gestão de produtos (F-49, F-50), categorias (F-51), stock (F-52), funcionários (F-53),
-métricas e gráficos do dashboard (F-55, F-56, F-57) e a tabela de reservas (F-61). A décima é
-a revisão visual final (F-60), que não depende de ninguém — ver o fim desta secção.
+Só as tarefas que **guardam** alguma coisa é que precisam de endpoints: F-50 (B-61),
+F-51 (B-62), F-52 (B-63), F-53 (B-64) e F-61 (B-73). **Ler já se pode hoje** — o catálogo,
+as sessões, a fila da cozinha e o balcão já respondem a sério.
+
+A ideia de que "9 das 10 esperam por endpoints" andou aqui escrita e era falsa: a coluna
+*Depende de* dessas tarefas aponta para a **F-44**, a barra lateral, feita há muito. Estava a
+travar trabalho sem motivo.
 
 **Ideia nova, construída no mesmo dia (04/09):** dar à página da cozinha acesso de leitura ao
 stock, para os cozinheiros verem o que está a acabar em tempo real, e usar isso para um aviso

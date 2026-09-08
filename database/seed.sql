@@ -216,15 +216,32 @@ INSERT INTO funcionario (id_funcionario, id_utilizador, cargo, data_contratacao)
 
 
 -- =====================================================================
+--  NOTA SOBRE AS DATAS DESTE FICHEIRO
+--
+--  As horas dos pedidos, das sessoes e do historico sao RELATIVAS ao
+--  momento em que se corre o seed (NOW() - INTERVAL n MINUTE), e nao
+--  datas escritas a mao.
+--
+--  A razao apareceu a 08/09, a olhar para o ecra da cozinha: os
+--  cartoes mudam de cor conforme a antiguidade (F-46), e com datas
+--  fixas de 31 de agosto diziam "ha 164h" e estavam todos vermelhos.
+--  No dia da apresentacao diriam "ha 1800h" e o ecra inteiro parecia
+--  uma emergencia.
+--
+--  Assim, o seed mostra sempre um servico com minutos de idade, seja
+--  corrido hoje ou em novembro.
+-- =====================================================================
+
+-- =====================================================================
 --  SESSOES DE MESA
 --  Uma sessao e a refeicao inteira: abre quando o cliente le o QR Code
 --  e fecha quando pede a conta. Agrupa varias rondas de pedidos.
 -- =====================================================================
 INSERT INTO sessao_mesa
  (id_sessao, codigo_sessao, id_mesa, num_pessoas, estado, valor_total, id_funcionario, aberta_em, fechada_em) VALUES
- (1, 'SES-8H3K1', 3, 2, 'fechada', 0.00,    3, '2026-08-31 20:10:00', '2026-08-31 21:05:00'),
- (2, 'SES-2M9P4', 6, 4, 'aberta',  0.00, NULL, '2026-09-01 12:38:00', NULL),
- (3, 'SES-6R1T7', 9, 6, 'aberta',  0.00, NULL, '2026-09-01 13:00:00', NULL);
+ (1, 'SES-8H3K1', 3, 2, 'fechada', 0.00,    3, NOW() - INTERVAL 190 MINUTE, NOW() - INTERVAL 135 MINUTE),
+ (2, 'SES-2M9P4', 6, 4, 'aberta',  0.00, NULL, NOW() - INTERVAL 52 MINUTE, NULL),
+ (3, 'SES-6R1T7', 9, 6, 'aberta',  0.00, NULL, NOW() - INTERVAL 30 MINUTE, NULL);
 
 -- Os valores ficam a zero aqui e sao calculados no fim, a partir dos
 -- pedidos. Assim nunca ha dois numeros diferentes para a mesma coisa.
@@ -239,13 +256,13 @@ INSERT INTO pedido
  (id_pedido, numero_pedido, id_cliente, id_mesa, id_sessao, id_funcionario, tipo_pedido, estado,
   data_hora, valor_total, nome_convidado, telefone_convidado, observacoes) VALUES
  (1, 'PED-4K9M2', NULL, 3,    1,    2, 'restaurante', 'entregue',
-  '2026-08-31 20:14:00', 38.80, NULL, NULL, NULL),
+  NOW() - INTERVAL 186 MINUTE, 38.80, NULL, NULL, NULL),
  (2, 'PED-7X3B8', NULL, 6,    2,    2, 'restaurante', 'em_preparacao',
-  '2026-09-01 12:41:00', 33.50, NULL, NULL, 'Sem cebola no prego, por favor'),
+  NOW() - INTERVAL 49 MINUTE, 33.50, NULL, NULL, 'Sem cebola no prego, por favor'),
  (3, 'PED-2N5Q7', NULL, NULL, NULL, 3, 'take_away',   'pronto',
-  '2026-09-01 12:52:00', 22.00, 'Andreia Costa', '913456789', NULL),
+  NOW() - INTERVAL 38 MINUTE, 22.00, 'Andreia Costa', '913456789', NULL),
  (4, 'PED-9H1L4', NULL, 9,    3, NULL, 'restaurante', 'recebido',
-  '2026-09-01 13:05:00', 56.00, NULL, NULL, 'Aniversário — trazer vela na sobremesa');
+  NOW() - INTERVAL 25 MINUTE, 56.00, NULL, NULL, 'Aniversário — trazer vela na sobremesa');
 
 -- O pedido 3 e take away: nao pertence a sessao nenhuma (id_sessao NULL).
 -- Os outros tres sao rondas dentro das sessoes 1, 2 e 3.
@@ -272,19 +289,19 @@ INSERT INTO item_pedido (id_pedido, id_produto, quantidade, preco_unitario, subt
 
 -- Historico de estados: e daqui que sai o tempo medio de preparacao.
 INSERT INTO historico_estado_pedido (id_pedido, estado, id_funcionario, data_hora) VALUES
- (1, 'recebido',      NULL, '2026-08-31 20:14:00'),
- (1, 'confirmado',       2, '2026-08-31 20:16:00'),
- (1, 'em_preparacao',    2, '2026-08-31 20:17:00'),
- (1, 'pronto',           2, '2026-08-31 20:39:00'),
- (1, 'entregue',         3, '2026-08-31 20:42:00'),
- (2, 'recebido',      NULL, '2026-09-01 12:41:00'),
- (2, 'confirmado',       2, '2026-09-01 12:43:00'),
- (2, 'em_preparacao',    2, '2026-09-01 12:45:00'),
- (3, 'recebido',      NULL, '2026-09-01 12:52:00'),
- (3, 'confirmado',       3, '2026-09-01 12:53:00'),
- (3, 'em_preparacao',    2, '2026-09-01 12:55:00'),
- (3, 'pronto',           2, '2026-09-01 13:18:00'),
- (4, 'recebido',      NULL, '2026-09-01 13:05:00');
+ (1, 'recebido',      NULL, NOW() - INTERVAL 186 MINUTE),
+ (1, 'confirmado',       2, NOW() - INTERVAL 184 MINUTE),
+ (1, 'em_preparacao',    2, NOW() - INTERVAL 183 MINUTE),
+ (1, 'pronto',           2, NOW() - INTERVAL 161 MINUTE),
+ (1, 'entregue',         3, NOW() - INTERVAL 158 MINUTE),
+ (2, 'recebido',      NULL, NOW() - INTERVAL 49 MINUTE),
+ (2, 'confirmado',       2, NOW() - INTERVAL 47 MINUTE),
+ (2, 'em_preparacao',    2, NOW() - INTERVAL 45 MINUTE),
+ (3, 'recebido',      NULL, NOW() - INTERVAL 38 MINUTE),
+ (3, 'confirmado',       3, NOW() - INTERVAL 37 MINUTE),
+ (3, 'em_preparacao',    2, NOW() - INTERVAL 35 MINUTE),
+ (3, 'pronto',           2, NOW() - INTERVAL 12 MINUTE),
+ (4, 'recebido',      NULL, NOW() - INTERVAL 25 MINUTE);
 
 -- O valor de cada sessao e a soma das rondas dela.
 UPDATE sessao_mesa s
@@ -305,9 +322,9 @@ UPDATE mesa SET estado = 'ocupada' WHERE id_mesa IN (6, 9);
 INSERT INTO reserva
  (id_reserva, codigo_reserva, nome, telemovel, num_pessoas, data_reserva, id_slot,
   modo_ementa, observacoes, valor_estimado, estado) VALUES
- (1, 'RSV-7K2M9', 'Sara Londreira',  '914112233', 2, '2026-09-05',  8, 'no_restaurante',  NULL, NULL, 'pendente'),
- (2, 'RSV-3B8X1', 'Tatiana Salsa',   '926778899', 6, '2026-09-06', 10, 'pre_selecionada', 'Uma pessoa é alérgica a frutos secos', 97.20, 'pendente'),
- (3, 'RSV-5Q4W2', 'Gabriel Martins', '937221144', 4, '2026-09-12',  3, 'no_restaurante',  'Mesa perto da janela, se possível', NULL, 'pendente');
+ (1, 'RSV-7K2M9', 'Sara Londreira',  '914112233', 2, CURDATE() + INTERVAL 2 DAY,  8, 'no_restaurante',  NULL, NULL, 'pendente'),
+ (2, 'RSV-3B8X1', 'Tatiana Salsa',   '926778899', 6, CURDATE() + INTERVAL 3 DAY, 10, 'pre_selecionada', 'Uma pessoa é alérgica a frutos secos', 97.20, 'pendente'),
+ (3, 'RSV-5Q4W2', 'Gabriel Martins', '937221144', 4, CURDATE() + INTERVAL 9 DAY,  3, 'no_restaurante',  'Mesa perto da janela, se possível', NULL, 'pendente');
 
 INSERT INTO item_reserva (id_reserva, id_produto, quantidade, preco_unitario, subtotal) VALUES
  (2, 10, 2, 17.80, 35.60),
