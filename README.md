@@ -17,14 +17,18 @@ Sistema web para o restaurante *Vem Pro Abate* (Amadora), composto por duas apli
 
 ## 📌 Estado do projeto
 
+*Atualizado a 8 de setembro de 2026. As contagens por tarefa estão no
+[`docs/TAREFAS.md`](docs/TAREFAS.md) — aqui só o estado de cada módulo.*
+
 | Módulo | Estado |
 |---|---|
-| Site institucional (início, menu, galeria, sobre, contactos) | ✅ Concluído |
-| Chatbot de reservas (interface) | ✅ Quase concluído |
-| Pedido à mesa (interface) | 🟨 Em construção |
-| Aplicação de gestão (interface) | ⬜ Por iniciar |
-| Base de dados | ⬜ Por iniciar |
-| API / back-end | ⬜ Por iniciar |
+| Base de dados | ✅ 17 tabelas + vista, alojada no Aiven |
+| API / back-end | ✅ No ar no Render — catálogo, login, sessões de mesa e cozinha |
+| Site institucional (início, menu, galeria, sobre, contactos) | ✅ Concluído · ementa lida da API |
+| Chatbot de reservas (interface) | ✅ Concluído · ainda sobre dados simulados |
+| Pedido à mesa (interface) | ✅ Ligado à API |
+| Aplicação de gestão (interface) | 🟨 Login, cozinha e balcão a funcionar; falta produtos, stock e estatísticas |
+| Publicação do site | ⬜ Por fazer — ver **F-67** |
 
 ---
 
@@ -65,13 +69,13 @@ Sistema web para o restaurante *Vem Pro Abate* (Amadora), composto por duas apli
 |---|---|
 | Front-end | HTML5 · CSS3 · JavaScript (sem framework) |
 | Back-end | Node.js · Express |
-| Base de dados | PostgreSQL (Neon / Supabase) |
+| Base de dados | MySQL 8.4 (Aiven, plano gratuito) · `mysql2` |
 | Autenticação | JSON Web Tokens · bcrypt |
 | Validação | zod |
 | Email | Nodemailer + Brevo / Resend |
 | QR Code | qrcode |
-| Alojamento (site) | ⚠️ **por publicar** — ver F-67 |
-| Alojamento (API) | Render |
+| Alojamento (site) | ⚠️ **por publicar** — ver **F-67**. Só corre localmente |
+| Alojamento (API) | Render (Frankfurt, plano gratuito) |
 
 ---
 
@@ -104,7 +108,7 @@ Projeto-Final/
 ### Requisitos
 
 - [Node.js](https://nodejs.org) 18 ou superior
-- Uma base de dados PostgreSQL (recomendado: [Neon](https://neon.tech) ou [Supabase](https://supabase.com), ambos com plano gratuito)
+- MySQL 8 — o [MySQL Workbench](https://dev.mysql.com/downloads/workbench/) chega, local ou ligado ao [Aiven](https://aiven.io) (plano gratuito)
 - Git
 
 ### 1. Clonar o repositório
@@ -116,22 +120,41 @@ cd Projeto-Final
 
 ### 2. Front-end
 
-O site é composto por ficheiros estáticos, portanto basta servi-los. Abrir o `index.html` diretamente também funciona, mas com um servidor local evitam-se problemas com caminhos relativos:
+O site são ficheiros estáticos, mas **não o abras com duplo clique**: em `file://` os pedidos à API falham por causa do CORS. Serve-o:
 
 ```bash
-npx serve frontend/cliente
+npx serve frontend
 ```
 
-Depois abrir o endereço que aparece no terminal (normalmente `http://localhost:3000`).
+Ou, no VS Code / Antigravity, botão direito no ficheiro → *Open with Live Server* (ou Five Server).
+
+Páginas úteis:
+
+| Página | Caminho |
+|---|---|
+| Site do cliente | `frontend/cliente/index.html` |
+| Pedido à mesa | `frontend/cliente/mesa.html?mesa=<qr_code>` |
+| Aplicação de gestão | `frontend/funcionarios/login.html` |
+
+O `?mesa=` é o valor da coluna `mesa.qr_code`, que é o que fica dentro do QR Code — nunca o número da mesa.
+
+> Para trabalhar sem servidor nenhum, acrescenta `?simular=1` ao endereço: o front-end passa a usar dados de exemplo e não chama a API.
 
 ### 3. Base de dados
 
-```bash
-psql "<string-de-ligacao>" -f database/schema.sql
-psql "<string-de-ligacao>" -f database/seed.sql
+No MySQL Workbench, ligado à base local ou ao Aiven, correr **por esta ordem**:
+
+1. `database/schema.sql` — cria a base e as 17 tabelas (começa com um `DROP DATABASE`, apaga o que lá estiver)
+2. `database/seed.sql` — enche com a ementa real, 10 mesas, 3 contas e um serviço de exemplo
+
+Confirmar:
+
+```sql
+USE vem_pro_abate;
+SELECT COUNT(*) FROM produto;   -- 25
 ```
 
-> ⚠️ Ainda por criar — ver `docs/TAREFAS.md`, tarefas **B-04** a **B-12**.
+> **As palavras-passe das contas não estão em ficheiro nenhum**, só os hashes bcrypt. Para as definir: `cd backend && node scripts/gerarHash.js`.
 
 ### 4. Back-end
 
@@ -142,13 +165,39 @@ cp .env.example .env      # preencher com os valores reais
 npm run dev
 ```
 
-A API fica disponível em `http://localhost:3000`. Para confirmar que está a funcionar:
+A API fica em `http://localhost:3000`. Para confirmar:
 
 ```bash
 curl http://localhost:3000/api/saude
 ```
 
-> ⚠️ Ainda por criar — ver `docs/TAREFAS.md`, tarefas **B-13** a **B-16**.
+Deve responder com `"ligada": true`, o número de tabelas e os 25 produtos.
+
+A versão publicada está em **https://vem-pro-abate-api.onrender.com** e atualiza-se sozinha a cada `push` no `main`.
+
+---
+
+## 🎬 Preparar a demonstração
+
+Fazer isto na **manhã** do dia, não cinco minutos antes.
+
+**1. Regravar a base.** No Workbench, ligado ao Aiven: `database/schema.sql` e depois `database/seed.sql`.
+
+> **Porque tem de ser no próprio dia:** as horas dos pedidos, das sessões e do histórico no `seed.sql` são relativas ao momento em que o seed corre (`NOW() - INTERVAL n MINUTE`), e não ao momento em que a página abre. Os cartões da cozinha mudam de cor conforme a antiguidade (F-46), por isso um seed corrido há duas semanas mostra "há 340h" e o ecrã inteiro fica vermelho, como se estivesse tudo atrasado.
+>
+> Isto substituiu datas escritas à mão, que tinham o mesmo problema mas sem solução — a 08/09 os cartões já diziam "há 164h".
+
+**2. Confirmar que os três serviços gratuitos estão de pé** — são a única parte do sistema que se desliga sozinha sem ninguém lhe tocar:
+
+| Serviço | Verificar | Se estiver em baixo |
+|---|---|---|
+| **GitHub Actions** | O trabalho *Manter a base de dados acordada* correu nas últimas 6 h | Reativar. O GitHub desliga agendamentos em repositórios sem commits há 60 dias, e não avisa |
+| **Aiven** | O serviço `vem-pro-abate` diz **Running** | *Power on*, esperar, e **voltar ao passo 1** — o plano gratuito não guarda cópias e a base pode vir vazia |
+| **Render** | `.../api/saude` responde `"ligada": true` | Nada a fazer, só esperar |
+
+**3. Acordar o Render cinco minutos antes de entrar na sala.** No plano gratuito adormece ao fim de 15 minutos sem pedidos e o primeiro pedido a seguir demora ~50 segundos. Não é avaria, mas parece uma.
+
+**4. Ter os QR Codes impressos** (`npm run qrcodes -- <endereço-do-site>`), e o `?simular=1` como plano B se a rede da sala falhar.
 
 ---
 
@@ -158,19 +207,34 @@ O ficheiro `.env` **nunca** é enviado para o repositório. O `.env.example` ser
 
 ```env
 # Base de dados
-DATABASE_URL=postgresql://utilizador:password@host/base_de_dados
+DB_HOST=<host>
+DB_PORT=3306
+DB_USER=<utilizador>
+DB_PASSWORD=<password>
+DB_NAME=vem_pro_abate
+
+# Só para o Aiven, que exige ligação cifrada.
+# O ca.pem NÃO é segredo: é a assinatura que prova que o
+# servidor do outro lado é mesmo o Aiven. Vai para o Git.
+DB_SSL_CA=./certs/ca.pem
 
 # Autenticação
+# Gerar com:
+#   node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 JWT_SECRET=<string-aleatoria-longa>
-JWT_EXPIRA_EM=8h
+JWT_EXPIRA=8h
 
-# Email
-EMAIL_API_KEY=<chave-do-servico>
+# Email (ainda não usado)
+EMAIL_API_KEY=
 EMAIL_REMETENTE=reservas@vemproabate.pt
 
 # Servidor
 PORT=3000
-ORIGEM_PERMITIDA=https://<dominio-do-site>
+NODE_ENV=development
+
+# Domínios autorizados a chamar a API, separados por vírgulas.
+# Vazio = qualquer origem (só em desenvolvimento).
+ORIGEM_PERMITIDA=
 ```
 
 ---
@@ -182,8 +246,8 @@ ORIGEM_PERMITIDA=https://<dominio-do-site>
 | [`docs/CONTEXTO.md`](docs/CONTEXTO.md) | O quê e porquê: âmbito, atores, fluxos, regras de negócio, modelo de dados e decisões técnicas |
 | [`docs/PLANEAMENTO.md`](docs/PLANEAMENTO.md) | Calendário, sprints, prioridades e gestão de risco |
 | [`docs/TAREFAS.md`](docs/TAREFAS.md) | Lista de tarefas dividida por pessoa, com estimativas e dependências |
-| `docs/API.md` | Contrato dos endpoints da API *(por escrever)* |
-| `database/` | Diagrama Entidade-Relacionamento |
+| [`docs/API.md`](docs/API.md) | Contrato dos endpoints. **A secção 3.10 é a que vale** — substitui as anteriores |
+| `database/` | Diagrama ER (17 tabelas, notação pé-de-galinha), `schema.sql` e `seed.sql` |
 
 ---
 
