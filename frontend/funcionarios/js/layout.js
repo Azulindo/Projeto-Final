@@ -47,7 +47,7 @@ const NAV_ITEMS = [
   { id: 'cozinha',      icone: '🔥', label: 'Cozinha',        href: 'cozinha.html',   niveis: NIVEIS },
   { id: 'balcao',       icone: '🧾', label: 'Balcão',         href: 'balcao.html',    niveis: ['balcao', 'administrador'] },
   { id: 'qrcodes',      icone: '🔳', label: 'QR Codes',       href: 'qrcodes.html',   niveis: ['balcao', 'administrador'] },
-  { id: 'produtos',     icone: '🍽️', label: 'Produtos',       href: null, tag: 'F-49', niveis: ['administrador'] },
+  { id: 'produtos',     icone: '🍽️', label: 'Produtos',       href: 'produtos.html',  niveis: ['administrador'] },
   { id: 'categorias',   icone: '🏷️', label: 'Categorias',     href: null, tag: 'F-51', niveis: ['administrador'] },
   { id: 'stock',        icone: '📦', label: 'Stock',          href: null, tag: 'F-52', niveis: ['administrador'] },
   { id: 'funcionarios', icone: '👥', label: 'Funcionários',   href: null, tag: 'F-53', niveis: ['administrador'] },

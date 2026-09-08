@@ -46,6 +46,40 @@
     // Evita um ciclo infinito se a própria página inicial do nível
     // estiver mal configurada.
     const paginaAtual = window.location.pathname.split('/').pop();
-    if (destino !== paginaAtual) window.location.replace(destino);
+    if (destino !== paginaAtual) {
+      window.location.replace(destino);
+      return;
+    }
+  }
+
+  /* ── Revalidar contra o servidor (usa o B-22, 04/09) ──────────────
+     As verificações acima olham só para o `localStorage`, que é do lado
+     de cá e mente com facilidade: o token pode ter sido revogado, o
+     servidor pode ter reiniciado com outro JWT_SECRET (aconteceu hoje,
+     quando o João o trocou), ou a conta pode ter deixado de existir. Em
+     qualquer desses casos o ecrã continuava a portar-se como se
+     estivesse tudo bem, e só falhava mais tarde, sem explicação.
+
+     O `GET auth/eu` existe exatamente para isto e não estava a ser
+     chamado por ninguém.
+
+     ── A REGRA QUE IMPORTA: só um 401 desliga a sessão ──
+     Falha de rede, servidor em baixo, Render a acordar — nada disso
+     expulsa ninguém. Um monitor de cozinha que se desliga sozinho
+     porque o wi-fi piscou é pior do que inútil, e às sete da tarde
+     ninguém tem mãos livres para voltar a escrever a password. Quem
+     decide se a sessão presta é o servidor, e ele só o diz com um 401.
+
+     Corre depois de a página desenhar, para não atrasar nada. */
+  if (typeof chamarAPI === 'function') {
+    window.addEventListener('load', function () {
+      chamarAPI('auth/eu').catch(function (erro) {
+        if (erro && erro.status === 401) {
+          if (typeof limparSessao === 'function') limparSessao();
+          window.location.replace('login.html');
+        }
+        // Qualquer outro erro fica sem consequência, de propósito.
+      });
+    });
   }
 })();

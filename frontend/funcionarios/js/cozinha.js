@@ -343,7 +343,20 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       marcarLigacao(true);
     } catch (erro) {
-      marcarLigacao(false, erro.message);
+      /* 409 = a ronda já mudou de estado noutro sítio (B-32, 07/09).
+         Acontece de verdade: o monitor da cozinha marca "pronto" no
+         mesmo instante em que o balcão marca "entregue". Não é falha de
+         ligação nenhuma — a ligação está ótima, o pedido é que chegou
+         tarde. Acender o indicador a vermelho aqui seria mandar alguém
+         verificar o wi-fi por causa de uma corrida entre dois tablets.
+         O que faz falta é o ecrã passar a mostrar a verdade: vai buscar
+         a fila outra vez. */
+      if (erro && erro.status === 409) {
+        marcarLigacao(true);
+        await atualizar();
+      } else {
+        marcarLigacao(false, erro.message);
+      }
     } finally {
       aOcupar.delete(ronda.id);
       desenhar();

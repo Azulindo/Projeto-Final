@@ -90,6 +90,19 @@ const ENDPOINTS_REAIS = [
   /^produtos\/\d+$/,          // GET  /api/produtos/:id
   /^auth\/login$/,            // POST /api/auth/login   ← B-19 (04/09)
   /^auth\/eu$/,               // GET  /api/auth/eu      ← B-22 (04/09)
+
+  /* Sessões de mesa — B-31 a B-36 (07/09). O token do QR é a
+     credencial: estes quatro não levam login nenhum. */
+  /^mesas\/[^/]+\/sessao$/,        // GET  /api/mesas/:token/sessao
+  /^mesas\/[^/]+\/pedir$/,         // POST /api/mesas/:token/pedir
+  /^mesas\/[^/]+\/conta$/,         // GET  /api/mesas/:token/conta
+  /^mesas\/[^/]+\/pedir-conta$/,   // POST /api/mesas/:token/pedir-conta
+
+  /* Fila de trabalho — com login. */
+  /^pedidos\/ativos$/,             // GET   /api/pedidos/ativos
+  /^pedidos\/cozinha$/,            // GET   /api/pedidos/cozinha
+  /^pedidos\/\d+\/estado$/,        // PATCH /api/pedidos/:id/estado
+  /^pedidos\/sessao\/\d+\/fechar$/,// POST  /api/pedidos/sessao/:id/fechar
 ];
 
 /**
@@ -101,9 +114,33 @@ const ENDPOINTS_REAIS = [
  * Sem isto, uma demonstração passava a depender de uma base de dados
  * estar de pé — e não vale a pena arriscar isso à frente de um júri.
  */
+const CHAVE_SIMULAR = 'vpa_simular';
+
+/* ── A bandeira tem de sobreviver à navegação (07/09) ────────────────
+   Antes lia-se só o URL da página atual, e isso desfazia a razão de ela
+   existir: ao fazer login, o próprio código salta para `cozinha.html`
+   sem query nenhuma, e a partir daí voltava a chamar o servidor. Numa
+   apresentação sem rede, o login corria e o ecrã seguinte não.
+   Descobri porque um teste começou a falhar exatamente aí.
+
+   Fica guardada no `sessionStorage`: dura o separador, não contamina
+   outros nem a próxima visita. `?simular=0` desliga. */
 function simulacaoForcada() {
   try {
-    return new URLSearchParams(window.location.search).has('simular');
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('simular')) {
+      const ligar = params.get('simular') !== '0';
+      try {
+        if (ligar) sessionStorage.setItem(CHAVE_SIMULAR, '1');
+        else sessionStorage.removeItem(CHAVE_SIMULAR);
+      } catch (e) { /* sessionStorage desativado — vale só para esta página */ }
+      return ligar;
+    }
+    try {
+      return sessionStorage.getItem(CHAVE_SIMULAR) === '1';
+    } catch (e) {
+      return false;
+    }
   } catch (e) {
     return false;   // fora de um browser (testes em Node, por exemplo)
   }
@@ -165,8 +202,35 @@ function obterSessao() {
   }
 }
 
+/**
+ * Lê a data de validade que vem DENTRO do token (04/09).
+ *
+ * Até aqui a validade era um palpite: `Date.now() + 8h`, calculado no
+ * browser no momento do login. Era uma suposição sobre o que o servidor
+ * decidiu, não o que ele decidiu — e a contagem decrescente do
+ * dashboard mostrava esse palpite a quem estivesse a trabalhar. Se o
+ * João mudar a duração do token, ou se o relógio do tablet estiver
+ * adiantado, os dois lados discordam sem ninguém dar por isso.
+ *
+ * Um JWT tem três partes separadas por pontos; a do meio traz o `exp`
+ * em segundos. Só se lê — NÃO se verifica nada aqui, e isto nunca pode
+ * servir para decidir se alguém entra: quem valida o token é o
+ * servidor. Isto é só para mostrar a hora certa no ecrã.
+ *
+ * Se não der para ler (token simulado, formato diferente), volta-se ao
+ * palpite das 8 horas, que é o que havia antes.
+ */
+function validadeDoToken(token) {
+  try {
+    const carga = JSON.parse(atob(String(token).split('.')[1]));
+    if (carga && typeof carga.exp === 'number') return carga.exp * 1000;
+  } catch (e) { /* token não-JWT, ou ilegível — segue o plano B */ }
+  return null;
+}
+
 function guardarSessao({ token, nome, nivel }) {
-  const sessao = { token, nome, nivel, expiraEm: Date.now() + DURACAO_SESSAO_MS };
+  const expiraEm = validadeDoToken(token) || (Date.now() + DURACAO_SESSAO_MS);
+  const sessao = { token, nome, nivel, expiraEm };
   try {
     localStorage.setItem(CHAVE_SESSAO, JSON.stringify(sessao));
   } catch (e) {
@@ -185,10 +249,19 @@ function limparSessao() {
  * dashboard de gestão.
  * Definido aqui (e só aqui) porque o auth-guard.js, o layout.js e o
  * login.js precisam todos do mesmo mapa.
+ *
+ * ── CORREÇÃO (04/09) ────────────────────────────────────────────────
+ * O `balcao` ia para o `dashboard.html`. Era incoerência, não decisão:
+ * o argumento escrito aqui em cima para a cozinha vale igual para o
+ * balcão — é um posto de trabalho, não um posto de gestão. E hoje o
+ * dashboard é um cartão de "em construção" (o F-55 ainda não existe),
+ * por isso um tablet ao balcão fazia login e aterrava num placeholder
+ * vazio, tendo o ecrã dele mesmo ao lado no menu.
+ * Apanhado ao conferir o mapa contra o que o João esperava do B-19.
  */
 const PAGINA_INICIAL_POR_NIVEL = {
   cozinha:       'cozinha.html',
-  balcao:        'dashboard.html',
+  balcao:        'balcao.html',
   administrador: 'dashboard.html',
 };
 
@@ -233,6 +306,10 @@ async function chamarAPI(endpoint, opcoes = {}) {
   if (!resposta.ok) {
     const erro = new Error(corpo?.erro || `Erro ${resposta.status} ao contactar o servidor.`);
     erro.status = resposta.status;
+    // O 409 do PATCH de estado traz a lista do que era permitido a
+    // partir do estado atual (B-32). Sem isto, essa informação
+    // desaparecia aqui e quem apanha o erro só sabia que falhou.
+    if (corpo && corpo.permitidos) erro.permitidos = corpo.permitidos;
     throw erro;
   }
 
@@ -427,6 +504,38 @@ async function simularEndpoint(endpoint, opcoes) {
     const categoria = query.get('categoria');
     const lista = PRODUTOS_DEMO.filter(p => p.ativo && (!categoria || p.categoria === categoria));
     return lista.map(p => ({ ...p }));
+  }
+
+  /* ── gestao/produtos (F-49, 04/09) ─────────────────────────────────
+     O `produtos` aqui em cima é a vista do CLIENTE: esconde os inativos
+     e, no servidor real, também os que estão sem stock (docs/API.md 4.2,
+     regra 25 do CONTEXTO.md). Serve o site e a mesa, e está certo assim.
+
+     Mas um ecrã de administração precisa exatamente do contrário: é a
+     ver os inativos que se reativa um produto, e é a ver os que estão a
+     zero que se dá por eles. Se o F-49 lesse do `produtos`, o
+     administrador via um catálogo incompleto e não tinha como saber.
+
+     Por isso este endpoint devolve TUDO, com as bandeiras à vista, e
+     fica à espera do B-61 no João — mesmo formato, é só trocar a
+     origem. Enquanto isso, a lista de demonstração está toda ativa, por
+     isso as colunas de estado mostram sempre "ativo/disponível"; a
+     lógica que desenha os outros estados está lá e acende sozinha
+     quando os dados reais os trouxerem. */
+  if (caminho === 'gestao/produtos') {
+    return PRODUTOS_DEMO.map(p => ({
+      id: p.id,
+      nome: p.nome,
+      descricao: p.descricao,
+      preco: p.preco,
+      categoria: p.categoria,
+      imagem: p.imagem,
+      ativo: p.ativo !== false,
+      disponivel: p.disponivel !== false,
+      controla_stock: !!p.controla_stock,
+      quantidade_atual: p.controla_stock ? p.quantidade_atual : null,
+      quantidade_minima: p.controla_stock ? p.quantidade_minima : null,
+    }));
   }
 
   /* ── categorias (docs/API.md 4.2) ──────────────────────────────────
@@ -652,6 +761,29 @@ async function simularEndpoint(endpoint, opcoes) {
     for (const s of Object.values(sessoes)) {
       const ronda = (s.rondas || []).find(r => r.id === idRonda);
       if (ronda) {
+        /* O servidor recusa saltos inválidos com 409 e diz quais são os
+           permitidos (B-32, 07/09). A simulação era mais permissiva do
+           que o servidor: aceitava qualquer estado com nome válido, e
+           por isso um caminho que rebentava a sério passava aqui sem
+           ninguém dar por ele. Um simulador mais tolerante do que a
+           realidade é pior do que não ter simulador — mente na direção
+           que engana. Formato igual ao real, incluindo o `permitidos`. */
+        const PERMITIDOS = {
+          recebido:      ['confirmado', 'cancelado'],
+          confirmado:    ['em_preparacao', 'cancelado'],
+          em_preparacao: ['pronto', 'cancelado'],
+          pronto:        ['entregue'],
+          entregue:      [],
+          cancelado:     [],
+        };
+        const permitidos = PERMITIDOS[ronda.estado] || [];
+        if (estado !== ronda.estado && !permitidos.includes(estado)) {
+          const erro = erroSimulado(
+            `Um pedido em "${ronda.estado}" nao pode passar a "${estado}".`, 409);
+          erro.permitidos = permitidos;
+          throw erro;
+        }
+
         ronda.estado = estado;
         // Espelha nos itens, para quem lê a lista simples ver o mesmo
         s.itens.forEach(i => { if (i.pedidoId === idRonda) i.estado = estado; });

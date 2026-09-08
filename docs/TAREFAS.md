@@ -10,11 +10,20 @@
 
 | | Feito | Parcial | 🔁 Não se aplica | Por fazer | Total |
 |---|---|---|---|---|---|
-| 🔵 **João** — back-end | **17** | 0 | 0 | 56 | 73 |
+| 🔵 **João** — back-end | **24** | 0 | 0 | 49 | 73 |
+| 🟠 **Guilherme** — front-end | **38** | 0 | 19 | 10 | 67 |
+| 🟢 **Os dois** | 4 | 1 | 0 | 18 | 23 |
 
-> ⚠️ **O caminho crítico é agora o back-end.** Das 10 tarefas que faltam ao Guilherme, **9 esperam por endpoints que ainda não existem**. A décima é a revisão visual final. O front-end deixou de estar à espera de decisões e passou a estar à espera de código.
-| 🟠 **Guilherme** — front-end | **32** | 0 | 19 | 10 | 61 |
-| 🟢 **Os dois** | 1 | 2 | 0 | 19 | 22 |
+> ⚠️ **Correção a uma ideia que andou aqui escrita (07/09).** Esta secção dizia que "das 10
+> tarefas que faltam ao Guilherme, 9 esperam por endpoints que ainda não existem". Não é
+> verdade, e estava a travar trabalho sem motivo: a coluna *"Depende de"* da F-49, F-50,
+> F-51, F-52, F-53 e F-55 diz **F-44** — a barra lateral, feita há muito. Pela regra
+> fundadora do projeto (mais acima), constroem-se com dados simulados e troca-se a origem
+> depois. Foi assim que se fez a F-62 e a F-49.
+>
+> O que **de facto** espera pelo João são os endpoints de escrita, para as tarefas que
+> guardam alguma coisa: F-50 (B-61), F-51 (B-62), F-52 (B-63), F-53 (B-64) e F-61 (B-73).
+> Ler já se pode hoje.
 
 > As 19 tarefas 🔁 do Guilherme (≈22 h) descreviam a `pedido.html` — a página de conversa
 > com um bot, substituída pela `mesa.html`. **Não estão em falta**: o que garantiam está
@@ -283,7 +292,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | F-46 | Cartão de pedido com cor a mudar conforme a antiguidade | 1 h 30 | F-45 |
 | ✅ | F-47 | Painel de detalhe do pedido (itens, observações, mesa ou nome do take away) | 2 h | F-45 |
 | ✅ | F-48 | Botões de mudança de estado — ficaram **no próprio cartão**, não num painel de detalhe: na cozinha o objetivo é avançar a ronda num toque, sem abrir nada | 1 h | F-47 |
-| ⬜ | F-49 | Tabela de produtos com pesquisa e ordenação | 2 h | F-44 |
+| ✅ | F-49 | Tabela de produtos com pesquisa e ordenação — pesquisa por nome e descrição **sem acentos** (quem escreve "acores" encontra os "Açores"), filtro por categoria derivado dos próprios produtos, e ordenação por qualquer coluna com `aria-sort` a acompanhar a seta. *Lê do `gestao/produtos`, não do `produtos`: o `produtos` é a vista do CLIENTE e esconde os inativos e os que estão sem stock (`docs/API.md` 4.2) — num ecrã de administração era ao contrário do que faz falta, porque é a ver os inativos que se reativa um produto. Endpoint simulado no `api.js` com o formato acordado, à espera do **B-61**.* Só leitura; criar e editar são o F-50 | 2 h | F-44 |
 | ⬜ | F-50 | Formulário de produto (criar / editar / ativar / desativar) | 2 h | F-49 |
 | ⬜ | F-51 | Tabela e formulário de categorias | 1 h 30 | F-49 |
 | ⬜ | F-52 | Ecrã de stock com aviso visual de stock baixo | 2 h | F-49 |
@@ -417,7 +426,7 @@ estado, esta tabela fica errada até ser refeita.*
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
 | 🔵 João (B-) | 73 | 24 | — | 49 | ≈ 63 h 30 |
-| 🟠 Guilherme (F-) | 67 | 37 | 19 | 11 | ≈ 19 h 15 |
+| 🟠 Guilherme (F-) | 67 | 38 | 19 | 10 | ≈ 19 h 15 |
 | 🟢 Os dois (C-) | 23 | 4 | — | 19 | ≈ 40 h |
 | 🐞 Correções (X-) | 9 | 8 | — | 1 | ≈ 30 min |
 

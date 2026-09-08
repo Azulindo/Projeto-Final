@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt" data-niveis="administrador">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Produtos — Vem Pro Abate</title>
+<meta name="description" content="Catálogo completo de produtos: pesquisa, ordenação e estado de cada um.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/produtos.css">
+
+<script src="../js/api.js"></script>
+<script src="js/auth-guard.js"></script>
+</head>
+<body data-pagina="produtos" data-titulo="Produtos">
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="content-area">
+      <header class="content-topbar" id="contentTopbar"></header>
+
+      <main class="content-main" id="conteudoPagina">
+
+        <!-- ── Barra de filtros ────────────────────────────────────── -->
+        <section class="barra-filtros">
+          <div class="campo campo-pesquisa">
+            <label for="pesquisa" class="sr-so-leitor">Pesquisar produto</label>
+            <input type="search" id="pesquisa" placeholder="Pesquisar por nome ou descrição…"
+                   autocomplete="off" spellcheck="false">
+          </div>
+
+          <div class="campo campo-categoria">
+            <label for="filtroCategoria" class="sr-so-leitor">Filtrar por categoria</label>
+            <select id="filtroCategoria">
+              <option value="">Todas as categorias</option>
+            </select>
+          </div>
+
+          <span class="contagem" id="contagem" aria-live="polite"></span>
+
+          <!-- Botão desativado de propósito: o formulário de criação é o
+               F-50 e o endpoint de escrita é o B-61. Fica à vista, com a
+               etiqueta da tarefa, como os itens por construir da barra
+               lateral — esconder o que falta faz o ecrã parecer acabado
+               quando não está. -->
+          <button type="button" class="btn btn-primario btn-novo" disabled
+                  title="Chega com o F-50, quando existir o endpoint de escrita (B-61)">
+            ＋ Novo produto <span class="etiqueta-tarefa">F-50</span>
+          </button>
+        </section>
+
+        <!-- ── Estados ────────────────────────────────────────────── -->
+        <p class="estado-msg" id="estadoMsg" role="status">
+          <span class="estado-spinner" aria-hidden="true"></span>
+          <span id="estadoTexto">A carregar os produtos…</span>
+        </p>
+
+        <!-- ── Tabela ─────────────────────────────────────────────── -->
+        <div class="tabela-envolve hidden" id="tabelaEnvolve">
+          <table class="tabela-produtos">
+            <thead>
+              <tr>
+                <th scope="col" class="col-foto"><span class="sr-so-leitor">Fotografia</span></th>
+                <th scope="col" aria-sort="ascending">
+                  <button type="button" class="ordenar" data-campo="nome">Produto</button>
+                </th>
+                <th scope="col">
+                  <button type="button" class="ordenar" data-campo="categoria">Categoria</button>
+                </th>
+                <th scope="col" class="col-preco">
+                  <button type="button" class="ordenar" data-campo="preco">Preço</button>
+                </th>
+                <th scope="col" class="col-stock">
+                  <button type="button" class="ordenar" data-campo="stock">Stock</button>
+                </th>
+                <th scope="col" class="col-estado">
+                  <button type="button" class="ordenar" data-campo="estado">Estado</button>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="corpoTabela"></tbody>
+          </table>
+        </div>
+
+        <!-- Sem resultados de pesquisa (diferente de "não há produtos") -->
+        <p class="sem-resultados hidden" id="semResultados">
+          <span class="sem-resultados-icone" aria-hidden="true">🔍</span>
+          <span id="semResultadosTexto"></span>
+        </p>
+
+        <p class="nota-rodape">
+          Esta lista mostra o catálogo <strong>completo</strong>, incluindo o que está
+          inativo ou esgotado — ao contrário da ementa do site, que só mostra o que o
+          cliente pode pedir hoje. Criar e editar chega com o <strong>F-50</strong>.
+        </p>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="js/layout.js"></script>
+  <script src="js/produtos.js"></script>
+</body>
+</html>

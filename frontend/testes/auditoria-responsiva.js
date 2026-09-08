@@ -44,6 +44,7 @@ const PAGINAS_GESTAO = [
   { url: 'funcionarios/cozinha.html',   nome: 'Cozinha' },
   { url: 'funcionarios/balcao.html',    nome: 'Balcão' },
   { url: 'funcionarios/qrcodes.html',   nome: 'QR Codes' },
+  { url: 'funcionarios/produtos.html',  nome: 'Produtos' },
 ];
 
 /* Corre dentro da página. Devolve factos, não juízos. */

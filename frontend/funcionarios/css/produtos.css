@@ -1,0 +1,228 @@
+/* =====================================================================
+   produtos.css — Catálogo de produtos (F-49)
+   =====================================================================
+   Regra da F-08, e a que o João pôs por palavras: calor na moldura,
+   nunca nos dados. Isto é uma tabela — o sítio mais "dados" que a app
+   tem. Nada de brilhos, nada de gradientes decorativos. A única cor
+   aqui significa alguma coisa: vermelho = fora da carta ou stock
+   abaixo do mínimo, amarelo = hoje não há, verde = está na ementa.
+   ===================================================================== */
+
+/* Rótulo que só o leitor de ecrã lê. A caixa de pesquisa e o filtro
+   têm etiqueta visível "a mais" no desenho — mas um campo sem <label>
+   é um campo que ninguém anuncia. */
+.sr-so-leitor {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Barra de filtros ─────────────────────────────────────────────── */
+
+.barra-filtros {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.campo-pesquisa { flex: 1 1 260px; min-width: 0; }
+.campo-categoria { flex: 0 0 auto; }
+
+.barra-filtros input[type="search"],
+.barra-filtros select {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px 13px;
+  color: var(--texto);
+  outline: none;
+  min-height: 44px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.barra-filtros input[type="search"]:focus,
+.barra-filtros select:focus {
+  border-color: var(--cobre);
+  box-shadow: 0 0 0 3px rgba(201, 131, 47, 0.18);
+}
+
+.contagem {
+  font-size: 13px;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.btn-novo { margin-left: auto; }
+
+/* Etiqueta da tarefa que falta, como na barra lateral: mostra-se o que
+   ainda não existe em vez de o esconder. */
+.etiqueta-tarefa {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 2px 6px;
+  border-radius: 999px;
+  margin-left: 2px;
+}
+
+/* ── Tabela ───────────────────────────────────────────────────────── */
+
+.tabela-envolve {
+  background: var(--bg-elevada);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow-x: auto;      /* em ecrã estreito, a tabela desliza dentro da caixa */
+}
+
+.tabela-produtos { min-width: 720px; }
+
+.tabela-produtos th { white-space: nowrap; }
+
+.tabela-produtos tbody tr:last-child td { border-bottom: none; }
+
+/* Produto fora da carta: esbatido, mas ainda legível — é para se ver
+   que lá está e que está desligado, não para desaparecer. */
+.linha-inativa { opacity: 0.55; }
+
+.col-foto { width: 56px; }
+.col-preco, .col-stock { text-align: right; white-space: nowrap; }
+.col-estado { width: 130px; }
+
+.produto-foto {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: block;
+}
+
+.produto-nome { font-weight: 600; }
+
+.produto-desc {
+  font-size: 12.5px;
+  color: var(--texto-suave);
+  line-height: 1.45;
+  margin-top: 2px;
+  /* Descrições longas não podem esticar a coluna do nome até empurrar
+     o preço para fora do ecrã. */
+  max-width: 46ch;
+}
+
+.stock-ok { font-variant-numeric: tabular-nums; color: var(--texto-suave); }
+.stock-nao-controla { color: var(--texto-fraco); cursor: help; }
+
+/* ── Cabeçalhos ordenáveis ────────────────────────────────────────── */
+
+.ordenar {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ordenar:hover { color: var(--texto); }
+
+.ordenar:focus-visible {
+  outline: 2px solid var(--cobre);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* A seta é para quem vê; o `aria-sort` no <th> é o que o leitor de ecrã
+   anuncia. Os dois contam a mesma história (ver produtos.js). */
+.ordenar::after {
+  content: '';
+  opacity: 0;
+  font-size: 10px;
+}
+
+.ordenar-ativa { color: var(--dourado); }
+.ordenar-ativa[data-sentido="asc"]::after  { content: '▲'; opacity: 1; }
+.ordenar-ativa[data-sentido="desc"]::after { content: '▼'; opacity: 1; }
+
+/* ── Estados ──────────────────────────────────────────────────────── */
+
+.estado-msg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 20px;
+  color: var(--texto-suave);
+  font-size: 14px;
+}
+
+.estado-msg.hidden { display: none; }
+.estado-aviso { color: var(--aviso); }
+
+.estado-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(201, 131, 47, 0.25);
+  border-top-color: var(--cobre);
+  border-radius: 50%;
+  animation: produtosGira 0.8s linear infinite;
+}
+
+@keyframes produtosGira { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .estado-spinner { animation: none; }
+}
+
+/* Pesquisa sem resultados — mesmo tratamento das colunas vazias da
+   cozinha e do balcão (F-60): ícone esbatido, texto que diz o que se
+   passa. */
+.sem-resultados {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  color: var(--texto-suave);
+  font-size: 14px;
+  padding: 48px 20px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+}
+
+.sem-resultados.hidden { display: none; }
+
+.sem-resultados-icone {
+  font-size: 30px;
+  line-height: 1;
+  opacity: 0.34;
+  filter: grayscale(0.4);
+}
+
+.nota-rodape {
+  margin-top: 18px;
+  font-size: 12.5px;
+  color: var(--texto-fraco);
+  line-height: 1.6;
+}
+
+/* ── Ecrãs estreitos ──────────────────────────────────────────────── */
+
+@media (max-width: 700px) {
+  .btn-novo { margin-left: 0; width: 100%; }
+  .contagem { order: 3; }
+  .produto-desc { display: none; }   /* a descrição rouba a largura toda */
+}
