@@ -27,7 +27,8 @@
 > depois. Foi assim que se fez a F-62 e a F-49.
 >
 > O que **de facto** espera pelo João são os endpoints de escrita, para as tarefas que
-> guardam alguma coisa: F-50 (B-61), F-51 (B-62), F-52 (B-63), F-53 (B-64) e F-61 (B-73).
+> guardam alguma coisa: F-51 (B-62), F-53 (B-64) e F-61 (B-73). A F-50 e a F-52 já estão
+> construídas com dados simulados — falta-lhes só trocar a origem quando o B-61 e o B-63 existirem.
 > Ler já se pode hoje.
 
 > As 19 tarefas 🔁 do Guilherme (≈22 h) descreviam a `pedido.html` — a página de conversa
@@ -172,7 +173,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | B-60 | Atualizar automaticamente o estado da mesa (`livre` / `ocupada`) | 1 h | B-56 |
 | ⬜ | B-61 | CRUD de produtos | 2 h | B-21 |
 | ⬜ | B-62 | CRUD de categorias | 1 h 30 | B-21 |
-| ⬜ | B-63 | Consultar e ajustar stock + endpoint de produtos com stock baixo — *(ideia nova, 04/09)* acessível também ao nível `cozinha`, não só `administrador` (ver tabela de contas em `docs/API.md`) | 1 h 30 | B-21 |
+| ⬜ | B-63 | Consultar e ajustar stock + endpoint de produtos com stock baixo — *(ideia nova, 04/09)* acessível também ao nível `cozinha`, não só `administrador`. **A forma está proposta pelo Guilherme na secção 4.8 do `API.md` (08/09) e já corre simulada no `api.js`: `POST /api/gestao/stock/:id/movimento` com `tipo`, em vez de um PATCH que grava a quantidade, mais `PATCH /api/gestao/stock/:id/minimo`. O motivo é o B-58 — o stock desce sozinho quando a cozinha aceita uma ronda, e gravar um total absoluto apaga o que saiu entretanto.** **Formato fechado a 08/09** — os quatro acrescentos aceites: os descontos automáticos da cozinha também geram movimentos (`consumo` / `reposicao`, escritos só pelo servidor); cada linha guarda `quantidade_antes` e `quantidade_depois`; cada linha guarda quem e quando; e o `acerto` fica só para `administrador` — a cozinha mantém a `quebra`, que é o caso em que se sabe o motivo. A cadeia antes/depois obriga a serializar as escritas do mesmo produto: ler, calcular e gravar na mesma transação com `SELECT ... FOR UPDATE`, como o B-58 já faz, e verificar a cadeia por `id_movimento` e não por data. **Sobe de 1 h 30 para 2 h 30** — a tabela de movimentos, os campos antes/depois e a serialização não estavam na estimativa | 2 h 30 | B-21 |
 | ⬜ | B-64 | CRUD de funcionários (só administrador) | 2 h | B-21 |
 
 ## Sprint 5 · Extras (Semana 10: 3–9 nov)
@@ -300,9 +301,9 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | F-47 | Painel de detalhe do pedido (itens, observações, mesa ou nome do take away) | 2 h | F-45 |
 | ✅ | F-48 | Botões de mudança de estado — ficaram **no próprio cartão**, não num painel de detalhe: na cozinha o objetivo é avançar a ronda num toque, sem abrir nada | 1 h | F-47 |
 | ✅ | F-49 | Tabela de produtos com pesquisa e ordenação — pesquisa por nome e descrição **sem acentos** (quem escreve "acores" encontra os "Açores"), filtro por categoria derivado dos próprios produtos, e ordenação por qualquer coluna com `aria-sort` a acompanhar a seta. *Lê do `gestao/produtos`, não do `produtos`: o `produtos` é a vista do CLIENTE e esconde os inativos e os que estão sem stock (`docs/API.md` 4.2) — num ecrã de administração era ao contrário do que faz falta, porque é a ver os inativos que se reativa um produto. Endpoint simulado no `api.js` com o formato acordado, à espera do **B-61**.* Só leitura; criar e editar são o F-50 | 2 h | F-44 |
-| ⬜ | F-50 | Formulário de produto (criar / editar / ativar / desativar) | 2 h | F-49 |
+| ✅ | F-50 | Formulário de produto (criar / editar / ativar / desativar) — *feito a 08/09, formato proposto na secção 4.9 do `API.md`. **Sem DELETE**, de propósito: um produto que já apareceu num pedido não pode desaparecer sem levar o `item_pedido` atrás; desativar é o que faz as vezes de apagar. À espera do **B-61** para trocar a origem dos dados* | 2 h | F-49 |
 | ⬜ | F-51 | Tabela e formulário de categorias | 1 h 30 | F-49 |
-| ⬜ | F-52 | Ecrã de stock com aviso visual de stock baixo | 2 h | F-49 |
+| ✅ | F-52 | Ecrã de stock com aviso visual de stock baixo — *feito a 08/09 com dados simulados no `api.js`, como a F-62. Não esperou pelo B-63: quando ele existir, acrescentam-se dois caminhos ao `ENDPOINTS_REAIS` e mais nada muda. Trouxe também uma correção de contraste — o distintivo vermelho de "stock baixo" estava a 3,80:1 (mínimo 4,5:1 para texto); mudou o vermelho do texto no `base.css`, o que arrasta a `produtos.html`. O `--perigo` fica igual para molduras e avisos, onde o mínimo é 3:1* | 2 h | F-49 |
 | ⬜ | F-53 | Ecrã de funcionários (tabela + formulário) | 2 h | F-49 |
 | ✅ | F-54 | Responsividade da aplicação de gestão — *zero alvos de toque abaixo de 44 px e zero scroll horizontal, medido em 4 larguras; o pior era o ✕ do painel da conta, a 24×23* | 1 h 30 | F-53 |
 
@@ -427,19 +428,19 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 ## Resumo de esforço
 
-*Contagens a 8 de setembro, refeitas depois de fechar o B-24, o B-65 e o F-67.* **Esta é a única tabela de contagens do documento.** Os
+*Contagens a 8 de setembro, refeitas depois de fechar o B-24, o B-65, o F-67, a F-52 e a F-50.* **Esta é a única tabela de contagens do documento.** Os
 números saem de contar as linhas das tabelas de tarefas acima, uma a uma — não de somar ao
 que aqui estava. Se mudares uma linha lá em cima, esta tabela fica errada até alguém a
 refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 73 | 39 | — | 34 | ≈ 45 h |
-| 🟠 Guilherme (F-) | 67 | 39 | 19 | 9 | ≈ 16 h 15 |
+| 🔵 João (B-) | 73 | 39 | — | 34 | ≈ 46 h |
+| 🟠 Guilherme (F-) | 67 | 41 | 19 | 7 | ≈ 12 h 15 |
 | 🟢 Os dois (C-) | 23 | 4 | — | 19 | ≈ 40 h |
 | 🐞 Correções (X-) | 9 | 8 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 101 h 45.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
+**Total por fazer: ≈ 98 h 45.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
 take away, e falta o próprio B-35 do take away), C-01 (falta o Guilherme ler o `CONTEXTO.md`)
 e X-08 (não se conseguiu reproduzir). O B-65 saiu desta lista — os QR Codes estão gerados.
 
@@ -453,7 +454,8 @@ foi por aí que as tabelas se desencontraram — passou a não ter nenhuma. Os n
 tabela acima.)*
 
 Só as tarefas que **guardam** alguma coisa é que precisam de endpoints: F-50 (B-61),
-F-51 (B-62), F-52 (B-63), F-53 (B-64) e F-61 (B-73). **Ler já se pode hoje** — o catálogo,
+F-51 (B-62), F-53 (B-64) e F-61 (B-73) — a F-50 e a F-52 já estão construídas, só lhes falta
+trocar a origem dos dados. **Ler já se pode hoje** — o catálogo,
 as sessões, a fila da cozinha e o balcão já respondem a sério.
 
 A ideia de que "9 das 10 esperam por endpoints" andou aqui escrita e era falsa: a coluna
