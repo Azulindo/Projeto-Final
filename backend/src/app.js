@@ -89,8 +89,18 @@ app.get('/api/saude', async (_req, res, next) => {
     const [[{ produtos }]] = await pool.query(
       'SELECT COUNT(*) AS produtos FROM produto WHERE ativo = 1'
     );
-    const [[{ tabelas }]] = await pool.query(
-      `SELECT COUNT(*) AS tabelas
+    /*
+     *  Tabelas e vistas contadas em SEPARADO, de proposito.
+     *
+     *  O information_schema.TABLES do MySQL inclui as vistas, por isso
+     *  um COUNT(*) simples devolvia 18 quando o diagrama ER mostra 17.
+     *  Nenhum dos numeros estava errado — contavam coisas diferentes —
+     *  mas o diagrama e entregavel e alguem ia contar. Agora a resposta
+     *  diz o que e cada coisa: 17 tabelas e 1 vista (vw_total_sessao).
+     */
+    const [[{ tabelas, vistas }]] = await pool.query(
+      `SELECT SUM(TABLE_TYPE = 'BASE TABLE') AS tabelas,
+              SUM(TABLE_TYPE = 'VIEW')       AS vistas
          FROM information_schema.TABLES
         WHERE TABLE_SCHEMA = ?`,
       [process.env.DB_NAME]
@@ -103,7 +113,8 @@ app.get('/api/saude', async (_req, res, next) => {
       baseDados: {
         ligada: true,
         nome: process.env.DB_NAME,
-        tabelas,
+        tabelas: Number(tabelas),
+        vistas:  Number(vistas),
         produtosAtivos: produtos,
         tempoResposta: `${Date.now() - inicio} ms`,
       },

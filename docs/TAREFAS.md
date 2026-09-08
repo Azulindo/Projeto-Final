@@ -2,7 +2,7 @@
 
 **Projeto Final de Curso** · João Ribeiro & Guilherme Gonçalves
 **Documentos relacionados:** `CONTEXTO.md` (o quê e porquê) · `PLANEAMENTO.md` (calendário e sprints)
-**Versão:** 2.2 · **merge das duas versões (João + Guilherme)** · **Última revisão:** 3 de setembro de 2026
+**Versão:** 2.2 · **merge das duas versões (João + Guilherme)** · **Última revisão:** 8 de setembro de 2026
 
 ---
 
@@ -34,7 +34,9 @@
 > com um bot, substituída pela `mesa.html`. **Não estão em falta**: o que garantiam está
 > feito noutra forma. Não as contes no que falta.
 
-**Estado a 8 de setembro:** **Sprints 0, 1 e o núcleo do 2 fechados.** A base está no Aiven, a API em `https://vem-pro-abate-api.onrender.com` e o ciclo completo de uma refeição funciona ponta a ponta: ler o QR Code abre a sessão, o cliente envia rondas, a cozinha aceita (e o stock desce), o cliente pede a conta e o balcão fecha (e o total congela). Testado a 08/09 contra a base na nuvem. O login está ligado nos dois lados e cada nível cai no ecrã certo. **O F-67 fechou a 08/09:** o site está no ar em `https://vemproabate.vercel.app`, o que desbloqueia os QR Codes das mesas (B-65) e o CORS (B-24). **O que bloqueia agora são os endpoints de escrita da gestão** — B-61 (produtos), B-62 (categorias), B-63 (stock) e B-64 (funcionários). Os ecrãs que dependem deles já existem ou podem ser construídos com os formatos simulados; o que falta é gravarem na base em vez de no browser.
+**Estado a 8 de setembro:** **Sprints 0, 1 e o núcleo do 2 fechados, e o projeto está público.** A base está no Aiven, a API em `https://vem-pro-abate-api.onrender.com`, o site em `https://vemproabate.vercel.app` (F-67) e os dois falam um com o outro — o CORS está fechado ao domínio de produção (B-24) e a ementa carrega a partir do site publicado. O ciclo completo de uma refeição funciona ponta a ponta: ler o QR Code abre a sessão, o cliente envia rondas, a cozinha aceita (e o stock desce), o cliente pede a conta e o balcão fecha (e o total congela). Testado a 08/09 contra a base na nuvem. Os 10 QR Codes das mesas estão gerados e um foi aberto no telemóvel (B-65). O login está ligado nos dois lados e cada nível cai no ecrã certo. Do lado da gestão, os ecrãs de **Produtos** (F-49/F-50) e de **Stock** (F-52) estão feitos e a funcionar sobre os formatos simulados.
+
+**O que bloqueia agora, por ordem:** o **B-35** (take away — é o último buraco no ciclo de encomendas, e arrasta o B-40); o **B-66** (endpoint dos QR Codes, com a página do Guilherme já feita à espera dele); e os CRUDs de gestão — o **B-61** e o **B-63**, que fazem os ecrãs já construídos gravar na base em vez de no browser, e o **B-62** e o **B-64**, que destrancam as duas tarefas do Guilherme que faltam (F-51 e F-53). Fora da lista, e mais importante do que qualquer uma destas: o **plano B local** para a apresentação — o Aiven desligou-se sozinho duas vezes em quatro dias e ainda não se sabe porquê.
 
 **Legenda:** ✅ feito · 🟨 parcial (ver nota) · ⬜ por fazer · 🔁 **já não se aplica** — o plano mudou pelo caminho e a tarefa deixou de fazer sentido. Fica à vista, marcada, em vez de apagada: uma tarefa apagada parece esquecida, uma marcada mostra que houve uma decisão.
 
@@ -114,7 +116,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | B-21 | `exigirNivel()` — *ficou dentro do `middleware/autenticar.js`, ao lado do `autenticar`: são a mesma ideia em dois passos e separá-los em ficheiros não ganhava nada. Aceita os três níveis (`cozinha`, `balcao`, `administrador`)* | 30 min | B-20 |
 | ✅ | B-22 | `GET /api/auth/eu` — devolve os dados do funcionário da sessão — *vai à base em vez de responder com o conteúdo do token, para que uma conta desativada perca o acesso na hora e não só quando o token expirar* | 30 min | B-20 |
 | ✅ | B-23 | Limite de 5 tentativas de login falhadas por email em 15 minutos — *conta por email e não por IP: cozinha, balcão e escritório saem todos pelo mesmo IP do restaurante* | 1 h | B-19 |
-| ⬜ | B-24 | Configurar CORS para o domínio do Vercel — *desbloqueado a 08/09: `ORIGEM_PERMITIDA=https://vemproabate.vercel.app`, **com `https://` e sem barra no fim** (o CORS compara a origem tal e qual). Só o domínio de produção no Render; o `localhost` vive no `.env` local, que é para isso que a variável é de ambiente. Nota: as pré-visualizações do Vercel (ramos que não o `main`) têm endereços próprios e vão falhar o CORS — é aceitável, mas convém saber antes de se perder uma hora com isso. Testar a partir do site publicado, não do localhost* | 30 min | B-16, F-67 |
+| ✅ | B-24 | Configurar CORS para o domínio do Vercel — *`ORIGEM_PERMITIDA=https://vemproabate.vercel.app` no Render, sem barra no fim. Testado a partir do site publicado a 08/09: a ementa carrega. Só o domínio de produção vai nesta variável — o `localhost` fica no `.env` de cada um. As pré-visualizações do Vercel (ramos que não o `main`) têm endereço próprio e vão falhar o CORS; é aceite* | 30 min | B-16, F-67 |
 | ⬜ | B-25 | `express-rate-limit` nos endpoints públicos | 30 min | B-16 |
 
 ## Sprint 2 · Sessões de mesa e pedidos (Semanas 3–5: 15 set – 5 out)
@@ -177,8 +179,8 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| 🟨 | B-65 | Gerar os QR Codes das mesas com a biblioteca `qrcode` — *o `backend/scripts/gerarQRCodes.js` está escrito e passado para mysql2 (era do Guilherme, em Prisma). Desbloqueado a 08/09: `npm run qrcodes -- https://vemproabate.vercel.app`. ⚠️ **O endereço vai dentro do código impresso.** Se o endereço mudar depois de imprimir, todos os QR Codes em papel passam a apontar para uma página que já não existe — e não se dá por isso a olhar para o papel. Só imprimir com o endereço final confirmado* | 1 h 30 | B-11 |
-| ⬜ | B-66 | `GET /api/gestao/mesas/qrcodes` — dados para a página de impressão | 45 min | B-65 |
+| ✅ | B-65 | Gerar os QR Codes das mesas com a biblioteca `qrcode` — *`npm run qrcodes -- https://vemproabate.vercel.app`, 10 PNG em `backend/qrcodes/`, um testado no browser. Os tokens são fixos no `seed.sql`, por isso regravar a base **não** invalida os cartões impressos* | 1 h 30 | B-11 |
+| ⬜ | B-66 | `GET /api/gestao/mesas/qrcodes` — dados para a página de impressão — *o `qrcodes.html` do Guilherme (F-58) está feito e à espera deste endpoint. Os PNG do B-65 já servem para imprimir, isto é para se poder fazer sem terminal* | 45 min | B-65 |
 | ⬜ | B-67 | Entrada por token de mesa: `/mesa?t=<token>` | 1 h | B-36 |
 | ⬜ | B-68 | `estatisticas.js`: nº de pedidos, faturação diária e mensal, média por pedido | 2 h | B-39 |
 | ⬜ | B-69 | `estatisticas.js`: produtos mais vendidos + tempo médio de preparação | 1 h 30 | B-57 |
@@ -304,7 +306,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ⬜ | F-53 | Ecrã de funcionários (tabela + formulário) | 2 h | F-49 |
 | ✅ | F-54 | Responsividade da aplicação de gestão — *zero alvos de toque abaixo de 44 px e zero scroll horizontal, medido em 4 larguras; o pior era o ✕ do painel da conta, a 24×23* | 1 h 30 | F-53 |
 
-| ✅ | F-67 | **Publicar o site — no ar em https://vemproabate.vercel.app (08/09).** Descoberto a 04/09 que não havia nada publicado: o `vercel.json` estava no repositório desde julho e o `CONTEXTO.md` dizia *"Vercel (já configurado) — já está a funcionar"*, mas o endereço respondia `DEPLOYMENT_NOT_FOUND`. A causa apareceu só a 08/09: existia mesmo um projeto com esse nome na conta do João, criado em março e **sem deployment nenhum** — não era "não existe", era "existe e está vazio", e enquanto existisse ninguém podia usar o endereço. **O `vercel.json` também estava errado:** usava `rewrites`, que mantêm `/menu` na barra de endereços, e por isso os caminhos relativos resolviam mal (o `css/menu.css` ia parar a `/css/menu.css` e o `../js/api.js` a `/js/api.js`) — teria dado um site sem estilos e sem API. Trocado por um redirecionamento único da raiz. Verificados no endereço final: a raiz, os estilos e o `api.js`. *Contas: a Aiven e o Render são do João, o Vercel é do Guilherme — o plano gratuito do Vercel não permite membros. Desbloqueia o B-24 e o B-65.* | 1 h | — |
+| ✅ | F-67 | **Publicar o site.** Descoberto a 04/09: o `vercel.json` estava no repositório desde julho e o `CONTEXTO.md` dizia *"Vercel (já configurado)"*, mas nunca houve deployment — era um plano escrito como se estivesse feito. **No ar a 08/09 em `https://vemproabate.vercel.app`.** O `vercel.json` antigo usava *rewrites*, que mantêm o endereço na barra e faziam os caminhos relativos resolver a partir de `/menu` — o site teria aparecido sem estilos e sem API; passou a um redirecionamento simples da raiz. Verificados no endereço final: a raiz, os estilos e o `api.js`. Havia também dois projetos antigos no Vercel do João, de março: o `vemproabate` estava vazio mas tinha o nome reservado (daí o `DEPLOYMENT_NOT_FOUND`) e foi apagado; o `vemproabatee` continua no ar com a versão de março e vai levar um redirecionamento em vez de ser apagado, para quem tenha o link antigo não cair num 404. *Contas: a Aiven e o Render são do João, o Vercel é do Guilherme — o plano gratuito do Vercel não permite membros, por isso cada um mexe no seu sem esperar pelo outro.* | 1 h | — |
 
 **Total do sprint: ≈ 21 h 30**
 
@@ -425,23 +427,35 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 ## Resumo de esforço
 
-*Contagens a 8 de setembro.* **Esta é a única tabela de contagens do documento.** Os
+*Contagens a 8 de setembro, refeitas depois de fechar o B-24, o B-65 e o F-67.* **Esta é a única tabela de contagens do documento.** Os
 números saem de contar as linhas das tabelas de tarefas acima, uma a uma — não de somar ao
 que aqui estava. Se mudares uma linha lá em cima, esta tabela fica errada até alguém a
 refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 73 | 37 | — | 36 | ≈ 48 h |
+| 🔵 João (B-) | 73 | 39 | — | 34 | ≈ 46 h |
 | 🟠 Guilherme (F-) | 67 | 41 | 19 | 7 | ≈ 12 h 15 |
 | 🟢 Os dois (C-) | 23 | 4 | — | 19 | ≈ 40 h |
 | 🐞 Correções (X-) | 9 | 8 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 100 h 45.** *(O B-63 passou de 1 h 30 a 2 h 30 a 08/09: a tabela de
-movimentos, os campos antes/depois e a serialização das escritas não estavam na estimativa
-original.)* As tarefas 🟨 contam como por fazer: B-40 (falta testar o
-take away), B-65 (QR Codes, à espera de endereço público), C-01 (falta o Guilherme ler o
-`CONTEXTO.md`) e X-08 (não se conseguiu reproduzir).
+**Total por fazer: ≈ 98 h 45.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
+take away, e falta o próprio B-35 do take away), C-01 (falta o Guilherme ler o `CONTEXTO.md`)
+e X-08 (não se conseguiu reproduzir). O B-65 saiu desta lista — os QR Codes estão gerados.
+
+*Como estes números foram feitos:* contadas as 172 linhas das tabelas acima uma a uma e
+somada a coluna da estimativa só das linhas ⬜ e 🟨. Os quatro prefixos fecham certo
+(73 + 67 + 23 + 9) e não há códigos em falta na sequência. Se mudares uma linha lá em cima,
+refaz isto da mesma maneira — não somes nem subtraias a estes valores.
+
+> **Nota do merge de 08/09.** Este bloco veio em conflito porque cada um de nós tinha
+> atualizado a sua metade sem ver a do outro, e **nenhuma das duas versões estava certa**: a
+> do João dava 101 h 45 e não contava a F-50 nem a F-52; a do Guilherme dava 100 h 45 e não
+> contava o B-24 nem o B-65. Foi refeito contando as linhas outra vez, como diz o parágrafo
+> acima, em vez de se escolher um dos lados. As duas mudanças que se somaram: o João fechou o
+> B-24 e o B-65 (+2 feitas do lado dele), o Guilherme fechou a F-50 e a F-52 (+2 do lado
+> dele), e o **B-63 subiu de 1 h 30 para 2 h 30** — a tabela de movimentos, os campos
+> `antes`/`depois` e a serialização das escritas não estavam na estimativa original.
 
 **O que do front-end espera mesmo pelo back-end.** *(Este bloco tinha contagens próprias e
 foi por aí que as tabelas se desencontraram — passou a não ter nenhuma. Os números estão na
