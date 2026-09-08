@@ -28,7 +28,7 @@ Sistema web para o restaurante *Vem Pro Abate* (Amadora), composto por duas apli
 | Chatbot de reservas (interface) | ✅ Concluído · ainda sobre dados simulados |
 | Pedido à mesa (interface) | ✅ Ligado à API |
 | Aplicação de gestão (interface) | 🟨 Login, cozinha e balcão a funcionar; falta produtos, stock e estatísticas |
-| Publicação do site | ⬜ Por fazer — ver **F-67** |
+| Publicação do site | ✅ No ar no Vercel — ver **Ligações** |
 
 ---
 
@@ -74,7 +74,7 @@ Sistema web para o restaurante *Vem Pro Abate* (Amadora), composto por duas apli
 | Validação | zod |
 | Email | Nodemailer + Brevo / Resend |
 | QR Code | qrcode |
-| Alojamento (site) | ⚠️ **por publicar** — ver **F-67**. Só corre localmente |
+| Alojamento (site) | Vercel (plano Hobby, gratuito) · publica a cada `push` no `main` |
 | Alojamento (API) | Render (Frankfurt, plano gratuito) |
 
 ---
@@ -197,7 +197,11 @@ Fazer isto na **manhã** do dia, não cinco minutos antes.
 
 **3. Acordar o Render cinco minutos antes de entrar na sala.** No plano gratuito adormece ao fim de 15 minutos sem pedidos e o primeiro pedido a seguir demora ~50 segundos. Não é avaria, mas parece uma.
 
-**4. Ter os QR Codes impressos** (`npm run qrcodes -- <endereço-do-site>`), e o `?simular=1` como plano B se a rede da sala falhar.
+**4. Ter os QR Codes impressos** (`npm run qrcodes -- https://projeto-final-vpa.vercel.app`), e o `?simular=1` como plano B se a rede da sala falhar.
+
+> ⚠️ **Reimprimir os QR Codes se o endereço mudar.** O endereço vai dentro do
+> código impresso — um QR gerado para um endereço antigo leva o cliente a uma
+> página que já não existe, e não há forma de dar por isso a olho.
 
 ---
 
@@ -252,6 +256,17 @@ ORIGEM_PERMITIDA=
 ---
 
 ## 🌐 Ligações
+
+| | Endereço |
+|---|---|
+| **Site** | https://projeto-final-vpa.vercel.app |
+| **API** | https://vem-pro-abate-api.onrender.com/api/saude |
+
+> O nome `projeto-final-vpa` é **temporário**. Passa a `vemproabate` assim que
+> o projeto vazio com esse nome for apagado do Vercel. Quando isso acontecer,
+> há três sítios a mexer: esta tabela, o comando dos QR Codes acima, e a
+> variável `ORIGEM_PERMITIDA` do back-end (B-24) — e os QR Codes já impressos
+> deixam de servir.
 
 - [Instagram](https://www.instagram.com/restaurante_vem_pro_abate/)
 - [Facebook](https://www.facebook.com/profile.php?id=61588364957173)
