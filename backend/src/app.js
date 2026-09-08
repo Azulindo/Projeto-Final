@@ -11,6 +11,8 @@ const cors = require('cors');
 const { pool, testarLigacao } = require('./config/bd');
 const catalogoRouter = require('./routes/catalogo');
 const authRouter = require('./routes/auth');
+const mesasRouter = require('./routes/mesas');
+const pedidosRouter = require('./routes/pedidos');
 
 const app = express();
 
@@ -60,6 +62,14 @@ app.use('/api', authRouter);
 
 // Catalogo: GET /api/categorias, /api/produtos, /api/produtos/:id
 app.use('/api', catalogoRouter);
+
+// Cliente a mesa: /api/mesas/:token/sessao, /pedir, /conta, /pedir-conta
+// Sem login — quem faz de credencial e o token do QR Code impresso na mesa.
+app.use('/api', mesasRouter);
+
+// Gestao: /api/pedidos/ativos, /cozinha, /:id/estado, /sessao/:id/fechar
+// Todos exigem sessao iniciada.
+app.use('/api', pedidosRouter);
 
 /**
  * GET /api/saude

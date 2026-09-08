@@ -10,7 +10,7 @@
 
 | | Feito | Parcial | 🔁 Não se aplica | Por fazer | Total |
 |---|---|---|---|---|---|
-| 🔵 **João** — back-end | **24** | 0 | 0 | 49 | 73 |
+| 🔵 **João** — back-end | **37** | 2 | 0 | 34 | 73 |
 | 🟠 **Guilherme** — front-end | **38** | 0 | 19 | 10 | 67 |
 | 🟢 **Os dois** | 4 | 1 | 0 | 18 | 23 |
 
@@ -29,7 +29,7 @@
 > com um bot, substituída pela `mesa.html`. **Não estão em falta**: o que garantiam está
 > feito noutra forma. Não as contes no que falta.
 
-**Estado a 7 de setembro:** **Sprint 0 e Sprint 1 fechados.** A base está no Aiven, a API em `https://vem-pro-abate-api.onrender.com` (Render, Frankfurt, plano gratuito) e o login funciona de ponta a ponta contra a nuvem. O histórico do repositório foi reescrito para remover um `.env` que lá tinha ido parar, as três branches foram juntas no `main`, e o repositório passou a privado. O Guilherme ligou a ementa à API (F-65) e tem o front-end do Sprint 3 quase todo feito. **O que bloqueia agora: o F-67** — o site nunca chegou a ser publicado, e sem endereço público não há QR Codes de mesa nem CORS para fechar.
+**Estado a 8 de setembro:** **Sprints 0, 1 e o núcleo do 2 fechados.** A base está no Aiven, a API em `https://vem-pro-abate-api.onrender.com` e o ciclo completo de uma refeição funciona ponta a ponta: ler o QR Code abre a sessão, o cliente envia rondas, a cozinha aceita (e o stock desce), o cliente pede a conta e o balcão fecha (e o total congela). Testado a 08/09 contra a base na nuvem. O login está ligado nos dois lados e cada nível cai no ecrã certo. **O que bloqueia agora: o F-67** — o site nunca chegou a ser publicado, e sem endereço público não há QR Codes de mesa (B-65), não há CORS para fechar (B-24) nem demonstração de cliente na apresentação.
 
 **Legenda:** ✅ feito · 🟨 parcial (ver nota) · ⬜ por fazer · 🔁 **já não se aplica** — o plano mudou pelo caminho e a tarefa deixou de fazer sentido. Fica à vista, marcada, em vez de apagada: uma tarefa apagada parece esquecida, uma marcada mostra que houve uma decisão.
 
@@ -121,16 +121,16 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ⬜ | B-28 | `motorFluxos.js`: sessão de conversa — criar, ler, gravar, expirar às 2 h | 2 h | B-16 |
 | ⬜ | B-29 | `motorFluxos.js`: ciclo de resposta — validar → guardar → calcular próximo estado | 2 h 30 | B-28 |
 | ⬜ | B-30 | `motorFluxos.js`: comandos `voltar` e `recomeçar` | 1 h | B-29 |
-| ⬜ | B-31 | `POST /api/mesa/:token/sessao` — abre a sessão ou devolve a que já está aberta | 1 h 30 | B-26, B-27 |
-| ⬜ | B-32 | `GET /api/sessao/:codigo` — estado da sessão, rondas já pedidas e total | 1 h 30 | B-31 |
-| ⬜ | B-33 | `POST /api/sessao/:codigo/pedido` — envia uma ronda para a cozinha | 1 h | B-32 |
-| ⬜ | B-34 | `POST /api/sessao/:codigo/conta` — passa a `aguarda_pagamento` e devolve a conta | 1 h 30 | B-33 |
-| ⬜ | B-35 | `POST /api/pedidos/takeaway` — pedido único com nome e telemóvel | 1 h | B-33 |
-| ⬜ | B-36 | `PATCH /api/gestao/sessoes/:id/fechar` — funcionário fecha a conta | 1 h | B-34 |
+| ✅ | B-31 | `GET /api/mesas/:token/sessao` — abre a sessão ou devolve a que já está aberta — *o nome da rota mudou para o do `API.md` §3.2. Duas leituras do QR ao mesmo tempo não criam duas sessões: quem impede é o índice único na coluna virtual `mesa_aberta`, não código* | 1 h 30 | B-26, B-27 |
+| ✅ | B-32 | Estado da sessão, rondas já pedidas e total — *não ficou em endpoint próprio: vem no B-31 e no `GET /api/mesas/:token/conta`. O cliente identifica-se pelo token da mesa, nunca chega a saber o código da sessão* | 1 h 30 | B-31 |
+| ✅ | B-33 | `POST /api/mesas/:token/pedir` — envia uma ronda para a cozinha — *o preço vem sempre da base de dados, nunca do browser* | 1 h | B-32 |
+| ✅ | B-34 | `POST /api/mesas/:token/pedir-conta` e `GET /conta` — passa a `aguarda_pagamento` e devolve a conta por categoria | 1 h 30 | B-33 |
+| ⬜ | B-35 | `POST /api/pedidos/takeaway` — pedido único com nome e telemóvel — *é o único do fluxo de pedidos que falta. O `GET /pedidos/cozinha` já sabe mostrá-los (devolve `cliente` em vez de `mesa`), só não há por onde criar um* | 1 h | B-33 |
+| ✅ | B-36 | `POST /api/pedidos/sessao/:id/fechar` — funcionário fecha a conta — *o total fica gravado ao fechar. Enquanto aberta é calculado na hora; congela aqui, para a conta de hoje não mudar se amanhã se alterar um preço* | 1 h | B-34 |
 | ⬜ | B-37 | `POST /api/fluxo/iniciar` e `/responder` — para o fluxo de reservas | 1 h | B-29 |
-| ⬜ | B-38 | Cálculo do total no servidor + geração do `numero_pedido` | 1 h | B-34 |
-| ⬜ | B-39 | `POST /api/pedidos` — transação que grava `PEDIDO` + `ITEM_PEDIDO` | 2 h | B-38 |
-| ⬜ | B-40 | Testar no Postman/Thunder: pedido de restaurante e de take away | 1 h 30 | B-39 |
+| ✅ | B-38 | Cálculo do total no servidor + geração do `numero_pedido` — *código de 5 símbolos sem I, O, 0 nem 1: é para ser lido em voz alta no balcão* | 1 h | B-34 |
+| ✅ | B-39 | Transação que grava `PEDIDO` + `ITEM_PEDIDO` + histórico — *ou entra tudo ou não entra nada; resolve o problema que o Guilherme apontou no `API.md` §3.3* | 2 h | B-38 |
+| 🟨 | B-40 | Testar: pedido de restaurante e de take away — *restaurante testado ponta a ponta a 08/09 (QR → pedir → cozinha → stock → conta → fechar). Falta o take away, que depende do B-35* | 1 h 30 | B-39 |
 
 ## Sprint 3 · Reservas (Semanas 6–7: 6–19 out)
 
@@ -157,12 +157,12 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | B-55 | `GET /api/gestao/pedidos?estado=&data=` | 1 h 30 | B-39, B-21 |
-| ⬜ | B-56 | `PATCH /api/gestao/pedidos/:id/estado` — valida a transição permitida | 1 h 30 | B-55 |
-| ⬜ | B-57 | Gravar cada mudança em `HISTORICO_ESTADO_PEDIDO` | 45 min | B-56 |
-| ⬜ | B-58 | `services/stock.js` — descontar stock ao confirmar pedido | 1 h 30 | B-56 |
-| ⬜ | B-59 | `services/stock.js` — repor stock ao cancelar pedido confirmado | 45 min | B-58 |
-| ⬜ | B-60 | Atualizar automaticamente o estado da mesa (`livre` / `ocupada`) | 1 h | B-56 |
+| ✅ | B-55 | `GET /api/pedidos/ativos` e `GET /api/pedidos/cozinha` — *a fila da cozinha inclui `pronto`, porque um prato pronto ainda lá está até alguém o levar; o ecrã tem quatro colunas* | 1 h 30 | B-39, B-21 |
+| ✅ | B-56 | `PATCH /api/pedidos/:id/estado` — valida a transição permitida — *recusa com 409 e devolve a lista do que é permitido, para o front-end desenhar só os botões válidos* | 1 h 30 | B-55 |
+| ✅ | B-57 | Gravar cada mudança em `HISTORICO_ESTADO_PEDIDO` — *com o funcionário que a fez. É daqui que sai o tempo médio de preparação do F-57* | 45 min | B-56 |
+| ✅ | B-58 | Descontar stock ao confirmar pedido — *ficou dentro do `PATCH .../estado` e não num `services/stock.js`: mexer no stock fora da transação que muda o estado abria a porta a ficarem em desacordo* | 1 h 30 | B-56 |
+| ✅ | B-59 | Repor stock ao cancelar pedido confirmado — *só repõe se tinha chegado a `confirmado`; cancelar uma ronda em `recebido` não devolve nada porque nada saiu* | 45 min | B-58 |
+| ✅ | B-60 | Atualizar automaticamente o estado da mesa (`livre` / `ocupada`) | 1 h | B-56 |
 | ⬜ | B-61 | CRUD de produtos | 2 h | B-21 |
 | ⬜ | B-62 | CRUD de categorias | 1 h 30 | B-21 |
 | ⬜ | B-63 | Consultar e ajustar stock + endpoint de produtos com stock baixo — *(ideia nova, 04/09)* acessível também ao nível `cozinha`, não só `administrador` (ver tabela de contas em `docs/API.md`) | 1 h 30 | B-21 |
@@ -172,7 +172,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | B-65 | Gerar os QR Codes das mesas com a biblioteca `qrcode` | 1 h 30 | B-11 |
+| 🟨 | B-65 | Gerar os QR Codes das mesas com a biblioteca `qrcode` — *o `backend/scripts/gerarQRCodes.js` está escrito e passado para mysql2 (era do Guilherme, em Prisma). Não se pode correr sem endereço público — à espera do F-67* | 1 h 30 | B-11 |
 | ⬜ | B-66 | `GET /api/gestao/mesas/qrcodes` — dados para a página de impressão | 45 min | B-65 |
 | ⬜ | B-67 | Entrada por token de mesa: `/mesa?t=<token>` | 1 h | B-36 |
 | ⬜ | B-68 | `estatisticas.js`: nº de pedidos, faturação diária e mensal, média por pedido | 2 h | B-39 |
@@ -420,18 +420,19 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 ## Resumo de esforço
 
-*Contagens a 7 de setembro, tiradas das próprias tabelas acima — se uma linha mudar de
+*Contagens a 8 de setembro, tiradas das próprias tabelas acima — se uma linha mudar de
 estado, esta tabela fica errada até ser refeita.*
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 73 | 24 | — | 49 | ≈ 63 h 30 |
+| 🔵 João (B-) | 73 | 37 | — | 36 | ≈ 47 h |
 | 🟠 Guilherme (F-) | 67 | 38 | 19 | 10 | ≈ 19 h 15 |
 | 🟢 Os dois (C-) | 23 | 4 | — | 19 | ≈ 40 h |
 | 🐞 Correções (X-) | 9 | 8 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 123 h 15.** As tarefas 🟨 (C-01, à espera de o Guilherme ler o
-`CONTEXTO.md`, e X-08, que não se conseguiu reproduzir) contam como por fazer.
+**Total por fazer: ≈ 106 h 45.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
+take away), B-65 (QR Codes, à espera de endereço público), C-01 (falta o Guilherme ler o
+`CONTEXTO.md`) e X-08 (não se conseguiu reproduzir).
 
 **Onde está mesmo o front-end (04/09):** 35 tarefas feitas, 19 marcadas 🔁 (a `pedido.html`,
 substituída pela `mesa.html`) e **10 por fazer**.
