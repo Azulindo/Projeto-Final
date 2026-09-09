@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<!-- Só administrador. A cozinha e o balcão não veem faturação: o monitor
+     da cozinha fica ligado o turno inteiro num sítio por onde passa
+     gente, e o balcão não tem decisão nenhuma a tomar com estes números.
+     Tem de bater certo com o `niveis` deste item no layout.js. -->
+<html lang="pt" data-niveis="administrador">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estatísticas — Vem Pro Abate</title>
+<meta name="description" content="Pedidos, faturação e tempo de preparação do serviço.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/estatisticas.css">
+
+<script src="../js/api.js"></script>
+<script src="js/auth-guard.js"></script>
+</head>
+<body data-pagina="estatisticas" data-titulo="Estatísticas">
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="content-area">
+      <header class="content-topbar" id="contentTopbar"></header>
+
+      <main class="content-main" id="conteudoPagina">
+
+        <p class="estado-msg" id="estadoMsg" role="status">
+          <span class="estado-spinner" aria-hidden="true"></span>
+          <span id="estadoTexto">A carregar as estatísticas…</span>
+        </p>
+
+        <div id="conteudo" hidden>
+
+          <!-- ── Hoje ──────────────────────────────────────────────────
+               Primeiro bloco porque é o único que responde a "como é que
+               está a correr agora". O resto é história. -->
+          <section class="bloco">
+            <header class="bloco-cabecalho">
+              <h2>Hoje</h2>
+              <span class="bloco-nota" id="notaHoje"></span>
+            </header>
+
+            <div class="cartoes">
+              <article class="cartao">
+                <span class="cartao-etiqueta">Pedidos</span>
+                <span class="cartao-valor" id="hojePedidos">—</span>
+                <span class="cartao-rodape" id="hojePedidosComp"></span>
+              </article>
+
+              <article class="cartao">
+                <span class="cartao-etiqueta">Faturação</span>
+                <span class="cartao-valor" id="hojeFaturacao">—</span>
+                <span class="cartao-rodape" id="hojeFaturacaoComp"></span>
+              </article>
+
+              <article class="cartao">
+                <span class="cartao-etiqueta">Média por pedido</span>
+                <span class="cartao-valor" id="hojeMedia">—</span>
+                <span class="cartao-rodape">Faturação a dividir pelos pedidos</span>
+              </article>
+
+              <article class="cartao">
+                <span class="cartao-etiqueta">Tempo médio de preparação</span>
+                <span class="cartao-valor" id="hojeTempo">—</span>
+                <span class="cartao-rodape">De aceite a pronto</span>
+              </article>
+            </div>
+          </section>
+
+          <!-- ── Serviço agora ───────────────────────────────────────── -->
+          <section class="bloco">
+            <header class="bloco-cabecalho">
+              <h2>Serviço neste momento</h2>
+            </header>
+
+            <div class="cartoes">
+              <article class="cartao">
+                <span class="cartao-etiqueta">Mesas ocupadas</span>
+                <span class="cartao-valor" id="mesasOcupadas">—</span>
+                <span class="cartao-rodape" id="mesasNota"></span>
+              </article>
+
+              <article class="cartao">
+                <span class="cartao-etiqueta">Rondas por servir</span>
+                <span class="cartao-valor" id="rondasPorFazer">—</span>
+                <span class="cartao-rodape">Aceites e ainda não entregues</span>
+              </article>
+
+              <article class="cartao" id="cartaoStock">
+                <span class="cartao-etiqueta">Produtos abaixo do mínimo</span>
+                <span class="cartao-valor" id="stockBaixo">—</span>
+                <span class="cartao-rodape"><a href="stock.html">Ver o stock</a></span>
+              </article>
+            </div>
+          </section>
+
+          <!-- ── Mês ─────────────────────────────────────────────────── -->
+          <section class="bloco">
+            <header class="bloco-cabecalho">
+              <h2>Este mês</h2>
+            </header>
+
+            <div class="cartoes">
+              <article class="cartao">
+                <span class="cartao-etiqueta">Pedidos</span>
+                <span class="cartao-valor" id="mesPedidos">—</span>
+              </article>
+
+              <article class="cartao">
+                <span class="cartao-etiqueta">Faturação</span>
+                <span class="cartao-valor" id="mesFaturacao">—</span>
+              </article>
+
+              <article class="cartao">
+                <span class="cartao-etiqueta">Média por pedido</span>
+                <span class="cartao-valor" id="mesMedia">—</span>
+              </article>
+            </div>
+          </section>
+
+          <!-- Os gráficos são a F-56 e a F-57. Fica à vista com a
+               etiqueta, como os itens por construir da barra lateral:
+               esconder o que falta faz o ecrã parecer acabado. -->
+          <section class="bloco por-construir">
+            <header class="bloco-cabecalho">
+              <h2>Gráficos <span class="etiqueta-tarefa">F-56 · F-57</span></h2>
+            </header>
+            <p class="por-construir-texto">
+              Faturação por dia e por mês, e os produtos mais vendidos. Os dados já vêm
+              no mesmo pedido que enche os cartões acima — falta desenhá-los.
+            </p>
+          </section>
+
+          <p class="nota-rodape" id="notaSimulado" hidden></p>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="js/layout.js"></script>
+  <script src="js/estatisticas.js"></script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 
 **Projeto Final de Curso** · João Ribeiro & Guilherme Gonçalves
 **Documentos relacionados:** `CONTEXTO.md` (o quê e porquê) · `PLANEAMENTO.md` (calendário e sprints)
-**Versão:** 2.2 · **merge das duas versões (João + Guilherme)** · **Última revisão:** 9 de setembro de 2026
+**Versão:** 2.2 · **merge das duas versões (João + Guilherme)** · **Última revisão:** 8 de setembro de 2026
 
 ---
 
@@ -78,7 +78,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | **✅** | **X-07** | ~~Topo dos cartões altos cortado~~ — corrigido com teste | 45 min | Gui |
 | 🟨 | **X-08** | Banda branca no topo — **não reproduzida** pelo Guilherme em 6 páginas a 1440 e 1920. A causa que eu apontei era real (`html`/`body` sem cor de fundo) e foi tapada com `background-color` + `color-scheme: dark`. Possível artefacto do meu teste: corri em Chromium sem rede, e a fonte Nosifer não carregou | 30 min | Gui |
 | **✅** | **X-09** | ~~Caixa de escrita engolia texto sem responder~~ — corrigido com teste | 20 min | Gui |
-| ⬜ | **X-10** | `docs/API.md` desatualizado em dois sítios, encontrado a 09/09 ao ler as secções novas. **(a)** A §5 *"Onde é que o servidor está"* ainda diz `API_BASE = 'http://localhost:3000/api'` e *"quando houver endereço público, muda-se uma linha"* — mas o C-26 já o faz sozinho e o servidor está no Render desde 05/09; a lista `ENDPOINTS_REAIS` que ela mostra tem 4 entradas e a real tem 16. **(b)** A §4.8 traz a justificação do movimento **duas vezes**, com a mesma frase final repetida — sobra do merge. É o mesmo erro do F-67 (*"Vercel (já configurado)"*): documentação a descrever um plano como se fosse o que corre. E o `API.md` é entregável | 30 min | João |
+| ⬜ | **X-10** | `docs/API.md` desatualizado em dois sítios, encontrado a 09/09 ao ler as secções novas. **(a)** A §5 *"Onde é que o servidor está"* ainda diz `API_BASE = 'http://localhost:3000/api'` e *"quando houver endereço público, muda-se uma linha"* — mas o C-26 já o faz sozinho e o servidor está no Render desde 05/09; a lista `ENDPOINTS_REAIS` que ela mostra tem 4 entradas e a real tem 16. **(b)** A §4.8 traz a justificação do movimento **duas vezes**, com a mesma frase final repetida — sobra do merge. É o mesmo erro do F-67 (*"Vercel (já configurado)"*): documentação a descrever um plano como se fosse o que corre. E o `API.md` é entregável | 30 min | Gui |
 
 ---
 
@@ -309,7 +309,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | F-54 | Responsividade da aplicação de gestão — *zero alvos de toque abaixo de 44 px e zero scroll horizontal, medido em 4 larguras; o pior era o ✕ do painel da conta, a 24×23* | 1 h 30 | F-53 |
 
 | ✅ | F-67 | **Publicar o site.** Descoberto a 04/09: o `vercel.json` estava no repositório desde julho e o `CONTEXTO.md` dizia *"Vercel (já configurado)"*, mas nunca houve deployment — era um plano escrito como se estivesse feito. **No ar a 08/09 em `https://vemproabate.vercel.app`.** O `vercel.json` antigo usava *rewrites*, que mantêm o endereço na barra e faziam os caminhos relativos resolver a partir de `/menu` — o site teria aparecido sem estilos e sem API; passou a um redirecionamento simples da raiz. Verificados no endereço final: a raiz, os estilos e o `api.js`. Havia também dois projetos antigos no Vercel do João, de março: o `vemproabate` estava vazio mas tinha o nome reservado (daí o `DEPLOYMENT_NOT_FOUND`) e foi apagado; o `vemproabatee` continua no ar com a versão de março e vai levar um redirecionamento em vez de ser apagado, para quem tenha o link antigo não cair num 404. *Contas: a Aiven e o Render são do João, o Vercel é do Guilherme — o plano gratuito do Vercel não permite membros, por isso cada um mexe no seu sem esperar pelo outro.* | 1 h | — |
-| ⬜ | F-68 | Fontes do Google guardadas no repositório — *só se o C-27 mostrar que sem rede fica mau. Hoje as páginas vão buscar o tipo de letra ao Google e sem internet caem no do sistema; no plano B isso acontece de certeza* | 30 min | C-27 |
+| ⬜ | F-68 | Fontes do Google guardadas no repositório — *só se o C-27 mostrar que sem rede fica mau. Hoje as páginas vão buscar o tipo de letra ao Google e sem internet caem no do sistema; no plano B isso acontece de certeza. Já houve indício: o X-08, a banda branca que nunca se reproduziu, apareceu numa corrida sem rede em que a Nosifer não carregou* | 30 min | C-27 |
 
 **Total do sprint: ≈ 21 h 30**
 
@@ -317,7 +317,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | F-55 | Cartões de métricas do dashboard | 1 h 30 | F-44 |
+| ✅ | F-55 | Cartões de métricas — **em `estatisticas.html`, não no Início** — *a tarefa dizia "do dashboard", mas o Início é visto pela cozinha, pelo balcão e pela administração, e o monitor da cozinha fica ligado o turno inteiro num sítio por onde passa gente: faturação não fica nesse ecrã. A barra lateral já previa um item "Estatísticas" só para administrador. Cartões de hoje, do serviço em curso e do mês, cada valor comparável com o de ontem — um número sozinho não diz se o dia está a correr bem. Os números de hoje saem dos pedidos feitos na própria demonstração, por isso fazer um pedido à mesa move o ecrã à frente de quem está a ver. O ecrã diz em voz alta o que é série de exemplo. Formato proposto em `docs/API.md` 4.10, à espera do **B-72**. Verificado: `frontend/testes/estatisticas.js`* | 1 h 30 | F-44 |
 | ⬜ | F-56 | Gráfico de faturação diária e mensal (Chart.js) | 2 h | F-55 |
 | ⬜ | F-57 | Gráfico de produtos mais vendidos | 1 h 30 | F-56 |
 | ✅ | F-58 | Página imprimível dos QR Codes (um por mesa, com o número bem visível) | 2 h | B-66 |
@@ -480,14 +480,23 @@ refazer.
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
 | 🔵 João (B-) | 73 | 40 | — | 33 | ≈ 43 h 30 |
-| 🟠 Guilherme (F-) | 68 | 41 | 19 | 8 | ≈ 12 h 45 |
+| 🟠 Guilherme (F-) | 68 | 42 | 19 | 7 | ≈ 11 h 15 |
 | 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
 | 🐞 Correções (X-) | 10 | 8 | — | 2 | ≈ 1 h |
 
-**Total por fazer: ≈ 98 h 45.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
+**Total por fazer: ≈ 97 h 15.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
 take away, e falta o próprio B-35 do take away), C-01 (falta o Guilherme ler o `CONTEXTO.md`)
-e X-08 (não se conseguiu reproduzir). O total subiu, e subiu de propósito: entraram o plano B
-local (C-24 a C-28, ≈ 2 h 45 por fazer) e o X-10. O B-65 saiu desta lista — os QR Codes estão gerados.
+e X-08 (não se conseguiu reproduzir). O B-65 saiu desta lista — os QR Codes estão gerados.
+
+> **Nota do merge de 09/09 (o terceiro seguido neste bloco).** Outra vez nenhuma das duas
+> versões estava certa: a do João não contava a F-55, a do Guilherme não contava as C-24 a
+> C-28. Refeito a contar as linhas, como o parágrafo acima manda.
+>
+> E a contagem apanhou mais uma coisa: a versão do João dizia **68** tarefas F- e **10** X-.
+> São **67** e **9** — as quatro sequências estão completas, de B-1 a B-73, F-1 a F-67, C-1 a
+> C-28 e X-1 a X-9, sem um único código em falta. A verificação da sequência é a que o próprio
+> parágrafo acima prescreve, e é a terceira vez que é ela a apanhar o erro. Vale a pena
+> confiar nela em vez da memória.
 
 *Como estes números foram feitos:* contadas as 179 linhas das tabelas acima uma a uma e
 somada a coluna da estimativa só das linhas ⬜ e 🟨. Os quatro prefixos fecham certo

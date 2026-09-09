@@ -1,0 +1,169 @@
+/* =====================================================================
+   estatisticas.css — Cartões de métricas (F-55)
+   =====================================================================
+   Regra da F-08, nas palavras do João: calor na moldura, nunca nos
+   dados. Um ecrã de números é o sítio onde essa regra mais custa a
+   cumprir e mais rende — a tentação é pintar os cartões de dourado
+   porque fica bonito, e o resultado é que nada salta à vista.
+
+   Aqui só duas coisas ganham cor, e as duas querem dizer alguma coisa:
+   uma descida em relação a ontem, e o stock abaixo do mínimo.
+   ===================================================================== */
+
+.bloco { margin-bottom: 28px; }
+
+.bloco-cabecalho {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.bloco-cabecalho h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.bloco-nota { font-size: 13px; color: var(--texto-suave); }
+
+/* ── Cartões ──────────────────────────────────────────────────────── */
+
+/* auto-fit + minmax em vez de media queries: a grelha reflui sozinha de
+   quatro colunas para uma, e continua certa em larguras que não estão
+   escritas em lado nenhum. */
+.cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.cartao {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  background: var(--bg-elevada);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  min-width: 0;
+}
+
+.cartao-etiqueta {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  /* --texto-fraco dava 2,72:1 aqui, abaixo dos 4,5:1 da WCAG. Medido ao
+     construir a F-52, e vale para todas as etiquetas pequenas da app. */
+  color: var(--texto-suave);
+}
+
+.cartao-valor {
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.15;
+  /* Números de largura fixa: sem isto, um valor que muda de 9 para 10
+     empurra o resto do cartão e a grelha inteira estremece a cada
+     atualização. */
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.cartao-rodape {
+  font-size: 12.5px;
+  color: var(--texto-suave);
+  line-height: 1.45;
+}
+
+.cartao-rodape a { color: var(--dourado); }
+.cartao-rodape a:hover { text-decoration: underline; }
+
+/* ── As duas únicas cores com significado ─────────────────────────── */
+
+/* Uma descida não é um erro — é um facto que se quer ver depressa. Daí
+   ser cor de aviso e não de perigo. */
+.comp-desce { color: var(--aviso); }
+.comp-sobe  { color: var(--sucesso); }
+
+/* Stock abaixo do mínimo: barra à esquerda em vez de fundo vermelho, e
+   só quando há mesmo. Marca o cartão sem gritar mais alto do que o
+   número que lá está dentro. */
+.cartao-alerta {
+  border-left: 3px solid var(--perigo);
+}
+
+/* ── Bloco por construir ──────────────────────────────────────────── */
+
+.por-construir {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  opacity: 0.8;
+}
+
+.por-construir .bloco-cabecalho { margin-bottom: 6px; }
+
+.por-construir-texto {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--texto-suave);
+}
+
+.etiqueta-tarefa {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 3px 7px;
+  border-radius: 999px;
+  margin-left: 6px;
+  vertical-align: middle;
+  text-transform: none;
+}
+
+/* ── Estados ──────────────────────────────────────────────────────── */
+
+.estado-msg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 20px;
+  color: var(--texto-suave);
+  font-size: 14px;
+}
+
+.estado-msg.hidden { display: none; }
+.estado-aviso { color: var(--aviso); }
+
+.estado-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(201, 131, 47, 0.25);
+  border-top-color: var(--cobre);
+  border-radius: 50%;
+  animation: estatGira 0.8s linear infinite;
+}
+
+@keyframes estatGira { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .estado-spinner { animation: none; }
+}
+
+.nota-rodape {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+  color: var(--texto-suave);
+  line-height: 1.6;
+}
+
+.nota-rodape[hidden] { display: none; }
