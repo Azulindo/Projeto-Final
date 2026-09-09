@@ -750,20 +750,6 @@ o cliente não escolhe em nome de quem grava.
 > O ecrã já o mostra desativado à cozinha, com o motivo escrito em vez de o esconder — uma
 > opção que desaparece sem explicação é comunicada como avaria.
 
-> **Porque um movimento e não um `PATCH` que grava `quantidade_atual`.** Este stock mexe-se
-> sozinho (B-58/B-59). Entre o gerente abrir o ecrã e carregar em gravar podem ter saído três
-> pratos. Se ele gravar "24", os três pratos vendidos desaparecem da contabilidade — e ninguém
-> dá por isso, porque o ecrã fica a mostrar um número com todo o ar de estar certo. Com
-> movimentos, o servidor soma e as duas coisas coexistem.
->
-> O `acerto` é o único absoluto, e é suposto ser: uma contagem física manda sobre o que o
-> sistema julgava saber.
-
-> 📐 **Consequência a não esquecer:** a tabela de movimentos é a **18.ª**. O `/api/saude`
-> passou a dizer *"17 tabelas + 1 vista"* precisamente porque o diagrama ER é entregável e
-> alguém ia contar. Quando esta tabela entrar, há três sítios a acertar: o `/api/saude`, o
-> diagrama ER, e as três menções a "17 tabelas" no `README.md`.
-
 > **Porque é um movimento e não um campo `quantidade_atual` que se grava por cima.**
 > Esta foi a decisão de desenho do ecrã, e é a única parte que vale mesmo a pena discutir.
 >
@@ -781,6 +767,15 @@ o cliente não escolhe em nome de quem grava.
 >
 > O `acerto` é o único absoluto, e é suposto ser: uma contagem física manda sobre o que o
 > sistema julgava saber.
+
+> 📐 **A tabela de movimentos é a 18.ª — e já entrou (09/09).** Ficava aqui escrito, em
+> futuro, que "quando esta tabela entrar há três sítios a acertar". Entrou, e os três foram
+> acertados: o `schema.sql` tem 18 `CREATE TABLE` e 1 `CREATE VIEW`, o `/api/saude` conta as
+> duas coisas em separado, e as três menções no `README.md` passaram a 18. Verificado a
+> 09/09, a contar as linhas do `schema.sql`.
+>
+> *(Deixar esta nota no futuro seria repetir o erro do F-67 — documentação a descrever um
+> plano como se fosse o que corre.)*
 
 #### `PATCH /api/gestao/stock/:produtoId/minimo`
 
@@ -911,20 +906,19 @@ O `MODO_SIMULACAO` é global: desligá-lo mandaria para o servidor **tudo** — 
 cozinha, o balcão e as sessões de mesa —, e desses só o catálogo existe. Ligar uma coisa
 partia quatro ecrãs.
 
-Por isso o `frontend/js/api.js` tem uma lista dos caminhos que já existem mesmo:
-
-```js
-const ENDPOINTS_REAIS = [
-  /^categorias$/,             // GET /api/categorias
-  /^produtos$/,               // GET /api/produtos
-  /^produtos\?/,              // GET /api/produtos?categoria=Bebidas
-  /^produtos\/\d+$/,          // GET /api/produtos/:id
-];
-```
-
-Vão ao servidor mesmo com a simulação ligada; **todo o resto continua simulado**. À medida
-que cada endpoint for ficando pronto, acrescenta-se uma linha. No dia em que a lista cobrir
+Por isso o `frontend/js/api.js` tem uma lista — o `ENDPOINTS_REAIS` — com os caminhos que já
+existem mesmo. Vão ao servidor com a simulação ligada; **todo o resto continua simulado**. À
+medida que cada endpoint fica pronto, acrescenta-se uma linha. No dia em que a lista cobrir
 tudo, põe-se `MODO_SIMULACAO = false` e apaga-se a lista e a simulação inteira.
+
+**A 09/09 são 15 caminhos**, e cobrem quatro coisas: o catálogo (`saude`, `categorias`,
+`produtos`), a autenticação (`auth/login`, `auth/eu`), as sessões de mesa (`mesas/:token/…`,
+que não levam login — o token do QR é a credencial) e a fila de trabalho (`pedidos/…`).
+
+> **A lista exata vive no `api.js` e não aqui, de propósito.** Este documento chegou a ter
+> uma cópia dela com 4 entradas quando o ficheiro já tinha 15 — copiada uma vez e nunca mais
+> tocada. Uma lista copiada é uma lista que vai ficar errada; o que se escreve aqui é o que
+> ela cobre, não o que ela diz linha a linha.
 
 ### `?simular=1` — ver tudo sem base de dados nenhuma
 
@@ -936,14 +930,27 @@ estar de pé à frente de um júri.** Os testes automáticos usam o mesmo mecani
 
 ### Onde é que o servidor está
 
-`API_BASE = 'http://localhost:3000/api'`.
+**O `API_BASE` deixou de ser uma linha escrita à mão (C-26, 09/09).** É decidido pela origem
+da própria página:
 
-**Isto só funciona para quem tenha o back-end a correr na própria máquina.** Um telemóvel na
-mesa do restaurante não chega ao `localhost` de ninguém. Enquanto o servidor não estiver
-publicado (o João vai pô-lo no Render), o menu ligado à base de dados só se vê em quem o
-corra localmente — para todo o resto, existe o `?simular=1`.
+| A página foi aberta de… | A API é… |
+|---|---|
+| `vemproabate.vercel.app` (ou qualquer domínio público) | `https://vem-pro-abate-api.onrender.com/api` |
+| `localhost`, `127.0.0.1`, um IP privado (`10.·`, `192.168.·`, `172.16-31.·`) ou `file://` | `http://<mesmo host>:3000/api` |
 
-Quando houver endereço público, muda-se **uma linha**: o `API_BASE`.
+Nunca uma página `https` a chamar uma API `http`: no plano B é tudo local em http, no normal
+é tudo público em https. Para forçar à mão sem editar ficheiro nenhum,
+`?api=http://192.168.1.70:3000/api` — e a escolha sobrevive à navegação, como o `?simular=1`.
+
+Isto existe por causa do plano B da apresentação (C-24 a C-28): entrar em modo local não pode
+obrigar a editar o `api.js` à pressa à frente do júri, e muito menos a lembrar de o pôr como
+estava depois. Verificado em `frontend/testes/api-base.js`.
+
+> **Esta secção estava a mentir até 09/09** (X-10, apontado pelo João). Dizia
+> `API_BASE = 'http://localhost:3000/api'` e *"quando houver endereço público, muda-se uma
+> linha"* — quando o servidor está no Render desde 05/09 e o C-26 já escolhe o endereço
+> sozinho. É o mesmo erro do F-67: documentação a descrever um plano como se fosse o que
+> corre. E o `API.md` é entregável.
 
 ## 6. Onde está o projeto (atualizado a 03/09)
 
