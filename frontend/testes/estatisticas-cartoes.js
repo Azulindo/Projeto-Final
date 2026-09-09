@@ -114,6 +114,50 @@ const num = t => Number(String(t || '').replace(/[^\d,.-]/g, '').replace(',', '.
         /^[1-9]\d* de \d+/.test(await admin.locator('#mesasOcupadas').textContent() || ''),
         await admin.locator('#mesasOcupadas').textContent());
 
+  /* ── Gráficos (F-56, F-57) ──────────────────────────────────────── */
+  const svgs = await admin.locator('.grafico-svg').count();
+  check('Os três gráficos são desenhados', svgs === 3, `contou ${svgs}`);
+
+  const barras = await admin.locator('#graficoDias .grafico-barra').count();
+  check('O gráfico dos dias tem uma barra por dia (30)', barras === 30, `contou ${barras}`);
+  check('O dos meses tem 6 barras',
+        (await admin.locator('#graficoMeses .grafico-barra').count()) === 6);
+  check('O dos produtos tem 5 barras',
+        (await admin.locator('#graficoProdutos .grafico-barra').count()) === 5);
+
+  /* A tabela não é um extra: é onde estão os números para quem não vê o
+     gráfico. Um SVG sem ela seria a coisa menos acessível da app. */
+  const linhasTabela = await admin.locator('#graficoDias .tabela-grafico tbody tr').count();
+  check('Cada gráfico traz a tabela equivalente, com as mesmas 30 linhas',
+        linhasTabela === 30, `contou ${linhasTabela}`);
+  check('A tabela dos produtos nomeia os produtos',
+        /Abate Misto/.test(await admin.locator('#graficoProdutos .tabela-grafico').textContent() || ''));
+
+  /* O erro que eu próprio meti na primeira versão do graficos.js:
+     barras alcançáveis por Tab dentro de um SVG escondido aos leitores
+     de ecrã — focáveis e mudas, a mesma classe do lightbox da F-63. */
+  const focaveis = await admin.locator('.grafico-svg [tabindex]').count();
+  check('Nenhuma barra é alcançável por Tab dentro do SVG',
+        focaveis === 0, `contou ${focaveis}`);
+  check('Os SVG não estão aria-hidden — têm role="img" com um resumo',
+        (await admin.locator('.grafico-svg[aria-hidden="true"]').count()) === 0
+        && (await admin.locator('.grafico-svg[role="img"]').count()) === 3);
+
+  const rotulo = await admin.locator('#graficoDias .grafico-svg').getAttribute('aria-label');
+  check('E o resumo diz o que o gráfico mostra e onde estão os números',
+        /faturação diária/i.test(rotulo || '') && /tabela/i.test(rotulo || ''), rotulo);
+
+  /* Um eixo que acaba em 437,29 € não se lê — tem de ser um número
+     redondo. Os rótulos do eixo são os três primeiros <text>, na ordem
+     0 → metade → topo; o que interessa é o TERCEIRO. Apanhar o primeiro
+     dava sempre "0 €" e a verificação passava por engano. */
+  const eixoY = await admin.$$eval('#graficoDias .grafico-svg text',
+    els => els.slice(0, 3).map(e => e.textContent.trim()));
+  const topo = eixoY[2] || '';
+  check('O topo do eixo é um número redondo, não o valor máximo em bruto',
+        /^(\d+|\d+,\d)( mil)? €$/.test(topo) && topo !== '0 €',
+        `eixo: ${eixoY.join(' · ')}`);
+
   /* ── 1. Quem não entra ──────────────────────────────────────────── */
   const coz = await login(ctx, 'cozinha@vemproabate.pt');
   check('A cozinha não tem o item "Estatísticas" na barra lateral',

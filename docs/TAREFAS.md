@@ -316,8 +316,8 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
 | ✅ | F-55 | Cartões de métricas — **em `estatisticas.html`, não no Início** — *a tarefa dizia "do dashboard", mas o Início é visto pela cozinha, pelo balcão e pela administração, e o monitor da cozinha fica ligado o turno inteiro num sítio por onde passa gente: faturação não fica nesse ecrã. A barra lateral já previa um item "Estatísticas" só para administrador. Cartões de hoje, do serviço em curso e do mês, cada valor comparável com o de ontem — um número sozinho não diz se o dia está a correr bem. Os números de hoje saem dos pedidos feitos na própria demonstração, por isso fazer um pedido à mesa move o ecrã à frente de quem está a ver. O ecrã diz em voz alta o que é série de exemplo. Formato proposto em `docs/API.md` 4.10, à espera do **B-72**. Verificado: `frontend/testes/estatisticas.js`* | 1 h 30 | F-44 |
-| ⬜ | F-56 | Gráfico de faturação diária e mensal (Chart.js) | 2 h | F-55 |
-| ⬜ | F-57 | Gráfico de produtos mais vendidos | 1 h 30 | F-56 |
+| ✅ | F-56 | Gráfico de faturação diária e mensal — **SVG à mão, sem Chart.js** — *a tarefa dizia Chart.js e a decisão foi contra, por três razões: o projeto é declaradamente sem frameworks (está no README e é o que o distingue); por causa do plano B a biblioteca teria de ir para dentro do repositório, deixando lá ~200 KB minificados que ninguém revê; e o Chart.js desenha em `<canvas>`, opaco para um leitor de ecrã — seria a coisa menos acessível da app, logo no ecrã que resume o negócio. Cada gráfico traz a tabela dos números por baixo, no "Ver os números". Eixo em números redondos, rótulos de N em N quando 30 dias não cabem, redesenha ao mudar a largura para o texto não encolher. Se o João preferir Chart.js, a troca fica contida no `graficos.js`. Verificado: `frontend/testes/estatisticas-cartoes.js`* | 2 h | F-55 |
+| ✅ | F-57 | Gráfico de produtos mais vendidos — *barras horizontais, porque "Picanha na Brasa Negra" na vertical fica de lado ou cortado, e um rótulo que se lê de lado é um rótulo que ninguém lê. Partilha o `graficos.js` com a F-56. A unidade aqui é quantidade, não dinheiro* | 1 h 30 | F-56 |
 | ✅ | F-58 | Página imprimível dos QR Codes (um por mesa, com o número bem visível) | 2 h | B-66 |
 | ✅ | F-59 | Revisão de responsividade de todos os ecrãs do cliente — *menu de 5px→15px, alvos a 44px, imagens 38,6→3,6 MB; medido em 5 larguras* | 2 h | — |
 | ⬜ | F-60 | Revisão visual final e afinação de detalhes | 2 h | — |
@@ -478,11 +478,11 @@ refazer.
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
 | 🔵 João (B-) | 73 | 39 | — | 34 | ≈ 46 h |
-| 🟠 Guilherme (F-) | 67 | 42 | 19 | 6 | ≈ 10 h 45 |
+| 🟠 Guilherme (F-) | 67 | 44 | 19 | 4 | ≈ 7 h 15 |
 | 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
 | 🐞 Correções (X-) | 9 | 8 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 98 h 45.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
+**Total por fazer: ≈ 95 h 15.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
 take away, e falta o próprio B-35 do take away), C-01 (falta o Guilherme ler o `CONTEXTO.md`)
 e X-08 (não se conseguiu reproduzir). O B-65 saiu desta lista — os QR Codes estão gerados.
 

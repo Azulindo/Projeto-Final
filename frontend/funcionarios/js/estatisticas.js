@@ -92,6 +92,8 @@ document.addEventListener('DOMContentLoaded', function () {
     texto('mesFaturacao', euros(mes.faturacao));
     texto('mesMedia', euros(mes.media_por_pedido));
 
+    desenharGraficos(d);
+
     /* Um dia sem serviço nenhum não é um erro, e o ecrã tem de o dizer —
        senão quem vê quatro zeros pensa que se partiu alguma coisa. */
     const nota = document.getElementById('notaHoje');
@@ -113,6 +115,59 @@ document.addEventListener('DOMContentLoaded', function () {
         aviso.hidden = false;
       }
     }
+  }
+
+  /* ── Gráficos — F-56 e F-57 ──────────────────────────────────────
+     Os dados vêm no mesmo pedido que encheu os cartões: um ecrã, uma
+     chamada. Ver o cabeçalho do graficos.js para a razão de serem SVG
+     à mão e não Chart.js. */
+  function desenharGraficos(d) {
+    if (typeof grafico !== 'function') return;   // graficos.js não carregou
+
+    /* Nos dias mostra-se só o número do dia. A data inteira em 30
+       rótulos não cabe em ecrã nenhum, e o mês já está no título do
+       bloco — mas o `titulo` guarda a data toda, para a tabela e para
+       a legenda ao passar o rato. */
+    grafico(document.getElementById('graficoDias'),
+      (d.faturacao_por_dia || []).map(function (x) {
+        return { rotulo: String(Number(x.dia.slice(8, 10))), titulo: dataLegivel(x.dia), valor: x.total };
+      }),
+      { cabecalhos: ['Dia', 'Faturação'],
+        resumo: `Gráfico de barras da faturação diária dos últimos ${(d.faturacao_por_dia || []).length} dias. Os números estão na tabela a seguir.` });
+
+    grafico(document.getElementById('graficoMeses'),
+      (d.faturacao_por_mes || []).map(function (x) {
+        return { rotulo: mesCurto(x.mes), titulo: mesLegivel(x.mes), valor: x.total };
+      }),
+      { cabecalhos: ['Mês', 'Faturação'],
+        resumo: 'Gráfico de barras da faturação mensal dos últimos 6 meses. Os números estão na tabela a seguir.' });
+
+    /* Horizontal: "Picanha na Brasa Negra" na vertical fica de lado ou
+       cortado, e um rótulo que se lê de lado é um rótulo que ninguém lê.
+       E aqui a unidade não é dinheiro — é quantidade. */
+    grafico(document.getElementById('graficoProdutos'),
+      (d.mais_vendidos || []).map(function (p) {
+        return { rotulo: p.nome, titulo: p.nome, valor: p.quantidade };
+      }),
+      { horizontal: true,
+        formatar: function (v) { return `${Number(v) || 0}`; },
+        cabecalhos: ['Produto', 'Vendidos'],
+        resumo: 'Gráfico de barras dos cinco produtos mais vendidos, por quantidade. Os números estão na tabela a seguir.' });
+  }
+
+  const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+  function dataLegivel(iso) {
+    const [a, m, dia] = String(iso).split('-');
+    return `${Number(dia)} de ${MESES[Number(m) - 1] || m} de ${a}`;
+  }
+  function mesCurto(iso) {
+    const [, m] = String(iso).split('-');
+    return MESES[Number(m) - 1] || iso;
+  }
+  function mesLegivel(iso) {
+    const [a, m] = String(iso).split('-');
+    return `${MESES[Number(m) - 1] || m} de ${a}`;
   }
 
   /* ── Comparação com ontem ────────────────────────────────────────

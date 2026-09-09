@@ -126,17 +126,32 @@
             </div>
           </section>
 
-          <!-- Os gráficos são a F-56 e a F-57. Fica à vista com a
-               etiqueta, como os itens por construir da barra lateral:
-               esconder o que falta faz o ecrã parecer acabado. -->
-          <section class="bloco por-construir">
+          <!-- ── Gráficos (F-56, F-57) ──────────────────────────────
+               SVG desenhado à mão, sem biblioteca — ver o cabeçalho do
+               graficos.js para a razão. Cada um traz a tabela dos
+               números por baixo, no "Ver os números". -->
+          <section class="bloco">
             <header class="bloco-cabecalho">
-              <h2>Gráficos <span class="etiqueta-tarefa">F-56 · F-57</span></h2>
+              <h2>Faturação por dia</h2>
+              <span class="bloco-nota">Últimos 30 dias</span>
             </header>
-            <p class="por-construir-texto">
-              Faturação por dia e por mês, e os produtos mais vendidos. Os dados já vêm
-              no mesmo pedido que enche os cartões acima — falta desenhá-los.
-            </p>
+            <div class="grafico" id="graficoDias"></div>
+          </section>
+
+          <section class="bloco">
+            <header class="bloco-cabecalho">
+              <h2>Faturação por mês</h2>
+              <span class="bloco-nota">Últimos 6 meses</span>
+            </header>
+            <div class="grafico" id="graficoMeses"></div>
+          </section>
+
+          <section class="bloco">
+            <header class="bloco-cabecalho">
+              <h2>Produtos mais vendidos</h2>
+              <span class="bloco-nota">Por quantidade, este mês</span>
+            </header>
+            <div class="grafico" id="graficoProdutos"></div>
           </section>
 
           <p class="nota-rodape" id="notaSimulado" hidden></p>
@@ -147,6 +162,7 @@
   </div>
 
   <script src="js/layout.js"></script>
+  <script src="js/graficos.js"></script>
   <script src="js/estatisticas.js"></script>
 </body>
 </html>

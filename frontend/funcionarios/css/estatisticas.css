@@ -97,6 +97,63 @@
   border-left: 3px solid var(--perigo);
 }
 
+/* ── Gráficos (F-56, F-57) ────────────────────────────────────────── */
+
+.grafico {
+  background: var(--bg-elevada);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+}
+
+/* min-width: 0 é o que impede a grelha/flex de esticar por causa do
+   SVG lá dentro — sem isto, o gráfico empurra a página e dá scroll
+   horizontal num telemóvel. */
+.grafico-zona { min-width: 0; overflow: hidden; }
+.grafico-svg { display: block; width: 100%; }
+
+.grafico-barra { transition: fill 0.12s ease; cursor: default; }
+
+/* A legenda ocupa sempre a mesma altura, cheia ou vazia: sem isto, o
+   conteúdo por baixo salta de cada vez que se passa o rato numa barra. */
+.grafico-legenda {
+  margin: 8px 0 0;
+  min-height: 20px;
+  font-size: 13px;
+  color: var(--texto);
+  font-variant-numeric: tabular-nums;
+}
+
+.grafico-vazio { margin: 0; padding: 24px 0; text-align: center; color: var(--texto-suave); font-size: 13.5px; }
+
+.grafico-tabela { margin-top: 10px; }
+
+.grafico-tabela summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--texto-suave);
+  padding: 8px 2px;      /* alvo de toque decente sem parecer um botão */
+  list-style-position: inside;
+}
+
+.grafico-tabela summary:hover { color: var(--texto); }
+.grafico-tabela summary:focus-visible { outline: 2px solid var(--cobre); outline-offset: 2px; border-radius: 4px; }
+
+.tabela-grafico {
+  width: 100%;
+  margin-top: 8px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabela-grafico th[scope="row"] { font-weight: 400; color: var(--texto-suave); }
+.tabela-grafico td { text-align: right; }
+.tabela-grafico th, .tabela-grafico td { padding: 6px 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .grafico-barra { transition: none; }
+}
+
 /* ── Bloco por construir ──────────────────────────────────────────── */
 
 .por-construir {
