@@ -582,6 +582,91 @@ function proximoIdDemo() {
   return Math.max(0, ...todos) + 1;
 }
 
+/* ── Categorias editáveis simuladas (F-51) ─────────────────────────
+   Mesmo padrão do catálogo: a lista de origem fica intocada e por cima
+   dela vivem as edições e as categorias criadas no ecrã.
+   Formato: { edicoes: { "<id>": {...} }, novas: [ {...} ] } */
+const CHAVE_CATEGORIAS_DEMO = 'vpa_categorias_demo';
+
+/* As quatro de origem. A `ordem` é o campo que interessa: é ela que põe
+   as entradas antes das sobremesas na ementa, e é a razão de as
+   categorias serem uma entidade em vez de um texto dentro do produto. */
+const CATEGORIAS_DEMO = [
+  { id: 1, nome: 'Entradas',          descricao: 'Para começar',              ordem: 1, ativo: true },
+  { id: 2, nome: 'Pratos Principais', descricao: 'Carnes na brasa e no forno', ordem: 2, ativo: true },
+  { id: 3, nome: 'Bebidas',           descricao: '',                          ordem: 3, ativo: true },
+  { id: 4, nome: 'Sobremesas',        descricao: 'Para acabar',               ordem: 4, ativo: true },
+];
+
+function lerCategoriasDemo() {
+  try {
+    const g = JSON.parse(localStorage.getItem(CHAVE_CATEGORIAS_DEMO) || '{}');
+    return { edicoes: g.edicoes || {}, novas: g.novas || [] };
+  } catch (e) { return { edicoes: {}, novas: [] }; }
+}
+
+function gravarCategoriasDemo(estado) {
+  try { localStorage.setItem(CHAVE_CATEGORIAS_DEMO, JSON.stringify(estado)); }
+  catch (e) { /* segue sem persistir */ }
+}
+
+/** categoriasDemo — as de origem com as edições aplicadas, já ordenadas. */
+function categoriasDemo() {
+  const { edicoes, novas } = lerCategoriasDemo();
+  return CATEGORIAS_DEMO
+    .map(c => Object.assign({}, c, edicoes[String(c.id)] || {}))
+    .concat(novas.map(c => Object.assign({}, c)))
+    .sort((a, b) => (Number(a.ordem) || 0) - (Number(b.ordem) || 0));
+}
+
+/* Comparação de nomes sem acentos e sem maiúsculas: "Bebidas" e
+   "bebidas" são a mesma categoria, e deixar as duas existirem partia a
+   ementa em duas gavetas com o mesmo nome. */
+function mesmoNome(a, b) {
+  const n = t => String(t || '').trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return n(a) === n(b);
+}
+
+function produtosNaCategoria(nome) {
+  return catalogoDemo().filter(p => p.categoria === nome);
+}
+
+function linhaCategoriaDemo(c) {
+  return {
+    id: c.id,
+    nome: c.nome,
+    descricao: c.descricao || '',
+    ordem: c.ordem,
+    ativo: c.ativo !== false,
+    // Quantos produtos lá estão. É o que decide se se pode desativar.
+    produtos: produtosNaCategoria(c.nome).length,
+  };
+}
+
+function validarCategoriaDemo(corpo, completo) {
+  const out = {};
+  const tem = c => Object.prototype.hasOwnProperty.call(corpo, c);
+
+  if (completo || tem('nome')) {
+    const nome = String(corpo.nome || '').trim();
+    if (!nome) throw erroSimulado('O nome é obrigatório.', 400);
+    if (nome.length > 40) throw erroSimulado('O nome não pode passar dos 40 caracteres.', 400);
+    out.nome = nome;
+  }
+  if (tem('descricao')) out.descricao = String(corpo.descricao || '').trim().slice(0, 120);
+  if (tem('ativo')) out.ativo = corpo.ativo !== false;
+
+  /* A `ordem` não se muda por aqui: muda-se em bloco no
+     PUT /gestao/categorias/ordem, para não haver duas categorias na
+     mesma posição nem buracos na sequência. */
+  if (tem('ordem')) {
+    throw erroSimulado('A ordem muda-se em PUT /gestao/categorias/ordem, com a lista completa.', 400);
+  }
+
+  return out;
+}
+
 /* Uma linha do `gestao/produtos` (docs/API.md 4.9). As quantidades
    passam pelo stockAtualDemo para o catálogo (F-49) e o ecrã de stock
    (F-52) nunca mostrarem números diferentes do mesmo produto. */
@@ -920,10 +1005,126 @@ async function simularEndpoint(endpoint, opcoes) {
      produtos). Funcionava, mas escondia o caminho que corre a sério.
      O que importa aqui é o campo `ordem`: é ele que manda na ementa. */
   if (caminho === 'categorias') {
-    const ordem = ['Entradas', 'Pratos Principais', 'Bebidas', 'Sobremesas'];
-    return ordem
-      .filter(nome => catalogoDemo().some(p => p.ativo && p.categoria === nome))
-      .map((nome, i) => ({ id: i + 1, nome, descricao: '', ordem: i + 1 }));
+    /* ── A ordem estava escrita à mão aqui (corrigido a 09/09) ─────
+       Havia um array fixo com os quatro nomes, e a ordem da ementa
+       saía dele. Resultado: mexer na ordem no ecrã de Categorias
+       (F-51) não mudava nada no site — duas fontes de verdade para a
+       mesma coisa, e a que o cliente vê era justamente a que ninguém
+       podia editar. Foi o teste da F-51 que deu por isso.
+
+       Continua a esconder do cliente as categorias desligadas e as que
+       não tenham nenhum produto ativo: uma gaveta vazia na ementa é
+       pior do que uma gaveta a menos. */
+    return categoriasDemo()
+      .filter(c => c.ativo !== false)
+      .filter(c => catalogoDemo().some(p => p.ativo && p.categoria === c.nome))
+      .map(c => ({ id: c.id, nome: c.nome, descricao: c.descricao || '', ordem: c.ordem }));
+  }
+
+  /* ── gestao/categorias — F-51 / B-62 (docs/API.md 4.11) ───────────
+     O `categorias` público esconde as que não têm produtos ativos; um
+     ecrã de administração precisa do contrário, pela mesma razão do
+     `gestao/produtos`: é a ver uma categoria vazia que se percebe que
+     ela existe e não serve para nada.
+
+     Traz o número de produtos de cada uma. Não é enfeite — é o que
+     decide se a categoria se pode desativar sem deixar pratos órfãos,
+     e mostrar esse número é mais honesto do que descobrir só ao gravar. */
+  if (caminho === 'gestao/categorias' && metodo === 'GET') {
+    return categoriasDemo().map(c => linhaCategoriaDemo(c));
+  }
+
+  if (caminho === 'gestao/categorias' && metodo === 'POST') {
+    const campos = validarCategoriaDemo(opcoes.body || {}, true);
+    const estado = lerCategoriasDemo();
+    const todas = categoriasDemo();
+    if (todas.some(c => mesmoNome(c.nome, campos.nome))) {
+      throw erroSimulado('Já existe uma categoria com esse nome.', 409);
+    }
+    const nova = {
+      id: Math.max(0, ...todas.map(c => Number(c.id) || 0)) + 1,
+      ordem: Math.max(0, ...todas.map(c => Number(c.ordem) || 0)) + 1,
+      ativo: true,
+      ...campos,
+    };
+    estado.novas.push(nova);
+    gravarCategoriasDemo(estado);
+    return linhaCategoriaDemo(nova);
+  }
+
+  const catMatch = caminho.match(/^gestao\/categorias\/(\d+)$/);
+  if (catMatch && metodo === 'PATCH') {
+    const id = Number(catMatch[1]);
+    const atual = categoriasDemo().find(c => c.id === id);
+    if (!atual) throw erroSimulado('Categoria não encontrada.', 404);
+
+    const campos = validarCategoriaDemo(opcoes.body || {}, false);
+
+    if (campos.nome && categoriasDemo().some(c => c.id !== id && mesmoNome(c.nome, campos.nome))) {
+      throw erroSimulado('Já existe uma categoria com esse nome.', 409);
+    }
+
+    /* Desativar uma categoria com produtos deixaria os pratos numa
+       gaveta que já não aparece — some da ementa sem ninguém ter
+       decidido isso prato a prato. Recusa-se, e diz-se quantos são. */
+    if (campos.ativo === false) {
+      const quantos = produtosNaCategoria(atual.nome).length;
+      if (quantos > 0) {
+        throw erroSimulado(
+          `Esta categoria tem ${quantos} produto${quantos === 1 ? '' : 's'}. ` +
+          'Move-os para outra categoria antes de a desativar.', 409);
+      }
+    }
+
+    const estado = lerCategoriasDemo();
+    const iNova = estado.novas.findIndex(c => c.id === id);
+    if (iNova !== -1) estado.novas[iNova] = { ...estado.novas[iNova], ...campos };
+    else estado.edicoes[String(id)] = { ...(estado.edicoes[String(id)] || {}), ...campos };
+
+    /* Renomear tem de arrastar os produtos. Aqui os produtos guardam o
+       NOME da categoria; na base de dados guardam o id, e por isso lá
+       este problema não existe. É uma diferença da simulação, não do
+       desenho — ver a nota no docs/API.md 4.11. */
+    if (campos.nome && campos.nome !== atual.nome) {
+      const cat = lerCatalogoDemo();
+      catalogoDemo().forEach(function (p) {
+        if (p.categoria !== atual.nome) return;
+        const iP = cat.novos.findIndex(x => x.id === p.id);
+        if (iP !== -1) cat.novos[iP].categoria = campos.nome;
+        else cat.edicoes[String(p.id)] = { ...(cat.edicoes[String(p.id)] || {}), categoria: campos.nome };
+      });
+      gravarCatalogoDemo(cat);
+    }
+
+    gravarCategoriasDemo(estado);
+    return linhaCategoriaDemo(categoriasDemo().find(c => c.id === id));
+  }
+
+  /* Reordenar: a ordem é a razão de as categorias existirem como
+     entidade em vez de um texto no produto — é ela que põe as entradas
+     antes das sobremesas na ementa. Manda-se a lista inteira de ids
+     pela ordem nova, e não "sobe esta uma posição": assim não há dois
+     pedidos a trocarem posições ao mesmo tempo e a deixarem buracos. */
+  if (caminho === 'gestao/categorias/ordem' && metodo === 'PUT') {
+    const ids = (opcoes.body || {}).ids;
+    const todas = categoriasDemo();
+    if (!Array.isArray(ids) || ids.length !== todas.length) {
+      throw erroSimulado('Manda a lista completa de ids, pela ordem nova.', 400);
+    }
+    const conhecidos = new Set(todas.map(c => c.id));
+    if (!ids.every(id => conhecidos.has(Number(id)))) {
+      throw erroSimulado('Há ids que não existem.', 400);
+    }
+
+    const estado = lerCategoriasDemo();
+    ids.forEach(function (id, i) {
+      const n = Number(id);
+      const iNova = estado.novas.findIndex(c => c.id === n);
+      if (iNova !== -1) estado.novas[iNova].ordem = i + 1;
+      else estado.edicoes[String(n)] = { ...(estado.edicoes[String(n)] || {}), ordem: i + 1 };
+    });
+    gravarCategoriasDemo(estado);
+    return categoriasDemo().map(c => linhaCategoriaDemo(c));
   }
 
   /* ── stock (docs/CONTEXTO.md §6.3, regra 21 — F-62, 04/09) ───────

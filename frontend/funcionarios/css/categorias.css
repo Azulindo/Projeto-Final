@@ -1,0 +1,123 @@
+/* =====================================================================
+   categorias.css — Categorias da ementa (F-51)
+   =====================================================================
+   Carrega por cima do produtos.css, que já traz a barra de filtros, o
+   <dialog> do formulário, os campos e os interruptores. Aqui só o que é
+   próprio: a lista ordenável.
+
+   Regra da F-08: calor na moldura, nunca nos dados. Neste ecrã a única
+   cor que significa alguma coisa é a do distintivo "Escondida".
+   ===================================================================== */
+
+.lista-categorias {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lista-categorias.hidden { display: none; }
+
+.cat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-elevada);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  min-height: 60px;
+}
+
+/* Escondida da ementa: esbatida, mas ainda legível — é para se ver que
+   lá está e que está desligada, não para desaparecer. Mesmo tratamento
+   dos produtos fora da carta. */
+.cat-inativa { opacity: 0.6; }
+
+/* ── Setas de ordenar ─────────────────────────────────────────────── */
+
+.cat-setas {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+/* 44 px de alvo, contando as duas juntas: cada seta tem 22 de altura
+   por 44 de largura, e ficam encostadas. Uma seta de 44×44 cada faria
+   a linha ter 88 px de altura só por causa dos botões. */
+.btn-seta {
+  width: 44px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--texto-suave);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-seta:first-child { border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+.btn-seta:last-child  { border-radius: 0 0 var(--radius-sm) var(--radius-sm); border-top: none; }
+
+.btn-seta:hover:not(:disabled) { border-color: var(--cobre); color: var(--dourado); }
+.btn-seta:focus-visible { outline: 2px solid var(--cobre); outline-offset: 2px; z-index: 1; }
+
+/* Desativada em vez de escondida: se sumisse, a linha mudava de largura
+   e a lista saltava a cada movimento. */
+.btn-seta:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── Corpo ────────────────────────────────────────────────────────── */
+
+.cat-corpo { flex: 1 1 auto; min-width: 0; }
+
+.cat-nome { font-weight: 600; font-size: 15px; }
+
+.cat-desc {
+  font-size: 12.5px;
+  color: var(--texto-suave);
+  line-height: 1.45;
+  margin-top: 2px;
+}
+
+.cat-produtos {
+  font-size: 12.5px;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+/* Uma categoria vazia não é um erro, mas é o caso em que se pode
+   mexer — vale a pena distinguir-se do resto sem parecer um alarme. */
+.cat-vazia { color: var(--texto-fraco); font-style: italic; }
+
+.cat-item .btn-editar { flex: 0 0 auto; min-height: 36px; padding: 7px 14px; }
+.cat-item .badge { flex: 0 0 auto; }
+
+/* ── Ecrãs estreitos ──────────────────────────────────────────────── */
+
+@media (max-width: 620px) {
+  /* As setas ficam à esquerda e o resto reflui por baixo, em vez de
+     espremer cinco coisas numa linha de 360 px. */
+  .cat-item {
+    flex-wrap: wrap;
+    row-gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .cat-corpo { flex: 1 1 60%; }
+  .cat-produtos { order: 3; }
+  .cat-item .badge { order: 4; }
+  .cat-item .btn-editar { order: 5; margin-left: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-seta { transition: none; }
+}

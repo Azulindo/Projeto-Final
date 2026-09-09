@@ -48,7 +48,7 @@ const NAV_ITEMS = [
   { id: 'balcao',       icone: '🧾', label: 'Balcão',         href: 'balcao.html',    niveis: ['balcao', 'administrador'] },
   { id: 'qrcodes',      icone: '🔳', label: 'QR Codes',       href: 'qrcodes.html',   niveis: ['balcao', 'administrador'] },
   { id: 'produtos',     icone: '🍽️', label: 'Produtos',       href: 'produtos.html',  niveis: ['administrador'] },
-  { id: 'categorias',   icone: '🏷️', label: 'Categorias',     href: null, tag: 'F-51', niveis: ['administrador'] },
+  { id: 'categorias',   icone: '🏷️', label: 'Categorias',     href: 'categorias.html', niveis: ['administrador'] },
   /* F-52 (08/09): a cozinha entra aqui, o balcão não. Quem parte uma
      garrafa ou deita fora um lombo fora de validade é quem está lá
      dentro — obrigar a passar pelo gerente para registar uma quebra é
