@@ -38,10 +38,17 @@
  *     POST  auth/login · GET auth/eu        ← bloqueia a app de gestão
  *     POST  mesas/:token/chamar-empregado
  *     GET   gestao/mesas/qrcodes · GET gestao/sessoes/:id/conta
- *     GET   gestao/stock                    ← F-62 (04/09); B-63 no João
- *     POST  gestao/stock/:id/movimento      ← F-52 (08/09); B-63 no João
- *     PATCH gestao/stock/:id/minimo         ←  "     "        "     "
- *           (formato proposto em docs/API.md 4.8 — a discutir com ele)
+ *
+ * O stock (gestao/stock e as duas escritas) saiu desta lista a 09/09:
+ * o B-63 ficou pronto e os três caminhos passaram para o
+ * ENDPOINTS_REAIS. O formato acordado no docs/API.md 4.8 acertou —
+ * não foi preciso mexer numa linha do stock.js.
+ *
+ * ⚠️ ENQUANTO O B-61 NÃO EXISTIR, dois ecrãs leem de mundos
+ * diferentes: o Stock já vem da base de dados a sério, o Produtos
+ * ainda vem do PRODUTOS_DEMO daqui. As quantidades de um produto podem
+ * não bater entre os dois ecrãs, e não é avaria — é a transição.
+ * Desaparece quando o `gestao/produtos` entrar na lista.
  * =====================================================================
  */
 
@@ -171,6 +178,15 @@ const ENDPOINTS_REAIS = [
   /^pedidos\/cozinha$/,            // GET   /api/pedidos/cozinha
   /^pedidos\/\d+\/estado$/,        // PATCH /api/pedidos/:id/estado
   /^pedidos\/sessao\/\d+\/fechar$/,// POST  /api/pedidos/sessao/:id/fechar
+
+  /* Stock — B-63 (09/09). A F-52 deixa de ser simulada.
+     O formato é o que estava proposto no docs/API.md 4.8 e o que a
+     simulação daqui já devolvia, por isso não foi preciso mexer numa
+     linha do stock.js: só acrescentar estes três caminhos. Era esse o
+     objetivo de se acordar o formato antes de construir. */
+  /^gestao\/stock$/,               // GET   /api/gestao/stock
+  /^gestao\/stock\/\d+\/movimento$/, // POST  /api/gestao/stock/:id/movimento
+  /^gestao\/stock\/\d+\/minimo$/,  // PATCH /api/gestao/stock/:id/minimo
 ];
 
 /**
