@@ -37,7 +37,7 @@
 
 **Estado a 8 de setembro:** **Sprints 0, 1 e o núcleo do 2 fechados, e o projeto está público.** A base está no Aiven, a API em `https://vem-pro-abate-api.onrender.com`, o site em `https://vemproabate.vercel.app` (F-67) e os dois falam um com o outro — o CORS está fechado ao domínio de produção (B-24) e a ementa carrega a partir do site publicado. O ciclo completo de uma refeição funciona ponta a ponta: ler o QR Code abre a sessão, o cliente envia rondas, a cozinha aceita (e o stock desce), o cliente pede a conta e o balcão fecha (e o total congela). Testado a 08/09 contra a base na nuvem. Os 10 QR Codes das mesas estão gerados e um foi aberto no telemóvel (B-65). O login está ligado nos dois lados e cada nível cai no ecrã certo. Do lado da gestão, os ecrãs de **Produtos** (F-49/F-50) e de **Stock** (F-52) estão feitos e a funcionar sobre os formatos simulados.
 
-**O que bloqueia agora, por ordem:** o **B-35** (take away — é o último buraco no ciclo de encomendas, e arrasta o B-40); o **B-66** (endpoint dos QR Codes, com a página do Guilherme já feita à espera dele); e os CRUDs de gestão — o **B-61** e o **B-63**, que fazem os ecrãs já construídos gravar na base em vez de no browser, e o **B-62** e o **B-64**, que destrancam as duas tarefas do Guilherme que faltam (F-51 e F-53). Acima de todas elas, e agora **dentro** da lista: o **plano B local** (C-24 a C-28) — o Aiven desligou-se sozinho duas vezes em quatro dias e ainda não se sabe porquê. Esteve escrito aqui duas vezes como aviso solto e não lhe pegou ninguém; passou a ter código, dono e horas.
+**O que bloqueia agora, por ordem:** o **B-35** (take away — é o último buraco no ciclo de encomendas, e arrasta o B-40); o **B-66** (endpoint dos QR Codes, com a página do Guilherme já feita à espera dele); e os CRUDs de gestão que faltam — o **B-61** (agora destrancado pelo B-63), e o **B-62** e o **B-64**, que destrancam as duas tarefas do Guilherme que faltam (F-51 e F-53). O **B-63 fechou a 09/09**: falta só o Guilherme acrescentar os dois caminhos ao `ENDPOINTS_REAIS` para a F-52 deixar de ser simulada. Acima de todas elas, e agora **dentro** da lista: o **plano B local** (C-24 a C-28) — o Aiven desligou-se sozinho duas vezes em quatro dias e ainda não se sabe porquê. Esteve escrito aqui duas vezes como aviso solto e não lhe pegou ninguém; passou a ter código, dono e horas.
 
 **Legenda:** ✅ feito · 🟨 parcial (ver nota) · ⬜ por fazer · 🔁 **já não se aplica** — o plano mudou pelo caminho e a tarefa deixou de fazer sentido. Fica à vista, marcada, em vez de apagada: uma tarefa apagada parece esquecida, uma marcada mostra que houve uma decisão.
 
@@ -174,7 +174,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | B-60 | Atualizar automaticamente o estado da mesa (`livre` / `ocupada`) | 1 h | B-56 |
 | ⬜ | B-61 | CRUD de produtos — *formato na secção 4.9 do `API.md`. **Depende do B-63**, e não só do B-21: um produto novo com stock grava o movimento nº 1, que precisa da tabela que o B-63 cria* | 2 h | B-21, B-63 |
 | ⬜ | B-62 | CRUD de categorias | 1 h 30 | B-21 |
-| ⬜ | B-63 | Consultar e ajustar stock + endpoint de produtos com stock baixo — *(ideia nova, 04/09)* acessível também ao nível `cozinha`, não só `administrador`. **A forma está proposta pelo Guilherme na secção 4.8 do `API.md` (08/09) e já corre simulada no `api.js`: `POST /api/gestao/stock/:id/movimento` com `tipo`, em vez de um PATCH que grava a quantidade, mais `PATCH /api/gestao/stock/:id/minimo`. O motivo é o B-58 — o stock desce sozinho quando a cozinha aceita uma ronda, e gravar um total absoluto apaga o que saiu entretanto.** **Formato fechado a 08/09** — os quatro acrescentos aceites: os descontos automáticos da cozinha também geram movimentos (`consumo` / `reposicao`, escritos só pelo servidor); cada linha guarda `quantidade_antes` e `quantidade_depois`; cada linha guarda quem e quando; e o `acerto` fica só para `administrador` — a cozinha mantém a `quebra`, que é o caso em que se sabe o motivo. A cadeia antes/depois obriga a serializar as escritas do mesmo produto: ler, calcular e gravar na mesma transação com `SELECT ... FOR UPDATE`, como o B-58 já faz, e verificar a cadeia por `id_movimento` e não por data. Cria a **18.ª tabela** — ver a nota do diagrama ER na secção 4.8 do `API.md`. **Sobe de 1 h 30 para 2 h 30** — a tabela de movimentos, os campos antes/depois e a serialização não estavam na estimativa | 2 h 30 | B-21 |
+| ✅ | B-63 | Consultar e ajustar stock — *feito 09/09, formato da secção 4.8 do `API.md`, os três endpoints. **Existe um sítio só a mexer no stock**, o novo `src/servicos/stock.js`: o ecrã do gerente, a cozinha ao confirmar e a cozinha ao anular passam todos por lá. É isso que garante que o histórico não tem buracos — um `UPDATE` feito ao lado não deixava movimento e a cadeia deixava de reconstruir o saldo. O `pedidos.js` (B-36) foi alterado para gravar `consumo` ao confirmar e `reposicao` ao anular, com o pedido que os causou; o `UPDATE` com `JOIN` do cancelamento teve de passar a ciclo, porque um `UPDATE` em massa não consegue gravar o `antes`/`depois` de cada produto. O `acerto` é recusado com **403** a uma sessão de cozinha, no servidor e não só no ecrã. **Testado ponta a ponta contra a base local:** entrada 4→16, quebra 16→14, consumo 14→13 pela mesa 9, e as duas verificações da cadeia a **zero**. Cada linha começa onde a anterior acabou, sem isso estar programado em lado nenhum* | 2 h 30 | B-21 |
 | ⬜ | B-64 | CRUD de funcionários (só administrador) | 2 h | B-21 |
 
 ## Sprint 5 · Extras (Semana 10: 3–9 nov)
@@ -472,19 +472,19 @@ sem depender de nuvem nenhuma nem da rede da escola.
 
 ## Resumo de esforço
 
-*Contagens a 8 de setembro, refeitas depois de fechar o B-24, o B-65, o F-67, a F-52, a F-50, a C-26, a C-24 e a C-25, e de entrar o plano B local.* **Esta é a única tabela de contagens do documento.** Os
+*Contagens a 8 de setembro, refeitas depois de fechar o B-24, o B-65, o F-67, a F-52, a F-50, a C-26, a C-24, a C-25 e o B-63, e de entrar o plano B local.* **Esta é a única tabela de contagens do documento.** Os
 números saem de contar as linhas das tabelas de tarefas acima, uma a uma — não de somar ao
 que aqui estava. Se mudares uma linha lá em cima, esta tabela fica errada até alguém a
 refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 73 | 39 | — | 34 | ≈ 46 h |
+| 🔵 João (B-) | 73 | 40 | — | 33 | ≈ 43 h 30 |
 | 🟠 Guilherme (F-) | 68 | 41 | 19 | 8 | ≈ 12 h 45 |
 | 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
 | 🐞 Correções (X-) | 10 | 8 | — | 2 | ≈ 1 h |
 
-**Total por fazer: ≈ 101 h 15.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
+**Total por fazer: ≈ 98 h 45.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
 take away, e falta o próprio B-35 do take away), C-01 (falta o Guilherme ler o `CONTEXTO.md`)
 e X-08 (não se conseguiu reproduzir). O total subiu, e subiu de propósito: entraram o plano B
 local (C-24 a C-28, ≈ 2 h 45 por fazer) e o X-10. O B-65 saiu desta lista — os QR Codes estão gerados.
