@@ -48,6 +48,7 @@ const PAGINAS_GESTAO = [
   // ou um scroll horizontal.
   { url: 'funcionarios/produtos.html',  nome: 'Produtos' },
   { url: 'funcionarios/stock.html',     nome: 'Stock' },
+  { url: 'funcionarios/estatisticas.html', nome: 'Estatísticas' },
 ];
 
 /* Corre dentro da página. Devolve factos, não juízos. */

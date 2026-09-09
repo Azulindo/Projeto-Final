@@ -58,7 +58,11 @@ const NAV_ITEMS = [
      tomar sobre existências. */
   { id: 'stock',        icone: '📦', label: 'Stock',          href: 'stock.html', niveis: ['cozinha', 'administrador'] },
   { id: 'funcionarios', icone: '👥', label: 'Funcionários',   href: null, tag: 'F-53', niveis: ['administrador'] },
-  { id: 'estatisticas', icone: '📊', label: 'Estatísticas',   href: null, tag: 'F-55', niveis: ['administrador'] },
+  /* Só administrador, e não é só arrumação: faturação num monitor de
+     cozinha que fica ligado o turno inteiro, num sítio por onde passa
+     gente, é informação a mais no sítio errado. O servidor repete a
+     regra — o `admin/estatisticas` responde 403 aos outros níveis. */
+  { id: 'estatisticas', icone: '📊', label: 'Estatísticas',   href: 'estatisticas.html', niveis: ['administrador'] },
 ];
 
 /* Nome legível do nível, para mostrar no topo */

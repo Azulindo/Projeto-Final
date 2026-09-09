@@ -1006,6 +1006,109 @@ async function simularEndpoint(endpoint, opcoes) {
     return linhaStockDemo(produto);
   }
 
+  /* ── admin/estatisticas — F-55/F-56/F-57 · B-72 (docs/API.md 4.10) ──
+     Só administrador. A cozinha e o balcão não veem faturação: o
+     monitor da cozinha fica ligado o turno inteiro num sítio por onde
+     passa gente, e o balcão não tem decisão nenhuma a tomar com estes
+     números.
+
+     ── DE ONDE VÊM OS NÚMEROS AQUI ──
+     O "hoje" é calculado a partir das sessões de demonstração que estão
+     no browser — as mesmas que o mesa.html escreve. Não é enfeite: quer
+     dizer que, numa apresentação, fazer um pedido à mesa faz este ecrã
+     mexer à frente de quem está a ver. Um painel de estatísticas com
+     números fixos é um cartaz; este responde ao que se acabou de fazer.
+
+     O histórico (dias e meses) não dá para inventar assim — não há
+     passado nenhum no browser. Fica uma série fixa e plausível, marcada
+     como tal, que a F-56 e a F-57 desenham. Quando o B-72 existir, vem
+     do `historico_estado_pedido` e do `item_pedido` a sério. */
+  if (caminho === 'admin/estatisticas') {
+    const sessao = obterSessao();
+    if (!sessao) throw erroSimulado('Sessão inválida ou expirada.', 401);
+    if (sessao.nivel !== 'administrador') {
+      throw erroSimulado('Só a administração vê as estatísticas.', 403);
+    }
+
+    const sessoes = lerSessoesDemo();
+    const abertas = Object.values(sessoes).filter(s => estadoIgual(s.estado, 'aberta'));
+
+    let pedidosHoje = 0, faturacaoHoje = 0, porFazer = 0;
+    Object.values(sessoes).forEach(s => {
+      const rondas = s.rondas || [];
+      rondas.forEach(r => {
+        if (estadoIgual(r.estado, 'cancelado')) return;   // não se cobra o que não se fez
+        pedidosHoje += 1;
+        if (!estadoIgual(r.estado, 'entregue')) porFazer += 1;
+      });
+      faturacaoHoje += Number(totalDemo(s)) || 0;
+    });
+
+    const stock = catalogoDemo().filter(p => p.controla_stock)
+      .map(p => stockAtualDemo(p))
+      .filter(q => q.quantidade_atual <= q.quantidade_minima).length;
+
+    /* Série fixa, e é preciso que se saiba que é fixa: 30 dias e 6 meses
+       inventados para a F-56 e a F-57 terem o que desenhar. Os valores
+       oscilam à volta de uma média com fins de semana mais fortes, que é
+       como um restaurante se comporta — mas são inventados. */
+    const hoje = new Date();
+    const porDia = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(hoje.getTime() - i * 86400000);
+      const fds = d.getDay() === 5 || d.getDay() === 6;      // sexta e sábado
+      const base = fds ? 420 : 240;
+      const oscila = ((d.getDate() * 37) % 100) / 100;        // determinista, não aleatório
+      porDia.push({
+        dia: d.toISOString().slice(0, 10),
+        total: Math.round((base + oscila * 160) * 100) / 100,
+      });
+    }
+    const porMes = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+      const oscila = ((d.getMonth() * 53) % 100) / 100;
+      porMes.push({
+        mes: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+        total: Math.round((7200 + oscila * 2600) * 100) / 100,
+      });
+    }
+
+    const totalMes = porDia.reduce((a, d) => a + d.total, 0);
+    const pedidosMes = 243;
+
+    return {
+      simulado: true,          // o ecrã diz-o em voz alta; ver estatisticas.js
+      hoje: {
+        pedidos: pedidosHoje,
+        faturacao: Math.round(faturacaoHoje * 100) / 100,
+        media_por_pedido: pedidosHoje ? Math.round((faturacaoHoje / pedidosHoje) * 100) / 100 : 0,
+        tempo_medio_preparacao_min: 13,
+      },
+      ontem: { pedidos: 9, faturacao: 141.20 },
+      mes: {
+        pedidos: pedidosMes,
+        faturacao: Math.round(totalMes * 100) / 100,
+        media_por_pedido: Math.round((totalMes / pedidosMes) * 100) / 100,
+      },
+      servico: {
+        mesas_ocupadas: abertas.length,
+        mesas_total: MESAS_DEMO.length,
+        rondas_por_fazer: porFazer,
+      },
+      stock_baixo: stock,
+      faturacao_por_dia: porDia,
+      faturacao_por_mes: porMes,
+      mais_vendidos: [
+        { id: 7,  nome: 'Abate Misto',            quantidade: 38, total: 615.60 },
+        { id: 8,  nome: 'Prega-me Isto',          quantidade: 31, total: 523.90 },
+        { id: 9,  nome: 'Picanha na Brasa Negra', quantidade: 27, total: 432.00 },
+        { id: 6,  nome: 'Francesinha em K.O.',    quantidade: 24, total: 292.80 },
+        { id: 1,  nome: 'Abatata Frita',          quantidade: 22, total:  85.80 },
+      ],
+    };
+  }
+
   /* ── mesas + tokens para imprimir os QR Codes (docs/API.md 4.6) ── */
   if (caminho === 'gestao/mesas/qrcodes') {
     return MESAS_DEMO.filter(m => m.ativa !== false).map(m => ({ ...m }));

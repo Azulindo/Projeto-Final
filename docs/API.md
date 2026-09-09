@@ -852,6 +852,57 @@ ou ponto (num teclado português escreve-se `16,20`) e envia sempre número.
 
 ---
 
+### 4.10 `GET /api/admin/estatisticas` (**B-72**) · *proposta, 09/09*
+
+**Só `administrador` — `403` para os outros.** Não é arrumação: o monitor da cozinha fica
+ligado o turno inteiro num sítio por onde passa gente, e o balcão não tem decisão nenhuma a
+tomar com estes números. O ecrã já esconde o item da barra lateral, mas quem faz cumprir a
+regra é o servidor.
+
+Uma chamada só serve os cartões (F-55) e os dois gráficos (F-56, F-57) — não vale a pena
+três pedidos para o mesmo ecrã.
+
+```json
+{
+  "hoje":  { "pedidos": 12, "faturacao": 184.60,
+             "media_por_pedido": 15.38, "tempo_medio_preparacao_min": 13 },
+  "ontem": { "pedidos": 9, "faturacao": 141.20 },
+  "mes":   { "pedidos": 243, "faturacao": 3820.50, "media_por_pedido": 15.72 },
+  "servico": { "mesas_ocupadas": 3, "mesas_total": 10, "rondas_por_fazer": 4 },
+  "stock_baixo": 2,
+  "faturacao_por_dia": [ { "dia": "2026-09-09", "total": 210.40 } ],
+  "faturacao_por_mes": [ { "mes": "2026-09", "total": 7420.00 } ],
+  "mais_vendidos": [ { "id": 7, "nome": "Abate Misto", "quantidade": 38, "total": 615.60 } ]
+}
+```
+
+**De onde saem os números, do lado do servidor:**
+
+| Campo | Origem |
+|---|---|
+| `hoje` / `ontem` / `mes` | `pedido` + `item_pedido`, **excluindo as rondas em `cancelado`** — não se cobra o que a cozinha não fez (regra do 3.10.4) |
+| `tempo_medio_preparacao_min` | `historico_estado_pedido`: de `confirmado` a `pronto`. É para isto que o B-57 guarda cada mudança |
+| `servico` | `sessao_mesa` abertas e rondas ainda não entregues |
+| `stock_baixo` | o mesmo cálculo do `gestao/stock` |
+| `mais_vendidos` | soma das quantidades em `item_pedido`, também sem as canceladas |
+
+> **`ontem` existe para o número de hoje querer dizer alguma coisa.** "184,60 €" sozinho não
+> é informação — não se sabe se é um bom dia. O ecrã mostra a diferença por baixo do valor, e
+> é a diferença que se lê. Se for mais barato para ti, manda só o total de ontem e eu calculo
+> a percentagem aqui; o que não dá é não ter com que comparar.
+
+> **Cuidado com o fuso.** "Hoje" tem de ser o dia em Lisboa, não em UTC — o Render corre em
+> Frankfurt e a Aiven em Amesterdão. Entre a meia-noite e a uma da manhã em Portugal, um
+> `CURDATE()` em UTC ainda está no dia anterior, e o serviço de sexta à noite acabaria
+> contado no sábado. É o género de erro que ninguém vê até alguém conferir uma conta.
+
+*Enquanto o B-72 não existir, está simulado no `api.js`: o `hoje` e o `servico` são
+calculados a partir das sessões de demonstração no browser — fazer um pedido à mesa move o
+ecrã, o que é o que se quer numa apresentação — e o resto é uma série de exemplo, com o
+campo `simulado: true` que o ecrã mostra em voz alta ao utilizador.*
+
+---
+
 ## 5. Como ligar o front-end ao backend real
 
 **Não é um interruptor.** É uma lista.

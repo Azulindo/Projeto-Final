@@ -48,8 +48,16 @@ body[data-pagina="dashboard"] #conteudoPagina {
   line-height: 1.6;
 }
 
+.placeholder-falta {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
 .expira-nota {
   margin-top: 18px;
   font-size: 12px;
-  color: var(--texto-fraco);
+  /* Era --texto-fraco: 2,72:1 sobre este fundo, quando o mínimo da WCAG
+     para texto normal é 4,5:1. É uma nota discreta, não invisível. */
+  color: var(--texto-suave);
 }
