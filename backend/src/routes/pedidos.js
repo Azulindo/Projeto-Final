@@ -21,6 +21,7 @@ const { z } = require('zod');
 const { pool } = require('../config/bd');
 const { validar } = require('../middleware/validar');
 const { autenticar, exigirNivel } = require('../middleware/autenticar');
+const { aplicarMovimento } = require('../servicos/stock');
 
 const router = express.Router();
 
@@ -278,34 +279,65 @@ router.patch('/pedidos/:id/estado',
         for (const item of itens) {
           if (!item.controla_stock) continue;
 
-          const [r] = await con.query(
-            `UPDATE stock
-                SET quantidade_atual = quantidade_atual - ?
-              WHERE id_produto = ? AND quantidade_atual >= ?`,
-            [item.quantidade, item.id_produto, item.quantidade]
-          );
+          /*
+           *  Desde o B-63 isto passa pelo aplicarMovimento em vez de um
+           *  UPDATE aqui. A diferenca nao e de arrumacao: cada descida
+           *  passa a deixar uma linha no movimento_stock, com o pedido
+           *  que a causou e quem a confirmou.
+           *
+           *  Sem isso, a quantidade_atual era mexida por dois
+           *  mecanismos e so um ficava registado — e o historico
+           *  deixava de reconstruir o saldo, que e a unica coisa que o
+           *  torna uma prova em vez de um diario incompleto.
+           */
+          const r = await aplicarMovimento(con, {
+            idProduto:    item.id_produto,
+            tipo:         'consumo',
+            quantidade:   item.quantidade,
+            idUtilizador: req.utilizador.id,
+            idPedido:     id,
+          });
 
-          if (r.affectedRows === 0) {
+          if (r.estado === 'insuficiente') {
             await con.rollback(); con.release();
             return res.status(409).json({
               erro: `Nao ha stock suficiente de "${item.nome}" para confirmar este pedido.`,
             });
           }
+          // 'sem_linha' nao acontece aqui (o controla_stock ja filtrou),
+          // mas se acontecesse era um produto sem existencias a
+          // controlar — segue sem descontar nada.
         }
       }
 
       if (novo === 'cancelado' && JA_DESCONTOU.includes(pedido.estado)) {
-        // Devolve o que tinha sido descontado. Cancelar uma ronda que
-        // nunca chegou a "confirmado" nao devolve nada, porque nada
-        // tinha saido.
-        await con.query(
-          `UPDATE stock s
-             JOIN item_pedido i ON i.id_produto = s.id_produto
-             JOIN produto pr    ON pr.id_produto = s.id_produto
-              SET s.quantidade_atual = s.quantidade_atual + i.quantidade
+        /*
+         *  Devolve o que tinha sido descontado. Cancelar uma ronda que
+         *  nunca chegou a "confirmado" nao devolve nada, porque nada
+         *  tinha saido.
+         *
+         *  Era um UPDATE com JOIN, numa linha so. Passou a um ciclo de
+         *  proposito: um UPDATE em massa nao consegue gravar o "antes"
+         *  e o "depois" de cada produto, e sem esses dois numeros a
+         *  cadeia do historico nao se aguenta.
+         */
+        const [itens] = await con.query(
+          `SELECT i.id_produto, i.quantidade
+             FROM item_pedido i
+             JOIN produto pr ON pr.id_produto = i.id_produto
             WHERE i.id_pedido = ? AND pr.controla_stock = 1`,
           [id]
         );
+
+        for (const item of itens) {
+          await aplicarMovimento(con, {
+            idProduto:    item.id_produto,
+            tipo:         'reposicao',
+            quantidade:   item.quantidade,
+            idUtilizador: req.utilizador.id,
+            idPedido:     id,
+          });
+        }
       }
 
       // ---- O estado, e o registo de que mudou ----

@@ -22,6 +22,7 @@ const catalogoRouter = require('./routes/catalogo');
 const authRouter = require('./routes/auth');
 const mesasRouter = require('./routes/mesas');
 const pedidosRouter = require('./routes/pedidos');
+const gestaoStockRouter = require('./routes/gestaoStock');
 
 const app = express();
 
@@ -79,6 +80,10 @@ app.use('/api', mesasRouter);
 // Gestao: /api/pedidos/ativos, /cozinha, /:id/estado, /sessao/:id/fechar
 // Todos exigem sessao iniciada.
 app.use('/api', pedidosRouter);
+
+// Stock: /api/gestao/stock, /:id/movimento, /:id/minimo
+// Niveis administrador e cozinha; o acerto so administrador.
+app.use('/api', gestaoStockRouter);
 
 /**
  * GET /api/saude

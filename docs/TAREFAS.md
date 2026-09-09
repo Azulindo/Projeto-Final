@@ -37,7 +37,7 @@
 
 **Estado a 8 de setembro:** **Sprints 0, 1 e o núcleo do 2 fechados, e o projeto está público.** A base está no Aiven, a API em `https://vem-pro-abate-api.onrender.com`, o site em `https://vemproabate.vercel.app` (F-67) e os dois falam um com o outro — o CORS está fechado ao domínio de produção (B-24) e a ementa carrega a partir do site publicado. O ciclo completo de uma refeição funciona ponta a ponta: ler o QR Code abre a sessão, o cliente envia rondas, a cozinha aceita (e o stock desce), o cliente pede a conta e o balcão fecha (e o total congela). Testado a 08/09 contra a base na nuvem. Os 10 QR Codes das mesas estão gerados e um foi aberto no telemóvel (B-65). O login está ligado nos dois lados e cada nível cai no ecrã certo. Do lado da gestão, os ecrãs de **Produtos** (F-49/F-50) e de **Stock** (F-52) estão feitos e a funcionar sobre os formatos simulados.
 
-**O que bloqueia agora, por ordem:** o **B-35** (take away — é o último buraco no ciclo de encomendas, e arrasta o B-40); o **B-66** (endpoint dos QR Codes, com a página do Guilherme já feita à espera dele); e os CRUDs de gestão — o **B-61** e o **B-63**, que fazem os ecrãs já construídos gravar na base em vez de no browser, e o **B-62** e o **B-64**, que destrancam as duas tarefas do Guilherme que faltam (F-51 e F-53). Fora da lista, e mais importante do que qualquer uma destas: o **plano B local** para a apresentação — o Aiven desligou-se sozinho duas vezes em quatro dias e ainda não se sabe porquê.
+**O que bloqueia agora, por ordem:** o **B-35** (take away — é o último buraco no ciclo de encomendas, e arrasta o B-40); o **B-66** (endpoint dos QR Codes, com a página do Guilherme já feita à espera dele); e os CRUDs de gestão que faltam — o **B-61** (agora destrancado pelo B-63), e o **B-62** e o **B-64**, que destrancam as duas tarefas do Guilherme que faltam (F-51 e F-53). O **B-63 fechou a 09/09**: falta só o Guilherme acrescentar os dois caminhos ao `ENDPOINTS_REAIS` para a F-52 deixar de ser simulada. Acima de todas elas, e agora **dentro** da lista: o **plano B local** (C-24 a C-28) — o Aiven desligou-se sozinho duas vezes em quatro dias e ainda não se sabe porquê. Esteve escrito aqui duas vezes como aviso solto e não lhe pegou ninguém; passou a ter código, dono e horas.
 
 **Legenda:** ✅ feito · 🟨 parcial (ver nota) · ⬜ por fazer · 🔁 **já não se aplica** — o plano mudou pelo caminho e a tarefa deixou de fazer sentido. Fica à vista, marcada, em vez de apagada: uma tarefa apagada parece esquecida, uma marcada mostra que houve uma decisão.
 
@@ -78,6 +78,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | **✅** | **X-07** | ~~Topo dos cartões altos cortado~~ — corrigido com teste | 45 min | Gui |
 | 🟨 | **X-08** | Banda branca no topo — **não reproduzida** pelo Guilherme em 6 páginas a 1440 e 1920. A causa que eu apontei era real (`html`/`body` sem cor de fundo) e foi tapada com `background-color` + `color-scheme: dark`. Possível artefacto do meu teste: corri em Chromium sem rede, e a fonte Nosifer não carregou | 30 min | Gui |
 | **✅** | **X-09** | ~~Caixa de escrita engolia texto sem responder~~ — corrigido com teste | 20 min | Gui |
+| ⬜ | **X-10** | `docs/API.md` desatualizado em dois sítios, encontrado a 09/09 ao ler as secções novas. **(a)** A §5 *"Onde é que o servidor está"* ainda diz `API_BASE = 'http://localhost:3000/api'` e *"quando houver endereço público, muda-se uma linha"* — mas o C-26 já o faz sozinho e o servidor está no Render desde 05/09; a lista `ENDPOINTS_REAIS` que ela mostra tem 4 entradas e a real tem 16. **(b)** A §4.8 traz a justificação do movimento **duas vezes**, com a mesma frase final repetida — sobra do merge. É o mesmo erro do F-67 (*"Vercel (já configurado)"*): documentação a descrever um plano como se fosse o que corre. E o `API.md` é entregável | 30 min | Gui |
 
 ---
 
@@ -173,7 +174,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | B-60 | Atualizar automaticamente o estado da mesa (`livre` / `ocupada`) | 1 h | B-56 |
 | ⬜ | B-61 | CRUD de produtos — *formato na secção 4.9 do `API.md`. **Depende do B-63**, e não só do B-21: um produto novo com stock grava o movimento nº 1, que precisa da tabela que o B-63 cria* | 2 h | B-21, B-63 |
 | ⬜ | B-62 | CRUD de categorias | 1 h 30 | B-21 |
-| ⬜ | B-63 | Consultar e ajustar stock + endpoint de produtos com stock baixo — *(ideia nova, 04/09)* acessível também ao nível `cozinha`, não só `administrador`. **A forma está proposta pelo Guilherme na secção 4.8 do `API.md` (08/09) e já corre simulada no `api.js`: `POST /api/gestao/stock/:id/movimento` com `tipo`, em vez de um PATCH que grava a quantidade, mais `PATCH /api/gestao/stock/:id/minimo`. O motivo é o B-58 — o stock desce sozinho quando a cozinha aceita uma ronda, e gravar um total absoluto apaga o que saiu entretanto.** **Formato fechado a 08/09** — os quatro acrescentos aceites: os descontos automáticos da cozinha também geram movimentos (`consumo` / `reposicao`, escritos só pelo servidor); cada linha guarda `quantidade_antes` e `quantidade_depois`; cada linha guarda quem e quando; e o `acerto` fica só para `administrador` — a cozinha mantém a `quebra`, que é o caso em que se sabe o motivo. A cadeia antes/depois obriga a serializar as escritas do mesmo produto: ler, calcular e gravar na mesma transação com `SELECT ... FOR UPDATE`, como o B-58 já faz, e verificar a cadeia por `id_movimento` e não por data. Cria a **18.ª tabela** — ver a nota do diagrama ER na secção 4.8 do `API.md`. **Sobe de 1 h 30 para 2 h 30** — a tabela de movimentos, os campos antes/depois e a serialização não estavam na estimativa | 2 h 30 | B-21 |
+| ✅ | B-63 | Consultar e ajustar stock — *feito 09/09, formato da secção 4.8 do `API.md`, os três endpoints. **Existe um sítio só a mexer no stock**, o novo `src/servicos/stock.js`: o ecrã do gerente, a cozinha ao confirmar e a cozinha ao anular passam todos por lá. É isso que garante que o histórico não tem buracos — um `UPDATE` feito ao lado não deixava movimento e a cadeia deixava de reconstruir o saldo. O `pedidos.js` (B-36) foi alterado para gravar `consumo` ao confirmar e `reposicao` ao anular, com o pedido que os causou; o `UPDATE` com `JOIN` do cancelamento teve de passar a ciclo, porque um `UPDATE` em massa não consegue gravar o `antes`/`depois` de cada produto. O `acerto` é recusado com **403** a uma sessão de cozinha, no servidor e não só no ecrã. **Testado ponta a ponta contra a base local:** entrada 4→16, quebra 16→14, consumo 14→13 pela mesa 9, e as duas verificações da cadeia a **zero**. Cada linha começa onde a anterior acabou, sem isso estar programado em lado nenhum* | 2 h 30 | B-21 |
 | ⬜ | B-64 | CRUD de funcionários (só administrador) | 2 h | B-21 |
 
 ## Sprint 5 · Extras (Semana 10: 3–9 nov)
@@ -308,6 +309,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | F-54 | Responsividade da aplicação de gestão — *zero alvos de toque abaixo de 44 px e zero scroll horizontal, medido em 4 larguras; o pior era o ✕ do painel da conta, a 24×23* | 1 h 30 | F-53 |
 
 | ✅ | F-67 | **Publicar o site.** Descoberto a 04/09: o `vercel.json` estava no repositório desde julho e o `CONTEXTO.md` dizia *"Vercel (já configurado)"*, mas nunca houve deployment — era um plano escrito como se estivesse feito. **No ar a 08/09 em `https://vemproabate.vercel.app`.** O `vercel.json` antigo usava *rewrites*, que mantêm o endereço na barra e faziam os caminhos relativos resolver a partir de `/menu` — o site teria aparecido sem estilos e sem API; passou a um redirecionamento simples da raiz. Verificados no endereço final: a raiz, os estilos e o `api.js`. Havia também dois projetos antigos no Vercel do João, de março: o `vemproabate` estava vazio mas tinha o nome reservado (daí o `DEPLOYMENT_NOT_FOUND`) e foi apagado; o `vemproabatee` continua no ar com a versão de março e vai levar um redirecionamento em vez de ser apagado, para quem tenha o link antigo não cair num 404. *Contas: a Aiven e o Render são do João, o Vercel é do Guilherme — o plano gratuito do Vercel não permite membros, por isso cada um mexe no seu sem esperar pelo outro.* | 1 h | — |
+| ⬜ | F-68 | Fontes do Google guardadas no repositório — *só se o C-27 mostrar que sem rede fica mau. Hoje as páginas vão buscar o tipo de letra ao Google e sem internet caem no do sistema; no plano B isso acontece de certeza. Já houve indício: o X-08, a banda branca que nunca se reproduziu, apareceu numa corrida sem rede em que a Nosifer não carregou* | 30 min | C-27 |
 
 **Total do sprint: ≈ 21 h 30**
 
@@ -470,35 +472,36 @@ sem depender de nuvem nenhuma nem da rede da escola.
 
 ## Resumo de esforço
 
-*Contagens a 8 de setembro, refeitas depois de fechar o B-24, o B-65, o F-67, a F-52, a F-50, a C-26, a C-24 e a C-25, e de entrar o plano B local.* **Esta é a única tabela de contagens do documento.** Os
+*Contagens a 8 de setembro, refeitas depois de fechar o B-24, o B-65, o F-67, a F-52, a F-50, a C-26, a C-24, a C-25 e o B-63, e de entrar o plano B local.* **Esta é a única tabela de contagens do documento.** Os
 números saem de contar as linhas das tabelas de tarefas acima, uma a uma — não de somar ao
 que aqui estava. Se mudares uma linha lá em cima, esta tabela fica errada até alguém a
 refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 73 | 39 | — | 34 | ≈ 46 h |
-| 🟠 Guilherme (F-) | 67 | 44 | 19 | 4 | ≈ 7 h 15 |
+| 🔵 João (B-) | 73 | 40 | — | 33 | ≈ 43 h 30 |
+| 🟠 Guilherme (F-) | 68 | 44 | 19 | 5 | ≈ 7 h 45 |
 | 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
-| 🐞 Correções (X-) | 9 | 8 | — | 1 | ≈ 30 min |
+| 🐞 Correções (X-) | 10 | 8 | — | 2 | ≈ 1 h |
 
-**Total por fazer: ≈ 95 h 15.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
+**Total por fazer: ≈ 93 h 45.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
 take away, e falta o próprio B-35 do take away), C-01 (falta o Guilherme ler o `CONTEXTO.md`)
 e X-08 (não se conseguiu reproduzir). O B-65 saiu desta lista — os QR Codes estão gerados.
 
-> **Nota do merge de 09/09 (o terceiro seguido neste bloco).** Outra vez nenhuma das duas
-> versões estava certa: a do João não contava a F-55, a do Guilherme não contava as C-24 a
-> C-28. Refeito a contar as linhas, como o parágrafo acima manda.
+> **Nota dos merges de 09/09 (foram cinco neste bloco, ao todo).** De cada vez, nenhuma das
+> duas versões estava certa — cada um marcava o seu lado sem ver o do outro. Refeito sempre a
+> contar as linhas, como o parágrafo abaixo manda, e nunca escolhendo um dos lados.
 >
-> E a contagem apanhou mais uma coisa: a versão do João dizia **68** tarefas F- e **10** X-.
-> São **67** e **9** — as quatro sequências estão completas, de B-1 a B-73, F-1 a F-67, C-1 a
-> C-28 e X-1 a X-9, sem um único código em falta. A verificação da sequência é a que o próprio
-> parágrafo acima prescreve, e é a terceira vez que é ela a apanhar o erro. Vale a pena
-> confiar nela em vez da memória.
+> **E uma correção a mim próprio.** Num desses merges escrevi aqui que o João tinha contado
+> mal, porque a minha cópia dava 67 tarefas F- e 9 X- quando ele dizia 68 e 10. Ele não contou
+> mal: a **F-68** e a **X-10** existiam no ficheiro dele e ainda não tinham chegado ao meu. A
+> verificação estava certa sobre o ficheiro que eu tinha, e eu é que tirei a conclusão errada
+> dela — atribuí a erro o que era só duas cópias em momentos diferentes. Agora são mesmo 68 e
+> 10, e as quatro sequências estão completas: B-1 a B-73, F-1 a F-68, C-1 a C-28, X-1 a X-10.
 
-*Como estes números foram feitos:* contadas as 172 linhas das tabelas acima uma a uma e
+*Como estes números foram feitos:* contadas as 179 linhas das tabelas acima uma a uma e
 somada a coluna da estimativa só das linhas ⬜ e 🟨. Os quatro prefixos fecham certo
-(73 + 67 + 23 + 9) e não há códigos em falta na sequência. Se mudares uma linha lá em cima,
+(73 + 68 + 28 + 10) e não há códigos em falta na sequência. Se mudares uma linha lá em cima,
 refaz isto da mesma maneira — não somes nem subtraias a estes valores.
 
 > **Nota do merge de 08/09.** Este bloco veio em conflito porque cada um de nós tinha
