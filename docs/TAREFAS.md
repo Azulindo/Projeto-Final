@@ -171,7 +171,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | B-58 | Descontar stock ao confirmar pedido — *ficou dentro do `PATCH .../estado` e não num `services/stock.js`: mexer no stock fora da transação que muda o estado abria a porta a ficarem em desacordo* | 1 h 30 | B-56 |
 | ✅ | B-59 | Repor stock ao cancelar pedido confirmado — *só repõe se tinha chegado a `confirmado`; cancelar uma ronda em `recebido` não devolve nada porque nada saiu* | 45 min | B-58 |
 | ✅ | B-60 | Atualizar automaticamente o estado da mesa (`livre` / `ocupada`) | 1 h | B-56 |
-| ⬜ | B-61 | CRUD de produtos | 2 h | B-21 |
+| ⬜ | B-61 | CRUD de produtos — *formato na secção 4.9 do `API.md`. **Depende do B-63**, e não só do B-21: um produto novo com stock grava o movimento nº 1, que precisa da tabela que o B-63 cria* | 2 h | B-21, B-63 |
 | ⬜ | B-62 | CRUD de categorias | 1 h 30 | B-21 |
 | ⬜ | B-63 | Consultar e ajustar stock + endpoint de produtos com stock baixo — *(ideia nova, 04/09)* acessível também ao nível `cozinha`, não só `administrador`. **A forma está proposta pelo Guilherme na secção 4.8 do `API.md` (08/09) e já corre simulada no `api.js`: `POST /api/gestao/stock/:id/movimento` com `tipo`, em vez de um PATCH que grava a quantidade, mais `PATCH /api/gestao/stock/:id/minimo`. O motivo é o B-58 — o stock desce sozinho quando a cozinha aceita uma ronda, e gravar um total absoluto apaga o que saiu entretanto.** **Formato fechado a 08/09** — os quatro acrescentos aceites: os descontos automáticos da cozinha também geram movimentos (`consumo` / `reposicao`, escritos só pelo servidor); cada linha guarda `quantidade_antes` e `quantidade_depois`; cada linha guarda quem e quando; e o `acerto` fica só para `administrador` — a cozinha mantém a `quebra`, que é o caso em que se sabe o motivo. A cadeia antes/depois obriga a serializar as escritas do mesmo produto: ler, calcular e gravar na mesma transação com `SELECT ... FOR UPDATE`, como o B-58 já faz, e verificar a cadeia por `id_movimento` e não por data. Cria a **18.ª tabela** — ver a nota do diagrama ER na secção 4.8 do `API.md`. **Sobe de 1 h 30 para 2 h 30** — a tabela de movimentos, os campos antes/depois e a serialização não estavam na estimativa | 2 h 30 | B-21 |
 | ⬜ | B-64 | CRUD de funcionários (só administrador) | 2 h | B-21 |
@@ -391,7 +391,49 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ⬜ | C-19 | Manual de utilização (cliente e funcionário) | 1 h 30 | — |
 | ⬜ | C-20 | Apresentação — 12 a 15 diapositivos | 3 h | C-17 |
 | ⬜ | C-21 | Dois ensaios cronometrados | 2 h | C-20 |
-| ⬜ | C-22 | Preparar a demonstração + **vídeo de 3 min como plano B** | 2 h | C-16 |
+| ⬜ | C-22 | Preparar a demonstração + **vídeo de 3 min como plano B** — *o vídeo é a última rede: se tudo falhar, mostra-se. Não substitui o plano B local (C-24 a C-28), porque um vídeo não responde a "e se eu carregar aqui?" — que é a pergunta que um júri faz* | 2 h | C-16 |
+
+### Plano B local — o sistema a correr sem internet nenhuma
+
+O Aiven desligou-se sozinho **duas vezes em quatro dias** e ainda não se sabe porquê. É o
+único risco que estraga a apresentação inteira em vez de estragar uma parte dela. Andou aqui
+escrito duas vezes como aviso solto, fora da lista — que é a maneira garantida de ninguém lhe
+pegar. Passou a ter código, dono e horas, por insistência do Guilherme (09/09), e ele tem
+razão: **o que não está na lista, no dia 15 ninguém se lembra.**
+
+Já havia um plano B na lista — o vídeo do C-22 — e ninguém deu por ele. O vídeo é a última
+rede, para quando nada funciona. Isto é outra coisa: o sistema **a correr mesmo**, no portátil,
+sem depender de nuvem nenhuma nem da rede da escola.
+
+| ✅ | ID | Tarefa | Est. | Depende de |
+|---|---|---|---|---|
+| ✅ | C-24 | Base de dados local a espelhar o Aiven — *feito 09/09: **18 tabelas, 1 vista, 25 produtos e 15 movimentos**, com a cadeia verificada a zero. A `movimento_stock` (B-63) foi escrita antes de correr, para o esquema ser criado de uma vez só. Dois tropeções pelo caminho, ambos meus: o `<` do PowerShell (usa-se `mysql -e "source ..."`, que também evita o PowerShell estragar os acentos) e o bloco dos movimentos colocado antes do `INSERT INTO utilizador` — ERROR 1452, porque num seed a ordem dos INSERT é a ordem das chaves estrangeiras, não arrumação* | 45 min | — |
+| ✅ | C-25 | API a correr local com `.env` próprio — *feito 09/09. Existe agora o `backend/.env.local` (fora do Git) e o novo `src/config/ambiente.js`, **o único sítio que decide qual `.env` vale**. Foi preciso porque o `bd.js` chamava o `dotenv` uma segunda vez sem caminho: as chaves em falta vinham do `.env` da nuvem e o `DB_SSL_CA` do Aiven infiltrava-se numa ligação ao MySQL de casa — `self-signed certificate in certificate chain`, um erro que não aponta para a causa. O arranque e o `/api/saude` passaram a dizer `LOCAL` ou `NUVEM`, **tirado do `DB_HOST` e não do nome do ficheiro**: a primeira versão dizia LOCAL enquanto falava com o Aiven, e um indicador que mente é pior do que não haver nenhum. `12 ms` de resposta local. `node src/app.js --nuvem` força a nuvem* | 30 min | C-24 |
+| ✅ | C-26 | O `api.js` escolhe o endereço da API pela origem da página — *feito 09/09 pelo Guilherme, commit `9eed5db`, com teste em `frontend/testes/api-base.js`. De `localhost`, de um IP privado ou de `file://` vai à API local em `http`; do Vercel vai ao Render em `https`. **Nunca uma página `https` a chamar `http`**, que era a armadilha que ia partir o plano B sem dar erro percebível. Há um `?api=http://…` para forçar à mão, e sobrevive à navegação.* **Deixou o `API.md` §5 desatualizado** (ver X-10) | 1 h | — |
+| ⬜ | C-27 | Ensaio do ciclo completo **com o Wi-Fi desligado** — não basta sair da nossa rede: sem rede nenhuma as fontes do Google não carregam e as páginas caem no tipo de letra do sistema. Não parte nada, muda o aspeto, e é melhor sabermos como fica antes do que descobrir no projetor. *(Já aconteceu uma vez: o X-08, a banda branca que o Guilherme nunca reproduziu, apareceu numa corrida sem rede em que a Nosifer não carregou.)* Cobre QR → sessão → ronda → cozinha → conta → fechar, mais login nos três níveis. *Os dois* | 1 h | C-25, C-26 |
+| ⬜ | C-28 | Folha de emergência impressa — os comandos pela ordem certa, os endereços, as contas de teste e a decisão dos cartões. No dia não se pensa, lê-se. *João* | 30 min | C-27 |
+
+**Decisões já fechadas neste plano (09/09):**
+
+- **O palco é o portátil.** A rede da escola não serve para o telemóvel chegar ao portátil —
+  muitas têm isolamento entre clientes ligado por omissão, e isso não se descobre a ensaiar
+  em casa.
+- **O telemóvel entra por dados móveis, contra o site publicado.** As duas vias falham por
+  razões diferentes — uma precisa do portátil, a outra da nuvem —, que é precisamente o que se
+  quer num plano B.
+- **Um jogo só de QR Codes, com o endereço de produção** — os que já estão impressos. O
+  Guilherme propôs apontá-los ao `localhost`, pelo argumento (certo) de que é o único endereço
+  que nunca muda. Mas **um QR Code só alguma vez é lido por um telemóvel, e um telemóvel nunca
+  chega ao `localhost`** — ali o `localhost` é o próprio telefone. Um cartão desses falha a
+  100% na única coisa para que serve, e alguém do júri **vai** pegar num cartão e apontar-lhe o
+  telefone. No portátil não é preciso QR nenhum: abre-se o endereço.
+- **Se o plano B estiver a correr, os cartões não vão para cima da mesa.** Com o Aiven em
+  baixo, o cartão leva o telemóvel a um site que abre e não mostra dados. Fica escrito na folha
+  do C-28. A alternativa — o portátil criar um ponto de acesso com endereço fixo e imprimível —
+  foi estudada e **posta de lado**: o ponto de acesso do Windows 11 falha o DHCP com
+  frequência suficiente para não se pôr uma apresentação em cima dele.
+
+---
 
 ---
 
@@ -428,7 +470,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 ## Resumo de esforço
 
-*Contagens a 8 de setembro, refeitas depois de fechar o B-24, o B-65, o F-67, a F-52 e a F-50.* **Esta é a única tabela de contagens do documento.** Os
+*Contagens a 8 de setembro, refeitas depois de fechar o B-24, o B-65, o F-67, a F-52, a F-50, a C-26, a C-24 e a C-25, e de entrar o plano B local.* **Esta é a única tabela de contagens do documento.** Os
 números saem de contar as linhas das tabelas de tarefas acima, uma a uma — não de somar ao
 que aqui estava. Se mudares uma linha lá em cima, esta tabela fica errada até alguém a
 refazer.
@@ -437,12 +479,22 @@ refazer.
 |---|---|---|---|---|---|
 | 🔵 João (B-) | 73 | 39 | — | 34 | ≈ 46 h |
 | 🟠 Guilherme (F-) | 67 | 42 | 19 | 6 | ≈ 10 h 45 |
-| 🟢 Os dois (C-) | 23 | 4 | — | 19 | ≈ 40 h |
+| 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
 | 🐞 Correções (X-) | 9 | 8 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 97 h 15.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
+**Total por fazer: ≈ 98 h 45.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
 take away, e falta o próprio B-35 do take away), C-01 (falta o Guilherme ler o `CONTEXTO.md`)
 e X-08 (não se conseguiu reproduzir). O B-65 saiu desta lista — os QR Codes estão gerados.
+
+> **Nota do merge de 09/09 (o terceiro seguido neste bloco).** Outra vez nenhuma das duas
+> versões estava certa: a do João não contava a F-55, a do Guilherme não contava as C-24 a
+> C-28. Refeito a contar as linhas, como o parágrafo acima manda.
+>
+> E a contagem apanhou mais uma coisa: a versão do João dizia **68** tarefas F- e **10** X-.
+> São **67** e **9** — as quatro sequências estão completas, de B-1 a B-73, F-1 a F-67, C-1 a
+> C-28 e X-1 a X-9, sem um único código em falta. A verificação da sequência é a que o próprio
+> parágrafo acima prescreve, e é a terceira vez que é ela a apanhar o erro. Vale a pena
+> confiar nela em vez da memória.
 
 *Como estes números foram feitos:* contadas as 172 linhas das tabelas acima uma a uma e
 somada a coluna da estimativa só das linhas ⬜ e 🟨. Os quatro prefixos fecham certo
