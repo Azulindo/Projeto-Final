@@ -173,9 +173,9 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | B-59 | Repor stock ao cancelar pedido confirmado — *só repõe se tinha chegado a `confirmado`; cancelar uma ronda em `recebido` não devolve nada porque nada saiu* | 45 min | B-58 |
 | ✅ | B-60 | Atualizar automaticamente o estado da mesa (`livre` / `ocupada`) | 1 h | B-56 |
 | ✅ | B-61 | CRUD de produtos — *feito 09/09, formato da secção 4.9 do `API.md`, em `src/routes/gestaoProdutos.js`. **Sem DELETE**: quem sai da carta fica `ativo = 0`, senão o `item_pedido` ficava a apontar para o nada e as estatísticas passavam a mentir. As duas armadilhas da 4.9 fechadas e testadas: **(1)** um `quantidade_atual` no `PATCH` dá **400** e o pedido é recusado inteiro — o preço que vinha no mesmo corpo também não passa, porque meio pedido aplicado é pior do que nenhum; a verificação corre antes do zod, que de outro modo já teria deitado fora a chave; **(2)** só se mexe no stock quando o `controla_stock` **muda** — reenviar `true` sem alterar é o que qualquer formulário faz ao gravar, e teria posto o produto a zero ao mudar um preço. A quantidade inicial de um produto novo entra como movimento nº 1 (`entrada`, `antes = 0`), o único sítio onde a quantidade é aceite num pedido de produto — e é seguro porque o produto não existia um segundo antes. **Testado:** produto 26 criado com 36, preço alterado com os 36 intactos, cadeia a zero* | 2 h | B-21, B-63 |
-| ⬜ | B-62 | CRUD de categorias | 1 h 30 | B-21 |
+| ✅ | B-62 | CRUD de categorias — *feito 09/09, `src/routes/gestaoCategorias.js`. Sem DELETE (o `produto` aponta para a categoria com `ON DELETE RESTRICT`). O `GET` devolve o **número de produtos activos** dentro de cada categoria, e é esse número que dá sentido à regra seguinte: **desligar uma categoria com produtos é recusado à primeira**, com 409 a dizer quantos são. O catálogo do cliente filtra por `c.ativo = 1`, por isso desligar uma categoria tira da ementa todos os produtos que ela tem dentro **sem tocar em nenhum deles** — quem carrega no botão só queria arrumar o back-office. Quem quiser mesmo repete com `"confirmar": true`. **Testado:** recusa nas Sobremesas (4 produtos), e com a confirmação a ementa do cliente caiu de 26 para 22 e voltou aos 26* | 1 h 30 | B-21 |
 | ✅ | B-63 | Consultar e ajustar stock — *feito 09/09, formato da secção 4.8 do `API.md`, os três endpoints. **Existe um sítio só a mexer no stock**, o novo `src/servicos/stock.js`: o ecrã do gerente, a cozinha ao confirmar e a cozinha ao anular passam todos por lá. É isso que garante que o histórico não tem buracos — um `UPDATE` feito ao lado não deixava movimento e a cadeia deixava de reconstruir o saldo. O `pedidos.js` (B-36) foi alterado para gravar `consumo` ao confirmar e `reposicao` ao anular, com o pedido que os causou; o `UPDATE` com `JOIN` do cancelamento teve de passar a ciclo, porque um `UPDATE` em massa não consegue gravar o `antes`/`depois` de cada produto. O `acerto` é recusado com **403** a uma sessão de cozinha, no servidor e não só no ecrã. **Testado ponta a ponta contra a base local:** entrada 4→16, quebra 16→14, consumo 14→13 pela mesa 9, e as duas verificações da cadeia a **zero**. Cada linha começa onde a anterior acabou, sem isso estar programado em lado nenhum* | 2 h 30 | B-21 |
-| ⬜ | B-64 | CRUD de funcionários (só administrador) | 2 h | B-21 |
+| ✅ | B-64 | CRUD de funcionários (só administrador) — *feito 09/09, `src/routes/gestaoFuncionarios.js`. Uma conta vive em duas tabelas (`utilizador` + `funcionario`) e as duas escritas vão sempre na mesma transacção. Senha em bcrypt custo 12, mínimo 10 caracteres; **o `password_hash` nunca sai numa resposta** — não se desfaz, mas fica no histórico do browser e num printscreen. Sem DELETE: o funcionário está agarrado ao histórico de estados dos pedidos e aos movimentos de stock, e apagá-lo deixava esse passado sem dono. **A regra do último administrador:** desativar (ou despromover) o último administrador ativo é recusado com 409, **inclusive quando é a própria conta a fazê-lo** — ser quem manda não muda o resultado, e não haveria ecrã para desfazer, porque o ecrã que desfazia é o que ficou inacessível. **Testado:** recusou o auto-desligar do único administrador; promovida a Maria a `gerente`, o mesmo pedido passou. A regra conta, não bloqueia às cegas* | 2 h | B-21 |
 
 ## Sprint 5 · Extras (Semana 10: 3–9 nov)
 
@@ -479,12 +479,12 @@ refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 73 | 41 | — | 32 | ≈ 41 h 30 |
+| 🔵 João (B-) | 73 | 43 | — | 30 | ≈ 38 h |
 | 🟠 Guilherme (F-) | 68 | 44 | 19 | 5 | ≈ 7 h 45 |
 | 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
 | 🐞 Correções (X-) | 10 | 9 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 91 h 15.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
+**Total por fazer: ≈ 87 h 45.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
 take away, e falta o próprio B-35 do take away), C-01 (falta o Guilherme ler o `CONTEXTO.md`)
 e X-08 (não se conseguiu reproduzir). O B-65 saiu desta lista — os QR Codes estão gerados.
 
