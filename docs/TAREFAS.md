@@ -27,7 +27,8 @@
 > depois. Foi assim que se fez a F-62 e a F-49.
 >
 > O que **de facto** espera pelo João são os endpoints de escrita, para as tarefas que
-> guardam alguma coisa: F-50 (B-61), F-51 (B-62), F-52 (B-63), F-53 (B-64) e F-61 (B-73).
+> guardam alguma coisa: F-51 (B-62), F-53 (B-64) e F-61 (B-73). A F-50 e a F-52 já estão
+> construídas com dados simulados — falta-lhes só trocar a origem quando o B-61 e o B-63 existirem.
 > Ler já se pode hoje.
 
 > As 19 tarefas 🔁 do Guilherme (≈22 h) descreviam a `pedido.html` — a página de conversa
@@ -172,7 +173,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | B-60 | Atualizar automaticamente o estado da mesa (`livre` / `ocupada`) | 1 h | B-56 |
 | ⬜ | B-61 | CRUD de produtos | 2 h | B-21 |
 | ⬜ | B-62 | CRUD de categorias | 1 h 30 | B-21 |
-| ⬜ | B-63 | Consultar e ajustar stock + endpoint de produtos com stock baixo — *formato fechado a 08/09 entre os dois, em `docs/API.md` 4.8: **movimentos** (`entrada`/`quebra`/`acerto`), nunca um total gravado por cima. Acrescentado pelo João e aceite: o `consumo` e a `reposicao` automáticos (B-58/B-59) também gravam movimento, escritos só pelo servidor; cada linha leva `quantidade_antes`, `quantidade_depois`, `id_utilizador` e `data`; o `acerto` fica só para `administrador` (a `entrada` e a `quebra` continuam acessíveis à `cozinha`). **Serializar as escritas do mesmo produto** dentro da transação, ou a cadeia antes/depois parte-se sozinha. Cria a 18.ª tabela — ver nota do diagrama ER* | 2 h 30 | B-21 |
+| ⬜ | B-63 | Consultar e ajustar stock + endpoint de produtos com stock baixo — *(ideia nova, 04/09)* acessível também ao nível `cozinha`, não só `administrador`. **A forma está proposta pelo Guilherme na secção 4.8 do `API.md` (08/09) e já corre simulada no `api.js`: `POST /api/gestao/stock/:id/movimento` com `tipo`, em vez de um PATCH que grava a quantidade, mais `PATCH /api/gestao/stock/:id/minimo`. O motivo é o B-58 — o stock desce sozinho quando a cozinha aceita uma ronda, e gravar um total absoluto apaga o que saiu entretanto.** **Formato fechado a 08/09** — os quatro acrescentos aceites: os descontos automáticos da cozinha também geram movimentos (`consumo` / `reposicao`, escritos só pelo servidor); cada linha guarda `quantidade_antes` e `quantidade_depois`; cada linha guarda quem e quando; e o `acerto` fica só para `administrador` — a cozinha mantém a `quebra`, que é o caso em que se sabe o motivo. A cadeia antes/depois obriga a serializar as escritas do mesmo produto: ler, calcular e gravar na mesma transação com `SELECT ... FOR UPDATE`, como o B-58 já faz, e verificar a cadeia por `id_movimento` e não por data. Cria a **18.ª tabela** — ver a nota do diagrama ER na secção 4.8 do `API.md`. **Sobe de 1 h 30 para 2 h 30** — a tabela de movimentos, os campos antes/depois e a serialização não estavam na estimativa | 2 h 30 | B-21 |
 | ⬜ | B-64 | CRUD de funcionários (só administrador) | 2 h | B-21 |
 
 ## Sprint 5 · Extras (Semana 10: 3–9 nov)
@@ -302,7 +303,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | F-49 | Tabela de produtos com pesquisa e ordenação — pesquisa por nome e descrição **sem acentos** (quem escreve "acores" encontra os "Açores"), filtro por categoria derivado dos próprios produtos, e ordenação por qualquer coluna com `aria-sort` a acompanhar a seta. *Lê do `gestao/produtos`, não do `produtos`: o `produtos` é a vista do CLIENTE e esconde os inativos e os que estão sem stock (`docs/API.md` 4.2) — num ecrã de administração era ao contrário do que faz falta, porque é a ver os inativos que se reativa um produto. Endpoint simulado no `api.js` com o formato acordado, à espera do **B-61**.* Só leitura; criar e editar são o F-50 | 2 h | F-44 |
 | ✅ | F-50 | Formulário de produto (criar / editar / ativar / desativar) — *criar e editar num `<dialog>`, com as duas bandeiras explicadas no próprio formulário porque são a confusão mais provável do ecrã: **"está na carta"** (`ativo`, decisão permanente) e **"há hoje"** (`disponivel`, decisão do dia). **Sem apagar, de propósito:** um produto que já apareceu num pedido não pode desaparecer sem levar o histórico atrás. O preço aceita vírgula — num teclado português escreve-se "16,20", e um `input type=number` devolve string vazia para o que considera inválido, fazendo o preço desaparecer sem dizer porquê. A existência só é editável ao criar ou ao ligar o controlo de stock; a partir daí manda o ecrã de Stock, senão eram dois ecrãs a escrever o mesmo número. Formato proposto em `docs/API.md` 4.9, simulado no `api.js` à espera do **B-61**. Verificado: `frontend/testes/produtos-form.js`* | 2 h | F-49 |
 | ⬜ | F-51 | Tabela e formulário de categorias | 1 h 30 | F-49 |
-| ✅ | F-52 | Ecrã de stock: ler, ajustar e mudar o mínimo — *o aviso de stock baixo existia desde a F-62 em dois sítios (cozinha e contador do gerente), mas quem o via não tinha para onde ir. Três operações em vez de um campo que se grava por cima: **entrada** (+), **quebra** (−) e **acerto** (=), porque um valor absoluto perde o porquê e apaga as vendas que a cozinha registou entretanto — este stock mexe-se sozinho (B-58/B-59). Formato proposto ao João em `docs/API.md` 4.8, simulado no `api.js` à espera do **B-63**; até lá os ajustes ficam no browser. A cozinha entra (é quem dá pelas quebras), o balcão não. Verificado: `frontend/testes/stock-ecra.js`* | 2 h | F-49 |
+| ✅ | F-52 | Ecrã de stock: ler, ajustar e mudar o mínimo — *o aviso de stock baixo existia desde a F-62 em dois sítios (cozinha e contador do gerente), mas quem o via não tinha para onde ir. Três operações em vez de um campo que se grava por cima: **entrada** (+), **quebra** (−) e **acerto** (=), porque um valor absoluto perde o porquê e apaga as vendas que a cozinha registou entretanto — este stock mexe-se sozinho (B-58/B-59). O `acerto` fica só para `administrador`. Formato proposto ao João em `docs/API.md` 4.8, simulado no `api.js` à espera do **B-63**; até lá os ajustes ficam no browser. A cozinha entra (é quem dá pelas quebras), o balcão não. Trouxe também uma **correção de contraste**: o distintivo vermelho de "stock baixo" estava a 3,80:1 (mínimo 4,5:1 para texto), e mudou o vermelho do texto no `base.css`, o que arrasta a `produtos.html` — o `--perigo` fica igual para molduras e avisos, onde o mínimo é 3:1. E uma de layout: o `.sr-so-leitor` escapava ao `overflow` da tabela e dava scroll horizontal a 360 px. Verificado: `frontend/testes/stock-ecra.js`* | 2 h | F-49 |
 | ⬜ | F-53 | Ecrã de funcionários (tabela + formulário) | 2 h | F-49 |
 | ✅ | F-54 | Responsividade da aplicação de gestão — *zero alvos de toque abaixo de 44 px e zero scroll horizontal, medido em 4 larguras; o pior era o ✕ do painel da conta, a 24×23* | 1 h 30 | F-53 |
 
@@ -427,7 +428,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 ## Resumo de esforço
 
-*Contagens a 8 de setembro, refeitas depois de fechar o B-24, o B-65 e o F-67.* **Esta é a única tabela de contagens do documento.** Os
+*Contagens a 8 de setembro, refeitas depois de fechar o B-24, o B-65, o F-67, a F-52 e a F-50.* **Esta é a única tabela de contagens do documento.** Os
 números saem de contar as linhas das tabelas de tarefas acima, uma a uma — não de somar ao
 que aqui estava. Se mudares uma linha lá em cima, esta tabela fica errada até alguém a
 refazer.
@@ -461,17 +462,18 @@ refaz isto da mesma maneira — não somes nem subtraias a estes valores.
 foi por aí que as tabelas se desencontraram — passou a não ter nenhuma. Os números estão na
 tabela acima.)*
 
-Só as tarefas que **guardam** alguma coisa é que precisam de endpoints: F-51 (B-62),
-F-53 (B-64) e F-61 (B-73). A F-50 saiu desta lista a 08/09, pela mesma razão da F-52. **Ler já se pode hoje** — o catálogo,
+Só as tarefas que **guardam** alguma coisa é que precisam de endpoints: F-50 (B-61),
+F-51 (B-62), F-53 (B-64) e F-61 (B-73) — a F-50 e a F-52 já estão construídas, só lhes falta
+trocar a origem dos dados. **Ler já se pode hoje** — o catálogo,
 as sessões, a fila da cozinha e o balcão já respondem a sério.
 
-A F-52 saiu desta lista a 08/09 e vale a pena dizer porquê, porque é o padrão a seguir nas
-outras três: o ecrã foi construído inteiro, com os endpoints de escrita simulados no
-`api.js` no formato que se propõe ao João (`docs/API.md` 4.8). Funciona de ponta a ponta e
-dá para demonstrar; o que falta é o **B-63** guardar os ajustes na base em vez de no
-browser, e isso é uma linha no `ENDPOINTS_REAIS`. Esperar pelo endpoint para começar o ecrã
-era perder o tempo todo à espera, e ainda por cima entregava-se ao João um formato decidido
-por ele sozinho em vez de um discutido pelos dois.
+A F-50 e a F-52 são o padrão a seguir nas outras: o ecrã constrói-se inteiro, com os
+endpoints de escrita simulados no `api.js` no formato que se propõe ao João (`docs/API.md`
+4.8 e 4.9). Funcionam de ponta a ponta e dão para demonstrar; o que falta é o **B-61** e o
+**B-63** guardarem na base em vez de no browser, e isso é uma linha no `ENDPOINTS_REAIS`.
+Esperar pelo endpoint para começar o ecrã era perder o tempo todo à espera, e ainda por
+cima entregava-se ao João um formato decidido por uma pessoa só em vez de discutido pelos
+dois — que foi o que apanhou os dois erros do `quantidade_atual`.
 
 A ideia de que "9 das 10 esperam por endpoints" andou aqui escrita e era falsa: a coluna
 *Depende de* dessas tarefas aponta para a **F-44**, a barra lateral, feita há muito. Estava a
