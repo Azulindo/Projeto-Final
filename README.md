@@ -22,7 +22,7 @@ Sistema web para o restaurante *Vem Pro Abate* (Amadora), composto por duas apli
 
 | Módulo | Estado |
 |---|---|
-| Base de dados | ✅ 17 tabelas + vista, alojada no Aiven |
+| Base de dados | ✅ 18 tabelas + vista, alojada no Aiven |
 | API / back-end | ✅ No ar no Render — catálogo, login, sessões de mesa e cozinha |
 | Site institucional (início, menu, galeria, sobre, contactos) | ✅ Concluído · ementa lida da API |
 | Chatbot de reservas (interface) | ✅ Concluído · ainda sobre dados simulados |
@@ -144,7 +144,7 @@ O `?mesa=` é o valor da coluna `mesa.qr_code`, que é o que fica dentro do QR C
 
 No MySQL Workbench, ligado à base local ou ao Aiven, correr **por esta ordem**:
 
-1. `database/schema.sql` — cria a base e as 17 tabelas (começa com um `DROP DATABASE`, apaga o que lá estiver)
+1. `database/schema.sql` — cria a base e as 18 tabelas (começa com um `DROP DATABASE`, apaga o que lá estiver)
 2. `database/seed.sql` — enche com a ementa real, 10 mesas, 3 contas e um serviço de exemplo
 
 Confirmar:
@@ -253,7 +253,7 @@ ORIGEM_PERMITIDA=
 | [`docs/PLANEAMENTO.md`](docs/PLANEAMENTO.md) | Calendário, sprints, prioridades e gestão de risco |
 | [`docs/TAREFAS.md`](docs/TAREFAS.md) | Lista de tarefas dividida por pessoa, com estimativas e dependências |
 | [`docs/API.md`](docs/API.md) | Contrato dos endpoints. **A secção 3.10 é a que vale** — substitui as anteriores |
-| `database/` | Diagrama ER (17 tabelas, notação pé-de-galinha), `schema.sql` e `seed.sql` |
+| `database/` | Diagrama ER (18 tabelas, notação pé-de-galinha), `schema.sql` e `seed.sql` |
 
 ---
 

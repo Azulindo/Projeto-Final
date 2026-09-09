@@ -5,7 +5,16 @@
  * =====================================================================
  */
 
-require('dotenv').config();
+/*
+ *  Qual base de dados? A decisao esta toda no config/ambiente.js, e
+ *  este require tem de vir ANTES de qualquer outro que leia variaveis
+ *  de ambiente — o bd.js e o primeiro deles.
+ *
+ *  Para usar a nuvem tendo o .env.local no sitio:
+ *      node src/app.js --nuvem
+ */
+const { NOME_AMBIENTE, nomeFicheiro, avisoTrocado } = require('./config/ambiente');
+
 const express = require('express');
 const cors = require('cors');
 const { pool, testarLigacao } = require('./config/bd');
@@ -79,7 +88,7 @@ app.use('/api', pedidosRouter);
  * que a ligacao funciona antes de haver logica nenhuma. Depois de o
  * projeto estar publicado, e tambem por aqui que se verifica se o
  * servidor adormeceu — e o que o trabalho agendado do GitHub chama de
- * 6 em 6 horas para o Aiven nao se desligar.
+ * hora a hora para o Aiven nao se desligar.
  */
 app.get('/api/saude', async (_req, res, next) => {
   try {
@@ -112,6 +121,9 @@ app.get('/api/saude', async (_req, res, next) => {
       ambiente: process.env.NODE_ENV || 'development',
       baseDados: {
         ligada: true,
+        // LOCAL ou NUVEM. Numa apresentacao, saber isto de relance vale
+        // mais do que qualquer outro campo desta resposta.
+        origem: NOME_AMBIENTE,
         nome: process.env.DB_NAME,
         tabelas: Number(tabelas),
         vistas:  Number(vistas),
@@ -169,7 +181,18 @@ const PORTA = process.env.PORT || 3000;
 
   try {
     await testarLigacao();
-    console.log(`Base de dados "${process.env.DB_NAME}" ligada.`);
+    console.log('');
+    console.log('  ------------------------------------------------------');
+    console.log(`   BASE DE DADOS: ${NOME_AMBIENTE}`);
+    console.log(`   servidor:      ${process.env.DB_HOST}`);
+    console.log(`   base:          ${process.env.DB_NAME}`);
+    console.log(`   ficheiro:      ${nomeFicheiro}`);
+    console.log('  ------------------------------------------------------');
+    if (avisoTrocado) {
+      console.log('');
+      console.log(avisoTrocado);
+    }
+    console.log('');
   } catch (erro) {
     console.error('NAO FOI POSSIVEL LIGAR A BASE DE DADOS');
     console.error(erro.message);

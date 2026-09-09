@@ -11,7 +11,12 @@
  *  abertas e vai-as emprestando conforme os pedidos chegam.
  */
 
-require('dotenv').config();
+/*
+ *  Nao se chama aqui o dotenv. Quem decide qual .env vale e o
+ *  config/ambiente.js, e chama-se uma vez so — ver la a nota sobre o
+ *  DB_SSL_CA da nuvem que se infiltrou numa ligacao local.
+ */
+require('./ambiente');
 const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({

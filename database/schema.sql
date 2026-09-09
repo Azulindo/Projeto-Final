@@ -525,6 +525,123 @@ CREATE TABLE notificacao (
 -- e tentar enviar outra vez.
 
 
+
+-- =====================================================================
+--  18. MOVIMENTO_STOCK
+--
+--  Cada mexida no stock deixa aqui uma linha. A tabela stock guarda
+--  QUANTO ha agora; esta guarda COMO SE LA CHEGOU.
+--
+--  Porque nao basta a coluna quantidade_atual: este stock mexe-se
+--  sozinho (desce quando a cozinha aceita uma ronda, sobe quando uma
+--  ronda e anulada). Se o gerente abrisse o ecra, visse 20 e gravasse
+--  24 para uma entrega de 4, os pratos que sairam entretanto
+--  desapareciam da contabilidade sem ninguem reparar. Gravando
+--  MOVIMENTOS em vez de totais, o servidor soma e as duas coisas
+--  coexistem.
+--
+--  E fica o porque: uma descida de 20 para 14 pode ser uma encomenda
+--  incompleta ou seis garrafas partidas, e sao conversas diferentes
+--  com o fornecedor.
+-- =====================================================================
+CREATE TABLE movimento_stock (
+  id_movimento       INT NOT NULL AUTO_INCREMENT,
+  id_produto         INT NOT NULL,
+  tipo               ENUM('entrada','quebra','acerto','consumo','reposicao') NOT NULL,
+  quantidade         INT NOT NULL,
+  quantidade_antes   INT NOT NULL,
+  quantidade_depois  INT NOT NULL,
+  id_utilizador      INT NOT NULL,
+  id_pedido          INT NULL,
+  nota               VARCHAR(200) NULL,
+  data_movimento     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (id_movimento),
+
+  -- O indice e (produto, movimento) e nao so (produto): e ele que faz
+  -- a verificacao da cadeia e o historico de um produto correrem sem
+  -- ler a tabela toda.
+  KEY idx_movimento_produto (id_produto, id_movimento),
+
+  CONSTRAINT fk_movimento_produto
+    FOREIGN KEY (id_produto) REFERENCES produto (id_produto)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_movimento_utilizador
+    FOREIGN KEY (id_utilizador) REFERENCES utilizador (id_utilizador)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_movimento_pedido
+    FOREIGN KEY (id_pedido) REFERENCES pedido (id_pedido)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+
+  CONSTRAINT ck_movimento_quantidade CHECK (quantidade        >= 0),
+  CONSTRAINT ck_movimento_antes      CHECK (quantidade_antes  >= 0),
+  CONSTRAINT ck_movimento_depois     CHECK (quantidade_depois >= 0),
+
+  -- A ARITMETICA E VERIFICADA PELA PROPRIA BASE DE DADOS.
+  --
+  -- Nao se confia no codigo para isto. Uma linha cujas contas nao
+  -- fechem nao entra, venha de onde vier - da API, do Workbench, de um
+  -- script escrito a pressa no dia da apresentacao.
+  --
+  --   entrada / reposicao -> depois = antes + quantidade
+  --   quebra  / consumo   -> depois = antes - quantidade
+  --   acerto              -> depois = quantidade  (e absoluto de proposito:
+  --                          uma contagem fisica manda sobre o que o
+  --                          sistema julgava saber)
+  CONSTRAINT ck_movimento_aritmetica CHECK (
+       (tipo = 'acerto'                    AND quantidade_depois = quantidade)
+    OR (tipo IN ('entrada','reposicao')    AND quantidade_depois = quantidade_antes + quantidade)
+    OR (tipo IN ('quebra','consumo')       AND quantidade_depois = quantidade_antes - quantidade)
+  )
+) ENGINE=InnoDB;
+
+-- QUEM ESCREVE O QUE
+--   entrada    gerente ou cozinha   chegou mercadoria
+--   quebra     gerente ou cozinha   partiu-se, estragou-se, fora de validade
+--   acerto     SO o gerente         contagem fisica; e o unico absoluto
+--   consumo    so o servidor        ronda confirmada
+--   reposicao  so o servidor        ronda anulada
+--
+-- O consumo e a reposicao nao se pedem pela API: acontecem. Se se
+-- pudessem pedir, alguem podia inventar consumos a mao e o historico
+-- deixava de valer como prova.
+--
+-- O id_utilizador sai sempre do token, nunca do corpo do pedido: quem
+-- chama nao escolhe em nome de quem grava.
+
+
+-- =====================================================================
+--  VERIFICAR A CADEIA
+--
+--  O quantidade_antes de cada linha tem de ser igual ao
+--  quantidade_depois da anterior, para o mesmo produto. As duas
+--  consultas seguintes devem devolver ZERO linhas. Se devolverem
+--  alguma, alguem escreveu na tabela stock por fora dos movimentos.
+--
+--  Ordena-se por id_movimento e NUNCA por data: dois movimentos no
+--  mesmo segundo vao existir (a cozinha confirma rondas em rajada) e
+--  por data caiam ao calhas - o alarme tocava sem ninguem ter feito
+--  nada de errado. Um alarme que dispara sem motivo deixa de ser lido
+--  a segunda vez.
+-- =====================================================================
+
+-- 1. A cadeia parte-se em algum ponto?
+-- SELECT * FROM (
+--   SELECT id_produto, id_movimento, quantidade_antes,
+--          LAG(quantidade_depois) OVER (PARTITION BY id_produto
+--                                       ORDER BY id_movimento) AS depois_anterior
+--     FROM movimento_stock) c
+--  WHERE depois_anterior IS NOT NULL
+--    AND quantidade_antes <> depois_anterior;
+
+-- 2. O ultimo movimento bate certo com o stock a serio?
+-- SELECT s.id_produto, s.quantidade_atual, m.quantidade_depois
+--   FROM stock s
+--   JOIN movimento_stock m ON m.id_produto = s.id_produto
+--  WHERE m.id_movimento = (SELECT MAX(id_movimento) FROM movimento_stock x
+--                           WHERE x.id_produto = s.id_produto)
+--    AND s.quantidade_atual <> m.quantidade_depois;
+
 -- =====================================================================
 --  VISTA: vw_total_sessao
 --  O total de uma sessao, calculado UMA vez so.
@@ -567,9 +684,21 @@ GROUP BY s.id_sessao;
 
 -- =====================================================================
 --  VERIFICACAO
---  Depois de correr, isto deve devolver 17 linhas (a vista nao conta).
+--
+--  Devem aparecer 18 tabelas e 1 vista.
+--
+--  O information_schema.TABLES inclui as VISTAS, e por isso um
+--  COUNT(*) simples aqui dava 19 quando o diagrama ER mostra 18.
+--  Nenhum dos numeros estaria errado - contavam coisas diferentes -
+--  mas o diagrama e entregavel e alguem ia contar. Por isso a coluna
+--  TABLE_TYPE aparece na resposta: cada coisa diz o que e.
 -- =====================================================================
-SELECT TABLE_NAME AS tabela, TABLE_ROWS AS linhas
+SELECT TABLE_NAME AS nome, TABLE_TYPE AS tipo, TABLE_ROWS AS linhas
 FROM information_schema.TABLES
 WHERE TABLE_SCHEMA = 'vem_pro_abate'
-ORDER BY TABLE_NAME;
+ORDER BY TABLE_TYPE, TABLE_NAME;
+
+SELECT SUM(TABLE_TYPE = 'BASE TABLE') AS tabelas,
+       SUM(TABLE_TYPE = 'VIEW')       AS vistas
+FROM information_schema.TABLES
+WHERE TABLE_SCHEMA = 'vem_pro_abate';
