@@ -23,6 +23,7 @@ const authRouter = require('./routes/auth');
 const mesasRouter = require('./routes/mesas');
 const pedidosRouter = require('./routes/pedidos');
 const gestaoStockRouter = require('./routes/gestaoStock');
+const gestaoProdutosRouter = require('./routes/gestaoProdutos');
 
 const app = express();
 
@@ -84,6 +85,10 @@ app.use('/api', pedidosRouter);
 // Stock: /api/gestao/stock, /:id/movimento, /:id/minimo
 // Niveis administrador e cozinha; o acerto so administrador.
 app.use('/api', gestaoStockRouter);
+
+// Catalogo de gestao: /api/gestao/produtos (listar, criar, editar)
+// So administrador. Nao ha DELETE — quem sai da carta fica ativo=0.
+app.use('/api', gestaoProdutosRouter);
 
 /**
  * GET /api/saude
