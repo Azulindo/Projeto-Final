@@ -78,7 +78,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | **✅** | **X-07** | ~~Topo dos cartões altos cortado~~ — corrigido com teste | 45 min | Gui |
 | 🟨 | **X-08** | Banda branca no topo — **não reproduzida** pelo Guilherme em 6 páginas a 1440 e 1920. A causa que eu apontei era real (`html`/`body` sem cor de fundo) e foi tapada com `background-color` + `color-scheme: dark`. Possível artefacto do meu teste: corri em Chromium sem rede, e a fonte Nosifer não carregou | 30 min | Gui |
 | **✅** | **X-09** | ~~Caixa de escrita engolia texto sem responder~~ — corrigido com teste | 20 min | Gui |
-| ⬜ | **X-10** | `docs/API.md` desatualizado em dois sítios, encontrado a 09/09 ao ler as secções novas. **(a)** A §5 *"Onde é que o servidor está"* ainda diz `API_BASE = 'http://localhost:3000/api'` e *"quando houver endereço público, muda-se uma linha"* — mas o C-26 já o faz sozinho e o servidor está no Render desde 05/09; a lista `ENDPOINTS_REAIS` que ela mostra tem 4 entradas e a real tem 16. **(b)** A §4.8 traz a justificação do movimento **duas vezes**, com a mesma frase final repetida — sobra do merge. É o mesmo erro do F-67 (*"Vercel (já configurado)"*): documentação a descrever um plano como se fosse o que corre. E o `API.md` é entregável | 30 min | Gui |
+| **✅** | **X-10** | ~~`docs/API.md` desatualizado em dois sítios~~ — corrigido pelo Guilherme a 09/09. A §5 passou a descrever o que o C-26 faz mesmo, e a §4.8 perdeu a justificação repetida. **A correcção foi melhor do que a pedida:** em vez de actualizar a cópia da lista `ENDPOINTS_REAIS` que estava no documento com 4 entradas quando o `api.js` já tinha 15, apagou a cópia e escreveu *"uma lista copiada é uma lista que vai ficar errada"* — passou a dizer o que a lista cobre, não o que ela diz linha a linha | 30 min | Gui |
 
 ---
 
@@ -482,9 +482,9 @@ refazer.
 | 🔵 João (B-) | 73 | 40 | — | 33 | ≈ 43 h 30 |
 | 🟠 Guilherme (F-) | 68 | 44 | 19 | 5 | ≈ 7 h 45 |
 | 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
-| 🐞 Correções (X-) | 10 | 8 | — | 2 | ≈ 1 h |
+| 🐞 Correções (X-) | 10 | 9 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 93 h 45.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
+**Total por fazer: ≈ 93 h 15.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
 take away, e falta o próprio B-35 do take away), C-01 (falta o Guilherme ler o `CONTEXTO.md`)
 e X-08 (não se conseguiu reproduzir). O B-65 saiu desta lista — os QR Codes estão gerados.
 
