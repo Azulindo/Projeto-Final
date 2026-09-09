@@ -55,7 +55,72 @@
        código. Ver o aviso que a menu.html mostra a partir dos 4s;
      · cada push no main faz deploy automático — durante dois ou três
        minutos a seguir a um push, a API pode estar a meio da troca. */
-const API_BASE = 'https://vem-pro-abate-api.onrender.com/api';
+/* ── C-26: o endereço da API decide-se sozinho ──────────────────────
+   O plano B da apresentação (C-24 a C-28) é correr tudo no portátil,
+   sem rede: base de dados local, API local, site servido de local. Se
+   o endereço da API estivesse escrito à mão aqui, entrar em plano B
+   obrigava a editar este ficheiro à pressa, à frente do júri, e a
+   lembrar de o pôr como estava a seguir. É o género de passo que se
+   esquece exatamente no dia em que não se pode esquecer.
+
+   Por isso decide-se pela origem da própria página:
+
+     · página aberta de localhost / 127.0.0.1 / rede local / file://
+         → API em http://<mesmo host>:3000/api
+     · qualquer outro sítio (o vemproabate.vercel.app)
+         → API no Render
+
+   Tudo em http no plano B, tudo em https no normal — nunca uma página
+   https a chamar uma API http, que é terreno pantanoso e muda com a
+   versão do browser (armadilha nº 2 do João, e tem razão).
+
+   Para forçar à mão, sem editar nada: ?api=http://192.168.1.70:3000/api
+   Fica no sessionStorage, como o ?simular=1, para sobreviver ao salto
+   que o login dá entre páginas. */
+const API_RENDER = 'https://vem-pro-abate-api.onrender.com/api';
+const PORTA_API_LOCAL = 3000;
+const CHAVE_API = 'vpa_api_base';
+
+function descobrirAPIBase() {
+  /* 1. Escolha explícita no endereço, que manda sobre tudo o resto. */
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('api')) {
+      const escolhido = params.get('api');
+      try {
+        if (escolhido) sessionStorage.setItem(CHAVE_API, escolhido);
+        else sessionStorage.removeItem(CHAVE_API);
+      } catch (e) { /* sessionStorage desligado — vale só para esta página */ }
+      if (escolhido) return escolhido;
+    }
+    const guardado = sessionStorage.getItem(CHAVE_API);
+    if (guardado) return guardado;
+  } catch (e) { /* fora de um browser (testes em Node) */ }
+
+  /* 2. Pela origem da página. */
+  try {
+    const proto = window.location.protocol;
+    const host  = window.location.hostname;
+
+    // Ficheiro aberto por duplo clique: não há host nenhum de onde partir.
+    if (proto === 'file:') return `http://localhost:${PORTA_API_LOCAL}/api`;
+
+    const ehLocal =
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '::1' ||
+      host.endsWith('.local') ||
+      /^10\./.test(host) ||
+      /^192\.168\./.test(host) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host);   // 172.16–172.31, a gama privada
+
+    if (ehLocal) return `http://${host}:${PORTA_API_LOCAL}/api`;
+  } catch (e) { /* segue para o Render */ }
+
+  return API_RENDER;
+}
+
+const API_BASE = descobrirAPIBase();
 
 /**
  * MODO_SIMULACAO — `true` enquanto houver endpoints por fazer.
