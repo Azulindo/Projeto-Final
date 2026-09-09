@@ -145,9 +145,10 @@ async function abrirEdicao(p, nome) {
   await abrirEdicao(admin, 'Cheesecake da Casa');
   await admin.check('#fControlaStock');
   await admin.waitForTimeout(200);
-  const existenciaVisivel = await admin.locator('#campoExistencia').isVisible();
-  check('Ao LIGAR o controlo de stock, pede a existência inicial', existenciaVisivel);
-  await admin.fill('#fQtdAtual', '9');
+  check('Ao ligar o controlo de stock num produto que JÁ existe, a existência não é editável',
+        await admin.locator('#campoExistencia').isHidden());
+  check('...e o formulário diz que começa a zero e a primeira contagem é uma entrada',
+        /zero/i.test(await admin.locator('#notaStock').textContent() || ''));
   await admin.fill('#fQtdMinima', '3');
   await admin.click('#btnGravarForm');
   await admin.waitForTimeout(600);
@@ -162,20 +163,59 @@ async function abrirEdicao(p, nome) {
     minimo: Number(tr.children[3].textContent.trim()),
   })));
   const cheesecake = noStock.find(l => /Cheesecake da Casa/.test(l.nome));
-  check('O produto passa a aparecer no ecrã de stock, com 9 e mínimo 3',
-        cheesecake && cheesecake.atual === 9 && cheesecake.minimo === 3,
+  check('O produto passa a aparecer no ecrã de stock, a ZERO e com mínimo 3',
+        cheesecake && cheesecake.atual === 0 && cheesecake.minimo === 3,
         cheesecake ? `${cheesecake.atual}/${cheesecake.minimo}` : 'não apareceu');
+
+  /* A quantidade entra por onde tem de entrar: um movimento, com origem
+     registada. É o que faz a cadeia antes/depois começar sempre em 0. */
+  const linhaCheese = admin.locator('#corpoTabela tr', { hasText: 'Cheesecake da Casa' }).first();
+  await linhaCheese.locator('.btn-ajustar').click();
+  await admin.waitForSelector('#painelAjuste[open]', { timeout: 4000 });
+  await admin.check('#painelAjuste input[value="entrada"]');
+  await admin.fill('#ajusteQtd', '9');
+  await admin.click('#btnGravarAjuste');
+  await admin.waitForTimeout(600);
+  const depoisEntrada = await admin.$$eval('#corpoTabela tr', ls => ls.map(tr => ({
+    nome: tr.children[0].textContent.trim(), atual: Number(tr.children[2].textContent.trim()),
+  })));
+  check('A primeira contagem entra como entrada e leva-o a 9',
+        (depoisEntrada.find(l => /Cheesecake/.test(l.nome)) || {}).atual === 9);
 
   await admin.goto(`${GESTAO}/produtos.html?simular=1`);
   await admin.waitForSelector('#corpoTabela tr', { timeout: 8000 });
   await abrirEdicao(admin, 'Cheesecake da Casa');
-  const existenciaEscondida = await admin.locator('#campoExistencia').isHidden();
-  const notaVisivel = await admin.locator('#notaStock').isVisible();
   check('Ao EDITAR um produto que já controla stock, a existência não é editável aqui',
-        existenciaEscondida);
-  check('...e o formulário diz porquê: quem manda nela é o ecrã de Stock', notaVisivel);
-  await admin.click('#btnCancelarForm');
-  await admin.waitForTimeout(300);
+        await admin.locator('#campoExistencia').isHidden());
+  check('...e o formulário diz porquê: quem manda nela é o ecrã de Stock',
+        /Stock/.test(await admin.locator('#notaStock').textContent() || ''));
+
+  /* A prova do cenário das 20h03: mudar SÓ o preço não pode mexer na
+     quantidade, mesmo que o painel a tenha lido há dez minutos. */
+  await admin.fill('#fPreco', '5,10');
+  await admin.click('#btnGravarForm');
+  await admin.waitForTimeout(600);
+  await admin.goto(`${GESTAO}/stock.html?simular=1`);
+  await admin.waitForSelector('#corpoTabela tr', { timeout: 8000 });
+  const aposPreco = await admin.$$eval('#corpoTabela tr', ls => ls.map(tr => ({
+    nome: tr.children[0].textContent.trim(), atual: Number(tr.children[2].textContent.trim()),
+  })));
+  check('Mudar só o preço NÃO mexe na existência (o cenário das 20h03 do João)',
+        (aposPreco.find(l => /Cheesecake/.test(l.nome)) || {}).atual === 9,
+        String((aposPreco.find(l => /Cheesecake/.test(l.nome)) || {}).atual));
+
+  /* E se alguém mandar o campo à mão, o servidor recusa — o ecrã não é
+     a única defesa. */
+  const recusa = await admin.evaluate(async () => {
+    try {
+      await chamarAPI('gestao/produtos/24', { method: 'PATCH', body: { quantidade_atual: 999 } });
+      return 'passou';
+    } catch (e) { return e && e.status ? String(e.status) : 'erro sem estado'; }
+  });
+  check('Mandar `quantidade_atual` num PATCH de produto devolve 400', recusa === '400', recusa);
+
+  await admin.goto(`${GESTAO}/produtos.html?simular=1`);
+  await admin.waitForSelector('#corpoTabela tr', { timeout: 8000 });
 
   /* ── 7. Validações ──────────────────────────────────────────────── */
   const contagemAntes = (await lerLinhas(admin)).length;

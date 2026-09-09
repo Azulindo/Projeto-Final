@@ -721,11 +721,18 @@ o cliente não escolhe em nome de quem grava.
 > `depois` da anterior, para o mesmo produto. No dia em que não bater, alguém escreveu na
 > tabela por fora.
 >
-> ⚠️ Esse encadeamento só se aguenta se as escritas do mesmo produto forem **serializadas**:
-> a leitura do `antes`, o cálculo e a gravação têm de correr dentro da mesma transação, com
-> a linha do produto bloqueada — exatamente como o B-58 já faz ao descontar. Sem isso, dois
-> movimentos simultâneos leem o mesmo `antes`, e a cadeia parte-se sozinha sem ninguém ter
-> escrito por fora. Um alarme que dispara sem motivo deixa de ser lido ao fim de duas vezes.
+> ⚠️ **Duas condições para essa verificação não dar alarmes falsos**, e ambas importam mais
+> do que parecem, porque um alarme que dispara sem motivo deixa de ser lido à segunda vez:
+>
+> 1. **As escritas do mesmo produto têm de ser serializadas** — ler o `antes`, calcular e
+>    gravar dentro da mesma transação, com a linha bloqueada por `SELECT … FOR UPDATE`,
+>    exatamente como o B-36 e o B-58 já fazem. Sem isso, dois movimentos simultâneos leem o
+>    mesmo `antes` e a cadeia parte-se sozinha.
+> 2. **A cadeia ordena-se por `id_movimento`, nunca por `data`.** Dois movimentos no mesmo
+>    segundo vão existir — a cozinha confirma rondas em rajada — e ordenados por data caem ao
+>    calhas: o `antes` de um bate com o `depois` do outro pela ordem errada e o alarme toca sem
+>    ninguém ter escrito por fora. Com o auto-incremento, a ordem é a ordem real das escritas.
+>    *(Ponto do João, 08/09 — e é o mesmo argumento do alarme falso aplicado à ordenação.)*
 
 > **Porque o `consumo` e a `reposicao` também são movimentos.** Se as descidas automáticas da
 > cozinha não passarem pela tabela, a `quantidade_atual` é mexida por dois mecanismos e só um
@@ -813,16 +820,35 @@ continua a existir para o passado e deixa de aparecer para o futuro.
 arredondado noutro sítio qualquer, e as contas deixam de fechar. O front-end aceita vírgula
 ou ponto (num teclado português escreve-se `16,20`) e envia sempre número.
 
-> ⚠️ **Onde este endpoint toca no stock.** Se o `PATCH` trouxer `quantidade_atual`, isso passa
-> a ser a base — e os movimentos anteriores desse produto deixam de fazer sentido por cima
-> dela. Sugiro que o servidor trate isso como um **`acerto`** (com `quantidade_antes` e
-> `quantidade_depois` gravados como qualquer outro), em vez de escrever a coluna em silêncio:
-> assim o histórico continua a reconstruir o saldo, que é o teu ponto 1.
+> ⚠️ **A quantidade não se muda por aqui. Fechado a 08/09.**
 >
-> Do lado do ecrã já evitei o caso comum: ao editar um produto que **já** controla stock, o
-> formulário não deixa escrever a existência e diz que quem manda nela é o ecrã de Stock. A
-> `quantidade_atual` só vai no corpo ao criar um produto ou ao ligar o controlo de stock pela
-> primeira vez.
+> Um `PATCH` que traga `quantidade_atual` responde **`400`**, a dizer que a quantidade se muda
+> em `POST /gestao/stock/:id/movimento`. Não é convertido num `acerto`, não é ignorado em
+> silêncio: é recusado.
+>
+> *(Eu tinha proposto tratá-lo como um `acerto`; o João mostrou que estava errado, e o
+> argumento é o meu levado até ao fim.* Às 20h03 o gerente abre o formulário e a caixa da
+> quantidade traz 20. Às 20h05 a cozinha confirma duas rondas — saem 4. Às 20h07 ele corrige o
+> **preço** e grava. O formulário manda os 20 que trazia desde as 20h03, e isso apagaria os 4
+> que saíram — desta vez com data, carimbo e o nome dele, com ar de decisão. Um erro invisível
+> é mau; um erro invisível com ar de deliberado é pior, porque ninguém volta a pô-lo em causa.
+> Um acerto tem de ser um ato com motivo, nunca um efeito secundário de mudar um preço.*)*
+>
+> **A quantidade inicial de um produto novo entra como movimento nº 1, do tipo `entrada`.**
+> Assim a cadeia `antes`/`depois` começa sempre em 0 e não há nenhuma quantidade no sistema
+> sem origem registada — se a primeira linha do histórico já aparecesse com 40 caídos do céu,
+> a verificação do ponto 2 não teria por onde começar.
+>
+> **Ligar o controlo de stock a um produto que já existia começa em 0.** A primeira contagem
+> entra como `entrada` no ecrã de Stock, onde fica quem a fez e quando. O `POST` é o único
+> sítio onde `quantidade_atual` é aceite, e é seguro porque o produto não existia um segundo
+> antes — não há nada que ela possa apagar.
+>
+> **Uma armadilha para quem implementar o B-61**, que já me mordeu a mim e o teste apanhou:
+> só se mexe no stock quando o `controla_stock` **muda** de valor. Reenviar `controla_stock:
+> true` sem o alterar é o que qualquer formulário faz ao gravar — se isso limpasse os
+> movimentos, mudar o preço punha o produto a zero. É o mesmo cenário das 20h03 a entrar por
+> outra porta.
 
 ---
 

@@ -209,15 +209,13 @@
                 <input type="number" id="fQtdMinima" min="0" step="1" inputmode="numeric" value="0">
               </div>
             </div>
-            <!-- Ao EDITAR um produto que já controla stock, a existência
-                 deixa de ser editável aqui: quem manda nela é o ecrã de
-                 Stock, que sabe distinguir uma entrada de uma quebra. Dois
-                 ecrãs a escrever o mesmo número é como se perdem vendas. -->
-            <p class="ajuda" id="notaStock" hidden>
-              A existência atual é gerida no ecrã de <strong>Stock</strong>, onde se
-              distingue uma entrada de mercadoria de uma quebra. Aqui muda-se só o
-              limiar do aviso.
-            </p>
+            <!-- Em QUALQUER edição a existência não é editável aqui — o
+                 texto é posto pelo produtos.js e muda conforme o produto
+                 já controlava stock ou não. Quem manda na quantidade é o
+                 ecrã de Stock, que distingue uma entrada de uma quebra e
+                 regista quem a fez. Dois ecrãs a escrever o mesmo número
+                 é como se perdem vendas sem dar por isso. -->
+            <p class="ajuda" id="notaStock" hidden></p>
           </div>
         </fieldset>
 

@@ -395,17 +395,26 @@ document.addEventListener('DOMContentLoaded', function () {
     fNome.focus();
   }
 
-  /* A existência só se escreve aqui quando ainda não há ecrã de stock a
-     mandar nela: produto novo, ou controlo de stock acabado de ligar. */
+  /* A existência só se escreve ao CRIAR um produto — aí não há nada que
+     ela possa apagar, porque o produto não existia há um segundo, e o
+     servidor grava-a como movimento nº 1 do tipo `entrada`.
+
+     Em qualquer edição, o campo nem aparece. Ligar o controlo de stock a
+     um produto que já existe começa em zero, e a primeira contagem entra
+     como entrada no ecrã de Stock — que é onde as entradas se registam,
+     com quem as fez e quando. */
   function actualizarCamposDeStock() {
     const liga = fControla.checked;
     stockCampos.hidden = !liga;
 
-    const jaControlava = !!(aEditar && aEditar.controla_stock);
-    const existenciaEditavel = liga && !jaControlava;
+    campoExist.hidden = !(liga && !aEditar);
+    notaStock.hidden  = !(liga && aEditar);
 
-    campoExist.hidden = !existenciaEditavel;
-    notaStock.hidden  = !(liga && jaControlava);
+    if (liga && aEditar) {
+      notaStock.innerHTML = aEditar.controla_stock
+        ? 'A existência atual é gerida no ecrã de <strong>Stock</strong>, onde se distingue uma entrada de mercadoria de uma quebra. Aqui muda-se só o limiar do aviso.'
+        : 'O produto começa a <strong>zero</strong>. Regista a primeira contagem como <strong>entrada</strong> no ecrã de Stock, para ficar lá quem a fez e quando.';
+    }
   }
 
   fControla.addEventListener('change', actualizarCamposDeStock);
@@ -469,18 +478,26 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       corpo.quantidade_minima = minimo;
 
-      // Só manda a existência quando é ELE a decidi-la. Ao editar um
-      // produto que já controlava stock, a existência não vai no corpo —
-      // é do ecrã de stock, e mandá-la aqui apagava os movimentos.
-      const jaControlava = !!(aEditar && aEditar.controla_stock);
-      if (!jaControlava) {
+      /* ── A existência SÓ vai no corpo ao criar (08/09) ─────────────
+         Antes, ao editar, eu mandava `aEditar.quantidade_atual` — o
+         valor que o painel tinha carregado quando abriu. Era um erro, e
+         é exatamente o que este ecrã inteiro existe para evitar:
+
+           20h03  abro o formulário; a existência lida é 20
+           20h05  a cozinha confirma duas rondas — saem 4
+           20h07  corrijo o PREÇO e gravo
+
+         Os 20 velhos iam no corpo e apagavam os 4 que saíram, com data
+         e nome, com ar de decisão. O servidor passou a recusar
+         `quantidade_atual` num PATCH (400), mas o campo não devia sair
+         daqui de todo — um cliente que manda o que o servidor tem de
+         recusar está a tentar fazer o que não deve. */
+      if (!aEditar) {
         const atual = Number(fQtdAtual.value);
         if (!Number.isInteger(atual) || atual < 0) {
-          return falhar('A existência tem de ser um número inteiro, zero ou maior.', fQtdAtual);
+          return falhar('A existência inicial tem de ser um número inteiro, zero ou maior.', fQtdAtual);
         }
         corpo.quantidade_atual = atual;
-      } else {
-        corpo.quantidade_atual = aEditar.quantidade_atual;
       }
     }
 

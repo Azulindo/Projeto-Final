@@ -558,15 +558,59 @@ function validarProdutoDemo(corpo, completo) {
   if (tem('ativo'))      out.ativo      = corpo.ativo !== false;
   if (tem('disponivel')) out.disponivel = corpo.disponivel !== false;
 
+  /* ── A quantidade NÃO se muda por aqui (08/09, decisão do João) ────
+     Este endpoint recusa `quantidade_atual` num PATCH. Não a converte
+     num acerto, não a ignora em silêncio: devolve 400 e diz onde é.
+
+     Eu tinha proposto tratá-la como um `acerto`. Estava errado, e o
+     argumento dele é o meu levado até ao fim. O cenário:
+
+       20h03  o gerente abre o formulário do bitoque; a caixa da
+              quantidade traz 20
+       20h05  a cozinha confirma duas rondas — saem 4
+       20h07  ele corrige o PREÇO e grava
+
+     O formulário manda os 20 que trazia desde as 20h03, e isso apagava
+     os 4 que saíram — desta vez com data, carimbo e o nome dele, com ar
+     de decisão. Um erro invisível é mau; um erro invisível com ar de
+     deliberado é pior, porque ninguém volta a pô-lo em causa.
+
+     Um acerto tem de ser um ato com motivo, nunca um efeito secundário
+     de mudar um preço. */
+  if (!completo && tem('quantidade_atual')) {
+    throw erroSimulado(
+      'A existência não se muda aqui. Usa o ecrã de Stock (POST /gestao/stock/:id/movimento).', 400);
+  }
+
   if (tem('controla_stock')) {
     out.controla_stock = !!corpo.controla_stock;
     if (out.controla_stock) {
-      const atual  = Number(corpo.quantidade_atual);
       const minimo = Number(corpo.quantidade_minima);
-      if (!Number.isInteger(atual) || atual < 0)   throw erroSimulado('A existência tem de ser um inteiro não negativo.', 400);
       if (!Number.isInteger(minimo) || minimo < 0) throw erroSimulado('O mínimo tem de ser um inteiro não negativo.', 400);
-      out.quantidade_atual = atual;
       out.quantidade_minima = minimo;
+
+      /* Num produto NOVO a existência inicial é aceite — não há nada que
+         ela possa apagar, porque o produto não existia há um segundo. O
+         servidor grava-a como movimento nº 1 do tipo `entrada`, para a
+         cadeia começar sempre em 0 e não haver quantidade nenhuma no
+         sistema sem origem registada (ponto do João, 08/09).
+
+         Ligar o controlo de stock a um produto que já existia começa em
+         0: a primeira contagem entra como `entrada` no ecrã de Stock,
+         que é onde as entradas se registam. */
+      if (completo) {
+        const atual = Number(corpo.quantidade_atual ?? 0);
+        if (!Number.isInteger(atual) || atual < 0) throw erroSimulado('A existência inicial tem de ser um inteiro não negativo.', 400);
+        out.quantidade_atual = 0;          // a cadeia começa em zero…
+        out.entrada_inicial   = atual;     // …e o resto é movimento nº 1
+      }
+      /* Num PATCH não se escreve quantidade nenhuma aqui — nem sequer um
+         zero. Quem decide se há alguma coisa a fazer é o handler, e só
+         quando o `controla_stock` MUDA de facto.
+         Sem isto, reenviar `controla_stock: true` sem o alterar (que é o
+         que qualquer formulário faz ao gravar) punha o produto a zero e
+         apagava os movimentos — o cenário das 20h03, entrado por outra
+         porta. Foi o teste da F-50 que o apanhou. */
     } else {
       // Deixar de controlar stock não guarda uma quantidade órfã: o
       // produto passa a "nunca acaba", que é o que a bandeira quer dizer.
@@ -721,10 +765,25 @@ async function simularEndpoint(endpoint, opcoes) {
   if (caminho === 'gestao/produtos' && metodo === 'POST') {
     const campos = validarProdutoDemo(opcoes.body || {}, true);
     const estado = lerCatalogoDemo();
+    const entradaInicial = campos.entrada_inicial || 0;
+    delete campos.entrada_inicial;
+
     const novo = { id: proximoIdDemo(), ...campos };
     estado.novos.push(novo);
     gravarCatalogoDemo(estado);
+
+    /* O produto nasce a zero e a existência inicial entra como movimento
+       nº 1, do tipo `entrada` — assim a cadeia antes/depois começa
+       sempre em 0 e nenhuma quantidade aparece no sistema sem origem
+       registada. Aqui simula-se com o mesmo ajuste que o ecrã de stock
+       usa; no servidor (B-63) é uma linha na tabela de movimentos. */
     limparAjusteStockDemo(novo.id);
+    if (novo.controla_stock && entradaInicial > 0) {
+      const ajustes = lerStockDemo();
+      ajustes[String(novo.id)] = { ajuste: entradaInicial, minimo: null };
+      gravarStockDemo(ajustes);
+    }
+
     return linhaProdutoDemo(novo);
   }
 
@@ -747,13 +806,26 @@ async function simularEndpoint(endpoint, opcoes) {
     }
     gravarCatalogoDemo(estado);
 
-    /* Se o formulário gravou uma existência, ela passa a ser a base — os
-       ajustes que o ecrã de stock tinha por cima têm de sair, senão os
-       dois somavam-se e o número ficava errado sem ninguém perceber
-       porquê. É a mesma armadilha que se evita no B-63 ao mandar
-       movimentos em vez de totais, vista do outro lado. */
-    if (Object.prototype.hasOwnProperty.call(campos, 'quantidade_atual')) {
+    /* Só se mexe no stock quando o `controla_stock` MUDA mesmo.
+
+       Reenviar `controla_stock: true` sem o alterar é o que qualquer
+       formulário faz ao gravar — se isso limpasse os movimentos, mudar
+       o preço punha o produto a zero. É o cenário das 20h03 outra vez,
+       por outra porta.
+
+       Desligar deita fora os movimentos (o produto passa a "nunca
+       acaba"; uma quantidade órfã só confundia quem a encontrasse).
+       Ligar começa em zero, e a primeira contagem entra como `entrada`
+       no ecrã de Stock, com quem a fez e quando. */
+    const controlavaAntes = !!atual.controla_stock;
+    if (Object.prototype.hasOwnProperty.call(campos, 'controla_stock')
+        && campos.controla_stock !== controlavaAntes) {
       limparAjusteStockDemo(id);
+      const registo = estado.novos.findIndex(p => p.id === id) !== -1
+        ? estado.novos[estado.novos.findIndex(p => p.id === id)]
+        : estado.edicoes[String(id)];
+      registo.quantidade_atual = campos.controla_stock ? 0 : null;
+      gravarCatalogoDemo(estado);
     }
 
     return linhaProdutoDemo(catalogoDemo().find(p => p.id === id));
