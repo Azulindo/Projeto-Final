@@ -156,6 +156,16 @@ SELECT COUNT(*) FROM produto;   -- 25
 
 > **As palavras-passe das contas não estão em ficheiro nenhum**, só os hashes bcrypt. Para as definir: `cd backend && node scripts/gerarHash.js`.
 
+> ✅ **Os 25 preços foram conferidos contra a ementa impressa do restaurante a 09/09**, à
+> fotografia, e batem certo nos três sítios onde vivem: o `seed.sql`, o `PRODUTOS_DEMO` do
+> `frontend/js/api.js` e a ementa em papel. Os 25 produtos saem de **22 linhas do menu**
+> porque três delas têm dois preços e viram dois produtos cada — Cerveja (fino/caneca),
+> Sangria (copo/jarro) e Água (mineral/com gás). Isso é de propósito: para se poder pedir
+> uma coisa, ela tem de ser um produto.
+>
+> A única diferença que ficou é de texto, não de preço: a ementa diz *"Laranja ou mistura"*
+> nos Sumos Naturais e o sistema diz *"Laranja ou mistura de frutos"*.
+
 ### 4. Back-end
 
 ```bash
