@@ -304,7 +304,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | F-49 | Tabela de produtos com pesquisa e ordenação — pesquisa por nome e descrição **sem acentos** (quem escreve "acores" encontra os "Açores"), filtro por categoria derivado dos próprios produtos, e ordenação por qualquer coluna com `aria-sort` a acompanhar a seta. *Lê do `gestao/produtos`, não do `produtos`: o `produtos` é a vista do CLIENTE e esconde os inativos e os que estão sem stock (`docs/API.md` 4.2) — num ecrã de administração era ao contrário do que faz falta, porque é a ver os inativos que se reativa um produto. Endpoint simulado no `api.js` com o formato acordado, à espera do **B-61**.* Só leitura; criar e editar são o F-50 | 2 h | F-44 |
 | ✅ | F-50 | Formulário de produto (criar / editar / ativar / desativar) — *criar e editar num `<dialog>`, com as duas bandeiras explicadas no próprio formulário porque são a confusão mais provável do ecrã: **"está na carta"** (`ativo`, decisão permanente) e **"há hoje"** (`disponivel`, decisão do dia). **Sem apagar, de propósito:** um produto que já apareceu num pedido não pode desaparecer sem levar o histórico atrás. O preço aceita vírgula — num teclado português escreve-se "16,20", e um `input type=number` devolve string vazia para o que considera inválido, fazendo o preço desaparecer sem dizer porquê. A existência só é editável ao criar ou ao ligar o controlo de stock; a partir daí manda o ecrã de Stock, senão eram dois ecrãs a escrever o mesmo número. Formato proposto em `docs/API.md` 4.9, simulado no `api.js` à espera do **B-61**. Verificado: `frontend/testes/produtos-form.js`* | 2 h | F-49 |
 | ⬜ | F-51 | Tabela e formulário de categorias | 1 h 30 | F-49 |
-| ✅ | F-52 | Ecrã de stock: ler, ajustar e mudar o mínimo — *o aviso de stock baixo existia desde a F-62 em dois sítios (cozinha e contador do gerente), mas quem o via não tinha para onde ir. Três operações em vez de um campo que se grava por cima: **entrada** (+), **quebra** (−) e **acerto** (=), porque um valor absoluto perde o porquê e apaga as vendas que a cozinha registou entretanto — este stock mexe-se sozinho (B-58/B-59). O `acerto` fica só para `administrador`. Formato proposto ao João em `docs/API.md` 4.8, simulado no `api.js` à espera do **B-63**; até lá os ajustes ficam no browser. A cozinha entra (é quem dá pelas quebras), o balcão não. Trouxe também uma **correção de contraste**: o distintivo vermelho de "stock baixo" estava a 3,80:1 (mínimo 4,5:1 para texto), e mudou o vermelho do texto no `base.css`, o que arrasta a `produtos.html` — o `--perigo` fica igual para molduras e avisos, onde o mínimo é 3:1. E uma de layout: o `.sr-so-leitor` escapava ao `overflow` da tabela e dava scroll horizontal a 360 px. Verificado: `frontend/testes/stock-ecra.js`* | 2 h | F-49 |
+| ✅ | F-52 | Ecrã de stock: ler, ajustar e mudar o mínimo — *o aviso de stock baixo existia desde a F-62 em dois sítios (cozinha e contador do gerente), mas quem o via não tinha para onde ir. Três operações em vez de um campo que se grava por cima: **entrada** (+), **quebra** (−) e **acerto** (=), porque um valor absoluto perde o porquê e apaga as vendas que a cozinha registou entretanto — este stock mexe-se sozinho (B-58/B-59). O `acerto` fica só para `administrador`. Formato proposto ao João em `docs/API.md` 4.8, **ligado à base de dados a sério desde 09/09** — o B-63 ficou pronto e o formato acordado acertou: bastou acrescentar três caminhos ao `ENDPOINTS_REAIS`, sem mexer numa linha do `stock.js`. A cozinha entra (é quem dá pelas quebras), o balcão não. Trouxe também uma **correção de contraste**: o distintivo vermelho de "stock baixo" estava a 3,80:1 (mínimo 4,5:1 para texto), e mudou o vermelho do texto no `base.css`, o que arrasta a `produtos.html` — o `--perigo` fica igual para molduras e avisos, onde o mínimo é 3:1. E uma de layout: o `.sr-so-leitor` escapava ao `overflow` da tabela e dava scroll horizontal a 360 px. Verificado: `frontend/testes/stock-ecra.js`* | 2 h | F-49 |
 | ⬜ | F-53 | Ecrã de funcionários (tabela + formulário) | 2 h | F-49 |
 | ✅ | F-54 | Responsividade da aplicação de gestão — *zero alvos de toque abaixo de 44 px e zero scroll horizontal, medido em 4 larguras; o pior era o ✕ do painel da conta, a 24×23* | 1 h 30 | F-53 |
 
@@ -492,12 +492,26 @@ e X-08 (não se conseguiu reproduzir). O B-65 saiu desta lista — os QR Codes e
 > duas versões estava certa — cada um marcava o seu lado sem ver o do outro. Refeito sempre a
 > contar as linhas, como o parágrafo abaixo manda, e nunca escolhendo um dos lados.
 >
-> **E uma correção a mim próprio.** Num desses merges escrevi aqui que o João tinha contado
-> mal, porque a minha cópia dava 67 tarefas F- e 9 X- quando ele dizia 68 e 10. Ele não contou
-> mal: a **F-68** e a **X-10** existiam no ficheiro dele e ainda não tinham chegado ao meu. A
-> verificação estava certa sobre o ficheiro que eu tinha, e eu é que tirei a conclusão errada
-> dela — atribuí a erro o que era só duas cópias em momentos diferentes. Agora são mesmo 68 e
-> 10, e as quatro sequências estão completas: B-1 a B-73, F-1 a F-68, C-1 a C-28, X-1 a X-10.
+> **E uma correção a mim próprio, que é a parte que interessa.** Num desses merges escrevi
+> aqui que o João tinha contado mal, porque a minha cópia dava 67 tarefas F- e 9 X- quando ele
+> dizia 68 e 10.
+>
+> **Ele contou bem. Fui eu que apaguei as duas linhas.** O commit `9303458`, da F-55, removeu
+> 57 linhas deste ficheiro — entre elas a **F-68**, o **X-10** e a linha em que o próprio João
+> registava a minha C-26. Não deu conflito nenhum: para o git foi só "o Guilherme alterou o
+> ficheiro". Foi ele que reparou (`9ee6ba0`) e as repôs, e reparou porque a contagem deu 177
+> em vez de 179.
+>
+> A causa foi de processo: o ficheiro é trazido para editar, editado, e escrito **inteiro** de
+> volta. Se mudou no disco entretanto, essa escrita reverte tudo em silêncio.
+>
+> **É por isto que a regra de contar as linhas depois de cada merge vale mais do que parece.
+> Se o número não bater, não é a tabela que está errada — é porque desapareceu uma tarefa.**
+> Foi a única coisa que apanhou este erro, e apanhou-o duas vezes: primeiro a contagem do
+> João, depois a verificação da sequência.
+>
+> Agora são 68 e 10, e as quatro sequências estão completas: B-1 a B-73, F-1 a F-68,
+> C-1 a C-28, X-1 a X-10 — sem um único código em falta.
 
 *Como estes números foram feitos:* contadas as 179 linhas das tabelas acima uma a uma e
 somada a coluna da estimativa só das linhas ⬜ e 🟨. Os quatro prefixos fecham certo
