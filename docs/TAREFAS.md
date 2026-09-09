@@ -172,7 +172,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | B-58 | Descontar stock ao confirmar pedido — *ficou dentro do `PATCH .../estado` e não num `services/stock.js`: mexer no stock fora da transação que muda o estado abria a porta a ficarem em desacordo* | 1 h 30 | B-56 |
 | ✅ | B-59 | Repor stock ao cancelar pedido confirmado — *só repõe se tinha chegado a `confirmado`; cancelar uma ronda em `recebido` não devolve nada porque nada saiu* | 45 min | B-58 |
 | ✅ | B-60 | Atualizar automaticamente o estado da mesa (`livre` / `ocupada`) | 1 h | B-56 |
-| ⬜ | B-61 | CRUD de produtos — *formato na secção 4.9 do `API.md`. **Depende do B-63**, e não só do B-21: um produto novo com stock grava o movimento nº 1, que precisa da tabela que o B-63 cria* | 2 h | B-21, B-63 |
+| ✅ | B-61 | CRUD de produtos — *feito 09/09, formato da secção 4.9 do `API.md`, em `src/routes/gestaoProdutos.js`. **Sem DELETE**: quem sai da carta fica `ativo = 0`, senão o `item_pedido` ficava a apontar para o nada e as estatísticas passavam a mentir. As duas armadilhas da 4.9 fechadas e testadas: **(1)** um `quantidade_atual` no `PATCH` dá **400** e o pedido é recusado inteiro — o preço que vinha no mesmo corpo também não passa, porque meio pedido aplicado é pior do que nenhum; a verificação corre antes do zod, que de outro modo já teria deitado fora a chave; **(2)** só se mexe no stock quando o `controla_stock` **muda** — reenviar `true` sem alterar é o que qualquer formulário faz ao gravar, e teria posto o produto a zero ao mudar um preço. A quantidade inicial de um produto novo entra como movimento nº 1 (`entrada`, `antes = 0`), o único sítio onde a quantidade é aceite num pedido de produto — e é seguro porque o produto não existia um segundo antes. **Testado:** produto 26 criado com 36, preço alterado com os 36 intactos, cadeia a zero* | 2 h | B-21, B-63 |
 | ⬜ | B-62 | CRUD de categorias | 1 h 30 | B-21 |
 | ✅ | B-63 | Consultar e ajustar stock — *feito 09/09, formato da secção 4.8 do `API.md`, os três endpoints. **Existe um sítio só a mexer no stock**, o novo `src/servicos/stock.js`: o ecrã do gerente, a cozinha ao confirmar e a cozinha ao anular passam todos por lá. É isso que garante que o histórico não tem buracos — um `UPDATE` feito ao lado não deixava movimento e a cadeia deixava de reconstruir o saldo. O `pedidos.js` (B-36) foi alterado para gravar `consumo` ao confirmar e `reposicao` ao anular, com o pedido que os causou; o `UPDATE` com `JOIN` do cancelamento teve de passar a ciclo, porque um `UPDATE` em massa não consegue gravar o `antes`/`depois` de cada produto. O `acerto` é recusado com **403** a uma sessão de cozinha, no servidor e não só no ecrã. **Testado ponta a ponta contra a base local:** entrada 4→16, quebra 16→14, consumo 14→13 pela mesa 9, e as duas verificações da cadeia a **zero**. Cada linha começa onde a anterior acabou, sem isso estar programado em lado nenhum* | 2 h 30 | B-21 |
 | ⬜ | B-64 | CRUD de funcionários (só administrador) | 2 h | B-21 |
@@ -479,12 +479,12 @@ refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 73 | 40 | — | 33 | ≈ 43 h 30 |
+| 🔵 João (B-) | 73 | 41 | — | 32 | ≈ 41 h 30 |
 | 🟠 Guilherme (F-) | 68 | 45 | 19 | 4 | ≈ 6 h 15 |
 | 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
 | 🐞 Correções (X-) | 10 | 9 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 91 h 45.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
+**Total por fazer: ≈ 89 h 45.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
 take away, e falta o próprio B-35 do take away), C-01 (falta o Guilherme ler o `CONTEXTO.md`)
 e X-08 (não se conseguiu reproduzir). O B-65 saiu desta lista — os QR Codes estão gerados.
 
