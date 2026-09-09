@@ -49,6 +49,7 @@ const PAGINAS_GESTAO = [
   { url: 'funcionarios/produtos.html',  nome: 'Produtos' },
   { url: 'funcionarios/stock.html',     nome: 'Stock' },
   { url: 'funcionarios/estatisticas.html', nome: 'Estatísticas' },
+  { url: 'funcionarios/categorias.html',   nome: 'Categorias' },
 ];
 
 /* Corre dentro da página. Devolve factos, não juízos. */

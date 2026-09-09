@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt" data-niveis="administrador">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Categorias — Vem Pro Abate</title>
+<meta name="description" content="Categorias da ementa: nome, descrição e a ordem por que aparecem.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/produtos.css">
+<link rel="stylesheet" href="css/categorias.css">
+
+<script src="../js/api.js"></script>
+<script src="js/auth-guard.js"></script>
+</head>
+<body data-pagina="categorias" data-titulo="Categorias">
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="content-area">
+      <header class="content-topbar" id="contentTopbar"></header>
+
+      <main class="content-main" id="conteudoPagina">
+
+        <section class="barra-filtros">
+          <span class="contagem" id="contagem" aria-live="polite"></span>
+          <button type="button" class="btn btn-primario btn-novo" id="btnNova">
+            ＋ Nova categoria
+          </button>
+        </section>
+
+        <p class="estado-msg" id="estadoMsg" role="status">
+          <span class="estado-spinner" aria-hidden="true"></span>
+          <span id="estadoTexto">A carregar as categorias…</span>
+        </p>
+
+        <!-- ── A lista ─────────────────────────────────────────────────
+             Uma lista e não uma tabela: a ordem É o conteúdo, e uma
+             lista com setas de subir e descer diz isso melhor do que
+             uma coluna chamada "ordem" com números para editar. -->
+        <ol class="lista-categorias hidden" id="listaCategorias"></ol>
+
+        <p class="nota-rodape">
+          A <strong>ordem</strong> desta lista é a ordem por que as categorias aparecem na
+          ementa do site e no ecrã da mesa — entradas primeiro, sobremesas no fim. É por isso
+          que as categorias existem como entidade em vez de serem só um texto dentro de cada
+          produto.
+          <br>
+          Não há apagar: uma categoria com produtos não se desativa sem primeiro os mudar de
+          sítio, senão os pratos desapareciam da ementa sem ninguém ter decidido isso prato a
+          prato.
+        </p>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ── Formulário ──────────────────────────────────────────────── -->
+  <dialog class="painel-form" id="painelCategoria" aria-labelledby="catTitulo">
+    <form method="dialog" id="formCategoria">
+      <header class="form-cabecalho">
+        <h2 id="catTitulo">Nova categoria</h2>
+        <button type="button" class="btn-fechar" id="btnFecharCat" aria-label="Fechar">✕</button>
+      </header>
+
+      <div class="form-corpo">
+        <div class="campo-form">
+          <label for="cNome">Nome <span class="obrigatorio" aria-hidden="true">*</span></label>
+          <input type="text" id="cNome" maxlength="40" autocomplete="off" required>
+        </div>
+
+        <div class="campo-form">
+          <label for="cDescricao">Descrição <span class="opcional">(opcional)</span></label>
+          <input type="text" id="cDescricao" maxlength="120" autocomplete="off"
+                 placeholder="Uma linha, se ajudar a perceber o que lá vai">
+        </div>
+
+        <fieldset class="grupo-estados">
+          <legend>Onde aparece</legend>
+          <label class="interruptor">
+            <input type="checkbox" id="cAtivo" checked>
+            <span class="interruptor-corpo">
+              <span class="interruptor-nome">Aparece na ementa</span>
+              <span class="interruptor-desc" id="cAtivoDesc">
+                Desligar esconde a categoria do site. Só é possível se ela não tiver produtos.
+              </span>
+            </span>
+          </label>
+        </fieldset>
+
+        <p class="form-erro" id="catErro" role="alert" hidden></p>
+      </div>
+
+      <footer class="form-rodape">
+        <button type="button" class="btn btn-secundario" id="btnCancelarCat">Cancelar</button>
+        <button type="button" class="btn btn-primario" id="btnGravarCat">Gravar</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <script src="js/layout.js"></script>
+  <script src="js/categorias.js"></script>
+</body>
+</html>
