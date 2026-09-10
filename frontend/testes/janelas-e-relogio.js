@@ -1,11 +1,15 @@
 /**
- * X-14 e X-15 — duas avarias que não se viam.
+ * X-16 e X-17 — duas avarias que não se viam.
  *
  * As duas vieram da mesma mensagem do João, a 10/09, e as duas têm a
  * mesma forma: o ecrã fazia uma coisa errada com toda a confiança, e
  * nada apontava para o sítio certo.
  *
- * ── X-14: a janela abria no canto ──────────────────────────────────
+ * Eram X-14 e X-15 quando foram escritas. Passaram a X-16 e X-17 no
+ * merge: o João numerou os dois bugs de datas dele com os mesmos
+ * números, no mesmo dia, sem nenhum de nós ter visto o do outro.
+ *
+ * ── X-16: a janela abria no canto ──────────────────────────────────
  * O `* { margin: 0 }` do `base.css` apagava o `margin: auto` que o
  * browser usa para centrar um `<dialog>` aberto com `showModal()`. O
  * `::backdrop` continuava a funcionar, por isso a janela PARECIA estar
@@ -15,7 +19,7 @@
  * encontrada: a causa está no reset, portanto atinge-as todas, e uma
  * correção no reset tem de ser verificada onde ela atua.
  *
- * ── X-15: o relógio trocado dizia "agora mesmo" a tudo ─────────────
+ * ── X-17: o relógio trocado dizia "agora mesmo" a tudo ─────────────
  * O `minutosDesde()` tinha `Math.max(0, …)`. Com os pedidos uma hora no
  * futuro (o fuso do servidor), todas as diferenças davam negativo, o
  * clamp punha-as a zero, e o ecrã dizia "agora mesmo" até a uma ronda
@@ -57,7 +61,7 @@ async function entrar(ctx, email) {
 
   const admin = await entrar(ctx, 'admin@vemproabate.pt');
 
-  /* ── X-14: as quatro janelas ──────────────────────────────────────
+  /* ── X-16: as cinco janelas ──────────────────────────────────────
      Mede-se a folga à esquerda contra a folga à direita. Centrada, as
      duas são iguais; encostada ao canto, a da esquerda é zero. Não se
      compara com um número fixo porque a largura de cada janela é
@@ -119,7 +123,7 @@ async function entrar(ctx, email) {
     });
   check('E não está repetida no CSS de nenhuma página', emPaginas.length === 0, emPaginas.join(', '));
 
-  /* ── X-15: o relógio ──────────────────────────────────────────────
+  /* ── X-17: o relógio ──────────────────────────────────────────────
      Injeta-se uma encomenda com a data uma hora no FUTURO — exatamente
      o que o fuso do servidor produzia — e vê-se o que o ecrã faz.
 
@@ -197,6 +201,6 @@ async function entrar(ctx, email) {
 
   await browser.close();
   console.log('\n' + '═'.repeat(58));
-  if (!falhas.length) console.log('X-14 E X-15 VERIFICADOS ✅');
+  if (!falhas.length) console.log('X-16 E X-17 VERIFICADOS ✅');
   else { console.log('FALHAS:', falhas.length); falhas.forEach(f => console.log(' •', f)); process.exitCode = 1; }
 })();

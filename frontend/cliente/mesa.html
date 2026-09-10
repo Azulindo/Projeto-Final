@@ -316,7 +316,20 @@ document.addEventListener('DOMContentLoaded', () => {
     produtosPorId: {},
     categorias: [],
     categoriaAtiva: '',
-    carrinho: {},      // { produtoId: quantidade } — ainda por enviar
+    carrinho: {},
+    /* ── OBSERVAÇÕES POR ITEM (F-21, 10/09) ──────────────────────
+       Mapa PARALELO ao carrinho — `{ produtoId: texto }` — e não um
+       campo dentro dele. O `state.carrinho` é `{ id: quantidade }`, um
+       número simples, e é lido em cinco sítios deste ficheiro
+       (renderGrid, criarCard, alterarQuantidade, atualizarTotais,
+       enviarPedido). Mudá-lo para um objeto obrigava a mexer nos cinco
+       ao mesmo tempo, num ficheiro de 850 linhas que está testado ponta
+       a ponta. Um mapa ao lado toca em dois.
+
+       Não são duas fontes de verdade: são dois factos diferentes sobre
+       a mesma chave, e quem sai do carrinho sai das duas — ver o
+       `alterarQuantidade`. */
+    observacoes: {},      // { produtoId: quantidade } — ainda por enviar
   };
 
   let resumoAberto = false;
@@ -503,6 +516,71 @@ document.addEventListener('DOMContentLoaded', () => {
     card.querySelector('[data-action="menos"]').addEventListener('click', () => alterarQuantidade(produto.id, -1));
     card.querySelector('[data-action="mais"]').addEventListener('click', () => alterarQuantidade(produto.id, 1));
 
+    /* ── A NOTA (F-21) ────────────────────────────────────────────
+       Só aparece depois de o item estar no carrinho: uma caixa de
+       texto em 25 cartões que ninguém pediu é ruído, e antes de
+       escolher não há nada para anotar.
+
+       Fica no CARTÃO e não no resumo porque é aqui que a decisão
+       acontece — escolhe-se o hambúrguer e a seguir lembra-se da
+       cebola. No resumo obrigava a escolher tudo primeiro e só depois
+       lembrar-se de voltar atrás por cada um.
+
+       É o que a cozinha mostra no destaque amarelo, e é o que um
+       restaurante mais precisa de receber: uma alergia, uma vela de
+       aniversário. Até 10/09 esse destaque existia alimentado por
+       nada — a coluna na base, o POST a aceitar `observacao` por item
+       e o ecrã da cozinha a mostrá-la, e nenhuma forma de a escrever. */
+    const nota = document.createElement('div');
+    nota.className = 'nota-item mt-2';
+    nota.hidden = qty === 0;
+    nota.innerHTML = `
+      <button type="button" data-action="abrir-nota"
+              class="text-[11px] text-neutral-400 hover:text-copper underline decoration-dotted min-h-[24px]">
+        ${state.observacoes[produto.id] ? '✏️ Alterar nota' : '＋ Adicionar nota'}
+      </button>
+      <div data-nota-campo hidden class="mt-1.5">
+        <label class="sr-only" for="obs-${produto.id}">Nota para ${escapeAttr(produto.nome)}</label>
+        <textarea id="obs-${produto.id}" rows="2" maxlength="300"
+                  class="w-full bg-carvao3 border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-[13px] text-white placeholder-neutral-500 focus:outline-none focus:border-copper resize-none"
+                  placeholder="Sem cebola, bem passado, com vela…">${escapeHtml(state.observacoes[produto.id] || '')}</textarea>
+      </div>
+      <p data-nota-lida class="text-[11px] text-copper mt-1 ${state.observacoes[produto.id] ? '' : 'hidden'}">
+        “${escapeHtml(state.observacoes[produto.id] || '')}”
+      </p>
+    `;
+
+    const btnNota = nota.querySelector('[data-action="abrir-nota"]');
+    const campo   = nota.querySelector('[data-nota-campo]');
+    const caixa   = nota.querySelector('textarea');
+    const lida    = nota.querySelector('[data-nota-lida]');
+
+    btnNota.addEventListener('click', () => {
+      const abrir = campo.hidden;
+      campo.hidden = !abrir;
+      if (abrir) { caixa.focus(); lida.classList.add('hidden'); }
+    });
+
+    /* Grava ao escrever, sem botão de confirmar. Um botão de "guardar
+       nota" era mais um toque e mais uma forma de a perder: quem
+       escreve "sem cebola" e fecha o teclado espera que fique. */
+    const gravar = () => {
+      const texto = caixa.value.trim().slice(0, 300);
+      if (texto) state.observacoes[produto.id] = texto;
+      else delete state.observacoes[produto.id];
+
+      btnNota.textContent = texto ? '✏️ Alterar nota' : '＋ Adicionar nota';
+      lida.textContent = texto ? `“${texto}”` : '';
+      lida.classList.toggle('hidden', !texto || !campo.hidden);
+      atualizarTotais();
+    };
+    caixa.addEventListener('input', gravar);
+    caixa.addEventListener('blur', () => {
+      gravar();
+      if (state.observacoes[produto.id]) { campo.hidden = true; lida.classList.remove('hidden'); }
+    });
+
+    card.querySelector('.flex-1').appendChild(nota);
     return card;
   }
 
@@ -512,11 +590,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (nova === 0) delete state.carrinho[produtoId];
     else state.carrinho[produtoId] = nova;
 
+    /* Quem sai do carrinho sai das observações. Sem isto, tirar o
+       hambúrguer e voltar a pô-lo trazia de volta um "sem cebola" que a
+       pessoa já tinha desistido de pedir — e ia para a cozinha assim. */
+    if (nova === 0) delete state.observacoes[produtoId];
+
     // Atualiza só o cartão afetado (não perde o scroll da lista)
     const card = gridEl.querySelector(`[data-id="${produtoId}"]`);
     if (card) {
       card.querySelector('.qty-value').textContent = nova;
       card.querySelector('[data-action="menos"]').disabled = nova === 0;
+
+      const nota = card.querySelector('.nota-item');
+      if (nota) {
+        nota.hidden = nova === 0;
+        if (nova === 0) {
+          nota.querySelector('textarea').value = '';
+          nota.querySelector('[data-nota-campo]').hidden = true;
+          nota.querySelector('[data-nota-lida]').classList.add('hidden');
+          nota.querySelector('[data-action="abrir-nota"]').textContent = '＋ Adicionar nota';
+        }
+      }
     }
 
     atualizarTotais();
@@ -626,7 +720,8 @@ document.addEventListener('DOMContentLoaded', () => {
     ));
     pendentes.forEach(([id, qty]) => {
       const p = state.produtosPorId[id];
-      resumoLista.appendChild(criarLinhaResumo(p.nome, qty, Number(p.preco), 'por enviar'));
+      resumoLista.appendChild(criarLinhaResumo(
+        p.nome, qty, Number(p.preco), 'por enviar', state.observacoes[id]));
     });
 
     // Os anulados vão para o fim, riscados e sem preço.
@@ -672,18 +767,28 @@ document.addEventListener('DOMContentLoaded', () => {
     'anulado':     'text-red-400',
   };
 
-  function criarLinhaResumo(nome, qty, precoUnit, etiqueta) {
+  /**
+   * criarLinhaResumo — Uma linha da conta.
+   *
+   * O `obs` entrou com a F-21: a nota que a pessoa escreveu aparece
+   * também AQUI, e não só no cartão. O resumo é o último sítio antes de
+   * carregar em "Pedir Itens", e é onde se dá conta de que o "sem
+   * cebola" ficou no prato errado — depois de enviado, já foi.
+   */
+  function criarLinhaResumo(nome, qty, precoUnit, etiqueta, obs) {
     const linha = document.createElement('div');
-    linha.className = 'flex items-center justify-between gap-2';
     const cor = CORES_ETIQUETA[etiqueta] || 'text-neutral-500';
     const marca = etiqueta === 'por enviar' ? '' : '✅ ';
     linha.innerHTML = `
-      <span class="text-neutral-300 truncate flex items-center gap-1.5">
-        <span class="text-copper font-semibold flex-shrink-0">${qty}×</span>
-        <span class="truncate">${escapeHtml(nome)}</span>
-        <span class="text-[10px] ${cor} font-semibold whitespace-nowrap">${marca}${etiqueta}</span>
-      </span>
-      <span class="text-neutral-400 flex-shrink-0">${formatarPreco(precoUnit * qty)}</span>
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-neutral-300 truncate flex items-center gap-1.5">
+          <span class="text-copper font-semibold flex-shrink-0">${qty}×</span>
+          <span class="truncate">${escapeHtml(nome)}</span>
+          <span class="text-[10px] ${cor} font-semibold whitespace-nowrap">${marca}${etiqueta}</span>
+        </span>
+        <span class="text-neutral-400 flex-shrink-0">${formatarPreco(precoUnit * qty)}</span>
+      </div>
+      ${obs ? `<p class="linha-obs text-[11px] text-copper pl-5 mt-0.5">“${escapeHtml(obs)}”</p>` : ''}
     `;
     return linha;
   }
@@ -723,10 +828,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const pendentes = Object.entries(state.carrinho);
     if (pendentes.length === 0 || aEnviar) return;
 
-    const itens = pendentes.map(([produtoId, quantidade]) => ({
-      produtoId: Number(produtoId),
-      quantidade,
-    }));
+    /* A `observacao` vai por item, como o `POST /mesas/:token/pedir`
+       aceita desde o B-33 (docs/API.md 3.9). Só se envia quando existe:
+       um `observacao: null` em cada linha é ruído no pedido e na base. */
+    const itens = pendentes.map(([produtoId, quantidade]) => {
+      const item = { produtoId: Number(produtoId), quantidade };
+      const obs = state.observacoes[produtoId];
+      if (obs) item.observacao = obs;
+      return item;
+    });
 
     definirEstadoEnvio(true);
     try {
@@ -739,6 +849,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const dados = await chamarAPI(`mesas/${encodeURIComponent(state.token)}/sessao`);
       state.sessao = dados.sessao;
       state.carrinho = {};
+      state.observacoes = {};   // foram com o pedido; o que fica é o da sessão
 
       renderGrid();
       atualizarTotais();
