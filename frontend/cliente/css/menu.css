@@ -300,6 +300,57 @@
   .ementa-spinner { animation: none; }
 }
 
+/* ── BOTÃO DE TAKE AWAY (F-24, 10/09) ──────────────────────────────
+   Deliberadamente MAIS forte do que o da galeria, e a razão não é
+   estética: encomendar é a única coisa desta página que dá dinheiro à
+   casa, e ver fotografias é a que dá menos. Se os dois botões tivessem
+   o mesmo peso, o que decide era a ordem em que estão.
+
+   O texto é #0d0b07 sobre este gradiente, medido como o da galeria:
+   4,7:1 no pior ponto (o extremo dourado). O #16130d da marca ficava a
+   4,4 e falhava por pouco — a mesma armadilha do botão da galeria, e
+   pela mesma razão: o `contraste.js` só apanhou isto depois de aprender
+   a medir texto sobre gradientes. Nosifer NÃO se usa aqui: é uma fonte
+   de títulos curtos, e "Encomendar para levar" tem quatro palavras. */
+.takeaway-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: fit-content;
+  margin: 10px auto 14px auto;
+  background: linear-gradient(45deg, #ffb300, #ff5500);
+  color: #0d0b07;
+  border: none;
+  /* 48px de altura mínima: é um alvo de dedo num telemóvel, e é o
+     botão mais importante da página. */
+  min-height: 48px;
+  padding: 14px 32px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  border-radius: 25px;
+  box-shadow: 0 6px 22px rgba(255,120,0,0.55);
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.takeaway-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 28px rgba(255,120,0,0.75);
+}
+
+.takeaway-text {
+  text-align: center;
+  color: #e8e2d8;
+  font-size: 1.02rem;
+  line-height: 1.6;
+  max-width: 46ch;
+  margin: 0 auto 30px auto;
+}
+
 /* BOTÃO GALERIA */
 .galeria-btn {
   display: block;

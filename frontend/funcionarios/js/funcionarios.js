@@ -77,20 +77,35 @@ document.addEventListener('DOMContentLoaded', function () {
   let lista = [];
   let ordem = { campo: 'nome', asc: true };
 
-  /* Quem está com a sessão aberta. O /auth/eu devolve `{ nome, nivel }`
-     e mais nada, por isso a única forma de reconhecer a própria linha é
-     pelo nome — e dois homónimos davam a marca à pessoa errada.
-     Marca-se só quando não há ambiguidade: se o nome aparecer duas
-     vezes na lista, não se marca ninguém. A mensagem certa vem sempre
-     no 409 do servidor, que sabe de quem se trata. */
-  const nomeSessao = (function () {
-    try { const s = obterSessao(); return s && s.nome ? s.nome : null; }
-    catch (e) { return null; }
+  /* Quem está com a sessão aberta.
+     ── ISTO ERA ADIVINHADO ATÉ 10/09 ─────────────────────────────────
+     O `/auth/eu` devolvia só `{ nome, nivel }`, e a única forma de
+     reconhecer a própria linha era comparar o nome. Funcionava até
+     entrarem duas pessoas com o mesmo nome — e aí a marca "a tua conta"
+     ia à pessoa errada, num ecrã onde essa marca muda o tom de um aviso
+     sobre perder o acesso. A versão antiga só marcava quando o nome era
+     único na lista, o que era honesto mas deixava o caso sem resposta.
+
+     O X-11 fechou isto: o servidor passou a devolver `idUtilizador`, e
+     com o nome que a linha do `gestao/funcionarios` já usava — dois
+     nomes para o mesmo número seria um convite a comparar os campos
+     errados. Agora compara-se o número.
+
+     Fica o nome como plano B, para uma sessão gravada antes desta
+     mudança não perder a marca até ao próximo login. */
+  const sessaoAtual = (function () {
+    try { return obterSessao() || null; } catch (e) { return null; }
   })();
 
   function ehAPropriaConta(f) {
-    if (!nomeSessao || f.nome !== nomeSessao) return false;
-    return lista.filter(x => x.nome === nomeSessao).length === 1;
+    if (!f || !sessaoAtual) return false;
+    if (sessaoAtual.idUtilizador != null && f.idUtilizador != null) {
+      return Number(f.idUtilizador) === Number(sessaoAtual.idUtilizador);
+    }
+    /* Plano B, para sessões antigas: só marca se o nome for único, para
+       não marcar a pessoa errada. */
+    if (!sessaoAtual.nome || f.nome !== sessaoAtual.nome) return false;
+    return lista.filter(x => x.nome === sessaoAtual.nome).length === 1;
   }
 
   preencherCargos();

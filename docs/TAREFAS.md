@@ -66,6 +66,12 @@ Cada tarefa é pequena de propósito — a maioria leva **entre 45 minutos e 2 h
 
 # 🐞 CORREÇÕES — prioridade sobre tudo o resto
 
+> **Dois X-13 ao mesmo tempo (10/09).** O Guilherme abriu o dele a testar o B-35 contra o Render; eu abri os meus a
+> testar a cozinha no browser. Nenhum viu o do outro porque estavam a acontecer na mesma hora. Ficaram os três: o dele
+> mantém o número por ter chegado primeiro ao repositório, os meus passaram a X-14 e X-15. **Nenhum trabalho se perdeu —
+> só o número é que colidiu.**
+
+
 *Encontradas na revisão de 1 de setembro, com o site a correr.*
 
 **Ponto de situação a 3 de setembro: 8 das 9 fechadas.** Falta o X-08, que o Guilherme não
@@ -83,8 +89,9 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | 🟨 | **X-08** | Banda branca no topo — **não reproduzida** pelo Guilherme em 6 páginas a 1440 e 1920. A causa que eu apontei era real (`html`/`body` sem cor de fundo) e foi tapada com `background-color` + `color-scheme: dark`. Possível artefacto do meu teste: corri em Chromium sem rede, e a fonte Nosifer não carregou | 30 min | Gui |
 | **✅** | **X-09** | ~~Caixa de escrita engolia texto sem responder~~ — corrigido com teste | 20 min | Gui |
 | **✅** | **X-12** | ~~Um recurso meio ligado mentia em silêncio~~ — *encontrado e corrigido pelo Guilherme a 10/09, ao ligar as categorias. O `ENDPOINTS_REAIS` é uma lista por **caminho**, mas um ecrã usa vários caminhos do mesmo recurso, e nada garantia que fossem ligados todos ao mesmo tempo. O B-62 trouxe três dos quatro caminhos das categorias, e a F-51 ia ficar assim: a lista vinha do servidor, criar e editar iam ao servidor, e **reordenar caía na simulação, que devolvia a lista trocada e um 200**. As setas funcionavam à vista, a ordem mudava no ecrã, e voltava tudo atrás ao recarregar a página — sem erro nenhum, sem aviso nenhum. É a pior forma de falhar: a que parece ter corrido bem, e a que passa uma apresentação inteira sem ninguém notar. **A regra que ficou:** não se simula uma **escrita** sobre um recurso que já é real — se o `gestao/categorias` está na lista, ninguém finge gravar em `gestao/categorias/qualquer-coisa`. Devolve 501 e o ecrã mostra o motivo. Só escritas, de propósito: uma leitura simulada também é falsa mas **vê-se** (são dados de demonstração à vista, e é para isso que serve o `?simular=1`); uma escrita simulada devolve "gravado" a quem gravou nada, e ninguém vê nada. Verificado: `frontend/testes/guarda-endpoints.js` — apanha o caso real e não apanha nenhum dos quatro recursos que continuam inteiramente simulados* | 40 min | Gui |
-| **✅** | **X-13** | ~~As datas do `seed.sql` eram fixas e os dados envelheciam sozinhos~~ — encontrado a 10/09 ao testar o ecrã da cozinha no browser: as rondas diziam **"há 212h28"**, nove dias. O ecrã estava certo; os dados é que tinham sido escritos a 1 de setembro e ficado lá. Passaram a `NOW() - INTERVAL n MINUTE`, guardando as distâncias originais entre os momentos, e as reservas a `CURDATE() + INTERVAL n DAY` — duas das três já tinham passado, e o painel mostrava reservas para dias que já foram. As reservas empurram um dia quando calham numa segunda, porque a própria API recusa reservas no dia de folga e o seed não deve criar o que a API nunca aceitaria. As datas de contratação ficam fixas de propósito | 30 min | João |
-| **✅** | **X-14** | ~~O fuso horário punha todos os pedidos uma hora no futuro~~ — encontrado a 10/09, **escondido atrás do X-13**: só depois de as datas passarem a minutos é que se viu que a cozinha dizia "agora mesmo" a tudo, inclusive a uma ronda de 28 minutos. O MySQL guarda `DATETIME` sem fuso e o `NOW()` devolve a hora local da máquina (UTC+1 no verão); o `bd.js` dizia `timezone: 'Z'`, ou seja "isto é UTC". Cada data era lida uma hora mais tarde do que é, e o `minutosDesde()` do front-end faz `Math.max(0, ...)` — uma data no futuro dá zero, e zero é "agora mesmo". **Confirmado pela aritmética antes de se mexer em nada:** o ecrã mostrava 212h52 onde a diferença real era 213h52. Uma hora certinha não é coincidência. Corrigido nas **duas pontas**: `SET time_zone = '+00:00'` em cada ligação do pool (por ligação e não uma vez, senão umas linhas vinham com uma hora de diferença das outras) e no topo do `seed.sql`, que é corrido pelo `mysql` da linha de comandos e não pela API. **Ia ser pior no dia 16:** o Aiven está noutro fuso, e um erro que muda consoante o sítio onde a base está é dos piores de diagnosticar. Testado: 4 min, 28 min e 17 min em três cartões, com a escalada de cor do Guilherme a funcionar pela primeira vez | 45 min | João |
+| **✅** | **X-13** | ~~A mensagem útil do servidor nunca chegava ao ecrã~~ — *encontrado e corrigido pelo Guilherme a 10/09, **a chamar a API do Render à mão** para verificar o B-35 contra o servidor a sério. Não foi um teste que apanhou isto, e não podia: os testes correm todos com `?simular=1`, e a simulação devolve a mensagem certa no campo `erro`. O desencontro só existia contra o servidor. Quando a validação recusa, a resposta é `{ "erro": "Dados invalidos.", "problemas": [{ "campo": "telefone", "problema": "Telefone invalido..." }] }` — e o `chamarAPI` lia só o `erro`. Resultado: quem escreve um telefone com letras num formulário de cinco campos via **"Dados inválidos."** e ficava a olhar para o ecrã sem saber qual deles estava mal. Verdade, e inútil. Passa a juntar as entradas do `problemas` com o nome do campo à frente — com cinco campos no ecrã, saber QUAL é metade da informação. Vale para todos os ecrãs de uma vez, porque todos passam pelo mesmo sítio. **A lição é sobre o método:** uma simulação fiel esconde os desencontros que ela própria não tem, e há coisas que só se vêem a falar com o servidor* | 30 min | Gui |
+| **✅** | **X-14** | ~~As datas do `seed.sql` eram fixas e os dados envelheciam sozinhos~~ — encontrado a 10/09 ao testar o ecrã da cozinha no browser: as rondas diziam **"há 212h28"**, nove dias. O ecrã estava certo; os dados é que tinham sido escritos a 1 de setembro e ficado lá. Passaram a `NOW() - INTERVAL n MINUTE`, guardando as distâncias originais entre os momentos, e as reservas a `CURDATE() + INTERVAL n DAY` — duas das três já tinham passado, e o painel mostrava reservas para dias que já foram. As reservas empurram um dia quando calham numa segunda, porque a própria API recusa reservas no dia de folga e o seed não deve criar o que a API nunca aceitaria. As datas de contratação ficam fixas de propósito | 30 min | João |
+| **✅** | **X-15** | ~~O fuso horário punha todos os pedidos uma hora no futuro~~ — encontrado a 10/09, **escondido atrás do X-13**: só depois de as datas passarem a minutos é que se viu que a cozinha dizia "agora mesmo" a tudo, inclusive a uma ronda de 28 minutos. O MySQL guarda `DATETIME` sem fuso e o `NOW()` devolve a hora local da máquina (UTC+1 no verão); o `bd.js` dizia `timezone: 'Z'`, ou seja "isto é UTC". Cada data era lida uma hora mais tarde do que é, e o `minutosDesde()` do front-end faz `Math.max(0, ...)` — uma data no futuro dá zero, e zero é "agora mesmo". **Confirmado pela aritmética antes de se mexer em nada:** o ecrã mostrava 212h52 onde a diferença real era 213h52. Uma hora certinha não é coincidência. Corrigido nas **duas pontas**: `SET time_zone = '+00:00'` em cada ligação do pool (por ligação e não uma vez, senão umas linhas vinham com uma hora de diferença das outras) e no topo do `seed.sql`, que é corrido pelo `mysql` da linha de comandos e não pela API. **Ia ser pior no dia 16:** o Aiven está noutro fuso, e um erro que muda consoante o sítio onde a base está é dos piores de diagnosticar. Testado: 4 min, 28 min e 17 min em três cartões, com a escalada de cor do Guilherme a funcionar pela primeira vez | 45 min | João |
 | **✅** | **X-10** | ~~`docs/API.md` desatualizado em dois sítios~~ — corrigido pelo Guilherme a 09/09. A §5 passou a descrever o que o C-26 faz mesmo, e a §4.8 perdeu a justificação repetida. **A correcção foi melhor do que a pedida:** em vez de actualizar a cópia da lista `ENDPOINTS_REAIS` que estava no documento com 4 entradas quando o `api.js` já tinha 15, apagou a cópia e escreveu *"uma lista copiada é uma lista que vai ficar errada"* — passou a dizer o que a lista cobre, não o que ela diz linha a linha | 30 min | Gui |
 | **✅** | **X-11** | ~~Desativar um funcionário não lhe tirava o acesso~~ — corrigido a 10/09. O `exigirNivel` deixou de decidir pelo que está dentro do token e confirma na base a cada pedido autenticado **duas** coisas: se a conta continua ativa, e se o cargo ainda dá o nível que o token diz — a segunda apanha as despromoções, que tinham o mesmo problema. Conta desativada responde **401 e não 403**, de propósito: o 403 diz *"esta sessão não serve para isto"*, o 401 diz *"esta sessão já não serve para nada"*, e é o 401 que faz o `auth-guard` mandar a pessoa para o login em vez de a deixar num ecrã vazio. Se a base não responder, **não** deixa passar: uma verificação de permissões que falha aberta é pior do que não existir. Custo aceite: uma consulta por pedido autenticado, e só nos endpoints de gestão — os do cliente à mesa não levam login. **Apanhou um segundo problema:** a tabela cargo→nível estava escrita em dois sítios (`auth.js` e `gestaoFuncionarios.js`) e este ia ser o terceiro; passou para `src/config/niveis.js`. **Testado:** token da cozinha a ler a fila, conta desativada pelo administrador, o **mesmo** token a dar 401 à primeira, e a funcionar outra vez depois de reativada — sem novo login | 45 min | João |
 
@@ -214,11 +221,24 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 > sempre à vista: menos toques para pedir e muito melhor num telemóvel de pé, à mesa.
 >
 > O que estas tarefas queriam garantir **está feito**, só que noutra forma: cards de
-> produto, seletor de quantidade, observações, resumo com subtotais, remover item, número
-> do pedido em destaque. Ficam aqui marcadas 🔁 em vez de apagadas, para se perceber a
-> decisão e não parecer trabalho esquecido.
+> produto, seletor de quantidade, observações, resumo com subtotais, remover item. Ficam
+> aqui marcadas 🔁 em vez de apagadas, para se perceber a decisão e não parecer trabalho
+> esquecido.
 >
-> São ≈ 22 h que **não estão em falta** — não as contes no que falta fazer.
+> ⚠️ **CORREÇÃO (10/09): duas destas não estavam feitas noutra forma — estavam por fazer.**
+> A **F-24** (nome + telemóvel do take away) e a **F-25** (ecrã de confirmação com o número)
+> foram varridas para aqui por dependerem da F-16, que era do chatbot. Mas a `mesa.html`
+> identifica o cliente pelo **token do QR da mesa** e nunca pede nome nem telemóvel: não
+> havia como encomendar para levar. O `CONTEXTO.md` diz o contrário em dois sítios — na
+> §5A.3 e no **ponto 5 da definição de projeto concluído** — e o `POST /pedidos/takeaway` do
+> João ficou construído sem ninguém que o chamasse.
+>
+> Foram repostas e feitas a 10/09 (`cliente/takeaway.html`). **A lição não é sobre o take
+> away:** é que retirar uma tarefa por *associação* — "depende de uma coisa que morreu, logo
+> morreu" — apaga trabalho que ninguém decidiu apagar. As outras nove desta lista estavam
+> bem retiradas; estas duas só o pareciam.
+>
+> São ≈ 19 h que **não estão em falta** — não as contes no que falta fazer.
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
@@ -271,8 +291,8 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | 🔁 | F-21 | Campo de observações + botão "sem observações" | 1 h | F-16 |
 | 🔁 | F-22 | Ecrã de resumo do pedido (itens, quantidades, subtotais, total) | 2 h | F-16 |
 | 🔁 | F-23 | Botão de remover item no resumo | 1 h | F-22 |
-| 🔁 | F-24 | Ecrã de nome + telemóvel do take away, com validação | 1 h 30 | F-16 |
-| 🔁 | F-25 | Ecrã de confirmação com o **número do pedido em destaque** e botão "copiar" | 1 h 30 | F-22 |
+| ✅ | F-24 | Ecrã de nome + telemóvel do take away, com validação — *feita 10/09 como `cliente/takeaway.html`. **Estava marcada 🔁 por engano** (ver a nota do bloco acima): foi varrida para as tarefas do chatbot, mas o que ela garantia NÃO tinha sido feito noutra forma — a `mesa.html` identifica o cliente pelo token do QR e nunca pede nome nem telemóvel. Ficou um endpoint sem ecrã e o **ponto 5 da definição de concluído** do `CONTEXTO.md` sem front-end. O nome e o telemóvel são obrigatórios, com as MESMAS regras do servidor (o telefone só aceita dígitos, espaços e o `+`, 9 a 20 caracteres) — validar aqui poupa uma ida ao Render, ter as mesmas regras é o que impede o ecrã de aceitar o que o servidor recusa. O ecrã diz para que serve cada contacto, em vez de os pedir sem explicação. As observações da encomenda são **devolvidas** na confirmação: quem escreveu "sem cebola" tem de ver que ficou registado, senão a única forma de confirmar é telefonar — que é o que esta página existe para evitar. Verificado: `frontend/testes/takeaway.js`* | 1 h 30 | F-49 |
+| ✅ | F-25 | Ecrã de confirmação com o **número do pedido em destaque** e botão "copiar" — *feita 10/09, no mesmo `takeaway.html`. Repostas pela mesma razão da F-24. O número é a única coisa que a pessoa TEM de levar dali, por isso é a maior coisa no ecrã, dá para copiar, e vai para o endereço (`?encomenda=PED-XXXXX`) — assim um refresh ou um favorito não perdem a encomenda. **O botão de copiar tem plano B:** o `clipboard` não existe em `file://` nem sem HTTPS, e falhar em silêncio deixava a pessoa a carregar num botão que não faz nada; se não der, o número fica selecionado e o ecrã diz porquê. Ganhou uma coisa que não estava na tarefa original e que o B-35 tornou possível: **o estado da encomenda, relido do servidor** com um botão de atualizar, e uma caixa para consultar pelo número de um separador limpo. Era a razão de o `GET /pedidos/takeaway/:numero` existir. Verificado no mesmo teste* | 1 h 30 | F-24 |
 | ✅ | F-26 | Estados visuais de "a carregar" e de erro de ligação | 1 h | F-15 |
 | 🔁 | F-27 | Testar e afinar tudo em telemóvel real | 2 h | F-25 |
 
@@ -331,7 +351,8 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | F-57 | Gráfico de produtos mais vendidos — *barras horizontais, porque "Picanha na Brasa Negra" na vertical fica de lado ou cortado, e um rótulo que se lê de lado é um rótulo que ninguém lê. Partilha o `graficos.js` com a F-56. A unidade aqui é quantidade, não dinheiro* | 1 h 30 | F-56 |
 | ✅ | F-58 | Página imprimível dos QR Codes (um por mesa, com o número bem visível) | 2 h | B-66 |
 | ✅ | F-59 | Revisão de responsividade de todos os ecrãs do cliente — *menu de 5px→15px, alvos a 44px, imagens 38,6→3,6 MB; medido em 5 larguras* | 2 h | — |
-| ⬜ | F-60 | Revisão visual final e afinação de detalhes | 2 h | — |
+| ⬜ | F-60 | Revisão visual final e afinação de detalhes — *o `contraste.js` já não aponta nada abaixo do mínimo nas seis páginas do cliente (as duas falhas da `index.html` foram corrigidas a 08/09). Sobram os **nove títulos com gradiente** cuja última paragem cai a 1,7:1 quando o mínimo para texto grande é 3:1 — o próprio teste diz o que fazer: subir a última paragem para `#b52d00` põe tudo acima de 3:1 sem mexer no aspeto. Falta também correr o `contraste.js` sobre os ecrãs de GESTÃO, que ele nunca cobriu* | 2 h | — |
+| ⬜ | F-69 | Juntar a `mesa.html` ao `cliente/js/ementa-comum.js` — *aberta 10/09 ao construir a F-24 (era F-70 até a verificação da sequência apanhar o salto). As duas páginas que mostram a ementa com carrinho (a da mesa e a do take away) têm o MESMO cartão de produto, os mesmos separadores de categoria e as mesmas funções de formatar preço. A `takeaway.html` já usa o ficheiro comum; a `mesa.html` tem a sua própria cópia, porque é uma página de 850 linhas testada ponta a ponta e mexer-lhe ao mesmo tempo que se constrói uma página nova era arriscar as duas ao mesmo tempo. **Duas cópias do mesmo cartão acabam como as outras duas fontes de verdade deste projeto acabaram** (a ordem da ementa escrita à mão, e o stock lido de dois sítios): uma corrige-se, a outra fica. O `estados-pedido.js` cobre a `mesa.html` ponta a ponta e serve de rede* | 1 h | F-24 |
 | ⬜ | F-61 | 🔁 *(recuperação)* Tabela de reservas no dashboard — *(nota 04/09, ver F-62)* na linha de cada reserva de HOJE, avisar se algum prato pré-selecionado já estiver no `gestao/stock` como baixo; não descontar nem reservar stock nenhum — a pré-seleção já está definida no `CONTEXTO.md` §5B.3 como valor estimado, não vinculativo (o cliente pode mudar de ideias à mesa), por isso o aviso é só para o gerente decidir, nunca automático | 1 h 45 | B-73 |
 | ✅ | F-62 | Aviso de stock baixo na página da cozinha (leitura) + contador do mesmo aviso sempre visível para o gerente, em qualquer ecrã da app — construído com dados simulados (`gestao/stock`), como o resto do front-end; troca-se a origem quando o B-63 existir a sério — *verificado, `frontend/testes/stock-cozinha.js`* | 1 h 30 | B-63 |
 | ✅ | F-63 | Galeria: fotos dos pratos sempre visíveis + lightbox — *queixa de clientes: "não é intuitivo ter de passar com o rato por cima".* Tinham razão e era mais do que gosto: as fotos estavam a `height: 0; opacity: 0` até ao `:hover`, e num telemóvel **nunca apareciam**. Agora a foto está no cartão desde que a página abre, e clicar/tocar abre-a maior (setas, teclado ←/→, Esc, deslizar o dedo). `frontend/cliente/js/galeria.js` | 1 h 30 | — |
@@ -491,11 +512,11 @@ refazer.
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
 | 🔵 João (B-) | 74 | 53 | 8 | 13 | ≈ 17 h |
-| 🟠 Guilherme (F-) | 68 | 46 | 19 | 3 | ≈ 4 h 15 |
+| 🟠 Guilherme (F-) | 69 | 48 | 17 | 4 | ≈ 5 h 15 |
 | 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
-| 🐞 Correções (X-) | 14 | 13 | — | 1 | ≈ 30 min |
+| 🐞 Correções (X-) | 15 | 14 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 63 h 15.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
+**Total por fazer: ≈ 64 h 15.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
 (falta o Guilherme ler o `CONTEXTO.md`) e a X-08 (não se conseguiu reproduzir). O B-40 saiu
 desta lista a 10/09 — o B-35 fechou e o take away passou a estar testado. O B-65 já tinha
 saído: os QR Codes estão gerados.
@@ -558,9 +579,26 @@ saído: os QR Codes estão gerados.
 > Não foi ninguém a apagar nada: foi formatação. Mas o sintoma é igual ao do `9303458`, e a
 > mesma verificação apanhou os dois.
 
-*Como estes números foram feitos:* contadas as 184 linhas das tabelas acima uma a uma e
+*Como estes números foram feitos:* contadas as 186 linhas das tabelas acima uma a uma e
 somada a coluna da estimativa só das linhas ⬜ e 🟨. Os quatro prefixos fecham certo
-(74 + 68 + 28 + 12) e não há códigos em falta em nenhuma das quatro sequências. Se mudares
+(74 + 69 + 28 + 13) e não há códigos em falta em
+nenhuma das quatro sequências.
+
+> **A verificação da sequência ganhou o dia pela terceira vez, a 10/09.** Ao abrir a tarefa
+> de juntar a `mesa.html` ao ficheiro comum da ementa, chamei-lhe **F-70** — e a F-69 não
+> existia. Saltei um número sem dar por isso. O `falta=[69]` apareceu na recontagem antes de
+> qualquer coisa ser empurrada, e a tarefa passou a F-69.
+>
+> As três vezes de hoje foram por causas diferentes: uma escrita que reverteu linhas, um
+> parágrafo que partiu uma linha de tabela, e um número saltado. **A verificação não sabe
+> distinguir nenhuma delas, e é isso que a torna útil:** só sabe dizer que a conta não bate.
+
+> **E foram quatro merges deste bloco num dia.** No último, o lado do João dava 63 h 15 e o
+> meu 82 h — porque ele tinha fechado seis tarefas B- e retirado oito, e eu tinha aberto a
+> F-69 e reposto a F-24 e a F-25. **Nenhum dos dois estava errado sobre o seu lado e nenhum
+> estava certo sobre o total.** Nas duas linhas em conflito que eram tarefas dele (B-66 e
+> B-74), ficou a descrição dele: escreveu-as a partir do código, e eu tinha-as marcado a
+> partir de uma mensagem. Se mudares
 uma linha lá em cima, refaz isto da mesma maneira — não somes nem subtraias a estes valores.
 
 > **Merges de 10/09 — foram dois, com uma hora de intervalo.** No primeiro, nenhum dos dois

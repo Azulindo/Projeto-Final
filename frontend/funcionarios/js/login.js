@@ -88,6 +88,10 @@ document.addEventListener('DOMContentLoaded', () => {
         token: resposta.token,
         nome:  resposta.utilizador.nome,
         nivel: resposta.utilizador.nivel,
+        // X-11 (10/09): serve à F-53 para marcar "a tua conta" sem
+        // adivinhar pelo nome. Contas com nomes iguais deixam de ser
+        // um problema.
+        idUtilizador: resposta.utilizador.idUtilizador,
       });
 
       window.location.href = paginaInicialDoNivel(sessao.nivel);

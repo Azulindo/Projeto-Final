@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Take Away — Vem Pro Abate</title>
+<meta name="description" content="Encomende para levar no Vem Pro Abate: escolha na ementa, deixe o nome e o telemóvel, e nós chamamos.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          carvao:  '#121212',
+          carvao2: '#1a1a1a',
+          carvao3: '#242424',
+          copper:  '#c9832f',
+          copperdark: '#8a5a1f',
+          gold:    '#e8b34f',
+        },
+        fontFamily: {
+          display: ['"Playfair Display"', 'serif'],
+          sans: ['Inter', 'system-ui', 'sans-serif'],
+        },
+        boxShadow: {
+          soft: '0 10px 30px -8px rgba(0,0,0,0.55)',
+          liftup: '0 -8px 24px -6px rgba(0,0,0,0.55)',
+        },
+      },
+    },
+  };
+</script>
+
+<style>
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .card-enter { animation: fadeInUp .35s ease-out both; }
+
+  @keyframes girar { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 34px; height: 34px; border-radius: 9999px;
+    border: 3px solid rgba(232,179,79,0.25); border-top-color: #e8b34f;
+    animation: girar .8s linear infinite;
+  }
+  .spinner-pequeno {
+    width: 15px; height: 15px; border-radius: 9999px;
+    border: 2px solid rgba(0,0,0,0.25); border-top-color: rgba(0,0,0,0.75);
+    animation: girar .7s linear infinite;
+  }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+    background: radial-gradient(ellipse at top, #1a1611 0%, #121212 55%);
+  }
+  .placeholder-icon { background: radial-gradient(circle at 30% 30%, #2a2015, #161616); }
+</style>
+</head>
+
+<body class="bg-carvao text-neutral-100 font-sans pb-28 min-h-screen">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       CARREGAMENTO / ERRO
+       Mesmos dois ecrãs da mesa.html (F-26): a primeira consulta do
+       dia ao Render pode demorar quase um minuto, e um ecrã branco
+       durante esse tempo lê-se como avaria.
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="ecraCarregamento" class="fixed inset-0 z-[70] bg-carvao flex flex-col items-center justify-center gap-4">
+    <div class="spinner"></div>
+    <p id="textoCarregamento" class="text-neutral-400 text-sm">A abrir a ementa…</p>
+  </div>
+
+  <div id="ecraErro" class="hidden fixed inset-0 z-[70] bg-carvao flex-col items-center justify-center gap-4 px-8 text-center">
+    <p class="text-5xl" aria-hidden="true">⚠️</p>
+    <h2 class="font-display text-xl font-bold text-white">Algo correu mal</h2>
+    <p id="erroMensagem" class="text-neutral-400 text-sm max-w-xs">Não foi possível abrir a ementa.</p>
+    <button id="btnTentarNovamente" class="mt-2 bg-gradient-to-r from-gold to-copper text-carvao font-bold rounded-2xl px-6 py-3 text-sm">
+      Tentar novamente
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       CABEÇALHO
+  ═══════════════════════════════════════════════════════════ -->
+  <header class="sticky top-0 z-40 bg-carvao/85 backdrop-blur-md border-b border-white/[0.06]">
+    <div class="max-w-3xl mx-auto flex items-center justify-between px-4 pt-3 pb-2.5">
+      <a href="index.html" class="flex items-center gap-2.5 min-w-0">
+        <img src="../../assets/logos/logotipo.jpg" alt="Vem Pro Abate"
+             class="w-10 h-10 rounded-full object-cover ring-2 ring-copper/50 flex-shrink-0"
+             onerror="this.style.display='none'">
+        <div class="leading-tight min-w-0">
+          <p class="font-display text-base sm:text-lg font-bold text-white tracking-wide truncate">Vem Pro Abate</p>
+          <p class="text-[11px] text-neutral-400 -mt-0.5 tracking-wide">STEAKHOUSE</p>
+        </div>
+      </a>
+
+      <div class="flex items-center gap-1.5 bg-gradient-to-br from-gold to-copper text-carvao text-sm font-bold px-3.5 py-1.5 rounded-full shadow-soft flex-shrink-0">
+        <span aria-hidden="true">🥡</span>
+        <span>Take Away</span>
+      </div>
+    </div>
+
+    <!-- Resumo do carrinho — retrátil, como na mesa -->
+    <div id="barraResumo" class="max-w-3xl mx-auto px-4 pb-3">
+      <button id="resumoToggle"
+              class="w-full flex items-center justify-between gap-3 bg-carvao2 border border-white/[0.06] rounded-2xl px-4 py-3 shadow-soft active:scale-[0.99] transition-transform"
+              aria-expanded="false">
+        <span class="flex items-center gap-2 text-sm min-w-0">
+          <span class="text-lg" aria-hidden="true">🧾</span>
+          <span class="text-neutral-300 font-medium">A sua encomenda</span>
+          <span id="resumoCount" class="hidden bg-copper/20 text-copper text-[11px] font-bold px-1.5 py-0.5 rounded-full">0</span>
+        </span>
+        <span class="flex items-center gap-2 flex-shrink-0">
+          <span id="resumoSubtotal" class="font-bold text-gold text-[15px]">0,00 €</span>
+          <svg id="resumoChevron" class="w-4 h-4 text-neutral-500 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </span>
+      </button>
+
+      <div id="resumoPanel" class="overflow-hidden transition-[max-height] duration-300 ease-in-out" style="max-height:0px;">
+        <div class="bg-carvao2 border border-white/[0.06] border-t-0 rounded-b-2xl -mt-2 pt-3 px-4 pb-4">
+          <div id="resumoLista" class="space-y-2.5 text-sm"></div>
+          <p id="resumoVazio" class="text-neutral-500 text-xs text-center py-1.5">Ainda não escolheu nada.</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       ESTADO 1 — ESCOLHER E ENCOMENDAR
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="passoEncomendar">
+
+    <nav id="filtros" class="max-w-3xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar" role="tablist" aria-label="Categorias da ementa"></nav>
+
+    <main class="max-w-3xl mx-auto px-4 pb-6">
+      <div id="produtosGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+    </main>
+
+    <!-- ── Quem vem buscar ─────────────────────────────────────────
+         O nome e o telemóvel são obrigatórios, e não é burocracia: é
+         como se chama a pessoa quando a encomenda está pronta e como
+         se resolve quando ela não aparece. Dizê-lo aqui poupa a
+         pergunta "para que é que querem o meu número". -->
+    <section id="secaoContactos" class="max-w-3xl mx-auto px-4 pb-8">
+      <div class="bg-carvao2 border border-white/[0.06] rounded-2xl p-4 shadow-soft space-y-4">
+        <div>
+          <h2 class="font-display text-lg font-bold text-white">Quem vem buscar</h2>
+          <p class="text-xs text-neutral-400 mt-1">
+            Precisamos do nome para o chamar e do telemóvel para avisar que está pronta.
+            Não usamos os contactos para mais nada.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="taNome" class="block text-xs font-semibold text-neutral-300 mb-1.5">
+              Nome <span class="text-copper" aria-hidden="true">*</span>
+            </label>
+            <input type="text" id="taNome" maxlength="120" autocomplete="name" required
+                   class="w-full min-h-[44px] bg-carvao3 border border-white/[0.08] rounded-xl px-3.5 text-[15px] text-white placeholder-neutral-500 focus:outline-none focus:border-copper"
+                   placeholder="O nome por que o chamamos">
+          </div>
+
+          <div>
+            <label for="taTelefone" class="block text-xs font-semibold text-neutral-300 mb-1.5">
+              Telemóvel <span class="text-copper" aria-hidden="true">*</span>
+            </label>
+            <!-- inputmode="tel" e não type="number": um indicativo com
+                 "+" e os espaços de "912 345 678" não são um número. -->
+            <input type="tel" id="taTelefone" maxlength="20" autocomplete="tel" inputmode="tel" required
+                   class="w-full min-h-[44px] bg-carvao3 border border-white/[0.08] rounded-xl px-3.5 text-[15px] text-white placeholder-neutral-500 focus:outline-none focus:border-copper"
+                   placeholder="912 345 678">
+          </div>
+        </div>
+
+        <div>
+          <label for="taEmail" class="block text-xs font-semibold text-neutral-300 mb-1.5">
+            Email <span class="text-neutral-500 font-normal">(opcional)</span>
+          </label>
+          <input type="email" id="taEmail" maxlength="150" autocomplete="email" inputmode="email" spellcheck="false"
+                 class="w-full min-h-[44px] bg-carvao3 border border-white/[0.08] rounded-xl px-3.5 text-[15px] text-white placeholder-neutral-500 focus:outline-none focus:border-copper"
+                 placeholder="Para lhe mandarmos o comprovativo">
+        </div>
+
+        <div>
+          <label for="taObs" class="block text-xs font-semibold text-neutral-300 mb-1.5">
+            Observações <span class="text-neutral-500 font-normal">(opcional)</span>
+          </label>
+          <textarea id="taObs" rows="2" maxlength="500"
+                    class="w-full bg-carvao3 border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-[15px] text-white placeholder-neutral-500 focus:outline-none focus:border-copper resize-none"
+                    placeholder="Sem cebola, bem passado, a que horas passa…"></textarea>
+        </div>
+
+        <p id="taErro" class="hidden text-sm text-red-400 bg-red-500/10 border-l-2 border-red-500 rounded-lg px-3 py-2" role="alert"></p>
+      </div>
+
+      <p class="text-[11px] text-neutral-500 text-center mt-4 leading-relaxed">
+        Paga-se no balcão, ao levantar. A encomenda só entra na cozinha depois de ser confirmada lá dentro.
+      </p>
+    </section>
+
+    <!-- Barra fixa de envio -->
+    <div class="fixed bottom-0 left-0 right-0 z-40 bg-carvao/95 backdrop-blur-md border-t border-white/[0.06] shadow-liftup"
+         style="padding-bottom: env(safe-area-inset-bottom);">
+      <div class="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
+        <div class="min-w-0">
+          <p class="text-[11px] text-neutral-400 leading-none">Total</p>
+          <p id="footerTotal" class="font-bold text-gold text-lg leading-tight">0,00 €</p>
+        </div>
+        <button id="btnEncomendar" disabled
+                class="flex-1 min-h-[48px] flex items-center justify-center gap-2 bg-gradient-to-r from-gold to-copper text-carvao font-bold rounded-2xl px-5 text-[15px] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.99] transition-transform">
+          <span id="btnEncomendarIcone" aria-hidden="true">🥡</span>
+          <span id="btnEncomendarTexto">Encomendar</span>
+          <span id="footerCount" class="hidden bg-carvao/25 text-carvao text-xs font-bold px-1.5 py-0.5 rounded-full">0</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       ESTADO 2 — CONFIRMADO (F-25)
+       O número é a única coisa que a pessoa TEM de levar daqui, por
+       isso é a maior coisa no ecrã, dá para copiar, e o endereço da
+       barra passa a ter ?encomenda=<numero> — assim um refresh, ou um
+       favorito, não perdem a encomenda.
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="passoConfirmado" class="hidden max-w-3xl mx-auto px-4 py-8">
+    <div class="text-center">
+      <p class="text-5xl" aria-hidden="true">🥡</p>
+      <h2 id="confTitulo" class="font-display text-2xl font-bold text-white mt-3">Encomenda registada!</h2>
+      <p id="confMensagem" class="text-neutral-400 text-sm mt-2 max-w-sm mx-auto"></p>
+    </div>
+
+    <div class="mt-6 bg-carvao2 border border-white/[0.06] rounded-2xl p-5 shadow-soft text-center">
+      <p class="text-xs text-neutral-400 uppercase tracking-widest">É por este número que o chamamos</p>
+      <p id="confNumero" class="font-display text-4xl sm:text-5xl font-extrabold text-gold mt-2 tracking-wide select-all">—</p>
+      <button id="btnCopiar" type="button"
+              class="mt-4 min-h-[44px] inline-flex items-center gap-2 bg-carvao3 border border-white/[0.08] text-neutral-200 rounded-xl px-4 text-sm font-semibold hover:border-copper/50 transition-colors">
+        <span aria-hidden="true">📋</span><span id="btnCopiarTexto">Copiar número</span>
+      </button>
+      <p id="copiarAviso" class="hidden text-[11px] text-neutral-400 mt-2"></p>
+    </div>
+
+    <!-- O estado, relido do servidor. É a razão de o GET existir: a
+         pessoa quer saber se já pode ir buscar sem telefonar. -->
+    <div class="mt-4 bg-carvao2 border border-white/[0.06] rounded-2xl p-5 shadow-soft">
+      <div class="flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <p class="text-xs text-neutral-400">Estado</p>
+          <p id="confEstado" class="font-bold text-white text-lg leading-tight mt-0.5">—</p>
+          <p id="confEstadoNota" class="text-xs text-neutral-400 mt-1"></p>
+        </div>
+        <button id="btnRecarregar" type="button"
+                class="min-h-[44px] flex-shrink-0 inline-flex items-center gap-1.5 bg-carvao3 border border-white/[0.08] text-neutral-200 rounded-xl px-3.5 text-sm font-semibold hover:border-copper/50 transition-colors">
+          <span aria-hidden="true">↻</span><span>Atualizar</span>
+        </button>
+      </div>
+
+      <div id="confItens" class="mt-4 pt-4 border-t border-white/[0.06] space-y-2 text-sm"></div>
+
+      <!-- As observações da encomenda, devolvidas ao cliente.
+           Quem escreveu "sem cebola" tem de ver que ficou registado —
+           senão a única forma de confirmar é telefonar, que é
+           precisamente o que esta página existe para evitar. -->
+      <div id="confObsBloco" class="hidden mt-4 pt-3 border-t border-white/[0.06]">
+        <p class="text-xs text-neutral-400">O que pediu</p>
+        <p id="confObs" class="text-sm text-neutral-200 mt-1 whitespace-pre-line"></p>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between">
+        <span class="text-neutral-300 font-semibold">Total a pagar no balcão</span>
+        <span id="confTotal" class="font-bold text-gold text-lg">0,00 €</span>
+      </div>
+    </div>
+
+    <div class="mt-6 flex flex-col sm:flex-row gap-3">
+      <a href="menu.html" class="flex-1 min-h-[48px] flex items-center justify-center bg-carvao2 border border-white/[0.08] text-neutral-200 font-semibold rounded-2xl px-5 text-[15px] hover:border-copper/50 transition-colors">
+        Voltar à ementa
+      </a>
+      <button id="btnNovaEncomenda" type="button"
+              class="flex-1 min-h-[48px] flex items-center justify-center bg-gradient-to-r from-gold to-copper text-carvao font-bold rounded-2xl px-5 text-[15px] active:scale-[0.99] transition-transform">
+        Fazer outra encomenda
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       ESTADO 3 — CONSULTAR PELO NÚMERO
+       Aparece em baixo no passo de encomendar. Quem já encomendou e
+       fechou o separador precisa de uma porta de entrada.
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="secaoConsultar" class="max-w-3xl mx-auto px-4 pb-10">
+    <details class="bg-carvao2 border border-white/[0.06] rounded-2xl shadow-soft">
+      <summary class="cursor-pointer px-4 py-3.5 min-h-[44px] flex items-center gap-2 text-sm font-semibold text-neutral-200">
+        <span aria-hidden="true">🔎</span>
+        Já encomendou? Veja o estado pelo número
+      </summary>
+      <div class="px-4 pb-4 pt-1">
+        <p class="text-xs text-neutral-400 mb-3">
+          O número da encomenda é a sua credencial — quem o tem vê o estado. Não mostramos
+          contactos de ninguém.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <label for="taConsulta" class="sr-only">Número da encomenda</label>
+          <input type="text" id="taConsulta" maxlength="20" autocomplete="off" spellcheck="false"
+                 class="flex-1 min-h-[44px] bg-carvao3 border border-white/[0.08] rounded-xl px-3.5 text-[15px] text-white placeholder-neutral-500 focus:outline-none focus:border-copper uppercase"
+                 placeholder="PED-XXXXX">
+          <button id="btnConsultar" type="button"
+                  class="min-h-[44px] bg-carvao3 border border-white/[0.08] text-neutral-200 rounded-xl px-5 text-sm font-semibold hover:border-copper/50 transition-colors">
+            Ver estado
+          </button>
+        </div>
+        <p id="consultaErro" class="hidden text-sm text-red-400 mt-3" role="alert"></p>
+      </div>
+    </details>
+  </section>
+
+  <!-- TOAST -->
+  <div id="toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-24 z-[60] bg-carvao3 border border-white/[0.08] text-neutral-100 text-sm px-4 py-2.5 rounded-xl shadow-soft max-w-[90vw] text-center"></div>
+
+<script src="../js/api.js"></script>
+<script src="js/ementa-comum.js"></script>
+<script>
+/* =====================================================================
+   takeaway.html — Encomendar para levar (F-24 + F-25)
+   =====================================================================
+   Definido no docs/CONTEXTO.md §5A.3: "pelo site, sem QR Code e sem
+   mesa. Usa a mesma grelha, mas em vez de sessão cria um pedido único,
+   e no fim pede nome e telemóvel — sem eles, o balcão não sabe a quem
+   entregar." É também o ponto 5 da definição de projeto concluído.
+
+   ── PORQUE É QUE ESTA PÁGINA EXISTIU TARDE ─────────────────────────
+   A F-24 e a F-25 estavam marcadas 🔁 no TAREFAS.md, varridas para o
+   bloco das tarefas do chatbot que a `mesa.html` substituiu. Para as
+   outras desse bloco a nota estava certa — os cards, o seletor de
+   quantidade, as observações e o resumo existem todos na mesa.html.
+   Para estas duas não: a mesa.html identifica o cliente pelo TOKEN DO
+   QR e nunca pede nome nem telemóvel. Ficou um endpoint sem ecrã e um
+   ponto da definição de concluído sem front-end.
+
+   ── O QUE É DIFERENTE DA MESA, E SÓ ISSO ───────────────────────────
+   A mesa tem uma SESSÃO: vários pedidos ao longo do jantar, uma conta
+   só no fim. Aqui é UM pedido e acaba — não há sessão, não há "pedir a
+   conta", e paga-se no balcão ao levantar. Por isso não há botão de
+   chamar empregado nem banner de conta pedida.
+
+   Endpoints (docs/API.md 4.13):
+     POST pedidos/takeaway          → cria, devolve o número
+     GET  pedidos/takeaway/:numero  → estado, sem contactos de ninguém
+   Nenhum dos dois leva login, como as mesas.
+   ===================================================================== */
+document.addEventListener('DOMContentLoaded', function () {
+
+  const ESTADOS = {
+    recebido:      { rotulo: 'Recebida',       nota: 'Chegou-nos. A cozinha vai confirmar daqui a pouco.' },
+    confirmado:    { rotulo: 'Confirmada',     nota: 'A cozinha aceitou a encomenda e vai começar.' },
+    em_preparacao: { rotulo: 'Em preparação',  nota: 'Está a ser feita agora.' },
+    pronto:        { rotulo: 'Pronta!',        nota: 'Pode vir buscar. Paga-se no balcão.' },
+    entregue:      { rotulo: 'Entregue',       nota: 'Já foi levantada. Bom proveito!' },
+    cancelado:     { rotulo: 'Anulada',        nota: 'Esta encomenda foi anulada e não é cobrada.' },
+  };
+
+  const state = {
+    produtos: [],
+    produtosPorId: {},
+    categorias: [],
+    categoriaAtiva: '',
+    carrinho: {},        // { produtoId: quantidade }
+    encomenda: null,     // { numero, estado, total, nome }
+    itens: [],
+  };
+
+  let aEnviar = false;
+
+  const el = id => document.getElementById(id);
+  const ecraCarregamento = el('ecraCarregamento');
+  const textoCarregamento = el('textoCarregamento');
+  const ecraErro   = el('ecraErro');
+  const erroMsg    = el('erroMensagem');
+  const filtrosEl  = el('filtros');
+  const gridEl     = el('produtosGrid');
+  const passoEnc   = el('passoEncomendar');
+  const passoConf  = el('passoConfirmado');
+  const secConsult = el('secaoConsultar');
+  const barraResumo = el('barraResumo');
+  const resumoLista = el('resumoLista');
+  const resumoVazio = el('resumoVazio');
+  const resumoPanel = el('resumoPanel');
+  const resumoCount = el('resumoCount');
+  const resumoSub   = el('resumoSubtotal');
+  const resumoChev  = el('resumoChevron');
+  const footerTotal = el('footerTotal');
+  const footerCount = el('footerCount');
+  const btnEncomendar = el('btnEncomendar');
+  const btnEncTexto = el('btnEncomendarTexto');
+  const btnEncIcone = el('btnEncomendarIcone');
+  const taErro = el('taErro');
+
+  let resumoAberto = false;
+
+  /* ═══════════════════════════════════════════════════════════
+     ARRANQUE
+     Se o endereço já traz ?encomenda=PED-XXXXX, salta-se a ementa e
+     mostra-se o estado — é o que faz um refresh e um favorito
+     funcionarem depois de encomendar.
+  ═══════════════════════════════════════════════════════════ */
+  init();
+
+  async function init() {
+    const params = new URLSearchParams(window.location.search);
+    const numero = (params.get('encomenda') || '').trim().toUpperCase();
+
+    const avisoLento = setTimeout(function () {
+      textoCarregamento.textContent =
+        'A ligar ao servidor — a primeira consulta do dia pode demorar quase um minuto.';
+    }, 4000);
+
+    try {
+      if (numero) {
+        await verEstado(numero);
+      } else {
+        await carregarEmenta();
+      }
+      clearTimeout(avisoLento);
+      ecraCarregamento.classList.add('hidden');
+    } catch (erro) {
+      clearTimeout(avisoLento);
+      ecraCarregamento.classList.add('hidden');
+      mostrarErroFatal(erro && erro.message ? erro.message : 'Não foi possível abrir a ementa.');
+    }
+  }
+
+  function mostrarErroFatal(msg) {
+    erroMsg.textContent = msg;
+    ecraErro.classList.remove('hidden');
+    ecraErro.classList.add('flex');
+  }
+
+  el('btnTentarNovamente').addEventListener('click', function () {
+    ecraErro.classList.add('hidden');
+    ecraErro.classList.remove('flex');
+    ecraCarregamento.classList.remove('hidden');
+    init();
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     A EMENTA
+     Nada de dados de menu escritos à mão: os produtos, os preços e as
+     categorias vêm todos da API, incluindo os produtoId que vão no
+     pedido.
+  ═══════════════════════════════════════════════════════════ */
+  async function carregarEmenta() {
+    const [produtos, categorias] = await Promise.all([
+      chamarAPI('produtos'),
+      chamarAPI('categorias').catch(function () { return []; }),
+    ]);
+
+    state.produtos = (Array.isArray(produtos) ? produtos : [])
+      .filter(p => p.ativo !== false && p.disponivel !== false);
+    state.produtosPorId = {};
+    state.produtos.forEach(function (p) { state.produtosPorId[p.id] = p; });
+
+    const comProdutos = new Set(state.produtos.map(p => p.categoria));
+
+    /* A ordem vem do servidor — é o campo `ordem` das categorias, o
+       mesmo que o ecrã de gestão edita. Só se ordena aqui quando a API
+       não devolve categorias nenhumas. */
+    state.categorias = Array.isArray(categorias) && categorias.length
+      ? categorias.filter(c => comProdutos.has(c.nome)).map(c => c.nome)
+      : vpaOrdenarCategorias([...comProdutos]);
+
+    state.categoriaAtiva = state.categorias[0] || '';
+
+    desenharFiltros();
+    desenharGrelha();
+    atualizarTotais();
+  }
+
+  function desenharFiltros() {
+    vpaDesenharFiltros(filtrosEl, state.categorias, state.categoriaAtiva, function (categoria) {
+      state.categoriaAtiva = categoria;
+      desenharFiltros();
+      desenharGrelha();
+    });
+  }
+
+  function desenharGrelha() {
+    gridEl.innerHTML = '';
+    state.produtos
+      .filter(p => p.categoria === state.categoriaAtiva)
+      .forEach(function (produto, i) {
+        const card = vpaCartaoProduto(produto, state.carrinho[produto.id], alterarQuantidade);
+        card.style.animationDelay = `${Math.min(i, 6) * 35}ms`;
+        gridEl.appendChild(card);
+      });
+  }
+
+  function alterarQuantidade(produtoId, delta) {
+    const atual = state.carrinho[produtoId] || 0;
+    const nova = Math.max(0, atual + delta);
+    if (nova === 0) delete state.carrinho[produtoId];
+    else state.carrinho[produtoId] = nova;
+
+    vpaAtualizarCartao(gridEl, produtoId, nova);
+    atualizarTotais();
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     TOTAIS
+     Aqui o total é só do carrinho: não há nada já enviado, porque uma
+     encomenda de take away é um pedido único. É a diferença da mesa,
+     que soma o enviado com o que ainda está no carrinho.
+  ═══════════════════════════════════════════════════════════ */
+  function atualizarTotais() {
+    const entradas = Object.entries(state.carrinho);
+    const nItens = entradas.reduce((s, [, q]) => s + q, 0);
+    const preco = entradas.reduce(function (s, [id, q]) {
+      const p = state.produtosPorId[id];
+      return s + (p ? Number(p.preco) * q : 0);
+    }, 0);
+
+    footerTotal.textContent = vpaFormatarPreco(preco);
+    resumoSub.textContent = vpaFormatarPreco(preco);
+
+    if (nItens > 0) {
+      footerCount.textContent = nItens;
+      footerCount.classList.remove('hidden');
+      resumoCount.textContent = nItens;
+      resumoCount.classList.remove('hidden');
+    } else {
+      footerCount.classList.add('hidden');
+      resumoCount.classList.add('hidden');
+    }
+
+    btnEncomendar.disabled = aEnviar || nItens === 0;
+
+    resumoLista.innerHTML = '';
+    resumoVazio.classList.toggle('hidden', nItens > 0);
+    entradas.forEach(function ([id, q]) {
+      const p = state.produtosPorId[id];
+      if (p) resumoLista.appendChild(linhaResumo(p.nome, q, Number(p.preco)));
+    });
+
+    if (resumoAberto) resumoPanel.style.maxHeight = resumoPanel.scrollHeight + 'px';
+  }
+
+  function linhaResumo(nome, qty, precoUnit) {
+    const linha = document.createElement('div');
+    linha.className = 'flex items-center justify-between gap-2';
+    linha.innerHTML = `
+      <span class="text-neutral-300 truncate flex items-center gap-1.5">
+        <span class="text-copper font-semibold flex-shrink-0">${qty}×</span>
+        <span class="truncate">${vpaEscapeHtml(nome)}</span>
+      </span>
+      <span class="text-neutral-400 flex-shrink-0">${vpaFormatarPreco(precoUnit * qty)}</span>
+    `;
+    return linha;
+  }
+
+  el('resumoToggle').addEventListener('click', function () {
+    resumoAberto = !resumoAberto;
+    el('resumoToggle').setAttribute('aria-expanded', String(resumoAberto));
+    resumoChev.classList.toggle('rotate-180', resumoAberto);
+    resumoPanel.style.maxHeight = resumoAberto ? resumoPanel.scrollHeight + 'px' : '0px';
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     ENCOMENDAR
+  ═══════════════════════════════════════════════════════════ */
+  btnEncomendar.addEventListener('click', encomendar);
+
+  async function encomendar() {
+    if (aEnviar) return;
+
+    const nome = el('taNome').value.trim();
+    const telefone = el('taTelefone').value.trim();
+    const email = el('taEmail').value.trim();
+    const obs = el('taObs').value.trim();
+
+    /* As mesmas regras do servidor, com as mesmas palavras. Validar aqui
+       poupa uma ida ao Render para ouvir o que já se sabia; ter as
+       MESMAS regras é o que impede o ecrã de aceitar o que o servidor
+       recusa. */
+    if (nome.length < 2) return falhar('Escreva o seu nome, para o podermos chamar.', el('taNome'));
+    if (!/^[0-9+\s]{9,20}$/.test(telefone)) {
+      return falhar('Telemóvel inválido. Use só números, espaços e o "+" do indicativo.', el('taTelefone'));
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return falhar('Email inválido. Pode deixá-lo vazio.', el('taEmail'));
+    }
+
+    const itens = Object.entries(state.carrinho).map(function ([produtoId, quantidade]) {
+      return { produtoId: Number(produtoId), quantidade };
+    });
+    if (!itens.length) return falhar('Escolha primeiro o que quer levar.');
+
+    esconderErro();
+    definirAEnviar(true);
+
+    try {
+      const corpo = { nome, telefone, itens };
+      if (email) corpo.email = email;
+      if (obs) corpo.observacoes = obs;
+
+      const r = await chamarAPI('pedidos/takeaway', { method: 'POST', body: corpo });
+
+      state.encomenda = r.pedido;
+      state.itens = Array.isArray(r.itens) ? r.itens : [];
+      /* O POST devolve o pedido sem as observações — quem as escreveu
+         foi este ecrã, por isso guarda-as ele. O GET já as traz, e é de
+         lá que vêm depois de um refresh. */
+      if (obs) state.encomenda.observacoes = obs;
+      state.carrinho = {};
+
+      mostrarConfirmacao(r.mensagem);
+
+    } catch (erro) {
+      definirAEnviar(false);
+      falhar(erro && erro.message ? erro.message : 'Não foi possível registar a encomenda.');
+    }
+  }
+
+  function definirAEnviar(ativo) {
+    aEnviar = ativo;
+    btnEncTexto.textContent = ativo ? 'A registar…' : 'Encomendar';
+    btnEncIcone.innerHTML = ativo ? '<span class="spinner-pequeno inline-block"></span>' : '🥡';
+    btnEncomendar.disabled = ativo || Object.keys(state.carrinho).length === 0;
+  }
+
+  function falhar(msg, campo) {
+    taErro.textContent = msg;
+    taErro.classList.remove('hidden');
+    if (campo && typeof campo.focus === 'function') campo.focus();
+    else taErro.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
+  function esconderErro() { taErro.textContent = ''; taErro.classList.add('hidden'); }
+
+  /* ═══════════════════════════════════════════════════════════
+     CONFIRMAÇÃO E ESTADO
+  ═══════════════════════════════════════════════════════════ */
+  function mostrarConfirmacao(mensagem) {
+    passoEnc.classList.add('hidden');
+    secConsult.classList.add('hidden');
+    barraResumo.classList.add('hidden');
+    passoConf.classList.remove('hidden');
+
+    el('confMensagem').textContent = mensagem || '';
+    desenharEncomenda();
+
+    /* O número fica no endereço. Um refresh a meio de esperar não pode
+       perder a única coisa que a pessoa tem de guardar. */
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.set('encomenda', state.encomenda.numero);
+      history.replaceState(null, '', u.toString());
+    } catch (e) { /* browsers antigos: segue sem isto */ }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function desenharEncomenda() {
+    const p = state.encomenda;
+    if (!p) return;
+
+    el('confNumero').textContent = p.numero;
+
+    const chave = String(p.estado || '').toLowerCase();
+    const e = ESTADOS[chave] || { rotulo: p.estado || '—', nota: '' };
+    el('confEstado').textContent = e.rotulo;
+    el('confEstadoNota').textContent = e.nota;
+    el('confTotal').textContent = vpaFormatarPreco(Number(p.total) || 0);
+
+    const obs = p.observacoes ? String(p.observacoes).trim() : '';
+    el('confObs').textContent = obs;
+    el('confObsBloco').classList.toggle('hidden', !obs);
+
+    const lista = el('confItens');
+    lista.innerHTML = '';
+    state.itens.forEach(function (item) {
+      const nome = item.nome || (item.produto && item.produto.nome) || 'Produto';
+      const qtd = Number(item.quantidade) || 1;
+      const unit = Number(item.precoUnit != null ? item.precoUnit : item.preco_unitario) || 0;
+      const linha = document.createElement('div');
+      linha.className = 'flex items-start justify-between gap-2';
+      linha.innerHTML = `
+        <span class="text-neutral-300 min-w-0">
+          <span class="text-copper font-semibold">${qtd}×</span>
+          <span>${vpaEscapeHtml(nome)}</span>
+          ${item.observacao ? `<span class="block text-[11px] text-neutral-500 mt-0.5">“${vpaEscapeHtml(item.observacao)}”</span>` : ''}
+        </span>
+        <span class="text-neutral-400 flex-shrink-0">${vpaFormatarPreco(unit * qtd)}</span>
+      `;
+      lista.appendChild(linha);
+    });
+  }
+
+  async function verEstado(numero) {
+    const r = await chamarAPI(`pedidos/takeaway/${encodeURIComponent(numero)}`);
+    state.encomenda = r.pedido;
+    state.itens = Array.isArray(r.itens) ? r.itens : [];
+
+    passoEnc.classList.add('hidden');
+    secConsult.classList.add('hidden');
+    barraResumo.classList.add('hidden');
+    passoConf.classList.remove('hidden');
+
+    el('confTitulo').textContent = `Encomenda de ${state.encomenda.nome || 'take away'}`;
+    el('confMensagem').textContent = '';
+    desenharEncomenda();
+  }
+
+  el('btnRecarregar').addEventListener('click', async function () {
+    const b = el('btnRecarregar');
+    b.disabled = true;
+    try {
+      await verEstado(state.encomenda.numero);
+      mostrarToast('Estado atualizado.');
+    } catch (erro) {
+      mostrarToast(`⚠️ ${erro.message}`);
+    } finally {
+      b.disabled = false;
+    }
+  });
+
+  el('btnNovaEncomenda').addEventListener('click', function () {
+    /* Recarrega sem o ?encomenda. Mais fiável do que repor o estado à
+       mão: garante a ementa fresca, que pode ter mudado entretanto. */
+    const u = new URL(window.location.href);
+    u.searchParams.delete('encomenda');
+    window.location.href = u.toString();
+  });
+
+  /* ── Copiar o número ──────────────────────────────────────────
+     Com plano B: o clipboard não existe em `file://` nem sem HTTPS, e
+     falhar em silêncio deixava a pessoa a carregar num botão que não
+     faz nada. Se não der, seleciona-se o número para ela copiar à mão. */
+  el('btnCopiar').addEventListener('click', async function () {
+    const numero = state.encomenda ? state.encomenda.numero : '';
+    if (!numero) return;
+    const aviso = el('copiarAviso');
+    try {
+      if (!navigator.clipboard) throw new Error('sem clipboard');
+      await navigator.clipboard.writeText(numero);
+      el('btnCopiarTexto').textContent = 'Copiado!';
+      aviso.classList.add('hidden');
+      setTimeout(function () { el('btnCopiarTexto').textContent = 'Copiar número'; }, 2500);
+    } catch (e) {
+      selecionar(el('confNumero'));
+      aviso.textContent = 'Não deu para copiar automaticamente — o número está selecionado.';
+      aviso.classList.remove('hidden');
+    }
+  });
+
+  function selecionar(node) {
+    try {
+      const r = document.createRange();
+      r.selectNodeContents(node);
+      const s = window.getSelection();
+      s.removeAllRanges();
+      s.addRange(r);
+    } catch (e) { /* nada a fazer */ }
+  }
+
+  /* ── Consultar pelo número ─────────────────────────────────── */
+  el('btnConsultar').addEventListener('click', consultar);
+  el('taConsulta').addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter') { ev.preventDefault(); consultar(); }
+  });
+
+  async function consultar() {
+    const numero = el('taConsulta').value.trim().toUpperCase();
+    const erroEl = el('consultaErro');
+    erroEl.classList.add('hidden');
+    if (!numero) return;
+
+    const b = el('btnConsultar');
+    b.disabled = true;
+    try {
+      await verEstado(numero);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (erro) {
+      erroEl.textContent = erro && erro.status === 404
+        ? 'Não há nenhuma encomenda com esse número. Confirme se está bem escrito.'
+        : (erro && erro.message ? erro.message : 'Não foi possível consultar.');
+      erroEl.classList.remove('hidden');
+    } finally {
+      b.disabled = false;
+    }
+  }
+
+  /* ── Toast ─────────────────────────────────────────────────── */
+  let toastTimer = null;
+  function mostrarToast(msg) {
+    const t = el('toast');
+    t.textContent = msg;
+    t.classList.remove('hidden');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.add('hidden'); }, 3000);
+  }
+});
+</script>
+</body>
+</html>
