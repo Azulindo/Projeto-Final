@@ -1,0 +1,66 @@
+erDiagram
+  utilizador {
+  }
+  cliente {
+  }
+  funcionario {
+  }
+  categoria {
+  }
+  produto {
+  }
+  stock {
+  }
+  mesa {
+  }
+  slot_horario {
+  }
+  sessao_mesa {
+  }
+  pedido {
+  }
+  item_pedido {
+  }
+  historico_estado_pedido {
+  }
+  reserva {
+  }
+  item_reserva {
+  }
+  favorito {
+  }
+  avaliacao {
+  }
+  notificacao {
+  }
+  movimento_stock {
+  }
+  utilizador ||--o{ cliente : "id_utilizador"
+  utilizador ||--o{ funcionario : "id_utilizador"
+  categoria ||--o{ produto : "id_categoria"
+  produto ||--o{ stock : "id_produto"
+  mesa ||--o{ sessao_mesa : "id_mesa"
+  funcionario |o--o{ sessao_mesa : "id_funcionario"
+  cliente |o--o{ pedido : "id_cliente"
+  mesa ||--o{ pedido : "id_mesa"
+  sessao_mesa |o--o{ pedido : "id_sessao"
+  funcionario |o--o{ pedido : "id_funcionario"
+  pedido ||--o{ item_pedido : "id_pedido"
+  produto ||--o{ item_pedido : "id_produto"
+  pedido ||--o{ historico_estado_pedido : "id_pedido"
+  funcionario |o--o{ historico_estado_pedido : "id_funcionario"
+  slot_horario ||--o{ reserva : "id_slot"
+  cliente |o--o{ reserva : "id_cliente"
+  funcionario |o--o{ reserva : "id_funcionario"
+  pedido |o--o{ reserva : "id_pedido"
+  reserva ||--o{ item_reserva : "id_reserva"
+  produto ||--o{ item_reserva : "id_produto"
+  cliente ||--o{ favorito : "id_cliente"
+  produto ||--o{ favorito : "id_produto"
+  cliente ||--o{ avaliacao : "id_cliente"
+  pedido ||--o{ avaliacao : "id_pedido"
+  cliente |o--o{ notificacao : "id_cliente"
+  pedido ||--o{ notificacao : "id_pedido"
+  produto ||--o{ movimento_stock : "id_produto"
+  utilizador ||--o{ movimento_stock : "id_utilizador"
+  pedido |o--o{ movimento_stock : "id_pedido"

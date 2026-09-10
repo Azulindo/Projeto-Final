@@ -436,12 +436,12 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | C-13 | Escrever a lista de testes | 1 h 30 | — |
+| ✅ | C-13 | Escrever a lista de testes — *feita 10/09, em `docs/TESTES.md`: **67 testes** em oito grupos. Começa por uma secção do que **já foi verificado e quando**, porque um teste feito e não registado volta a ser feito — ou, pior, dá-se por feito sem ter sido. Cada erro que já apanhámos tem lá o seu teste, para não voltar: o HTML no nome (X-01), a mensagem que não chegava ao ecrã (X-13), a ronda de 28 minutos a vermelho (X-15), a janela encostada ao canto. **Regra escrita: um teste que falha não se corrige a meio da sessão** — anota-se e segue-se, senão perde-se o resto da lista, que é onde estão os erros que ninguém previu. E diz o que **não** cobre e porquê: carga, segurança a sério, e o que só o Guilherme pode julgar* | 1 h 30 | — |
 | ⬜ | C-14 | Sessão de testes de robustez — a lista de casos-limite abaixo | 3 h | C-13 |
 | ⬜ | C-15 | Testar em Chrome, Edge, Firefox e Safari + dois telemóveis | 2 h | C-14 |
 | ⬜ | C-16 | Corrigir os erros encontrados, por ordem de prioridade | 4 h | C-15 |
 | ⬜ | C-17 | Relatório final | 5 h | — |
-| ⬜ | C-18 | Documentação técnica: `README.md`, `docs/API.md`, diagrama ER | 2 h | — |
+| 🟨 | C-18 | Documentação técnica: `README.md`, `docs/API.md`, diagrama ER — *o **diagrama ER está feito** (10/09) e é **gerado do `schema.sql`** com `npm run diagrama`, em duas vistas: geral e detalhe. Um diagrama desenhado é uma cópia, e neste projeto já sabemos o que acontece às cópias — a lista de endpoints com 4 entradas quando o ficheiro tinha 15, a ordem da ementa em dois sítios, o README a dizer 17 tabelas no dia em que passaram a 18. Gerado, não consegue discordar. 18 tabelas, 139 colunas, 29 chaves estrangeiras, confirmados por duas contagens independentes. **Falta a passagem final pelo `README` e pelo `API.md`***, no fim de tudo | 2 h | — |
 | ⬜ | C-19 | Manual de utilização (cliente e funcionário) | 1 h 30 | — |
 | ⬜ | C-20 | Apresentação — 12 a 15 diapositivos | 3 h | C-17 |
 | ⬜ | C-21 | Dois ensaios cronometrados | 2 h | C-20 |
@@ -535,10 +535,10 @@ refazer.
 |---|---|---|---|---|---|
 | 🔵 João (B-) | 74 | 54 | 7 | 13 | ≈ 17 h |
 | 🟠 Guilherme (F-) | 69 | 49 | 15 | 5 | ≈ 6 h 45 |
-| 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 42 h |
+| 🟢 Os dois (C-) | 28 | 8 | — | 20 | ≈ 40 h 30 |
 | 🐞 Correções (X-) | 17 | 16 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 66 h 15.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
+**Total por fazer: ≈ 64 h 45.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
 (falta o Guilherme ler o `CONTEXTO.md`) e a X-08 (não se conseguiu reproduzir). O B-40 saiu
 desta lista a 10/09 — o B-35 fechou e o take away passou a estar testado. O B-65 já tinha
 saído: os QR Codes estão gerados.

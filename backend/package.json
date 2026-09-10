@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "qrcodes": "node scripts/gerarQRCodes.js"
+    "qrcodes": "node scripts/gerarQRCodes.js",
+    "diagrama": "node scripts/gerarDiagramaER.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
