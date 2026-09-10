@@ -140,12 +140,12 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | B-32 | Estado da sessão, rondas já pedidas e total — *não ficou em endpoint próprio: vem no B-31 e no `GET /api/mesas/:token/conta`. O cliente identifica-se pelo token da mesa, nunca chega a saber o código da sessão* | 1 h 30 | B-31 |
 | ✅ | B-33 | `POST /api/mesas/:token/pedir` — envia uma ronda para a cozinha — *o preço vem sempre da base de dados, nunca do browser* | 1 h | B-32 |
 | ✅ | B-34 | `POST /api/mesas/:token/pedir-conta` e `GET /conta` — passa a `aguarda_pagamento` e devolve a conta por categoria | 1 h 30 | B-33 |
-| ⬜ | B-35 | `POST /api/pedidos/takeaway` — pedido único com nome e telemóvel — *é o único do fluxo de pedidos que falta. O `GET /pedidos/cozinha` já sabe mostrá-los (devolve `cliente` em vez de `mesa`), só não há por onde criar um* | 1 h | B-33 |
+| ✅ | B-35 | `POST /api/pedidos/takeaway` — *feito 10/09, em `src/routes/takeaway.js`. Sem login, como o `mesas.js`: quem encomenda um frango não vai criar uma conta. **A criação de encomendas saiu do `mesas.js` para `src/servicos/pedidos.js`** — a alternativa era copiar oitenta linhas, e copiadas as duas versões divergiam na primeira vez que alguém corrigisse uma regra de stock num lado só. O caminho da mesa foi retestado depois da extracção, não só o novo. Veio também um `GET /pedidos/takeaway/:numero` para a pessoa ver se já está pronta sem telefonar — o número faz de credencial, como o token do QR, e a resposta **não traz telefone nem email**: quem sabe o número vê o estado, não os contactos. O router é montado **antes** do `pedidosRouter`, senão o `/pedidos/:id/estado` apanhava a palavra `takeaway` como se fosse um id* | 1 h | B-33 |
 | ✅ | B-36 | `POST /api/pedidos/sessao/:id/fechar` — funcionário fecha a conta — *o total fica gravado ao fechar. Enquanto aberta é calculado na hora; congela aqui, para a conta de hoje não mudar se amanhã se alterar um preço* | 1 h | B-34 |
 | ⬜ | B-37 | `POST /api/fluxo/iniciar` e `/responder` — para o fluxo de reservas | 1 h | B-29 |
 | ✅ | B-38 | Cálculo do total no servidor + geração do `numero_pedido` — *código de 5 símbolos sem I, O, 0 nem 1: é para ser lido em voz alta no balcão* | 1 h | B-34 |
 | ✅ | B-39 | Transação que grava `PEDIDO` + `ITEM_PEDIDO` + histórico — *ou entra tudo ou não entra nada; resolve o problema que o Guilherme apontou no `API.md` §3.3* | 2 h | B-38 |
-| 🟨 | B-40 | Testar: pedido de restaurante e de take away — *restaurante testado ponta a ponta a 08/09 (QR → pedir → cozinha → stock → conta → fechar). Falta o take away, que depende do B-35* | 1 h 30 | B-39 |
+| ✅ | B-40 | Testar: pedido de restaurante e de take away — *restaurante testado ponta a ponta a 08/09 (QR → pedir → cozinha → stock → conta → fechar) e **retestado a 10/09** depois da extracção do serviço: mesa 1, ronda `PED-HBEP2`, preços vindos da base. Take away testado a 10/09: encomenda `PED-22E2T` criada sem login, consultada só pelo número, aparecida na cozinha com `tipo: take_away`, confirmada, e o stock a descer com movimentos — Coca-Cola 96→94 e Abategatoue 15→14, os dois com o pedido 6 ao lado. **O ciclo de encomendas fica completo pelos dois caminhos*** | 1 h 30 | B-39 |
 
 ## Sprint 3 · Reservas (Semanas 6–7: 6–19 out)
 
@@ -488,14 +488,15 @@ refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 74 | 43 | — | 31 | ≈ 38 h 45 |
+| 🔵 João (B-) | 74 | 45 | — | 29 | ≈ 36 h 15 |
 | 🟠 Guilherme (F-) | 68 | 46 | 19 | 3 | ≈ 4 h 15 |
 | 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
-| 🐞 Correções (X-) | 11 | 10 | — | 1 | ≈ 30 min |
+| 🐞 Correções (X-) | 12 | 11 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 85 h.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
-take away, e falta o próprio B-35 do take away), C-01 (falta o Guilherme ler o `CONTEXTO.md`)
-e X-08 (não se conseguiu reproduzir). O B-65 saiu desta lista — os QR Codes estão gerados.
+**Total por fazer: ≈ 82 h 30.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
+(falta o Guilherme ler o `CONTEXTO.md`) e a X-08 (não se conseguiu reproduzir). O B-40 saiu
+desta lista a 10/09 — o B-35 fechou e o take away passou a estar testado. O B-65 já tinha
+saído: os QR Codes estão gerados.
 
 > **Ao Guilherme sobram três tarefas F-, e duas delas esperam por outra pessoa:** a F-61
 > espera pelo B-73 e a F-68 só se faz se a C-27 mostrar que as fontes dão mau aspeto offline.
@@ -560,10 +561,15 @@ somada a coluna da estimativa só das linhas ⬜ e 🟨. Os quatro prefixos fech
 (74 + 68 + 28 + 12) e não há códigos em falta em nenhuma das quatro sequências. Se mudares
 uma linha lá em cima, refaz isto da mesma maneira — não somes nem subtraias a estes valores.
 
-> **Merge de 10/09.** Este bloco veio em conflito outra vez, e outra vez **nenhum dos dois
-> lados estava certo**: o do João dava 180 linhas e não contava o B-74 que eu tinha aberto; o
-> meu dava 181 e não contava o X-11 que ele tinha aberto *e fechado*. Cada um estava a somar
-> o seu lado. Refeito a contar as linhas, como o parágrafo acima manda.
+> **Merges de 10/09 — foram dois, com uma hora de intervalo.** No primeiro, nenhum dos dois
+> lados estava certo: o do João dava 180 linhas e não contava o B-74 que eu tinha aberto, o
+> meu dava 181 e não contava o X-11 que ele tinha aberto *e fechado*. No segundo, o meu lado
+> dava 85 h e ainda tinha o B-40 como parcial — ele acabara de fechar o B-35 e de testar o
+> take away, e eu não tinha como saber.
+>
+> **Nunca é um dos lados que está certo.** Cada um marca o que fez e não vê o do outro, e é
+> por isso que a regra é recontar as linhas em vez de escolher a versão que parece mais
+> recente. Refeito assim as duas vezes.
 
 > **Nota do merge de 08/09.** Este bloco veio em conflito porque cada um de nós tinha
 > atualizado a sua metade sem ver a do outro, e **nenhuma das duas versões estava certa**: a

@@ -17,10 +17,10 @@
  */
 
 const express = require('express');
-const crypto = require('crypto');
 const { z } = require('zod');
 const { pool } = require('../config/bd');
 const { validar } = require('../middleware/validar');
+const { gerarCodigo, validarItens, criarPedido, lerItens } = require('../servicos/pedidos');
 
 const router = express.Router();
 
@@ -34,13 +34,10 @@ const router = express.Router();
  *  seja ~33 milhoes de combinacoes: de sobra para nunca haver dois
  *  iguais num servico.
  * ----------------------------------------------------------------- */
-const ALFABETO = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-function gerarCodigo(prefixo) {
-  let s = '';
-  for (let i = 0; i < 5; i++) s += ALFABETO[crypto.randomInt(ALFABETO.length)];
-  return `${prefixo}-${s}`;
-}
+/* O gerador de codigos e a criacao de encomendas passaram para
+   servicos/pedidos.js quando o take away (B-35) precisou dos mesmos:
+   copiar oitenta linhas era garantir que as duas versoes iam
+   divergir a primeira vez que se corrigisse uma regra num lado so. */
 
 
 /* -------------------------------------------------------------------
@@ -261,114 +258,26 @@ router.post('/mesas/:token/pedir', validar(esquemaPedir), async (req, res, next)
 
     await con.beginTransaction();
 
-    // ---- 1. Os produtos, lidos da base ----
-    const ids = [...new Set(req.body.itens.map(i => i.produtoId))];
-    const [produtos] = await con.query(
-      `SELECT p.id_produto, p.nome, p.preco, p.ativo, p.disponivel, p.controla_stock,
-              COALESCE(s.quantidade_atual, 0) AS stock
-         FROM produto p
-    LEFT JOIN stock s ON s.id_produto = p.id_produto
-        WHERE p.id_produto IN (?)`,
-      [ids]
-    );
-
-    const porId = new Map(produtos.map(p => [p.id_produto, p]));
-
-    /*
-     *  Valida-se TUDO antes de gravar seja o que for. Um produto
-     *  invalido a meio da lista nao pode deixar os anteriores gravados
-     *  — e a mensagem diz qual e o produto, nao um erro tecnico.
-     */
-    for (const item of req.body.itens) {
-      const p = porId.get(item.produtoId);
-      if (!p || !p.ativo) {
-        await con.rollback(); con.release();
-        return res.status(400).json({ erro: 'Um dos produtos pedidos ja nao existe na ementa.' });
-      }
-      if (!p.disponivel) {
-        await con.rollback(); con.release();
-        return res.status(400).json({ erro: `O produto "${p.nome}" esgotou hoje.` });
-      }
-      if (p.controla_stock && p.stock < item.quantidade) {
-        await con.rollback(); con.release();
-        return res.status(400).json({
-          erro: `Ja so restam ${p.stock} de "${p.nome}".`,
-        });
-      }
+    // ---- 1. Os produtos, validados antes de se gravar nada ----
+    const verificacao = await validarItens(con, req.body.itens);
+    if (!verificacao.ok) {
+      await con.rollback(); con.release();
+      return res.status(400).json({ erro: verificacao.erro });
     }
 
-    // ---- 2. A ronda ----
-    let idPedido, numero;
-    for (let tentativa = 1; ; tentativa++) {
-      numero = gerarCodigo('PED');
-      try {
-        const [r] = await con.query(
-          `INSERT INTO pedido
-             (numero_pedido, id_mesa, id_sessao, tipo_pedido, estado)
-           VALUES (?, ?, ?, 'restaurante', 'recebido')`,
-          [numero, mesa.id_mesa, sessao.id_sessao]
-        );
-        idPedido = r.insertId;
-        break;
-      } catch (erro) {
-        // Codigo repetido: e raro, mas ha 33 milhoes de hipoteses e
-        // mais dia menos dia sai uma repetida. Tenta-se outro.
-        if (erro.code !== 'ER_DUP_ENTRY' || tentativa >= 5) throw erro;
-      }
-    }
-
-    // ---- 3. Os itens, com o preco da base ----
-    const valores = req.body.itens.map(item => {
-      const p = porId.get(item.produtoId);
-      const preco = Number(p.preco);
-      return [
-        idPedido,
-        item.produtoId,
-        item.quantidade,
-        preco,
-        Number((preco * item.quantidade).toFixed(2)),
-        item.observacao || null,
-      ];
+    // ---- 2. A ronda: pedido + itens + total + historico ----
+    const { idPedido, numero } = await criarPedido(con, {
+      tipo:     'restaurante',
+      itens:    req.body.itens,
+      porId:    verificacao.porId,
+      idMesa:   mesa.id_mesa,
+      idSessao: sessao.id_sessao,
     });
-
-    await con.query(
-      `INSERT INTO item_pedido
-         (id_pedido, id_produto, quantidade, preco_unitario, subtotal, observacoes)
-       VALUES ?`,
-      [valores]
-    );
-
-    // ---- 4. Total da ronda e primeiro registo no historico ----
-    const totalRonda = valores.reduce((soma, v) => soma + v[4], 0);
-
-    await con.query(
-      'UPDATE pedido SET valor_total = ? WHERE id_pedido = ?',
-      [Number(totalRonda.toFixed(2)), idPedido]
-    );
-
-    /*
-     *  O historico comeca aqui, no "recebido". Sem este registo, a
-     *  primeira mudanca de estado nao teria com que se comparar e o
-     *  tempo de preparacao das estatisticas ficava sem inicio.
-     */
-    await con.query(
-      `INSERT INTO historico_estado_pedido (id_pedido, estado) VALUES (?, 'recebido')`,
-      [idPedido]
-    );
 
     await con.commit();
 
-    // ---- 5. Resposta ----
-    const [itensGravados] = await con.query(
-      `SELECT i.id_item, i.quantidade, i.preco_unitario, i.subtotal, i.observacoes,
-              pr.id_produto, pr.nome, c.nome AS categoria
-         FROM item_pedido i
-         JOIN produto  pr ON pr.id_produto  = i.id_produto
-         JOIN categoria c ON c.id_categoria = pr.id_categoria
-        WHERE i.id_pedido = ?
-        ORDER BY i.id_item`,
-      [idPedido]
-    );
+    // ---- 3. Resposta ----
+    const itensGravados = await lerItens(con, idPedido);
 
     con.release();
 
@@ -377,16 +286,7 @@ router.post('/mesas/:token/pedir', validar(esquemaPedir), async (req, res, next)
     res.status(201).json({
       mensagem: `${n} item(ns) adicionado(s)!`,
       pedido: { id: idPedido, numero },
-      itens: itensGravados.map(i => ({
-        id:         i.id_item,
-        produtoId:  i.id_produto,
-        nome:       i.nome,
-        categoria:  i.categoria,
-        quantidade: i.quantidade,
-        precoUnit:  Number(i.preco_unitario),
-        subtotal:   Number(i.subtotal),
-        observacao: i.observacoes,
-      })),
+      itens: itensGravados,
     });
   } catch (erro) {
     try { await con.rollback(); } catch { /* a ligacao ja pode estar perdida */ }
