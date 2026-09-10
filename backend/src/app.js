@@ -22,6 +22,7 @@ const catalogoRouter = require('./routes/catalogo');
 const authRouter = require('./routes/auth');
 const mesasRouter = require('./routes/mesas');
 const takeawayRouter = require('./routes/takeaway');
+const reservasRouter = require('./routes/reservas');
 const pedidosRouter = require('./routes/pedidos');
 const gestaoStockRouter = require('./routes/gestaoStock');
 const gestaoProdutosRouter = require('./routes/gestaoProdutos');
@@ -87,6 +88,11 @@ app.use('/api', mesasRouter);
 // pedidosRouter de proposito: se viesse depois, o /pedidos/:id/estado
 // desse router apanhava o "takeaway" como se fosse um id.
 app.use('/api', takeawayRouter);
+
+// Reservas: /api/reservas/horarios, POST /api/reservas, /api/reservas/:codigo
+// Sem login — quem reserva uma mesa nao tem conta. O que fica na mao do
+// cliente e o codigo da reserva.
+app.use('/api', reservasRouter);
 
 // Gestao: /api/pedidos/ativos, /cozinha, /:id/estado, /sessao/:id/fechar
 // Todos exigem sessao iniciada.
