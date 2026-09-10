@@ -53,9 +53,12 @@
           que as categorias existem como entidade em vez de serem só um texto dentro de cada
           produto.
           <br>
-          Não há apagar: uma categoria com produtos não se desativa sem primeiro os mudar de
-          sítio, senão os pratos desapareciam da ementa sem ninguém ter decidido isso prato a
-          prato.
+          Não há apagar. Quem sai da ementa fica <strong>escondida</strong>, porque os produtos
+          apontam para a categoria e apagá-la deixava-os órfãos.
+          <br>
+          Esconder uma categoria <strong>com produtos dentro</strong> tira-os todos da ementa de
+          uma vez, sem tocar em nenhum deles. Por isso é pedida confirmação, com o número à
+          frente: é a diferença entre uma decisão e um engano.
         </p>
 
       </main>
@@ -89,7 +92,8 @@
             <span class="interruptor-corpo">
               <span class="interruptor-nome">Aparece na ementa</span>
               <span class="interruptor-desc" id="cAtivoDesc">
-                Desligar esconde a categoria do site. Só é possível se ela não tiver produtos.
+                Desligar esconde a categoria do site — e com ela todos os produtos que tem
+                dentro.
               </span>
             </span>
           </label>

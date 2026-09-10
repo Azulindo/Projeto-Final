@@ -57,7 +57,12 @@ const NAV_ITEMS = [
      nível cozinha"). O balcão fica de fora: não tem ação nenhuma a
      tomar sobre existências. */
   { id: 'stock',        icone: '📦', label: 'Stock',          href: 'stock.html', niveis: ['cozinha', 'administrador'] },
-  { id: 'funcionarios', icone: '👥', label: 'Funcionários',   href: null, tag: 'F-53', niveis: ['administrador'] },
+  /* F-53 (10/09). Só administrador, e é a restrição mais importante da
+     lista: este é o ecrã que decide quem entra onde. Se a cozinha lhe
+     chegasse, bastava mudar o próprio cargo para ter tudo — e a
+     restrição dos outros ecrãs deixava de valer nada. O servidor repete
+     a regra (403 nos três caminhos), que é o que a torna verdade. */
+  { id: 'funcionarios', icone: '👥', label: 'Funcionários',   href: 'funcionarios.html', niveis: ['administrador'] },
   /* Só administrador, e não é só arrumação: faturação num monitor de
      cozinha que fica ligado o turno inteiro, num sítio por onde passa
      gente, é informação a mais no sítio errado. O servidor repete a

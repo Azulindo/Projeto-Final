@@ -898,6 +898,148 @@ campo `simulado: true` que o ecrã mostra em voz alta ao utilizador.*
 
 ---
 
+### 4.11 Categorias da ementa (**B-62**) · ✅ **FEITO (09/09)**, ligado a 10/09
+
+**Só `administrador`.** Três caminhos, sem `DELETE`: um produto aponta para a categoria com
+`ON DELETE RESTRICT`, e quem sai da ementa fica `ativo = false`.
+
+```
+GET   /api/gestao/categorias
+POST  /api/gestao/categorias
+PATCH /api/gestao/categorias/:id
+```
+
+Uma linha, igual nos três:
+
+```json
+{ "id": 3, "nome": "Bebidas", "descricao": "", "ordem": 3, "ativo": true, "produtos": 11 }
+```
+
+O `GET` traz **também as inativas** — é a vê-las que se reativa uma. E traz sempre o
+`produtos`, que é a contagem de produtos **ativos** lá dentro.
+
+> **O `produtos` não é enfeite: é o argumento.** O catálogo do cliente filtra por
+> `c.ativo = 1`, portanto desligar as "Bebidas" faz desaparecer 11 produtos da ementa de uma
+> vez — sem tocar em nenhum deles, e sem ninguém ter decidido isso produto a produto. Por
+> isso o servidor **recusa à primeira** com `409`, e devolve o número:
+>
+> ```json
+> { "erro": "A categoria \"Bebidas\" tem 11 produto(s) ativo(s). Desligá-la tira-os todos da ementa do cliente.",
+>   "produtos": 11, "comoConfirmar": "Repete o pedido com \"confirmar\": true." }
+> ```
+>
+> Quem quiser mesmo repete o `PATCH` com `"confirmar": true`. **Não é um obstáculo — é a
+> diferença entre uma decisão e um engano, e custa um clique.**
+
+A F-51 usa o `produtos` do `GET` para avisar **antes** de a pessoa carregar em Gravar, e usa
+o `409` como autoridade: o número da lista pode ter minutos, o do servidor é o que vale.
+O botão passa a dizer `Esconder mesmo assim` e mexer em qualquer campo cancela a
+confirmação — o "sim" era para o pedido que foi recusado, não para outro qualquer.
+
+#### ⛔ O que falta: `PUT /api/gestao/categorias/ordem`
+
+A `ordem` é a razão de as categorias existirem como entidade em vez de um texto dentro do
+produto — é ela que põe as entradas antes das sobremesas. **Este caminho ainda não existe**,
+e é a única parte da F-51 que continua simulada.
+
+```
+PUT /api/gestao/categorias/ordem
+{ "ids": [1, 2, 4, 3] }        ← a lista COMPLETA, pela ordem nova
+→ 200: a lista de categorias já reordenada (o mesmo formato do GET)
+```
+
+> **Manda-se a lista inteira e não "sobe esta uma posição".** Com pedidos relativos, duas
+> pessoas a mexer ao mesmo tempo deixam buracos na sequência e posições repetidas. Com a
+> lista completa, a última a gravar ganha e o resultado é sempre uma sequência válida.
+>
+> O `PATCH /:id` aceita `ordem`, e dá para reordenar com N pedidos — mas não vale a pena: são
+> N idas ao servidor e, se a terceira de cinco falhar, a lista fica meio ordenada e ninguém
+> sabe em que estado. Um pedido, ou nenhum.
+
+**Enquanto não existir, o front-end recusa-se a fingir.** Ver a guarda
+`escritaFingidaSobreRecursoReal` no `api.js`: como o `gestao/categorias` já é servido a
+sério, uma escrita simulada em `gestao/categorias/ordem` devolve `501` em vez de `200`. Sem
+isso, as setas funcionavam à vista, a ordem mudava no ecrã, e voltava atrás ao recarregar a
+página — sem erro nenhum. Testado no `frontend/testes/guarda-endpoints.js`.
+
+---
+
+### 4.12 Contas dos funcionários (**B-64**) · ✅ **FEITO (09/09)**, ligado a 10/09
+
+**Só `administrador`, e é a restrição mais importante do projeto:** este é o ecrã que decide
+quem entra onde. Se a cozinha lhe chegasse, bastava mudar o próprio cargo para ter tudo, e a
+restrição de todos os outros ecrãs deixava de valer nada.
+
+```
+GET   /api/gestao/funcionarios
+POST  /api/gestao/funcionarios
+PATCH /api/gestao/funcionarios/:id
+```
+
+```json
+{ "id": 2, "idUtilizador": 12, "nome": "Cozinha", "email": "cozinha@vemproabate.pt",
+  "telefone": "912 000 002", "cargo": "cozinheiro", "nivel": "cozinha",
+  "ativo": true, "data_contratacao": "2024-03-01" }
+```
+
+Uma conta vive em **duas tabelas** — `utilizador` (nome, email, senha) e `funcionario`
+(cargo, data de contratação) — e aqui tratam-se como uma coisa só, porque para quem está no
+ecrã é uma coisa só. As duas escritas vão na mesma transação: uma conta sem cargo, ou um
+cargo sem conta, não é meio trabalho — é uma linha estragada.
+
+O `id` e o `idUtilizador` **são diferentes**, e a simulação do `api.js` mantém-nos
+desencontrados de propósito: se fossem iguais, um ecrã que trocasse um pelo outro funcionava
+na demonstração e falhava contra o servidor.
+
+| Cargo | `nivel` | O que abre |
+|---|---|---|
+| `cozinheiro` | `cozinha` | Ecrã da cozinha |
+| `empregado_mesa` | `balcao` | Balcão e mesas |
+| `gerente` | `administrador` | Tudo |
+| `administrador` | `administrador` | Tudo |
+
+> **O `nivel` deriva do `cargo` e não se manda para o servidor.** Se fosse editável à parte
+> podia discordar do cargo, e depois nenhum dos dois manda. O `PATCH` com `nivel` devolve
+> `400`. No formulário da F-53 o acesso aparece debaixo do cargo e muda sozinho — explica a
+> regra melhor do que um parágrafo a dizê-la.
+
+**A palavra-passe só vai, nunca vem.** Mínimo de 10 caracteres, e o `password_hash` **nunca**
+sai numa resposta: um hash não se desfaz, mas também não tem nada que fazer no histórico do
+browser nem num printscreen que alguém cola num chat. No `PATCH` é opcional — **vazio quer
+dizer "não mexer na senha", nunca "senha vazia"**, e o campo do formulário aparece sempre
+vazio ao editar porque não há nada para lá trazer.
+
+**Sem `DELETE`**, e agora por **dois** históricos: o `historico_estado_pedido` guarda quem
+confirmou cada ronda (B-57) e o `movimento_stock` guarda quem fez cada entrada, quebra e
+acerto (B-63). Apagar uma conta deixava os dois sem dono. Quem sai da casa fica
+`ativo = false`.
+
+#### A regra do último administrador
+
+Desativar ou despromover o último administrador ativo fecha a porta da aplicação de gestão
+**por dentro**: não sobra ninguém que consiga entrar, e o ecrã que desfazia isso é este — o
+que acabou de ficar inacessível. A partir daí só se resolve com SQL à mão.
+
+`409` nos dois casos (desativar e despromover), e **a conta que faz o pedido não está
+isenta** — ser quem manda não muda o resultado, muda só a frase:
+
+```
+próprio: "És o único administrador ativo. Se te desativares, ninguém consegue
+          entrar na aplicação de gestão — nem tu."
+outro:   "\"Ana\" é o único administrador ativo. Promove outra pessoa a
+          administrador antes de o desativar."
+```
+
+> **A regra conta, não bloqueia às cegas:** com dois administradores ativos, desativar um
+> passa. Está testado nos dois sentidos, aqui e no servidor.
+
+**O ecrã mostra o botão sempre e deixa o servidor responder.** É deliberado: a contagem da
+F-53 pode ter minutos, e se entretanto alguém promoveu outra pessoa, bloquear impedia uma
+coisa que já era possível. Avisa-se antes (com o tom certo, e um aviso no topo da página
+sempre que só há um administrador), e a autoridade é o `409`.
+
+---
+
 ## 5. Como ligar o front-end ao backend real
 
 **Não é um interruptor.** É uma lista.

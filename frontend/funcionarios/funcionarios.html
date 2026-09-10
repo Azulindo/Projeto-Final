@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt" data-niveis="administrador">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Funcionários — Vem Pro Abate</title>
+<meta name="description" content="Contas dos funcionários: quem entra, com que cargo e com que acesso.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/produtos.css">
+<link rel="stylesheet" href="css/funcionarios.css">
+
+<script src="../js/api.js"></script>
+<script src="js/auth-guard.js"></script>
+</head>
+<body data-pagina="funcionarios" data-titulo="Funcionários">
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="content-area">
+      <header class="content-topbar" id="contentTopbar"></header>
+
+      <main class="content-main" id="conteudoPagina">
+
+        <section class="barra-filtros">
+          <div class="campo campo-pesquisa">
+            <label for="pesquisa" class="sr-so-leitor">Pesquisar funcionário</label>
+            <input type="search" id="pesquisa" placeholder="Pesquisar por nome, email ou telefone…"
+                   autocomplete="off" spellcheck="false">
+          </div>
+
+          <div class="campo campo-categoria">
+            <label for="filtroCargo" class="sr-so-leitor">Filtrar por cargo</label>
+            <select id="filtroCargo">
+              <option value="">Todos os cargos</option>
+            </select>
+          </div>
+
+          <span class="contagem" id="contagem" aria-live="polite"></span>
+
+          <button type="button" class="btn btn-primario btn-novo" id="btnNovo">
+            ＋ Nova conta
+          </button>
+        </section>
+
+        <p class="estado-msg" id="estadoMsg" role="status">
+          <span class="estado-spinner" aria-hidden="true"></span>
+          <span id="estadoTexto">A carregar as contas…</span>
+        </p>
+
+        <!-- ── O aviso do último administrador ─────────────────────────
+             Não é um erro: é o estado normal de uma casa que só tem um
+             administrador, e é a ler isto que alguém se lembra de
+             promover uma segunda pessoa ANTES de precisar. Aparece só
+             quando há exatamente um, e desaparece assim que há dois. -->
+        <p class="aviso-unico-admin hidden" id="avisoUnicoAdmin" role="status"></p>
+
+        <div class="tabela-envolve hidden" id="tabelaEnvolve">
+          <table class="tabela-funcionarios">
+            <thead>
+              <tr>
+                <th scope="col">
+                  <button type="button" class="ordenar" data-campo="nome">Nome</button>
+                </th>
+                <th scope="col" class="col-telefone">Telefone</th>
+                <th scope="col">
+                  <button type="button" class="ordenar" data-campo="cargo">Cargo e acesso</button>
+                </th>
+                <th scope="col" class="col-desde">
+                  <button type="button" class="ordenar" data-campo="data">Desde</button>
+                </th>
+                <th scope="col" class="col-estado">
+                  <button type="button" class="ordenar" data-campo="estado">Estado</button>
+                </th>
+                <th scope="col" class="col-accoes"><span class="sr-so-leitor">Ações</span></th>
+              </tr>
+            </thead>
+            <tbody id="corpoTabela"></tbody>
+          </table>
+        </div>
+
+        <p class="sem-resultados hidden" id="semResultados">
+          <span class="sem-resultados-icone" aria-hidden="true">🔍</span>
+          <span id="semResultadosTexto"></span>
+        </p>
+
+        <p class="nota-rodape">
+          O <strong>cargo</strong> é o que decide a que ecrãs a conta chega — não há uma
+          permissão para escolher à parte. Um cozinheiro entra no ecrã da cozinha, um
+          empregado de mesa no balcão, um gerente em tudo. Mudar o cargo muda o acesso na
+          mesma gravação.
+          <br>
+          Não há apagar. Uma conta está agarrada ao histórico dos pedidos (quem confirmou o
+          quê, e quando) e aos movimentos de stock; apagá-la deixava esse passado sem dono.
+          Quem sai da casa fica <strong>desativado</strong>: perde o acesso na hora e o
+          histórico continua a fazer sentido.
+        </p>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ── Formulário de conta ─────────────────────────────────────────── -->
+  <dialog class="painel-form" id="painelFuncionario" aria-labelledby="funcTitulo">
+    <form method="dialog" id="formFuncionario">
+      <header class="form-cabecalho">
+        <h2 id="funcTitulo">Nova conta</h2>
+        <button type="button" class="btn-fechar" id="btnFecharFunc" aria-label="Fechar">✕</button>
+      </header>
+
+      <div class="form-corpo">
+
+        <div class="campo-form">
+          <label for="fNome">Nome <span class="obrigatorio" aria-hidden="true">*</span></label>
+          <input type="text" id="fNome" maxlength="120" autocomplete="off" required>
+        </div>
+
+        <div class="form-linha">
+          <div class="campo-form">
+            <label for="fEmail">Email <span class="obrigatorio" aria-hidden="true">*</span></label>
+            <input type="email" id="fEmail" maxlength="150" autocomplete="off"
+                   inputmode="email" spellcheck="false" required>
+            <p class="ajuda">É com este email que a pessoa entra na aplicação.</p>
+          </div>
+
+          <div class="campo-form">
+            <label for="fTelefone">Telefone <span class="obrigatorio" aria-hidden="true">*</span></label>
+            <input type="tel" id="fTelefone" maxlength="30" autocomplete="off" required>
+          </div>
+        </div>
+
+        <div class="form-linha">
+          <div class="campo-form">
+            <label for="fCargo">Cargo <span class="obrigatorio" aria-hidden="true">*</span></label>
+            <select id="fCargo" required></select>
+            <!-- O nível não é um campo: sai do cargo. Mostrar-se aqui, a
+                 mudar sozinho, é o que explica isso sem um parágrafo. -->
+            <p class="ajuda" id="notaNivel"></p>
+          </div>
+
+          <div class="campo-form">
+            <label for="fData">Na casa desde</label>
+            <input type="date" id="fData" autocomplete="off">
+          </div>
+        </div>
+
+        <!-- ── A palavra-passe ─────────────────────────────────────────
+             Só viaja no sentido da escrita. Não vem no que o servidor
+             devolve, e por isso o campo aparece SEMPRE vazio ao editar:
+             não há nada para preencher, e deixá-lo vazio é o que quer
+             dizer "não mexer na senha". -->
+        <div class="campo-form">
+          <label for="fPassword">
+            Palavra-passe
+            <span class="obrigatorio" id="pwObrigatoria" aria-hidden="true">*</span>
+            <span class="opcional" id="pwOpcional" hidden>(só para a mudar)</span>
+          </label>
+          <input type="password" id="fPassword" maxlength="200" autocomplete="new-password"
+                 minlength="10">
+          <p class="ajuda" id="notaPassword">Pelo menos 10 caracteres.</p>
+        </div>
+
+        <fieldset class="grupo-estados">
+          <legend>Acesso</legend>
+          <label class="interruptor">
+            <input type="checkbox" id="fAtivo" checked>
+            <span class="interruptor-corpo">
+              <span class="interruptor-nome">Conta ativa</span>
+              <span class="interruptor-desc" id="fAtivoDesc">
+                Desligar tira o acesso na hora. O histórico do que esta pessoa fez
+                mantém-se.
+              </span>
+            </span>
+          </label>
+
+          <!-- Preenchido pelo funcionarios.js quando esta é a última
+               conta de administração ativa. Ver a nota lá dentro. -->
+          <p class="aviso-porta-fechada hidden" id="avisoPortaFechada" role="alert"></p>
+        </fieldset>
+
+        <p class="form-erro" id="funcErro" role="alert" hidden></p>
+      </div>
+
+      <footer class="form-rodape">
+        <button type="button" class="btn btn-secundario" id="btnCancelarFunc">Cancelar</button>
+        <button type="button" class="btn btn-primario" id="btnGravarFunc">Gravar</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <script src="js/layout.js"></script>
+  <script src="js/funcionarios.js"></script>
+</body>
+</html>

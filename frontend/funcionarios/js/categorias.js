@@ -26,8 +26,19 @@
  * a lista inteira, a última a gravar ganha e o resultado é sempre uma
  * sequência válida.
  *
- * Formato proposto em docs/API.md 4.11, simulado no `api.js` à espera
- * do **B-62**. Depende de ../js/api.js e de js/layout.js.
+ * ── O QUE JÁ É REAL E O QUE AINDA NÃO (10/09) ───────────────────────
+ * O B-62 ligou o GET, o POST e o PATCH: ler, criar, editar e esconder
+ * já falam com o servidor.
+ *
+ * O reordenar NÃO. O `PUT gestao/categorias/ordem` está proposto no
+ * docs/API.md 4.11 e ainda não existe do lado do servidor, e essa é
+ * precisamente a parte que dá o nome a este ecrã. Enquanto não existir,
+ * as setas falham com uma mensagem e a lista volta atrás — não fingem.
+ * A guarda que garante isso está no api.js (`escritaFingidaSobreRecurso-
+ * Real`): sem ela a simulação respondia 200 a um pedido que não gravava
+ * nada, e a ordem parecia mudar até alguém recarregar a página.
+ *
+ * Depende de ../js/api.js e de js/layout.js.
  * =====================================================================
  */
 
@@ -233,6 +244,28 @@ document.addEventListener('DOMContentLoaded', function () {
   let aEditar = null;
   let focoAnterior = null;
 
+  /* ── ESCONDER UMA CATEGORIA COM PRODUTOS DENTRO (10/09) ───────────
+     Isto era um interruptor bloqueado: uma categoria com produtos não
+     se podia esconder, ponto. Estava errado por dois motivos.
+
+     O primeiro: o servidor não é assim. O B-62 recusa à PRIMEIRA e
+     aceita a repetição com `confirmar: true` — há um caminho, e o meu
+     ecrã tapava-o. Uma funcionalidade que existe e não tem botão é uma
+     funcionalidade que não existe, e ninguém ia descobrir porque estava
+     enterrada num `if` do lado errado.
+
+     O segundo: "move os produtos primeiro" obriga a mexer em 15 pratos
+     para esconder uma gaveta durante uma semana. Esconder as Sobremesas
+     em janeiro não é um erro, é uma decisão sazonal — e ela não toca em
+     nenhum produto, só deixa de os mostrar. O que faltava não era uma
+     proibição, era o número à frente antes de carregar.
+
+     Então: pede-se uma vez, com o número que o servidor manda no 409, e
+     o segundo carregar confirma. O número vem do servidor de propósito,
+     não da lista que o ecrã já tem — a lista pode ter minutos e alguém
+     pode ter acrescentado pratos pelo meio. */
+  let porConfirmar = false;
+
   document.getElementById('btnNova').addEventListener('click', function () { abrir(null); });
 
   function abrir(c) {
@@ -242,28 +275,70 @@ document.addEventListener('DOMContentLoaded', function () {
     cDescricao.value = c ? (c.descricao || '') : '';
     cAtivo.checked = c ? c.ativo !== false : true;
 
-    /* Dizer já que não se pode desligar, em vez de deixar tentar e
-       recusar depois. O número é o argumento. */
-    const comProdutos = c && c.produtos > 0;
-    cAtivo.disabled = !!comProdutos;
-    cAtivoDesc.textContent = comProdutos
-      ? `Tem ${c.produtos} produto${c.produtos === 1 ? '' : 's'}. Move-os para outra categoria antes de a esconder.`
-      : 'Desligar esconde a categoria do site. Só é possível se ela não tiver produtos.';
-
+    cancelarConfirmacao();
+    descreverInterruptor();
     esconderErro();
+
     focoAnterior = document.activeElement;
     if (typeof painel.showModal === 'function') painel.showModal();
     else painel.setAttribute('open', '');
     cNome.focus();
   }
 
+  /* O aviso aparece ANTES de tentar, com o número que já se tem. Não
+     substitui a recusa do servidor — é só não deixar ninguém carregar
+     em "Gravar" sem saber o que vai acontecer. */
+  function descreverInterruptor() {
+    const quantos = aEditar && aEditar.produtos ? aEditar.produtos : 0;
+    if (!cAtivo.checked && quantos > 0) {
+      cAtivoDesc.textContent =
+        `Escondida, e com ela ${quantos} produto${quantos === 1 ? '' : 's'} `
+        + `sa${quantos === 1 ? 'i' : 'em'} da ementa do site. `
+        + (quantos === 1 ? 'Não é alterado — deixa' : 'Nenhum é alterado — deixam')
+        + ' de aparecer.';
+      return;
+    }
+    cAtivoDesc.textContent = cAtivo.checked
+      ? 'Aparece na ementa do site e no ecrã da mesa.'
+      : 'Desligar esconde a categoria do site — e com ela todos os produtos que tem dentro.';
+  }
+
+  /* Mexer em qualquer campo cancela uma confirmação pendente: o "sim"
+     era para o pedido que foi recusado, não para outro qualquer que
+     entretanto se escreveu no formulário. */
+  [cNome, cDescricao].forEach(function (campo) {
+    campo.addEventListener('input', cancelarConfirmacao);
+  });
+
+  cAtivo.addEventListener('change', function () {
+    cancelarConfirmacao();
+    descreverInterruptor();
+  });
+
+  function cancelarConfirmacao() {
+    porConfirmar = false;
+    btnGravar.textContent = 'Gravar';
+    btnGravar.classList.remove('btn-perigo');
+  }
+
+  function pedirConfirmacao(erro) {
+    porConfirmar = true;
+    btnGravar.textContent = 'Esconder mesmo assim';
+    btnGravar.classList.add('btn-perigo');
+    falhar(erro && erro.message
+      ? erro.message + ' Carrega outra vez para confirmar.'
+      : 'Esta categoria tem produtos. Carrega outra vez para confirmar.');
+    btnGravar.focus();
+  }
+
   btnGravar.addEventListener('click', async function () {
     const nome = cNome.value.trim();
     if (!nome) return falhar('O nome é obrigatório.', cNome);
 
-    const corpo = { nome, descricao: cDescricao.value.trim() };
-    if (!cAtivo.disabled) corpo.ativo = cAtivo.checked;
+    const corpo = { nome, descricao: cDescricao.value.trim(), ativo: cAtivo.checked };
+    if (porConfirmar) corpo.confirmar = true;
 
+    const eraConfirmacao = porConfirmar;
     esconderErro();
     btnGravar.disabled = true;
     btnGravar.textContent = 'A gravar…';
@@ -279,14 +354,25 @@ document.addEventListener('DOMContentLoaded', function () {
       } else {
         categorias.push(guardada);
       }
+      cancelarConfirmacao();
       desenhar();
       fechar();
 
     } catch (erro) {
+      btnGravar.disabled = false;
+
+      /* 409 com um número de produtos é o aviso, não uma recusa: o
+         servidor está a perguntar. Qualquer outro 409 (nome repetido) é
+         mesmo uma recusa e não se repete com `confirmar`. */
+      const eAviso = erro && erro.status === 409
+        && Number(erro.produtos) > 0 && !eraConfirmacao;
+      if (eAviso) return pedirConfirmacao(erro);
+
+      cancelarConfirmacao();
       falhar(erro && erro.message ? erro.message : 'Não foi possível gravar.');
     } finally {
       btnGravar.disabled = false;
-      btnGravar.textContent = 'Gravar';
+      if (!porConfirmar) btnGravar.textContent = 'Gravar';
     }
   });
 
