@@ -81,6 +81,41 @@ const nomes = p => p.$$eval('#corpoTabela .func-nome',
         (await admin.locator('#corpoTabela tr', { hasText: 'Administração' })
           .locator('.func-eu').count()) === 1);
 
+  /* ── O caso dos homónimos (X-11, 10/09) ─────────────────────────
+     A marca era decidida pelo NOME até o servidor passar a devolver o
+     `idUtilizador`. Cria-se uma segunda conta com o nome exatamente
+     igual ao de quem está ligado: só uma linha pode ficar marcada, e
+     tem de ser a certa. Sem o id, ou marcava as duas ou nenhuma. */
+  await admin.click('#btnNovo');
+  await admin.waitForSelector('#painelFuncionario[open]', { timeout: 4000 });
+  await admin.fill('#fNome', 'Administração');           // homónimo de propósito
+  await admin.fill('#fEmail', 'homonimo@vemproabate.pt');
+  await admin.fill('#fTelefone', '912 777 666');
+  await admin.selectOption('#fCargo', 'empregado_mesa');
+  await admin.fill('#fPassword', 'abate2026zz');
+  await admin.click('#btnGravarFunc');
+  await admin.waitForTimeout(800);
+
+  const homonimos = admin.locator('#corpoTabela tr', { hasText: 'Administração' });
+  check('Duas contas com o mesmo nome aparecem as duas', (await homonimos.count()) === 2);
+  check('Mas só UMA leva a marca "a tua conta" — é pelo id, não pelo nome',
+        (await homonimos.locator('.func-eu').count()) === 1,
+        `${await homonimos.locator('.func-eu').count()} marcadas`);
+
+  const marcada = await admin.evaluate(() => {
+    const tr = [...document.querySelectorAll('#corpoTabela tr')]
+      .find(t => t.querySelector('.func-eu'));
+    return tr ? tr.querySelector('.func-email').textContent.trim() : 'nenhuma';
+  });
+  check('E é a conta certa, não a homónima', marcada === 'admin@vemproabate.pt', marcada);
+
+  const idSessao = await admin.evaluate(() => {
+    const s = obterSessao();
+    return s ? String(s.idUtilizador) : 'sem sessao';
+  });
+  check('O /auth/eu e o login guardam o idUtilizador na sessão',
+        idSessao === '11', idSessao);
+
   /* ── 3. O password_hash não existe ──────────────────────────────── */
   const respostaCrua = await admin.evaluate(async () =>
     JSON.stringify(await chamarAPI('gestao/funcionarios')));

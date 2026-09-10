@@ -188,7 +188,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
 | ✅ | B-65 | Gerar os QR Codes das mesas com a biblioteca `qrcode` — *`npm run qrcodes -- https://vemproabate.vercel.app`, 10 PNG em `backend/qrcodes/`, um testado no browser. Os tokens são fixos no `seed.sql`, por isso regravar a base **não** invalida os cartões impressos* | 1 h 30 | B-11 |
-| ⬜ | B-66 | `GET /api/gestao/mesas/qrcodes` — dados para a página de impressão — *o `qrcodes.html` do Guilherme (F-58) está feito e à espera deste endpoint. Os PNG do B-65 já servem para imprimir, isto é para se poder fazer sem terminal* | 45 min | B-65 |
+| ✅ | B-66 | `GET /api/gestao/mesas/qrcodes` — *feito 10/09 (dito por ele). Ligado ao `ENDPOINTS_REAIS` no mesmo dia e a `qrcodes.html` deixou de estar à espera. **Nível `administrador` e `balcao`, e não "qualquer funcionário" como estava na 4.6:** o `qr_code` de uma mesa é a credencial dessa mesa, e uma lista deles desfaz de uma vez a proteção das dez. O balcão entra porque substitui um cartão gasto a meio do serviço; a cozinha fica fora porque nunca precisa de imprimir cartões. O critério é a necessidade, não a ausência de perigo. A página já declarava esses dois níveis desde 08/09 — não foi preciso mexer-lhe* | 45 min | B-65 |
 | ⬜ | B-67 | Entrada por token de mesa: `/mesa?t=<token>` | 1 h | B-36 |
 | ⬜ | B-68 | `estatisticas.js`: nº de pedidos, faturação diária e mensal, média por pedido | 2 h | B-39 |
 | ⬜ | B-69 | `estatisticas.js`: produtos mais vendidos + tempo médio de preparação | 1 h 30 | B-57 |
@@ -196,7 +196,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ⬜ | B-71 | `services/email.js` com Nodemailer + Brevo/Resend | 1 h 30 | B-16 |
 | ⬜ | B-72 | Email de novo pedido para o restaurante + registo em `NOTIFICACAO` | 1 h | B-71 |
 | ⬜ | B-73 | 🔁 *(recuperação)* `GET /api/gestao/reservas` — lista só de leitura | 1 h 30 | B-48 |
-| ⬜ | B-74 | `PUT /api/gestao/categorias/ordem` — *aberta pelo Guilherme a 10/09, ao ligar a F-51. O B-62 trouxe o GET, o POST e o PATCH; **faltou o reordenar**, e é a `ordem` que dá sentido a haver categorias como entidade em vez de um texto dentro do produto. Formato em `docs/API.md` 4.11: recebe a **lista completa de ids** pela ordem nova (`{"ids":[1,2,4,3]}`) e devolve a lista já ordenada. A lista inteira e não "sobe uma posição": com pedidos relativos, duas pessoas a mexer ao mesmo tempo deixam buracos e posições repetidas. O `PATCH /:id` já aceita `ordem` e dá para o fazer com N pedidos, mas se o terceiro de cinco falhar a lista fica meio ordenada e ninguém sabe em que estado — um pedido, ou nenhum. **Não é urgente e não trava nada:** as setas do ecrã falham com uma mensagem e a lista volta atrás, em vez de fingirem que gravaram (ver a nota do X-12)* | 45 min | B-62 |
+| ✅ | B-74 | `PUT /api/gestao/categorias/ordem` — *feito 10/09, horas depois de eu a abrir. Lista completa, uma transacção, `SELECT … FOR UPDATE` nas linhas, e devolve a lista já ordenada. Recusa com 409 se não trouxer todas exactamente uma vez e diz quais faltam em `emFalta` — normalmente isso quer dizer que o ecrã estava a ver uma lista antiga, e reordenar por cima seria gravar uma decisão tomada sobre outra realidade. **Tirou o `ordem` do PATCH /:id sem lhe ser pedido**, e o argumento é o certo: cada PATCH só sabia da sua categoria e nada impedia duas com `ordem = 2`. Uma sequência só é válida vista por inteiro — o mesmo raciocínio do `quantidade_atual` no produto. A F-51 fica inteira, e as setas passaram a gravar a sério* | 45 min | B-62 |
 
 ---
 
@@ -212,11 +212,24 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 > sempre à vista: menos toques para pedir e muito melhor num telemóvel de pé, à mesa.
 >
 > O que estas tarefas queriam garantir **está feito**, só que noutra forma: cards de
-> produto, seletor de quantidade, observações, resumo com subtotais, remover item, número
-> do pedido em destaque. Ficam aqui marcadas 🔁 em vez de apagadas, para se perceber a
-> decisão e não parecer trabalho esquecido.
+> produto, seletor de quantidade, observações, resumo com subtotais, remover item. Ficam
+> aqui marcadas 🔁 em vez de apagadas, para se perceber a decisão e não parecer trabalho
+> esquecido.
 >
-> São ≈ 22 h que **não estão em falta** — não as contes no que falta fazer.
+> ⚠️ **CORREÇÃO (10/09): duas destas não estavam feitas noutra forma — estavam por fazer.**
+> A **F-24** (nome + telemóvel do take away) e a **F-25** (ecrã de confirmação com o número)
+> foram varridas para aqui por dependerem da F-16, que era do chatbot. Mas a `mesa.html`
+> identifica o cliente pelo **token do QR da mesa** e nunca pede nome nem telemóvel: não
+> havia como encomendar para levar. O `CONTEXTO.md` diz o contrário em dois sítios — na
+> §5A.3 e no **ponto 5 da definição de projeto concluído** — e o `POST /pedidos/takeaway` do
+> João ficou construído sem ninguém que o chamasse.
+>
+> Foram repostas e feitas a 10/09 (`cliente/takeaway.html`). **A lição não é sobre o take
+> away:** é que retirar uma tarefa por *associação* — "depende de uma coisa que morreu, logo
+> morreu" — apaga trabalho que ninguém decidiu apagar. As outras nove desta lista estavam
+> bem retiradas; estas duas só o pareciam.
+>
+> São ≈ 19 h que **não estão em falta** — não as contes no que falta fazer.
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
@@ -269,8 +282,8 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | 🔁 | F-21 | Campo de observações + botão "sem observações" | 1 h | F-16 |
 | 🔁 | F-22 | Ecrã de resumo do pedido (itens, quantidades, subtotais, total) | 2 h | F-16 |
 | 🔁 | F-23 | Botão de remover item no resumo | 1 h | F-22 |
-| 🔁 | F-24 | Ecrã de nome + telemóvel do take away, com validação | 1 h 30 | F-16 |
-| 🔁 | F-25 | Ecrã de confirmação com o **número do pedido em destaque** e botão "copiar" | 1 h 30 | F-22 |
+| ✅ | F-24 | Ecrã de nome + telemóvel do take away, com validação — *feita 10/09 como `cliente/takeaway.html`. **Estava marcada 🔁 por engano** (ver a nota do bloco acima): foi varrida para as tarefas do chatbot, mas o que ela garantia NÃO tinha sido feito noutra forma — a `mesa.html` identifica o cliente pelo token do QR e nunca pede nome nem telemóvel. Ficou um endpoint sem ecrã e o **ponto 5 da definição de concluído** do `CONTEXTO.md` sem front-end. O nome e o telemóvel são obrigatórios, com as MESMAS regras do servidor (o telefone só aceita dígitos, espaços e o `+`, 9 a 20 caracteres) — validar aqui poupa uma ida ao Render, ter as mesmas regras é o que impede o ecrã de aceitar o que o servidor recusa. O ecrã diz para que serve cada contacto, em vez de os pedir sem explicação. As observações da encomenda são **devolvidas** na confirmação: quem escreveu "sem cebola" tem de ver que ficou registado, senão a única forma de confirmar é telefonar — que é o que esta página existe para evitar. Verificado: `frontend/testes/takeaway.js`* | 1 h 30 | F-49 |
+| ✅ | F-25 | Ecrã de confirmação com o **número do pedido em destaque** e botão "copiar" — *feita 10/09, no mesmo `takeaway.html`. Repostas pela mesma razão da F-24. O número é a única coisa que a pessoa TEM de levar dali, por isso é a maior coisa no ecrã, dá para copiar, e vai para o endereço (`?encomenda=PED-XXXXX`) — assim um refresh ou um favorito não perdem a encomenda. **O botão de copiar tem plano B:** o `clipboard` não existe em `file://` nem sem HTTPS, e falhar em silêncio deixava a pessoa a carregar num botão que não faz nada; se não der, o número fica selecionado e o ecrã diz porquê. Ganhou uma coisa que não estava na tarefa original e que o B-35 tornou possível: **o estado da encomenda, relido do servidor** com um botão de atualizar, e uma caixa para consultar pelo número de um separador limpo. Era a razão de o `GET /pedidos/takeaway/:numero` existir. Verificado no mesmo teste* | 1 h 30 | F-24 |
 | ✅ | F-26 | Estados visuais de "a carregar" e de erro de ligação | 1 h | F-15 |
 | 🔁 | F-27 | Testar e afinar tudo em telemóvel real | 2 h | F-25 |
 
@@ -329,7 +342,8 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | F-57 | Gráfico de produtos mais vendidos — *barras horizontais, porque "Picanha na Brasa Negra" na vertical fica de lado ou cortado, e um rótulo que se lê de lado é um rótulo que ninguém lê. Partilha o `graficos.js` com a F-56. A unidade aqui é quantidade, não dinheiro* | 1 h 30 | F-56 |
 | ✅ | F-58 | Página imprimível dos QR Codes (um por mesa, com o número bem visível) | 2 h | B-66 |
 | ✅ | F-59 | Revisão de responsividade de todos os ecrãs do cliente — *menu de 5px→15px, alvos a 44px, imagens 38,6→3,6 MB; medido em 5 larguras* | 2 h | — |
-| ⬜ | F-60 | Revisão visual final e afinação de detalhes | 2 h | — |
+| ⬜ | F-60 | Revisão visual final e afinação de detalhes — *o `contraste.js` já não aponta nada abaixo do mínimo nas seis páginas do cliente (as duas falhas da `index.html` foram corrigidas a 08/09). Sobram os **nove títulos com gradiente** cuja última paragem cai a 1,7:1 quando o mínimo para texto grande é 3:1 — o próprio teste diz o que fazer: subir a última paragem para `#b52d00` põe tudo acima de 3:1 sem mexer no aspeto. Falta também correr o `contraste.js` sobre os ecrãs de GESTÃO, que ele nunca cobriu* | 2 h | — |
+| ⬜ | F-69 | Juntar a `mesa.html` ao `cliente/js/ementa-comum.js` — *aberta 10/09 ao construir a F-24 (era F-70 até a verificação da sequência apanhar o salto). As duas páginas que mostram a ementa com carrinho (a da mesa e a do take away) têm o MESMO cartão de produto, os mesmos separadores de categoria e as mesmas funções de formatar preço. A `takeaway.html` já usa o ficheiro comum; a `mesa.html` tem a sua própria cópia, porque é uma página de 850 linhas testada ponta a ponta e mexer-lhe ao mesmo tempo que se constrói uma página nova era arriscar as duas ao mesmo tempo. **Duas cópias do mesmo cartão acabam como as outras duas fontes de verdade deste projeto acabaram** (a ordem da ementa escrita à mão, e o stock lido de dois sítios): uma corrige-se, a outra fica. O `estados-pedido.js` cobre a `mesa.html` ponta a ponta e serve de rede* | 1 h | F-24 |
 | ⬜ | F-61 | 🔁 *(recuperação)* Tabela de reservas no dashboard — *(nota 04/09, ver F-62)* na linha de cada reserva de HOJE, avisar se algum prato pré-selecionado já estiver no `gestao/stock` como baixo; não descontar nem reservar stock nenhum — a pré-seleção já está definida no `CONTEXTO.md` §5B.3 como valor estimado, não vinculativo (o cliente pode mudar de ideias à mesa), por isso o aviso é só para o gerente decidir, nunca automático | 1 h 45 | B-73 |
 | ✅ | F-62 | Aviso de stock baixo na página da cozinha (leitura) + contador do mesmo aviso sempre visível para o gerente, em qualquer ecrã da app — construído com dados simulados (`gestao/stock`), como o resto do front-end; troca-se a origem quando o B-63 existir a sério — *verificado, `frontend/testes/stock-cozinha.js`* | 1 h 30 | B-63 |
 | ✅ | F-63 | Galeria: fotos dos pratos sempre visíveis + lightbox — *queixa de clientes: "não é intuitivo ter de passar com o rato por cima".* Tinham razão e era mais do que gosto: as fotos estavam a `height: 0; opacity: 0` até ao `:hover`, e num telemóvel **nunca apareciam**. Agora a foto está no cartão desde que a página abre, e clicar/tocar abre-a maior (setas, teclado ←/→, Esc, deslizar o dedo). `frontend/cliente/js/galeria.js` | 1 h 30 | — |
@@ -488,12 +502,12 @@ refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 74 | 45 | — | 29 | ≈ 36 h 15 |
-| 🟠 Guilherme (F-) | 68 | 46 | 19 | 3 | ≈ 4 h 15 |
+| 🔵 João (B-) | 74 | 47 | — | 27 | ≈ 34 h 45 |
+| 🟠 Guilherme (F-) | 69 | 48 | 17 | 4 | ≈ 5 h 15 |
 | 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
 | 🐞 Correções (X-) | 12 | 11 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 82 h 30.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
+**Total por fazer: ≈ 82 h.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
 (falta o Guilherme ler o `CONTEXTO.md`) e a X-08 (não se conseguiu reproduzir). O B-40 saiu
 desta lista a 10/09 — o B-35 fechou e o take away passou a estar testado. O B-65 já tinha
 saído: os QR Codes estão gerados.
@@ -556,9 +570,20 @@ saído: os QR Codes estão gerados.
 > Não foi ninguém a apagar nada: foi formatação. Mas o sintoma é igual ao do `9303458`, e a
 > mesma verificação apanhou os dois.
 
-*Como estes números foram feitos:* contadas as 182 linhas das tabelas acima uma a uma e
+*Como estes números foram feitos:* contadas as 183 linhas das tabelas acima uma a uma e
 somada a coluna da estimativa só das linhas ⬜ e 🟨. Os quatro prefixos fecham certo
-(74 + 68 + 28 + 12) e não há códigos em falta em nenhuma das quatro sequências. Se mudares
+(74 + 68 + 28 + 12 → com a F-69 nova, 74 + 69 + 28 + 12) e não há códigos em falta em
+nenhuma das quatro sequências.
+
+> **A verificação da sequência ganhou o dia pela terceira vez, a 10/09.** Ao abrir a tarefa
+> de juntar a `mesa.html` ao ficheiro comum da ementa, chamei-lhe **F-70** — e a F-69 não
+> existia. Saltei um número sem dar por isso. O `falta=[69]` apareceu na recontagem antes de
+> qualquer coisa ser empurrada, e a tarefa passou a F-69.
+>
+> As três vezes de hoje foram por causas diferentes: uma escrita que reverteu linhas, um
+> parágrafo que partiu uma linha de tabela, e agora um número saltado. **A verificação não
+> sabe distinguir nenhuma delas, e é isso que a torna útil:** só sabe dizer que a conta não
+> bate. Se mudares
 uma linha lá em cima, refaz isto da mesma maneira — não somes nem subtraias a estes valores.
 
 > **Merges de 10/09 — foram dois, com uma hora de intervalo.** No primeiro, nenhum dos dois

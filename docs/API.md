@@ -590,6 +590,19 @@ deixar alguém pedir o que não vai receber.
 Devolve os dados do funcionário da sessão a partir do token. Usado para revalidar a sessão
 ao abrir a app. `{ "nome": "…", "nivel": "…" }` · `401` se o token não prestar.
 
+> **Devolve `idUtilizador` desde 10/09 (X-11).** Antes eram só `{ nome, nivel }`, e a F-53
+> não tinha como reconhecer a própria linha na lista de funcionários senão comparando o
+> **nome** — o que dava a marca "a tua conta" à pessoa errada quando havia homónimos, num
+> ecrã onde essa marca muda o tom de um aviso sobre perder o acesso.
+>
+> Chama-se `idUtilizador` e não `id` de propósito: é exatamente o nome que a linha do
+> `GET /gestao/funcionarios` usa (4.12), e dois nomes para o mesmo número era um convite a
+> comparar os campos errados.
+>
+> **Este número serve para desenhar, nunca para autorizar.** Fica no `localStorage`, e quem
+> decide acessos é o servidor — que desde o X-11 confirma na base, a cada pedido autenticado,
+> se a conta continua ativa e se o cargo ainda dá o nível que o token diz.
+
 ### 4.4 `POST /api/mesas/:token/chamar-empregado` — **desenho fechado a 03/09**
 
 O botão já existe no `mesa.html`. Falta o sítio onde guardar o aviso.
@@ -643,6 +656,17 @@ Implementação sugerida: `SELECT ... FROM mesa WHERE ativa = 1 ORDER BY numero`
 
 > Existe também o caminho por terminal: `npm run qrcodes -- https://o-site.pt` gera um PNG
 > por mesa em `backend/qrcodes/` (ficheiro `backend/prisma/gerarQRCodes.js` — o nome da pasta ficou do tempo do Prisma, tarefa B-65).
+
+> **✅ FEITO (B-66, 10/09), e com um nível diferente do que estava aqui escrito.**
+> Não é "qualquer funcionário": é **`administrador` e `balcao`**. O `qr_code` de uma mesa é a
+> credencial dessa mesa, e uma lista deles desfaz de uma vez a proteção das dez. O balcão
+> entra porque é quem substitui um cartão gasto a meio de um serviço; a cozinha fica fora
+> porque não há altura nenhuma em que quem cozinha precise de imprimir cartões.
+>
+> **O critério para dar acesso a uma credencial é a necessidade, não a ausência de perigo** —
+> e é o raciocínio do João, não o que estava escrito nesta secção. A `qrcodes.html` já
+> declarava `data-niveis="balcao administrador"` desde 08/09, por isso não foi preciso mexer
+> na página: só acrescentar o caminho ao `ENDPOINTS_REAIS`.
 
 ### 4.7 `GET /api/gestao/sessoes/:id/conta` — **bloqueia o detalhe no balcão**
 
@@ -936,11 +960,11 @@ o `409` como autoridade: o número da lista pode ter minutos, o do servidor é o
 O botão passa a dizer `Esconder mesmo assim` e mexer em qualquer campo cancela a
 confirmação — o "sim" era para o pedido que foi recusado, não para outro qualquer.
 
-#### ⛔ O que falta: `PUT /api/gestao/categorias/ordem`
+#### `PUT /api/gestao/categorias/ordem` — ✅ **FEITO (B-74, 10/09)**
 
 A `ordem` é a razão de as categorias existirem como entidade em vez de um texto dentro do
-produto — é ela que põe as entradas antes das sobremesas. **Este caminho ainda não existe**,
-e é a única parte da F-51 que continua simulada.
+produto — é ela que põe as entradas antes das sobremesas. Esteve um dia por fazer, e nesse
+dia a F-51 tinha as setas a falhar às claras em vez de fingirem que gravavam (X-12).
 
 ```
 PUT /api/gestao/categorias/ordem
@@ -952,15 +976,23 @@ PUT /api/gestao/categorias/ordem
 > pessoas a mexer ao mesmo tempo deixam buracos na sequência e posições repetidas. Com a
 > lista completa, a última a gravar ganha e o resultado é sempre uma sequência válida.
 >
-> O `PATCH /:id` aceita `ordem`, e dá para reordenar com N pedidos — mas não vale a pena: são
-> N idas ao servidor e, se a terceira de cinco falhar, a lista fica meio ordenada e ninguém
-> sabe em que estado. Um pedido, ou nenhum.
+> O `PATCH /:id` **já não aceita `ordem`** — dá `400` a apontar este endereço. Foi o João que
+> a tirou, sem lhe ser pedido, e o argumento é o certo: cada `PATCH` só sabe da sua categoria,
+> e nada impedia duas com `ordem = 2`. **Uma sequência só é válida vista por inteiro** — é o
+> mesmo raciocínio do `quantidade_atual` no produto (4.9). Duas portas para o mesmo facto, e
+> esta era a errada.
+>
+> Recusa com `409` se a lista não trouxer todas as categorias exatamente uma vez, e diz quais
+> faltam em `emFalta`. Normalmente isso quer dizer que o ecrã estava a ver uma lista antiga, e
+> reordenar por cima seria gravar uma decisão tomada sobre outra realidade. `SELECT … FOR
+> UPDATE` nas linhas, para duas pessoas a reordenar ao mesmo tempo não entrelaçarem as
+> escritas.
 
-**Enquanto não existir, o front-end recusa-se a fingir.** Ver a guarda
-`escritaFingidaSobreRecursoReal` no `api.js`: como o `gestao/categorias` já é servido a
-sério, uma escrita simulada em `gestao/categorias/ordem` devolve `501` em vez de `200`. Sem
-isso, as setas funcionavam à vista, a ordem mudava no ecrã, e voltava atrás ao recarregar a
-página — sem erro nenhum. Testado no `frontend/testes/guarda-endpoints.js`.
+**A guarda que cobriu essa janela ficou.** É o `escritaFingidaSobreRecursoReal` no `api.js`:
+não se simula uma **escrita** sobre um recurso que já é real, porque o resultado é um `200`
+para um pedido que não gravou nada. Continua a valer para o próximo recurso que fique meio
+ligado — e agora é testado com um recurso inventado em vez de uma lacuna verdadeira, para o
+teste não morrer de cada vez que o projeto melhora (`frontend/testes/guarda-endpoints.js`).
 
 ---
 
@@ -1037,6 +1069,59 @@ outro:   "\"Ana\" é o único administrador ativo. Promove outra pessoa a
 F-53 pode ter minutos, e se entretanto alguém promoveu outra pessoa, bloquear impedia uma
 coisa que já era possível. Avisa-se antes (com o tom certo, e um aviso no topo da página
 sempre que só há um administrador), e a autoridade é o `409`.
+
+---
+
+### 4.13 Take away (**B-35**) · ✅ **FEITO (10/09)**, ligado no mesmo dia
+
+**Sem login, os dois** — como o `mesas.js`, e pela mesma razão: quem encomenda um frango não
+tem conta e não vai criar uma para comprar. A diferença para o pedido à mesa está só no
+cabeçalho: a mesa identifica-se pelo token do QR, aqui identifica-se pelo nome e pelo
+telefone de quem vem buscar. Não há mesa nem sessão, e paga-se no balcão ao levantar.
+
+```
+POST /api/pedidos/takeaway
+GET  /api/pedidos/takeaway/:numero
+```
+
+**Corpo do POST:**
+
+```json
+{ "nome": "Ana Ferreira", "telefone": "912 345 678",
+  "email": "opcional@exemplo.pt", "observacoes": "Sem cebola.",
+  "itens": [ { "produtoId": 1, "quantidade": 2, "observacao": null } ] }
+```
+
+O **nome e o telefone são obrigatórios**, e não é burocracia: é como se avisa que a
+encomenda está pronta e como se resolve quando alguém não aparece. O telefone aceita só
+dígitos, espaços e o `+` do indicativo, entre 9 e 20 caracteres — não se valida se o número
+existe, isso é o telefonema que diz.
+
+**Resposta (201):** `{ mensagem, pedido: { id, numero, estado, tipo, total, nome }, itens }`,
+com os itens no formato do `lerItens` (`{ id, produtoId, nome, categoria, quantidade,
+precoUnit, subtotal, observacao }`).
+
+> **O stock não desce aqui.** Desce quando a cozinha confirmar, como nos pedidos à mesa
+> (B-58): descontar no `recebido` descontava coisas que a cozinha ainda pode recusar. A
+> verificação no POST já garantiu que havia stock no momento do pedido; se entretanto acabar,
+> a cozinha vê o 409 ao confirmar.
+
+**O GET é para a pessoa ver o estado sem telefonar.** O número faz de credencial — é o mesmo
+raciocínio do token do QR: não há login, há uma coisa que só quem encomendou tem.
+
+> **A resposta do GET NÃO traz o telefone nem o email.** Quem sabe o número pode ver o estado
+> da encomenda; não tem de poder ver os dados de contacto de ninguém. O teste
+> `frontend/testes/takeaway.js` verifica isto na resposta crua **e** no HTML da página.
+
+**Na cozinha** (`GET /api/pedidos/cozinha`, formato do 3.10.1) a encomenda entra na mesma
+fila que as rondas de mesa — para quem está na grelha não há diferença entre fazer um borrego
+para a mesa 4 e fazer um para levar. O que muda é o cabeçalho: leva
+`cliente: { nome, telemovel }` e **a chave `mesa` nem existe**. As transições de estado são as
+mesmas, e um salto inválido dá o mesmo 409.
+
+*O ecrã do cliente é a `frontend/cliente/takeaway.html` (F-24 + F-25). A simulação no
+`api.js` tem os dois caminhos com os mesmos limites e as mesmas mensagens, para os testes e
+para o plano B correrem sem base de dados.*
 
 ---
 

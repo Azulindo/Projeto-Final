@@ -1,22 +1,34 @@
 /**
  * A guarda do recurso meio ligado — `escritaFingidaSobreRecursoReal`.
  *
- * PORQUE É QUE ISTO É UM TESTE À PARTE
- * O ENDPOINTS_REAIS é uma lista por CAMINHO, mas um ecrã usa vários
- * caminhos do mesmo recurso. Nada garantia que fossem ligados todos ao
- * mesmo tempo — e um recurso meio ligado mente sem dar sinal:
+ * PORQUE É QUE ISTO EXISTE
+ * O `ENDPOINTS_REAIS` é uma lista por CAMINHO, mas um ecrã usa vários
+ * caminhos do mesmo recurso, e nada garantia que fossem ligados todos ao
+ * mesmo tempo. Um recurso meio ligado mente sem dar sinal:
  *
  *     GET  gestao/categorias        → servidor   (verdade)
  *     PUT  gestao/categorias/ordem  → simulação  (mentira: 200 sem gravar)
  *
- * As setas funcionavam à vista e a ordem voltava atrás ao recarregar a
- * página, sem erro nenhum. Este teste é o que impede isso de voltar.
+ * As setas funcionavam à vista, a ordem mudava no ecrã, e voltava tudo
+ * atrás ao recarregar a página — sem erro nenhum.
+ *
+ * ── PORQUE É QUE ESTE TESTE NÃO USA UM CASO REAL (10/09) ────────────
+ * A primeira versão testava o `gestao/categorias/ordem`, que era a
+ * lacuna do dia. O João fechou-a horas depois (B-74) e o teste passou a
+ * falhar — não porque a guarda se estragou, mas porque o exemplo
+ * desapareceu. Um teste que morre quando o projeto melhora é um teste
+ * que se acaba por apagar em vez de corrigir.
+ *
+ * Por isso agora o caso é INVENTADO: acrescenta-se um recurso de
+ * mentira ao `ENDPOINTS_REAIS` e exercita-se a guarda contra ele. Assim
+ * o teste mede o mecanismo, e não o estado de uma lacuna. Os caminhos
+ * verdadeiros continuam aqui, mas só para o outro lado: para provar que
+ * a guarda NÃO apanha quem não deve.
  *
  * Os outros testes correm todos com `?simular=1`, e a guarda está
  * desligada nesse modo de propósito (numa demonstração é tudo a fingir e
- * é isso que se quer). Por isso aqui abre-se a página SEM `?simular=1` e
- * substitui-se a `simulacaoForcada` — é a única forma de exercitar a
- * guarda sem precisar de servidor.
+ * é isso que se quer). Daí abrir-se a página sem `?simular=1` e
+ * substituir-se a `simulacaoForcada`.
  */
 const { chromium } = require('playwright');
 const path = require('path');
@@ -35,47 +47,75 @@ const check = (n, c, e = '') => {
   const p = await ctx.newPage();
   p.on('pageerror', e => { console.log('[pageerror]', e.message); falhas.push('pageerror'); });
 
-  /* Sem `?simular=1`: é preciso que a `simulacaoForcada` responda que
-     não, senão a guarda sai logo à primeira linha. Substitui-se de
-     seguida para não depender de sessionStorage nenhum. */
   await p.goto(`${RAIZ}/funcionarios/login.html`);
-  await p.evaluate(() => { window.simulacaoForcada = () => false; });
+
+  /* Sem `?simular=1`: a `simulacaoForcada` tem de responder que não,
+     senão a guarda sai na primeira linha. E acrescenta-se o recurso
+     inventado — só nesta página, que morre com o teste. */
+  await p.evaluate(() => {
+    window.simulacaoForcada = () => false;
+    ENDPOINTS_REAIS.push(/^inventado\/recurso$/);
+  });
 
   const g = (caminho, metodo) =>
     p.evaluate(([c, m]) => escritaFingidaSobreRecursoReal(c, m), [caminho, metodo]);
 
-  /* ── O caso que existe hoje ─────────────────────────────────────── */
-  check('Uma escrita em gestao/categorias/ordem é apanhada, e diz qual é o recurso já real',
-        (await g('gestao/categorias/ordem', 'PUT')) === 'gestao/categorias',
-        String(await g('gestao/categorias/ordem', 'PUT')));
+  /* ── O mecanismo ────────────────────────────────────────────────── */
+  check('Uma escrita debaixo de um recurso já real é apanhada, e diz qual é o recurso',
+        (await g('inventado/recurso/subcaminho', 'PUT')) === 'inventado/recurso',
+        String(await g('inventado/recurso/subcaminho', 'PUT')));
 
-  /* ── O que NÃO pode ser apanhado ────────────────────────────────── */
-  check('Uma leitura passa — dados de demonstração vêem-se, e é para isso que serve o ?simular=1',
-        (await g('gestao/categorias/ordem', 'GET')) === null);
+  check('Apanha em qualquer método de escrita, não só no PUT',
+        (await g('inventado/recurso/x', 'POST')) === 'inventado/recurso' &&
+        (await g('inventado/recurso/x', 'PATCH')) === 'inventado/recurso' &&
+        (await g('inventado/recurso/x', 'DELETE')) === 'inventado/recurso');
 
-  check('Um recurso inteiramente simulado passa (mesas/:token/chamar-empregado)',
-        (await g('mesas/demo-mesa-4/chamar-empregado', 'POST')) === null,
-        String(await g('mesas/demo-mesa-4/chamar-empregado', 'POST')));
+  check('Encontra o antepassado mesmo dois níveis acima',
+        (await g('inventado/recurso/a/b', 'POST')) === 'inventado/recurso');
 
-  check('Um recurso inteiramente simulado passa (admin/estatisticas)',
-        (await g('admin/estatisticas', 'POST')) === null);
+  check('Uma LEITURA passa — dados de demonstração vêem-se, e é para isso que serve o ?simular=1',
+        (await g('inventado/recurso/subcaminho', 'GET')) === null);
 
-  check('Um recurso inteiramente simulado passa (gestao/mesas/qrcodes)',
-        (await g('gestao/mesas/qrcodes', 'POST')) === null,
-        String(await g('gestao/mesas/qrcodes', 'POST')));
+  check('E o próprio caminho real não é apanhado: vai ao servidor, não à simulação',
+        (await g('inventado/recurso', 'POST')) === null);
 
-  check('Um caminho que JÁ é real não é apanhado — vai ao servidor, não à simulação',
-        (await g('gestao/produtos/7', 'PATCH')) === null);
+  check('Um recurso vizinho com o mesmo prefixo de texto não conta como antepassado',
+        (await g('inventado/recursos-outro/x', 'POST')) === null,
+        String(await g('inventado/recursos-outro/x', 'POST')));
 
-  check('Nem o gestao/stock/3/movimento, que também já é real',
-        (await g('gestao/stock/3/movimento', 'POST')) === null);
+  /* ── O outro lado: não apanhar quem não deve ────────────────────
+     Os caminhos que continuam INTEIRAMENTE simulados. Se algum destes
+     começar a ser apanhado, é porque alguém ligou metade de um recurso
+     e o ecrã dele está a fingir — e é exatamente o aviso que se quer. */
+  const simulados = [
+    ['mesas/demo-mesa-4/chamar-empregado', 'POST'],
+    ['admin/estatisticas',                 'POST'],
+    ['gestao/sessoes/7/conta',             'POST'],
+  ];
+  for (const [caminho, metodo] of simulados) {
+    check(`Inteiramente simulado, passa: ${metodo} ${caminho}`,
+          (await g(caminho, metodo)) === null, String(await g(caminho, metodo)));
+  }
 
-  /* ── E a ponta a ponta: a simulação recusa mesmo ─────────────────
-     Não basta a função devolver o nome do recurso; o simularEndpoint
-     tem de recusar. Um 501 e não um 200. */
+  /* ── E os que JÁ são reais não passam pela simulação ────────────── */
+  const reais = [
+    ['gestao/produtos/7',           'PATCH'],
+    ['gestao/stock/3/movimento',    'POST'],
+    ['gestao/categorias/ordem',     'PUT'],
+    ['gestao/funcionarios/2',       'PATCH'],
+    ['pedidos/takeaway',            'POST'],
+  ];
+  for (const [caminho, metodo] of reais) {
+    check(`Já é real, não é apanhado: ${metodo} ${caminho}`,
+          (await g(caminho, metodo)) === null, String(await g(caminho, metodo)));
+  }
+
+  /* ── Ponta a ponta: a simulação recusa mesmo ─────────────────────
+     Não basta a função devolver o nome do recurso; o `simularEndpoint`
+     tem de recusar com 501 em vez de responder que gravou. */
   const resultado = await p.evaluate(async () => {
     try {
-      await simularEndpoint('gestao/categorias/ordem', { method: 'PUT', body: { ids: [1, 2, 3, 4] } });
+      await simularEndpoint('inventado/recurso/subcaminho', { method: 'PUT', body: {} });
       return 'passou';
     } catch (e) { return e && e.status ? String(e.status) : 'erro sem estado'; }
   });

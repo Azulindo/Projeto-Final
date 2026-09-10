@@ -181,6 +181,15 @@ const ENDPOINTS_REAIS = [
   /^mesas\/[^/]+\/conta$/,         // GET  /api/mesas/:token/conta
   /^mesas\/[^/]+\/pedir-conta$/,   // POST /api/mesas/:token/pedir-conta
 
+  /* Take away — B-35 (10/09). Sem login, como as mesas, e pela mesma
+     razão: quem encomenda um frango não vai criar uma conta.
+     O que faz de credencial no GET é o NÚMERO da encomenda — mesmo
+     raciocínio do token do QR: não há sessão, há uma coisa que só quem
+     encomendou tem. Por isso a resposta não traz o telefone nem o email
+     de ninguém: quem sabe o número vê o estado, não os contactos. */
+  /^pedidos\/takeaway$/,             // POST /api/pedidos/takeaway
+  /^pedidos\/takeaway\/[A-Z0-9-]+$/, // GET  /api/pedidos/takeaway/:numero
+
   /* Fila de trabalho — com login. */
   /^pedidos\/ativos$/,             // GET   /api/pedidos/ativos
   /^pedidos\/cozinha$/,            // GET   /api/pedidos/cozinha
@@ -203,21 +212,37 @@ const ENDPOINTS_REAIS = [
   /^gestao\/produtos$/,            // GET e POST /api/gestao/produtos
   /^gestao\/produtos\/\d+$/,       // PATCH      /api/gestao/produtos/:id
 
-  /* Categorias — B-62 (09/09).
-     NOTA: o `gestao/categorias/ordem` NÃO está aqui, e não é esquecimento
-     — o servidor ainda não tem esse caminho (o B-62 traz GET, POST e
-     PATCH). Enquanto não tiver, reordenar não pode dar-se por gravado:
-     ver a guarda `escritaFingidaSobreRecursoReal` mais abaixo, que faz o
-     pedido falhar em vez de fingir. A F-51 repõe a ordem anterior e
-     mostra o motivo, que é o comportamento certo. */
+  /* Categorias — B-62 (09/09) e B-74 (10/09). A F-51 fica inteira: o
+     reordenar era a única parte que faltava, e era a que dá o nome ao
+     ecrã. Esteve um dia a falhar às claras em vez de fingir que
+     gravava — ver a guarda `escritaFingidaSobreRecursoReal`, que foi
+     escrita exatamente para essa janela.
+     O `ordem` saiu do PATCH /:id no B-74 e passa a dar 400 a apontar o
+     endereço novo: cada PATCH só sabia da sua categoria, e nada
+     impedia duas com `ordem = 2`. Uma sequência só é válida vista por
+     inteiro. A simulação daqui já recusava o `ordem` no PATCH desde a
+     F-51 — foi o único sítio onde os dois lados já concordavam antes
+     de alguém combinar. */
   /^gestao\/categorias$/,          // GET e POST /api/gestao/categorias
   /^gestao\/categorias\/\d+$/,     // PATCH      /api/gestao/categorias/:id
+  /^gestao\/categorias\/ordem$/,   // PUT        /api/gestao/categorias/ordem
 
   /* Funcionários — B-64 (09/09). Três caminhos, sem DELETE: quem sai
      fica `ativo = false`, porque a conta está agarrada ao histórico de
      estados dos pedidos e aos movimentos de stock. */
   /^gestao\/funcionarios$/,        // GET e POST /api/gestao/funcionarios
   /^gestao\/funcionarios\/\d+$/,   // PATCH      /api/gestao/funcionarios/:id
+
+  /* QR Codes das mesas — B-66 (10/09). A qrcodes.html estava construída
+     desde 08/09 à espera deste caminho.
+     Nível `administrador` e `balcao`, e não "qualquer funcionário" como
+     estava escrito na 4.6: o `qr_code` de uma mesa é a credencial dessa
+     mesa, e uma lista deles desfaz de uma vez a protecção das dez. O
+     balcão entra porque é quem substitui um cartão gasto a meio de um
+     serviço; a cozinha fica fora porque nunca precisa de imprimir
+     cartões. O critério é a necessidade, não a ausência de perigo — e a
+     página já declarava `data-niveis="balcao administrador"`. */
+  /^gestao\/mesas\/qrcodes$/,      // GET /api/gestao/mesas/qrcodes
 ];
 
 /**
@@ -386,9 +411,14 @@ function validadeDoToken(token) {
   return null;
 }
 
-function guardarSessao({ token, nome, nivel }) {
+function guardarSessao({ token, nome, nivel, idUtilizador }) {
   const expiraEm = validadeDoToken(token) || (Date.now() + DURACAO_SESSAO_MS);
-  const sessao = { token, nome, nivel, expiraEm };
+  /* O `idUtilizador` entra aqui a 10/09 (X-11). É só para o ecrã poder
+     reconhecer a própria linha na lista de funcionários — NÃO decide
+     acesso nenhum, e não podia: quem decide é o servidor, que relê a
+     base a cada pedido autenticado. Um número guardado no browser é
+     informação para desenhar, nunca para autorizar. */
+  const sessao = { token, nome, nivel, idUtilizador: idUtilizador ?? null, expiraEm };
   try {
     localStorage.setItem(CHAVE_SESSAO, JSON.stringify(sessao));
   } catch (e) {
@@ -912,6 +942,49 @@ function validarFuncionarioDemo(corpo, completo) {
   return out;
 }
 
+/* ── Encomendas de take away simuladas (B-35 / F-24) ───────────────
+   Uma encomenda de take away NÃO pertence a sessão nenhuma: é um pedido
+   único, e paga-se no balcão ao levantar. Por isso vive num sítio
+   separado das sessões de mesa em vez de ser enfiada numa sessão falsa.
+
+   Guardadas por número, que é a credencial: o `GET` procura por número
+   e mais nada, igual ao servidor. */
+const CHAVE_TAKEAWAY_DEMO = 'vpa_takeaway_demo';
+
+function lerTakeawayDemo() {
+  try { return JSON.parse(localStorage.getItem(CHAVE_TAKEAWAY_DEMO) || '{}'); }
+  catch (e) { return {}; }
+}
+
+function gravarTakeawayDemo(todas) {
+  try { localStorage.setItem(CHAVE_TAKEAWAY_DEMO, JSON.stringify(todas)); }
+  catch (e) { /* segue sem persistir */ }
+}
+
+/* Formato do `lerItens` do backend/src/servicos/pedidos.js, campo por
+   campo — é o que o ecrã lê, e discordar aqui era descobrir só contra o
+   servidor real. */
+function itensTakeawayDemo(pedidos) {
+  return pedidos.map(function (linha, i) {
+    const p = catalogoDemo().find(x => x.id === Number(linha.produtoId));
+    if (!p) throw erroSimulado(`O produto ${linha.produtoId} não existe.`, 400);
+    if (p.ativo === false || p.disponivel === false) {
+      throw erroSimulado(`O "${p.nome}" não está disponível hoje.`, 400);
+    }
+    const qtd = Math.max(1, Number(linha.quantidade) || 1);
+    return {
+      id: i + 1,
+      produtoId: p.id,
+      nome: p.nome,
+      categoria: p.categoria,
+      quantidade: qtd,
+      precoUnit: Number(p.preco),
+      subtotal: Number((Number(p.preco) * qtd).toFixed(2)),
+      observacao: linha.observacao ? String(linha.observacao).trim().slice(0, 300) : null,
+    };
+  });
+}
+
 /* Uma linha do `gestao/produtos` (docs/API.md 4.9). As quantidades
    passam pelo stockAtualDemo para o catálogo (F-49) e o ecrã de stock
    (F-52) nunca mostrarem números diferentes do mesmo produto. */
@@ -1100,6 +1173,24 @@ function proximoNumeroRonda() {
   return { id, numero: `PED-${sufixo}` };
 }
 
+/* Que estados se podem seguir a cada estado (B-32, 07/09). O servidor
+   recusa os saltos inválidos com 409 e diz quais eram os permitidos.
+
+   Estava escrito dentro do handler das rondas de mesa, e passou para
+   aqui a 10/09 quando o take away precisou das MESMAS transições: duas
+   cópias desta tabela era uma encomenda para levar a poder saltar do
+   "recebido" para o "entregue" só porque a segunda cópia se esqueceu de
+   uma linha. Um borrego para levar passa pelos mesmos estados que um
+   borrego para a mesa 4 — a tabela é uma. */
+const TRANSICOES_RONDA = {
+  recebido:      ['confirmado', 'cancelado'],
+  confirmado:    ['em_preparacao', 'cancelado'],
+  em_preparacao: ['pronto', 'cancelado'],
+  pronto:        ['entregue'],
+  entregue:      [],
+  cancelado:     [],
+};
+
 /** estadoDaRonda — Estado da ronda a que um item pertence. */
 function estadoDaRonda(sessao, item) {
   const ronda = (sessao.rondas || []).find(r => r.id === item.pedidoId);
@@ -1139,16 +1230,36 @@ async function simularEndpoint(endpoint, opcoes) {
     if (!conta || conta.password !== password) {
       throw erroSimulado('Email ou palavra-passe incorretos.', 401);
     }
+    /* O `idUtilizador` entrou a 10/09 com o X-11: o servidor passou a
+       devolvê-lo no login e no /auth/eu, e chamou-lhe exatamente o nome
+       que a linha do `gestao/funcionarios` usa — dois nomes para o mesmo
+       número era um convite a comparar os campos errados.
+       Aqui sai do FUNCIONARIOS_DEMO em vez de ser um número à parte:
+       duas fontes para o mesmo id davam um ecrã a marcar "a tua conta"
+       na pessoa errada, que é precisamente o problema que ele resolve. */
+    const eu = FUNCIONARIOS_DEMO.find(f => f.email === conta.email);
     return {
       token: `demo.${btoa(conta.email)}.${Date.now()}`,
-      utilizador: { nome: conta.nome, email: conta.email, nivel: conta.nivel },
+      utilizador: {
+        nome: conta.nome, email: conta.email, nivel: conta.nivel,
+        idUtilizador: eu ? eu.idUtilizador : null,
+      },
     };
   }
 
   if (caminho === 'auth/eu') {
     const sessao = obterSessao();
     if (!sessao) throw erroSimulado('Sessão inválida ou expirada.', 401);
-    return { nome: sessao.nome, nivel: sessao.nivel };
+    /* O id vem do email escondido no token demo, e não do que ficou
+       guardado na sessão: é o mesmo raciocínio do servidor, que relê a
+       base em vez de acreditar no token (X-11). */
+    const email = emailDaSessaoDemo();
+    const eu = email ? FUNCIONARIOS_DEMO.find(f => f.email === email) : null;
+    return {
+      nome: sessao.nome,
+      nivel: sessao.nivel,
+      idUtilizador: eu ? eu.idUtilizador : null,
+    };
   }
 
   /* ── produtos (docs/API.md 4.2) ────────────────────────────────── */
@@ -1846,6 +1957,75 @@ async function simularEndpoint(endpoint, opcoes) {
   }
 
   /* Rondas por fazer (docs/API.md 3.10.1) */
+  /* ── take away (docs/API.md 4.13 / B-35) ───────────────────────
+     Sem login, como as mesas. O número é a credencial do GET. */
+  if (caminho === 'pedidos/takeaway' && metodo === 'POST') {
+    const d = opcoes.body || {};
+
+    /* As mesmas regras do servidor, com os mesmos limites. Uma
+       simulação mais tolerante do que a realidade é pior do que não
+       ter simulação: mente na direção que engana. */
+    const nome = String(d.nome || '').trim();
+    if (nome.length < 2) throw erroSimulado('Escreve o teu nome, para te chamarmos.', 400);
+    if (nome.length > 120) throw erroSimulado('Nome demasiado longo.', 400);
+
+    const telefone = String(d.telefone || '').trim();
+    if (!/^[0-9+\s]{9,20}$/.test(telefone)) {
+      throw erroSimulado('Telefone inválido. Usa só números.', 400);
+    }
+
+    const email = d.email ? String(d.email).trim().toLowerCase() : null;
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw erroSimulado('Email inválido.', 400);
+    }
+
+    if (!Array.isArray(d.itens) || d.itens.length === 0) {
+      throw erroSimulado('A lista de itens está vazia.', 400);
+    }
+    if (d.itens.length > 50) throw erroSimulado('Demasiados itens de uma vez.', 400);
+
+    const itens = itensTakeawayDemo(d.itens);
+    const total = Number(itens.reduce((s, i) => s + i.subtotal, 0).toFixed(2));
+    const { id, numero } = proximoNumeroRonda();
+
+    const todas = lerTakeawayDemo();
+    todas[numero] = {
+      id, numero, estado: 'recebido', tipo: 'take_away',
+      nome, telefone, email,
+      observacoes: d.observacoes ? String(d.observacoes).trim().slice(0, 500) : null,
+      total, itens, criadoEm: new Date().toISOString(),
+    };
+    gravarTakeawayDemo(todas);
+
+    /* O stock não desce aqui — desce quando a cozinha confirmar, como
+       nos pedidos à mesa (B-58). Descontar no "recebido" descontava
+       coisas que a cozinha ainda pode recusar. */
+    return {
+      mensagem: `Encomenda registada, ${nome.split(' ')[0]}! `
+              + `Guarda o número ${numero} — é por ele que te vamos chamar.`,
+      pedido: { id, numero, estado: 'recebido', tipo: 'take_away', total, nome },
+      itens,
+    };
+  }
+
+  const taMatch = caminho.match(/^pedidos\/takeaway\/([^/]+)$/);
+  if (taMatch && metodo === 'GET') {
+    const numero = decodeURIComponent(taMatch[1]).trim().toUpperCase();
+    const enc = lerTakeawayDemo()[numero];
+    if (!enc) throw erroSimulado('Não há nenhuma encomenda com esse número.', 404);
+
+    /* NÃO devolve telefone nem email, igual ao servidor: quem sabe o
+       número vê o estado, não os contactos de ninguém. */
+    return {
+      pedido: {
+        id: enc.id, numero: enc.numero, estado: enc.estado,
+        nome: enc.nome, total: enc.total,
+        observacoes: enc.observacoes, hora: enc.criadoEm,
+      },
+      itens: enc.itens,
+    };
+  }
+
   if (caminho === 'pedidos/cozinha') {
     const sessoes = lerSessoesDemo();
     const linhas = [];
@@ -1858,7 +2038,7 @@ async function simularEndpoint(endpoint, opcoes) {
           numero: r.numero,
           estado: r.estado,
           criadoEm: r.criadoEm,
-          tipo: 'mesa',   // 'take_away' quando existir (docs/API.md 3.10.1)
+          tipo: 'mesa',   // e 'take_away' logo a seguir (docs/API.md 3.10.1)
           mesa: { numero: mesa?.numero, sessaoId: s.id },
           itens: s.itens
             .filter(i => i.pedidoId === r.id)
@@ -1871,6 +2051,40 @@ async function simularEndpoint(endpoint, opcoes) {
             })),
         }));
     });
+
+    /* As encomendas de take away entram na MESMA fila, e é isso que
+       interessa: para quem está na grelha não há diferença entre fazer
+       um borrego para a mesa 4 e fazer um para levar — o prato é o
+       mesmo e a ordem de chegada é a mesma. A diferença está só no
+       cabeçalho do cartão, e é o `tipo` que a diz.
+       Sem sessão nem mesa: em vez disso vai o nome de quem vem buscar,
+       que é o que o balcão grita quando estiver pronta. */
+    /* Formato do `pedidos.js` do servidor, campo por campo (docs/API.md
+       3.10.1): leva `cliente: { nome, telemovel }` e **não leva `mesa`
+       nenhuma** — a chave nem existe, em vez de existir a `null`. A
+       diferença conta: o `cozinha.js` lê `ronda.mesa?.numero`, e um
+       `mesa: null` passaria pelo mesmo caminho mas um `mesa: {}` vindo
+       de outro lado escreveria "Mesa —". Chave ausente é a única forma
+       que não deixa dúvida. */
+    Object.values(lerTakeawayDemo())
+      .filter(e => ['recebido', 'confirmado', 'em_preparacao', 'pronto'].includes(e.estado))
+      .forEach(e => linhas.push({
+        id: e.id,
+        numero: e.numero,
+        estado: e.estado,
+        criadoEm: e.criadoEm,
+        tipo: 'take_away',
+        observacao: e.observacoes,
+        cliente: { nome: e.nome, telemovel: e.telefone },
+        itens: e.itens.map(i => ({
+          id: i.id,
+          nome: i.nome,
+          categoria: i.categoria,
+          quantidade: i.quantidade,
+          observacao: i.observacao,
+        })),
+      }));
+
     return linhas.sort((a, b) => new Date(a.criadoEm) - new Date(b.criadoEm));
   }
 
@@ -1895,15 +2109,7 @@ async function simularEndpoint(endpoint, opcoes) {
            ninguém dar por ele. Um simulador mais tolerante do que a
            realidade é pior do que não ter simulador — mente na direção
            que engana. Formato igual ao real, incluindo o `permitidos`. */
-        const PERMITIDOS = {
-          recebido:      ['confirmado', 'cancelado'],
-          confirmado:    ['em_preparacao', 'cancelado'],
-          em_preparacao: ['pronto', 'cancelado'],
-          pronto:        ['entregue'],
-          entregue:      [],
-          cancelado:     [],
-        };
-        const permitidos = PERMITIDOS[ronda.estado] || [];
+        const permitidos = TRANSICOES_RONDA[ronda.estado] || [];
         if (estado !== ronda.estado && !permitidos.includes(estado)) {
           const erro = erroSimulado(
             `Um pedido em "${ronda.estado}" nao pode passar a "${estado}".`, 409);
@@ -1918,6 +2124,28 @@ async function simularEndpoint(endpoint, opcoes) {
         return { mensagem: `Pedido ${ronda.numero} → ${estado}`, pedido: ronda };
       }
     }
+
+    /* Não estava nas sessões: pode ser uma encomenda de take away.
+       Sem isto, a cozinha via a encomenda na grelha e levava 404 ao
+       tocar nela — pior do que não a mostrar, porque parecia avaria.
+       As transições são as mesmas: um borrego para levar passa pelos
+       mesmos estados que um borrego para a mesa 4. */
+    const encomendas = lerTakeawayDemo();
+    const chave = Object.keys(encomendas).find(n => encomendas[n].id === idRonda);
+    if (chave) {
+      const enc = encomendas[chave];
+      const permitidos = TRANSICOES_RONDA[enc.estado] || [];
+      if (estado !== enc.estado && !permitidos.includes(estado)) {
+        const erro = erroSimulado(
+          `Um pedido em "${enc.estado}" nao pode passar a "${estado}".`, 409);
+        erro.permitidos = permitidos;
+        throw erro;
+      }
+      enc.estado = estado;
+      gravarTakeawayDemo(encomendas);
+      return { mensagem: `Encomenda ${enc.numero} → ${estado}`, pedido: enc };
+    }
+
     throw erroSimulado('Registo não encontrado.', 404);
   }
 
