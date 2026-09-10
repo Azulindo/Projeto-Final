@@ -180,7 +180,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | B-49 | Limite de 3 reservas por telemóvel por dia — *feito 10/09. Conta-se por **dia da reserva** e não por dia em que se reservou: quem marca cinco sextas ao longo de dois meses é um bom cliente, não um abuso — o que faz mal ao restaurante é uma pessoa a bloquear meia sala na mesma noite. Testado: três aceites, a quarta recusada com 409, e o mesmo número escrito com e sem espaços conta como um só* | 45 min | B-48 |
 | 🔁 | B-50 | `fluxoReserva.js`: os 4 estados da ementa — *já não se aplica — descrevia estados de um `fluxoReserva.js` que **nunca chegou a ser preciso**: o fluxo inteiro de perguntas está construído no `frontend/cliente/js/reservas.js` do Guilherme (F-28 a F-43, todas ✅). É a mesma situação das 19 tarefas 🔁 do front-end, ao contrário: aqui foi trabalho do João que o front-end acabou por fazer. O que faltava mesmo era o servidor, e isso são o B-41, o B-47, o B-48, o B-49 e o B-53. Encontrado a 10/09, ao abrir o Sprint 3 — eram ≈ 10 h que ninguém precisava de fazer* | 2 h 30 | B-27, B-42 |
 | 🔁 | B-51 | Carrinho de reserva que preserva quantidades ao navegar para trás — *já não se aplica — descrevia estados de um `fluxoReserva.js` que **nunca chegou a ser preciso**: o fluxo inteiro de perguntas está construído no `frontend/cliente/js/reservas.js` do Guilherme (F-28 a F-43, todas ✅). É a mesma situação das 19 tarefas 🔁 do front-end, ao contrário: aqui foi trabalho do João que o front-end acabou por fazer. O que faltava mesmo era o servidor, e isso são o B-41, o B-47, o B-48, o B-49 e o B-53. Encontrado a 10/09, ao abrir o Sprint 3 — eram ≈ 10 h que ninguém precisava de fazer* | 1 h 30 | B-50 |
-| 🔁 | B-52 | `OBSERVACOES` + `RESUMO_EMENTA` com valor estimado calculado no servidor — *já não se aplica — descrevia estados de um `fluxoReserva.js` que **nunca chegou a ser preciso**: o fluxo inteiro de perguntas está construído no `frontend/cliente/js/reservas.js` do Guilherme (F-28 a F-43, todas ✅). É a mesma situação das 19 tarefas 🔁 do front-end, ao contrário: aqui foi trabalho do João que o front-end acabou por fazer. O que faltava mesmo era o servidor, e isso são o B-41, o B-47, o B-48, o B-49 e o B-53. Encontrado a 10/09, ao abrir o Sprint 3 — eram ≈ 10 h que ninguém precisava de fazer* | 1 h 30 | B-51 |
+| ✅ | B-52 | `OBSERVACOES` + `RESUMO_EMENTA` com valor estimado calculado no servidor — *tarefa com **duas metades** e cada uma acabou de maneira diferente, o que é a razão de ter sido mal varrida (apontado pelo Guilherme a 10/09). Os estados `OBSERVACOES` e `RESUMO_EMENTA` eram do `fluxoReserva.js` e esses **já não se aplicam** — o fluxo está no `reservas.js`. Mas o **valor estimado calculado no servidor está feito**: o `POST /api/reservas` soma-o dos preços da base e grava-o no `valor_estimado`, com o preço à data (verificado a 10/09: 33,60 € = 31,00 + 2,60). O que falta não é desta tarefa: é o **resumo mostrado antes de submeter**, que o `reservas.js` calcula no browser a partir de 25 preços escritos à mão lá dentro. Hoje batem certo com o `seed.sql` — **mas o risco mudou de estado a 10/09**: até esta manhã um preço só mudava editando o seed; desde o **B-61**, muda por um ecrã, e ninguém vai lembrar-se de editar um ficheiro de front-end depois de mudar um preço num formulário. Passou para o âmbito do **C-09*** | 1 h 30 | B-51 |
 | ✅ | B-53 | `POST /api/reservas` estendido — grava `ITEM_RESERVA` com `preco_unitario` à data — *feito 10/09, no mesmo `POST /api/reservas`. **O preço fica gravado à data:** uma reserva feita hoje para daqui a um mês mostra o preço de hoje, e se o prato aumentar entretanto quem reservou não pode ser surpreendido — ler o preço atual do produto fazia exatamente isso. O `valor_estimado` é somado no servidor* | 1 h 30 | B-52 |
 | ✅ | B-54 | Testes de API dos dois ramos — *ramo A (sem ementa) testado a 10/09 ponta a ponta: horários, reserva, lotação a descer, limite dos 3, consulta pelo código. Ramo B testado a 10/09: reserva com dois borregos e duas águas, `item_reserva` gravado com o preço à data, e o `valor_estimado` somado no servidor a dar 33,60 € (31,00 + 2,60). **O Sprint 3 do back-end fica fechado*** | 1 h 30 | B-53 |
 
@@ -409,7 +409,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | C-09 | Integração do fluxo de reservas (trocar o `localStorage` pela API) | 2 h | B-48, F-36 |
+| ⬜ | C-09 | Integração do fluxo de reservas — *são **duas** coisas, não uma. **(1)** Trocar o `localStorage` pela API: a reserva passa a ser gravada no servidor e o código vem na resposta em vez de ser gerado no browser. **(2)** **Tirar a ementa de dentro do `reservas.js`:** os 25 preços estão escritos à mão no ficheiro e o resumo é somado a partir deles. Batem certo hoje, e desde o B-61 (10/09) um preço muda por um ecrã de gestão — a cópia fica velha sem ninguém dar por isso, e o cliente vê um valor e a base guarda outro. É a mesma forma do stock lido de dois sítios e da ordem da ementa escrita à mão: **duas cópias à espera de divergir.** O `GET /api/produtos` já dá os preços; não é preciso endpoint novo* | 2 h 30 | B-48, F-36 |
 | ⬜ | C-10 | Teste conjunto: ramos A e B em telemóvel, confirmando os dados na BD | 1 h 30 | C-09, B-53 |
 
 ## Sprint 4 · Gestão (Semanas 8–9)
@@ -520,12 +520,12 @@ refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 74 | 53 | 8 | 13 | ≈ 17 h |
+| 🔵 João (B-) | 74 | 54 | 7 | 13 | ≈ 17 h |
 | 🟠 Guilherme (F-) | 69 | 48 | 15 | 6 | ≈ 7 h 30 |
-| 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
+| 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 42 h |
 | 🐞 Correções (X-) | 15 | 14 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 66 h 30.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
+**Total por fazer: ≈ 67 h.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
 (falta o Guilherme ler o `CONTEXTO.md`) e a X-08 (não se conseguiu reproduzir). O B-40 saiu
 desta lista a 10/09 — o B-35 fechou e o take away passou a estar testado. O B-65 já tinha
 saído: os QR Codes estão gerados.

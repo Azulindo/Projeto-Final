@@ -310,6 +310,37 @@ chaves em falta vinham do ficheiro da nuvem. O resultado foi uma ligação ao My
 certificado da nuvem, e um erro (`self-signed certificate in certificate chain`) que não
 apontava para a causa. Passou a haver **um único sítio a decidir** qual configuração vale.
 
+**Três avarias em fila, cada uma a tapar a seguinte.** Este é o episódio que melhor mostra
+como se procura um erro, e vale a pena contá-lo pela ordem em que apareceu — que é ao
+contrário da ordem em que existiam.
+
+O ecrã da cozinha mostrava rondas com **"há 212h28"** — nove dias. Primeira avaria: as datas
+dos dados de demonstração estavam escritas à mão com a data do dia em que o ficheiro foi
+escrito, e envelheceram sozinhas. Corrigidas para serem relativas ao momento em que a base é
+criada.
+
+Corrigida essa, o ecrã passou a dizer **"agora mesmo" a tudo** — incluindo a uma ronda com 28
+minutos. Segunda avaria: o MySQL guardava a hora local da máquina e a aplicação lia-a como se
+fosse UTC. No verão português isso é uma hora de diferença, e cada pedido ficava uma hora no
+*futuro*.
+
+Porque é que um pedido no futuro aparece como "agora mesmo"? Terceira avaria, no front-end: o
+cálculo do tempo de espera usava `Math.max(0, ...)` para nunca mostrar valores negativos. Uma
+data no futuro dá zero, e zero é "agora mesmo". A defesa contra um número estranho estava a
+esconder a causa dele.
+
+**O que abriu a fila foi uma conta.** O ecrã dizia 212h52 quando a diferença real entre as
+duas datas era 213h52 — exactamente uma hora. Uma hora certinha não é coincidência, e foi
+esse número redondo que apontou para o fuso horário antes de se ter mexido em código nenhum.
+
+Duas lições ficaram: **um erro pode estar escondido atrás de outro**, e só se vê quando o da
+frente sai; e **uma defesa contra sintomas — o `Math.max(0, ...)`, que existe por boas
+razões — também esconde causas.**
+
+E nada disto apareceu nos testes. O ciclo tinha sido verificado ponta a ponta várias vezes
+por chamadas diretas à API, onde os tempos não são mostrados a ninguém. **Apareceu nos
+primeiros dez minutos em que alguém olhou para o ecrã** como um cozinheiro olharia.
+
 > ⬜ **Falta:** o que o Aiven fez. Desligou-se sozinho duas vezes em quatro dias, sem aviso
 > por email, e ainda não se sabe porquê — escrevam o que se tentou e o que ficou por saber.
 > **Uma dificuldade honestamente por resolver vale mais do que uma explicação inventada.**
