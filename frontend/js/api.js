@@ -243,6 +243,23 @@ const ENDPOINTS_REAIS = [
   /^gestao\/funcionarios$/,        // GET e POST /api/gestao/funcionarios
   /^gestao\/funcionarios\/\d+$/,   // PATCH      /api/gestao/funcionarios/:id
 
+  /* Estatísticas — B-68, B-69 e B-70 (10/09). O ecrã da F-55 e os
+     gráficos da F-56/F-57 passam a ler do servidor.
+     Duas notas do formato que mudam o ecrã:
+       · o `tempo_medio_preparacao_min` vem `null` quando ainda nada
+         ficou pronto hoje, e não 0 — zero minutos diria "sai
+         instantaneamente", que é uma mentira diferente de "ainda não
+         há dados". O ecrã tem de distinguir os dois;
+       · não devolve `simulado`, portanto o aviso de dados de
+         demonstração desaparece sozinho quando isto ficar ligado.
+     O dia é calculado em Lisboa, no Node, e não com o `CONVERT_TZ` do
+     MySQL — que precisa das tabelas de fusos carregadas e no Aiven não
+     há garantia disso. Nos dois dias do ano em que a hora muda, uma
+     barra pode levar uma hora do dia vizinho: é um limite conhecido e
+     está escrito, o que é melhor do que um gráfico em que se acredita
+     sem se deve. */
+  /^admin\/estatisticas$/,          // GET /api/admin/estatisticas
+
   /* QR Codes das mesas — B-66 (10/09). A qrcodes.html estava construída
      desde 08/09 à espera deste caminho.
      Nível `administrador` e `balcao`, e não "qualquer funcionário" como
@@ -978,6 +995,21 @@ function validarFuncionarioDemo(corpo, completo) {
   }
 
   return out;
+}
+
+/* ── Reservas simuladas (Sprint 3 / C-09) ──────────────────────────
+   Guardadas por CÓDIGO, que é a credencial — o `GET` procura por
+   código e mais nada, igual ao servidor. */
+const CHAVE_RESERVAS_DEMO = 'vpa_reservas_demo';
+
+function lerReservasDemo() {
+  try { return JSON.parse(localStorage.getItem(CHAVE_RESERVAS_DEMO) || '{}'); }
+  catch (e) { return {}; }
+}
+
+function gravarReservasDemo(todas) {
+  try { localStorage.setItem(CHAVE_RESERVAS_DEMO, JSON.stringify(todas)); }
+  catch (e) { /* segue sem persistir */ }
 }
 
 /* ── Encomendas de take away simuladas (B-35 / F-24) ───────────────
@@ -2001,6 +2033,168 @@ async function simularEndpoint(endpoint, opcoes) {
   }
 
   /* Rondas por fazer (docs/API.md 3.10.1) */
+  /* ── Reservas (docs/API.md 4.5 / Sprint 3, B-41 a B-54) ────────
+     Sem login, os três. O CÓDIGO faz de credencial no GET, como o
+     número do take away e o token do QR. */
+  if (caminho === 'reservas/horarios') {
+    /* O `query` já vem separado pelo `simularEndpoint` lá em cima — o
+       `caminho` chega aqui SEM a interrogação. A primeira versão disto
+       tentava separá-la outra vez e ficava sempre com a data vazia, o
+       que dava um 400 a dizer "Data no formato AAAA-MM-DD" a uma data
+       que estava perfeitamente no formato. */
+    const data = query.get('data') || '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+      throw erroSimulado('Data no formato AAAA-MM-DD.', 400);
+    }
+
+    /* Segunda-feira encerra. É a mesma regra que o calendário do ecrã
+       já aplica — repetida aqui porque a simulação tem de recusar o que
+       o servidor recusa, senão mente na direção que engana. */
+    const dia = new Date(data + 'T12:00:00').getDay();
+    if (dia === 1) return [];
+
+    /* Ocupação de demonstração determinística: deriva do dia do mês,
+       para o mesmo dia dar sempre o mesmo resultado. Um `Math.random()`
+       aqui fazia as horas mudarem a cada recarregamento e tornava
+       qualquer teste impossível de escrever. */
+    const semente = Number(data.slice(-2));
+    const slots = [
+      ['12:00', 'almoco'], ['12:30', 'almoco'], ['13:00', 'almoco'],
+      ['13:30', 'almoco'], ['14:00', 'almoco'],
+      ['19:30', 'jantar'], ['20:00', 'jantar'], ['20:30', 'jantar'],
+      ['21:00', 'jantar'], ['21:30', 'jantar'], ['22:00', 'jantar'],
+      ['22:30', 'jantar'],
+    ];
+    return slots.map(function ([hora, periodo], i) {
+      const lotacao = 20;
+      /* As 20:00 e as 20:30 enchem nos dias pares — é o cenário que
+         interessa mostrar e testar: um sábado com o jantar cheio. */
+      const cheio = (semente % 2 === 0) && (hora === '20:00' || hora === '20:30');
+      const ocupado = cheio ? lotacao : ((semente + i * 3) % 17);
+      const reservados = lerReservasDemo();
+      const extra = Object.values(reservados)
+        .filter(r => r.data === data && r.hora === hora && r.estado !== 'cancelada')
+        .reduce((t, r) => t + Number(r.pessoas || 0), 0);
+      const total = Math.min(lotacao, ocupado + extra);
+      return {
+        id: i + 1,
+        hora,
+        periodo,
+        lotacao,
+        ocupado: total,
+        livres: Math.max(0, lotacao - total),
+        disponivel: total < lotacao,
+      };
+    });
+  }
+
+  if (caminho === 'reservas' && metodo === 'POST') {
+    const d = opcoes.body || {};
+
+    const nome = String(d.nome || '').trim();
+    if (nome.length < 2) throw erroSimulado('Escreve o teu nome.', 400);
+
+    /* Nove dígitos começados em 9, com os espaços tirados ANTES de
+       validar — "912 345 678" é o mesmo número que "912345678", e
+       recusá-lo por causa dos espaços era pedir à pessoa que
+       adivinhasse o formato. É a regra do esquema do servidor. */
+    const telemovel = String(d.telemovel || '').replace(/\s/g, '');
+    if (!/^9\d{8}$/.test(telemovel)) {
+      throw erroSimulado('Telemovel invalido. Sao 9 digitos comecados em 9.', 400);
+    }
+
+    const pessoas = Number(d.pessoas);
+    if (!Number.isInteger(pessoas) || pessoas < 1) {
+      throw erroSimulado('Tem de ser pelo menos uma pessoa.', 400);
+    }
+    if (pessoas > 50) throw erroSimulado('Para grupos maiores, telefona-nos.', 400);
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d.data || ''))) {
+      throw erroSimulado('Data no formato AAAA-MM-DD.', 400);
+    }
+    if (!/^\d{2}:\d{2}$/.test(String(d.hora || ''))) {
+      throw erroSimulado('Hora no formato HH:MM.', 400);
+    }
+
+    /* A hora tem de estar livre. É o caso que interessa: duas pessoas a
+       reservar as 20:00 do mesmo sábado. Sem isto a simulação aceitava
+       tudo e o ecrã aprendia a confiar numa coisa que o servidor
+       recusa. */
+    const doDia = await simularEndpoint(`reservas/horarios?data=${d.data}`, {});
+    const slot = doDia.find(sl => sl.hora === d.hora);
+    if (!slot) throw erroSimulado('Não temos essa hora nesse dia.', 400);
+    if (!slot.disponivel) throw erroSimulado('Essa hora já está cheia. Escolhe outra.', 409);
+    if (slot.livres < pessoas) {
+      throw erroSimulado(
+        `Só temos ${slot.livres} ${slot.livres === 1 ? 'lugar' : 'lugares'} a essa hora.`, 409);
+    }
+
+    /* O valor estimado calcula-se AQUI, a partir do catálogo, e não
+       vem do ecrã: é a metade da B-52 que estava feita no servidor, e
+       a simulação tem de a imitar para o ecrã não aprender a somar
+       preços por conta própria. */
+    let valorEstimado = 0;
+    const itens = Array.isArray(d.itens) ? d.itens : [];
+    itens.forEach(function (linha) {
+      const p = catalogoDemo().find(x => x.id === Number(linha.produtoId));
+      if (!p) throw erroSimulado(`O produto ${linha.produtoId} não existe.`, 400);
+      valorEstimado += Number(p.preco) * Math.max(1, Number(linha.quantidade) || 1);
+    });
+    valorEstimado = Number(valorEstimado.toFixed(2));
+
+    const codigo = 'RES-' + Array.from({ length: 5 },
+      () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
+
+    const todas = lerReservasDemo();
+    todas[codigo] = {
+      id: Math.floor(Date.now() / 1000) % 100000,
+      codigo, estado: 'pendente',
+      nome, telemovel, email: d.email || null,
+      pessoas, data: d.data, hora: d.hora,
+      modo_ementa: d.modo_ementa || 'no_restaurante',
+      observacoes: d.observacoes || null,
+      valorEstimado,
+      itens: itens.map(function (linha) {
+        const p = catalogoDemo().find(x => x.id === Number(linha.produtoId));
+        const q = Math.max(1, Number(linha.quantidade) || 1);
+        return {
+          produtoId: p.id, nome: p.nome, quantidade: q,
+          precoUnit: Number(p.preco),
+          subtotal: Number((Number(p.preco) * q).toFixed(2)),
+        };
+      }),
+      criadoEm: new Date().toISOString(),
+    };
+    gravarReservasDemo(todas);
+
+    return {
+      mensagem: `Reserva registada, ${nome.split(' ')[0]}! Vamos confirmar pelo telemovel.`,
+      reserva: {
+        id: todas[codigo].id, codigo, estado: 'pendente',
+        nome, pessoas, data: d.data, hora: d.hora,
+        modo_ementa: todas[codigo].modo_ementa, valorEstimado,
+      },
+    };
+  }
+
+  const resMatch = caminho.match(/^reservas\/([^/?]+)$/);
+  if (resMatch && metodo === 'GET') {
+    const codigo = decodeURIComponent(resMatch[1]).trim().toUpperCase();
+    const r = lerReservasDemo()[codigo];
+    if (!r) throw erroSimulado('Não há nenhuma reserva com esse código.', 404);
+    /* Como no take away: quem sabe o código vê a reserva, não os
+       contactos de ninguém. */
+    return {
+      reserva: {
+        id: r.id, codigo: r.codigo, estado: r.estado, nome: r.nome,
+        pessoas: r.pessoas, data: r.data, hora: r.hora,
+        modo_ementa: r.modo_ementa, observacoes: r.observacoes,
+        valorEstimado: r.valorEstimado,
+      },
+      itens: r.itens,
+    };
+  }
+
   /* ── take away (docs/API.md 4.13 / B-35) ───────────────────────
      Sem login, como as mesas. O número é a credencial do GET. */
   if (caminho === 'pedidos/takeaway' && metodo === 'POST') {

@@ -46,7 +46,11 @@ document.addEventListener('DOMContentLoaded', function () {
       const d = await chamarAPI('admin/estatisticas');
       clearTimeout(avisoLento);
 
-      preencher(d);
+      /* `await`, porque o `preencher` passou a ir buscar o
+         `gestao/stock` para não haver dois números para a mesma coisa.
+         Sem o await, um erro lá dentro virava uma promessa rejeitada em
+         silêncio e o ecrã ficava a meio sem dizer nada. */
+      await preencher(d);
       estadoEl.classList.add('hidden');
       conteudoEl.hidden = false;
 
@@ -63,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  function preencher(d) {
+  async function preencher(d) {
     const hoje = d.hoje || {};
     const ontem = d.ontem || {};
     const mes = d.mes || {};
@@ -83,10 +87,52 @@ document.addEventListener('DOMContentLoaded', function () {
 
     texto('rondasPorFazer', String(servico.rondas_por_fazer ?? 0));
 
-    texto('stockBaixo', String(d.stock_baixo ?? 0));
+    /* ── DOIS NÚMEROS PARA A MESMA COISA (10/09) ──────────────────
+       Este cartão mostrava o `stock_baixo` das estatísticas e a barra
+       lateral contava `gestao/stock` — e o João viu **2 no cartão e 1
+       na barra**, no mesmo ecrã, ao mesmo tempo. Não era um erro de
+       cálculo de nenhum dos dois: eram duas contas independentes da
+       mesma pergunta, e nada as obrigava a concordar.
+
+       É a terceira vez que este projeto tropeça na mesma forma (a
+       ordem da ementa na F-51, o stock lido de dois sítios no B-61), e
+       a lição que ficou é sempre a mesma: escolher UMA fonte para o
+       que se mostra.
+
+       O `gestao/stock` é a escolhida, e não o agregado — porque é a
+       lista que a barra lateral já usa e a única que sabe QUAIS são os
+       produtos (o `title` da barra lista-os pelo nome; um número não
+       dá para isso).
+
+       O `stock_baixo` do servidor continua a ser lido, mas passou de
+       fonte a VERIFICAÇÃO: se discordar, avisa na consola. Um
+       desencontro deixa de aparecer ao utilizador como dois números e
+       passa a aparecer-nos a nós como um aviso. */
+    let baixosContados = null;
+    try {
+      const stock = await chamarAPI('gestao/stock');
+      if (Array.isArray(stock)) {
+        const baixos = stock.filter(x => x.baixo);
+        baixosContados = baixos.length;
+
+        const doServidor = d.stock_baixo;
+        if (doServidor != null && Number(doServidor) !== baixosContados) {
+          console.warn(
+            `[estatisticas] O "stock_baixo" das estatísticas diz ${doServidor} e a lista `
+            + `do gestao/stock tem ${baixosContados} (${baixos.map(x => x.nome).join(', ')}). `
+            + 'Mostra-se a lista, que é a fonte única. Um dos dois cálculos está errado.');
+        }
+      }
+    } catch (erro) {
+      /* Sem a lista, mostra-se o agregado: é melhor do que um traço. */
+      baixosContados = null;
+    }
+
+    const baixoMostrado = baixosContados != null ? baixosContados : (d.stock_baixo ?? 0);
+    texto('stockBaixo', String(baixoMostrado));
     // A única cor de alarme deste ecrã, e só acende quando há motivo.
     const cartaoStock = document.getElementById('cartaoStock');
-    if (cartaoStock) cartaoStock.classList.toggle('cartao-alerta', (d.stock_baixo ?? 0) > 0);
+    if (cartaoStock) cartaoStock.classList.toggle('cartao-alerta', baixoMostrado > 0);
 
     texto('mesPedidos', String(mes.pedidos ?? 0));
     texto('mesFaturacao', euros(mes.faturacao));

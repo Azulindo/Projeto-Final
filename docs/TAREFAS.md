@@ -422,7 +422,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | C-09 | Integração do fluxo de reservas — *são **duas** coisas, não uma. **(1)** Trocar o `localStorage` pela API: a reserva passa a ser gravada no servidor e o código vem na resposta em vez de ser gerado no browser. **(2)** **Tirar a ementa de dentro do `reservas.js`:** os 25 preços estão escritos à mão no ficheiro e o resumo é somado a partir deles. Batem certo hoje, e desde o B-61 (10/09) um preço muda por um ecrã de gestão — a cópia fica velha sem ninguém dar por isso, e o cliente vê um valor e a base guarda outro. É a mesma forma do stock lido de dois sítios e da ordem da ementa escrita à mão: **duas cópias à espera de divergir.** O `GET /api/produtos` já dá os preços; não é preciso endpoint novo* | 2 h 30 | B-48, F-36 |
+| ✅ | C-09 | Integração do fluxo de reservas — *são **duas** coisas, não uma. **(1)** Trocar o `localStorage` pela API: a reserva passa a ser gravada no servidor e o código vem na resposta em vez de ser gerado no browser. **(2)** **Tirar a ementa de dentro do `reservas.js`:** os 25 preços estão escritos à mão no ficheiro e o resumo é somado a partir deles. Batem certo hoje, e desde o B-61 (10/09) um preço muda por um ecrã de gestão — a cópia fica velha sem ninguém dar por isso, e o cliente vê um valor e a base guarda outro. É a mesma forma do stock lido de dois sítios e da ordem da ementa escrita à mão: **duas cópias à espera de divergir.** O `GET /api/produtos` já dá os preços; não é preciso endpoint novo* **FEITO 10/09, e cresceu no caminho.** *Eram duas coisas e passaram a três, porque ao ir trocar o `localStorage` encontrei os **25 produtos escritos à mão** dentro do `reservas.js` — nome, descrição e preço. Batiam todos com o `seed.sql`, e isso não era garantia: era sorte com data de validade. Até ao B-61 um preço só mudava editando o seed, e quem editasse o seed lembrava-se deste ficheiro; **desde o B-61 um preço muda num ecrã**, por alguém que não tem razão nenhuma para saber que aquela lista existia. O separador foi instalado na manhã do próprio dia. E os ids eram inventados (`en1`, `pp3`), portanto uma pré-selecção não podia sequer ser enviada — o ecrã só funcionava enquanto a reserva não saísse do browser. **(1)** A ementa passa a vir do `GET /produtos` e do `GET /categorias`, com a ordem do servidor. **(2)** As horas vêm do `GET /reservas/horarios` com a ocupação, e as cheias ficam a cinzento e desligadas — antes todas pareciam livres sempre, e a recusa só chegava depois de escrever nome e telemóvel. **(3)** O `POST /reservas` grava e o **código vem na resposta**; se falhar, volta às horas em vez de mostrar um erro no fim, porque o caso provável é a hora ter enchido entretanto. E diz **"registada"**, não "confirmada" — fica em `pendente` e quem confirma é o restaurante. O `valorEstimado` passa a vir do servidor (a metade da B-52 que estava feita). A `dataISO` constrói-se dos números do calendário e não com `toISOString()`, que converte para UTC e punha uma data escolhida à noite no verão na véspera. Verificado: `frontend/testes/reservas-api.js`, 21 verificações* | 2 h 30 | B-48, F-36 |
 | ⬜ | C-10 | Teste conjunto: ramos A e B em telemóvel, confirmando os dados na BD | 1 h 30 | C-09, B-53 |
 
 ## Sprint 4 · Gestão (Semanas 8–9)
@@ -535,16 +535,17 @@ refazer.
 |---|---|---|---|---|---|
 | 🔵 João (B-) | 74 | 56 | 7 | 11 | ≈ 15 h 45 |
 | 🟠 Guilherme (F-) | 69 | 49 | 15 | 5 | ≈ 6 h 45 |
-| 🟢 Os dois (C-) | 28 | 8 | — | 20 | ≈ 40 h 30 |
+| 🟢 Os dois (C-) | 28 | 9 | — | 19 | ≈ 38 h 00 |
 | 🐞 Correções (X-) | 17 | 16 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 63 h 30.** Sobram **seis** tarefas 🟨, e todas contam como por fazer: as
-**B-68, B-69 e B-70** (escritas a 10/09, por correr — esperam que o Guilherme acrescente o
-caminho ao `ENDPOINTS_REAIS`), a **C-18** (o diagrama ER está feito, falta a passagem final
-pelo `README` e pelo `API.md`), a **C-01** (falta o Guilherme ler o `CONTEXTO.md`) e a
-**X-08** (não se conseguiu reproduzir). Uma tarefa 🟨 é a que tem código escrito e ainda não
-tem prova de que funciona — **e enquanto não tiver prova vale zero**, que é a razão de contar
-como por fazer e não como meia. O B-40 saiu
+**Total por fazer: ≈ 61 h.** Sobram **seis** tarefas 🟨, e todas contam como por fazer: as
+**B-68, B-69 e B-70** (escritas a 10/09; o Guilherme ligou os três caminhos ao
+`ENDPOINTS_REAIS` no mesmo dia, **falta agora só abrir o ecrã e ver números verdadeiros**),
+a **C-18** (o diagrama ER está feito, falta a passagem final pelo `README` e pelo `API.md`),
+a **C-01** (falta o Guilherme ler o `CONTEXTO.md`) e a **X-08** (não se conseguiu
+reproduzir). Uma tarefa 🟨 é a que tem código escrito e ainda não tem prova de que funciona —
+**e enquanto não tiver prova vale zero**, que é a razão de contar como por fazer e não como
+meia. O B-40 saiu
 desta lista a 10/09 — o B-35 fechou e o take away passou a estar testado. O B-65 já tinha
 saído: os QR Codes estão gerados.
 

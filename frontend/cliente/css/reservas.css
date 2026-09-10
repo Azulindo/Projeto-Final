@@ -460,6 +460,45 @@
   transform: none;
 }
 
+/* ── HORAS CHEIAS E COM POUCOS LUGARES (C-09) ──────────────────────
+   As horas passaram a vir do servidor com `livres` e `disponivel`. Uma
+   hora cheia fica VISÍVEL e desligada, em vez de desaparecer:
+   desaparecer faz a lista mudar de tamanho entre dias e não diz nada;
+   a cinzento diz "existe, mas não a esta hora".
+
+   Não se usa só o `.qr-btn:disabled` de cima, que baixa a opacidade a
+   0.35: o dourado a 35% sobre este fundo fica quase ilegível, e a hora
+   é precisamente a informação que a pessoa precisa de LER para escolher
+   outra. Um cinzento sólido lê-se; um dourado desmaiado não.
+
+   E não é só a cor a dizê-lo — o botão está `disabled`, tem `title` e
+   `aria-label` com "sem lugares". Cor sozinha nunca carrega a
+   informação (é a regra que o F-08 fixou para a cozinha, e vale aqui:
+   quem não distingue os dois cinzentos continua a saber). */
+.qr-btn--cheio,
+.qr-btn--cheio:disabled {
+  opacity: 1;                    /* anula o 0.35 do :disabled */
+  border-color: #55504a;
+  color: #9a948c;                /* 4,8:1 sobre o fundo do chat */
+  background: rgba(255, 255, 255, 0.03);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  cursor: not-allowed;
+}
+
+/* Poucos lugares: mostra o número ao lado da hora. Mantém-se dourado
+   porque continua a ser uma escolha possível — só com aviso. */
+.qr-btn--poucos {
+  border-color: var(--orange);
+  color: var(--orange);
+  font-variant-numeric: tabular-nums;
+}
+
+.qr-btn--poucos:hover:not(:disabled) {
+  background: var(--orange);
+  color: #0f0f0f;
+}
+
 /* Chip primário (laranja) — para ações principais */
 .qr-btn.primary {
   border-color: var(--orange);

@@ -10,6 +10,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Metal+Mania&family=Nosifer&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/nav.css">
   <script src="js/nav.js" defer></script>
+  <!-- C-09: a ementa e as horas passam a vir da API, e a reserva grava
+       no servidor. O api.js tem de vir ANTES do reservas.js — o `defer`
+       garante a ordem, mas a ordem das linhas é o que se lê. -->
+  <script src="../js/api.js" defer></script>
     <script src="js/reservas.js" defer></script>
 </head>
 <body>
