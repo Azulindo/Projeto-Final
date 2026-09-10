@@ -95,22 +95,81 @@ const nomes = p => p.$$eval('.cat-item .cat-nome', els => els.map(e => e.textCon
         posSobremesas > 0 && posBebidas > 0 && posSobremesas < posBebidas,
         `Sobremesas em ${posSobremesas}, Bebidas em ${posBebidas}`);
 
-  /* ── 5. Esconder uma categoria com produtos ─────────────────────── */
+  /* ── 5. Esconder uma categoria com produtos ─────────────────────
+     Isto era um interruptor bloqueado até 10/09, e estava errado: o
+     B-62 aceita a repetição com `confirmar: true`, e o ecrã tapava esse
+     caminho — uma funcionalidade que existe e não tem botão é uma
+     funcionalidade que não existe. Agora pergunta-se, com o número. */
   await admin.locator('.cat-item', { hasText: 'Entradas' }).locator('.btn-editar').click();
   await admin.waitForSelector('#painelCategoria[open]', { timeout: 4000 });
-  check('O interruptor "aparece na ementa" está bloqueado numa categoria com produtos',
-        await admin.locator('#cAtivo').isDisabled());
-  check('...e o ecrã diz porquê, com o número',
-        /4 produto/.test(await admin.locator('#cAtivoDesc').textContent() || ''));
-  await admin.click('#btnCancelarCat');
-  await admin.waitForTimeout(300);
 
-  // E o servidor recusa na mesma, se alguém chamar à mão.
+  check('O interruptor NÃO está bloqueado — pergunta-se, não se proíbe',
+        !(await admin.locator('#cAtivo').isDisabled()));
+
+  await admin.uncheck('#cAtivo');
+  await admin.waitForTimeout(200);
+  check('Ao desligar, o ecrã diz já quantos produtos saem da ementa',
+        /4 produto/.test(await admin.locator('#cAtivoDesc').textContent() || ''),
+        await admin.locator('#cAtivoDesc').textContent());
+
+  await admin.click('#btnGravarCat');
+  await admin.waitForTimeout(800);
+  check('O primeiro "Gravar" é recusado e pede confirmação, com o número',
+        /4 produto/.test(await admin.locator('#catErro').textContent() || ''),
+        await admin.locator('#catErro').textContent());
+  check('...e o botão passa a dizer o que vai fazer',
+        /mesmo assim/i.test(await admin.locator('#btnGravarCat').textContent() || ''),
+        await admin.locator('#btnGravarCat').textContent());
+
+  /* Mexer num campo cancela a confirmação: o "sim" era para o pedido
+     que foi recusado, não para outro que se escreveu entretanto. */
+  await admin.fill('#cDescricao', 'Para começar, mesmo');
+  await admin.waitForTimeout(150);
+  check('Mexer num campo cancela a confirmação pendente',
+        (await admin.locator('#btnGravarCat').textContent() || '').trim() === 'Gravar',
+        await admin.locator('#btnGravarCat').textContent());
+
+  // Repete-se o caminho todo e confirma-se.
+  await admin.click('#btnGravarCat');
+  await admin.waitForTimeout(800);
+  await admin.click('#btnGravarCat');
+  await admin.waitForTimeout(900);
+  check('O segundo carregar esconde mesmo a categoria',
+        /Escondida/.test(await admin.locator('.cat-item', { hasText: 'Entradas' }).textContent() || ''),
+        (await admin.locator('.cat-item', { hasText: 'Entradas' }).textContent() || '').replace(/\s+/g, ' '));
+
+  /* A prova que interessa: os 4 produtos saem da ementa do cliente sem
+     nenhum deles ter sido alterado. */
+  await cliente.goto(`${CLIENTE}/menu.html?simular=1`);
+  await cliente.waitForTimeout(2200);
+  const menuSemEntradas = await cliente.evaluate(() => document.body.innerText);
+  check('E os 4 produtos das Entradas saem da ementa do cliente',
+        !/Abatata Frita/.test(menuSemEntradas) && !/Abate-Boca/.test(menuSemEntradas));
+
+  // Voltar a ligar não precisa de confirmação: não esconde nada.
+  await admin.locator('.cat-item', { hasText: 'Entradas' }).locator('.btn-editar').click();
+  await admin.waitForSelector('#painelCategoria[open]', { timeout: 4000 });
+  await admin.check('#cAtivo');
+  await admin.click('#btnGravarCat');
+  await admin.waitForTimeout(900);
+  check('Voltar a ligar a categoria não pede confirmação nenhuma',
+        !/Escondida/.test(await admin.locator('.cat-item', { hasText: 'Entradas' }).textContent() || ''));
+
+  await cliente.goto(`${CLIENTE}/menu.html?simular=1`);
+  await cliente.waitForTimeout(2200);
+  check('E os produtos voltam à ementa, intactos',
+        /Abatata Frita/.test(await cliente.evaluate(() => document.body.innerText)));
+
+  /* Um nome repetido é uma recusa mesmo, e NÃO tem caminho de
+     confirmação — o 409 não é sempre uma pergunta. */
   const recusa = await admin.evaluate(async () => {
-    try { await chamarAPI('gestao/categorias/1', { method: 'PATCH', body: { ativo: false } }); return 'passou'; }
-    catch (e) { return e && e.status ? String(e.status) : 'erro sem estado'; }
+    try {
+      await chamarAPI('gestao/categorias/1', { method: 'PATCH', body: { nome: 'Bebidas' } });
+      return 'passou';
+    } catch (e) { return e && e.status ? String(e.status) : 'erro sem estado'; }
   });
-  check('E chamar o endpoint à mão devolve 409', recusa === '409', recusa);
+  check('Um nome repetido devolve 409 e não tem confirmação que o desfaça',
+        recusa === '409', recusa);
 
   /* ── 6. Nomes repetidos ─────────────────────────────────────────── */
   await admin.click('#btnNova');

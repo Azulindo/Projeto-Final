@@ -1,0 +1,118 @@
+/* =====================================================================
+   funcionarios.css — Contas dos funcionários (F-53)
+   =====================================================================
+   Assenta no produtos.css, que já traz a tabela, a barra de filtros e o
+   painel do formulário. Aqui só o que é próprio deste ecrã.
+
+   ── CALOR NA MOLDURA, NUNCA NOS DADOS ──────────────────────────────
+   A regra da F-08, e aqui vale por um motivo específico: neste ecrã a
+   cor não decora, diz quem entra e quem não entra. Verde é "tem acesso",
+   vermelho é "não tem". Se o dourado da casa andasse por cima dos
+   nomes, essas duas cores perdiam-se no meio do resto.
+   ===================================================================== */
+
+.tabela-funcionarios {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabela-funcionarios th,
+.tabela-funcionarios td {
+  vertical-align: middle;
+}
+
+.func-nome {
+  font-weight: 600;
+  font-size: 14.5px;
+  color: var(--texto);
+}
+
+/* O email é a credencial de entrada, não uma etiqueta: fica legível, não
+   esbatido a ponto de se ter de aproximar do ecrã. 4,6:1 sobre o fundo
+   do cartão — passa os 4,5:1 da WCAG a este tamanho. */
+.func-email {
+  font-size: 12.5px;
+  color: var(--texto-suave);
+  margin-top: 2px;
+  /* Selecionável e a quebrar em vez de esticar a tabela: um email longo
+     não pode ser o que decide a largura das outras colunas. */
+  word-break: break-all;
+}
+
+.func-cargo {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.func-acesso {
+  font-size: 12.5px;
+  color: var(--texto-suave);
+  margin-top: 2px;
+}
+
+.func-eu {
+  /* Alinha com a linha do nome sem a empurrar para baixo. */
+  vertical-align: middle;
+  font-size: 11px;
+}
+
+.col-telefone { white-space: nowrap; }
+.col-desde    { white-space: nowrap; }
+
+/* Uma conta desativada continua na lista — é a vê-la que se reativa uma
+   — mas não pode ler-se como uma conta normal. Esbatida, sem tirar o
+   contraste ao distintivo vermelho, que é o que a explica. */
+.linha-inativa .func-nome,
+.linha-inativa .func-cargo { opacity: 0.62; }
+.linha-inativa .func-email,
+.linha-inativa .func-acesso { opacity: 0.75; }
+
+/* ── Os dois avisos do último administrador ─────────────────────────
+   O de cima, na página, é informativo: aparece sempre que só há um
+   administrador ativo, e serve para alguém se lembrar de promover uma
+   segunda pessoa antes de precisar.
+   O de dentro do formulário é o que interessa no momento: aparece
+   quando a gravação, tal como está preenchida, fecharia a porta.
+
+   São dois tons de propósito. Amarelo é "atenção a isto"; vermelho é
+   "isto vai ser recusado". Se fossem iguais, o primeiro gastava a
+   atenção que o segundo precisa. */
+.aviso-unico-admin {
+  display: block;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--aviso);
+  background: rgba(245, 165, 36, 0.10);
+  color: var(--texto);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.aviso-porta-fechada {
+  margin: 10px 0 0;
+  padding: 11px 13px;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--perigo);
+  background: rgba(239, 68, 68, 0.10);
+  color: var(--texto);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.aviso-porta-fechada.hidden,
+.aviso-unico-admin.hidden { display: none; }
+
+/* ── Telemóvel ──────────────────────────────────────────────────────
+   Duas colunas caem: o telefone e a data. Não é por serem menos
+   importantes — é por estarem as duas no formulário, a um toque de
+   distância, e o nome, o cargo e o estado não poderem cair de maneira
+   nenhuma. Sem isto a tabela obrigava a arrastar de lado para saber se
+   uma conta está ativa, que é a única coisa que se vem aqui ver de
+   telemóvel. */
+@media (max-width: 700px) {
+  .tabela-funcionarios .col-telefone,
+  .tabela-funcionarios .col-desde { display: none; }
+
+  .func-email { word-break: break-word; }
+}

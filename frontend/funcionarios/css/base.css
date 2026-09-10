@@ -170,6 +170,21 @@ tr:hover td { background: var(--bg-hover); }
 
 .btn-secundario:hover { background: var(--bg-hover); }
 
+/* ── Botão de confirmar algo que se vai notar (10/09) ──────────────
+   Usa-se quando o mesmo botão passa de "Gravar" a "Esconder mesmo
+   assim": a mudança de cor é o que impede o segundo carregar de ser um
+   reflexo do primeiro.
+
+   Fundo vermelho cheio e texto quase branco — 6,1:1, e é o texto que
+   tem de passar os 4,5:1, não a moldura. O --perigo em cima do fundo
+   escuro do painel não chegava para texto a 14 px. */
+.btn-perigo {
+  background: #b02a2a;
+  color: #fff5f5;
+}
+
+.btn-perigo:hover { background: #c23232; }
+
 .btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;

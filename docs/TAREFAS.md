@@ -26,10 +26,14 @@
 > fundadora do projeto (mais acima), constroem-se com dados simulados e troca-se a origem
 > depois. Foi assim que se fez a F-62 e a F-49.
 >
-> O que **de facto** espera pelo João são os endpoints de escrita, para as tarefas que
-> guardam alguma coisa: F-51 (B-62), F-53 (B-64) e F-61 (B-73). A F-50 e a F-52 já estão
-> construídas com dados simulados — falta-lhes só trocar a origem quando o B-61 e o B-63 existirem.
-> Ler já se pode hoje.
+> O que **de facto** esperava pelo João eram os endpoints de escrita, para as tarefas que
+> guardam alguma coisa. **A 10/09 já não espera quase nada:** o B-61, o B-62 e o B-64 ficaram
+> prontos, e as F-50, F-51, F-52 e F-53 estão ligadas ao servidor a sério. Sobra a F-61, que
+> espera pelo B-73, e o reordenar das categorias, que espera pelo B-74.
+>
+> A troca correu como a regra fundadora previa: nos produtos e no stock não foi preciso mexer
+> numa linha dos ecrãs — só acrescentar caminhos ao `ENDPOINTS_REAIS`. A F-53 nem chegou a ter
+> versão simulada: o B-64 já existia quando ela começou.
 
 > As 19 tarefas 🔁 do Guilherme (≈22 h) descreviam a `pedido.html` — a página de conversa
 > com um bot, substituída pela `mesa.html`. **Não estão em falta**: o que garantiam está
@@ -78,6 +82,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | **✅** | **X-07** | ~~Topo dos cartões altos cortado~~ — corrigido com teste | 45 min | Gui |
 | 🟨 | **X-08** | Banda branca no topo — **não reproduzida** pelo Guilherme em 6 páginas a 1440 e 1920. A causa que eu apontei era real (`html`/`body` sem cor de fundo) e foi tapada com `background-color` + `color-scheme: dark`. Possível artefacto do meu teste: corri em Chromium sem rede, e a fonte Nosifer não carregou | 30 min | Gui |
 | **✅** | **X-09** | ~~Caixa de escrita engolia texto sem responder~~ — corrigido com teste | 20 min | Gui |
+| **✅** | **X-12** | ~~Um recurso meio ligado mentia em silêncio~~ — *encontrado e corrigido pelo Guilherme a 10/09, ao ligar as categorias. O `ENDPOINTS_REAIS` é uma lista por **caminho**, mas um ecrã usa vários caminhos do mesmo recurso, e nada garantia que fossem ligados todos ao mesmo tempo. O B-62 trouxe três dos quatro caminhos das categorias, e a F-51 ia ficar assim: a lista vinha do servidor, criar e editar iam ao servidor, e **reordenar caía na simulação, que devolvia a lista trocada e um 200**. As setas funcionavam à vista, a ordem mudava no ecrã, e voltava tudo atrás ao recarregar a página — sem erro nenhum, sem aviso nenhum. É a pior forma de falhar: a que parece ter corrido bem, e a que passa uma apresentação inteira sem ninguém notar. **A regra que ficou:** não se simula uma **escrita** sobre um recurso que já é real — se o `gestao/categorias` está na lista, ninguém finge gravar em `gestao/categorias/qualquer-coisa`. Devolve 501 e o ecrã mostra o motivo. Só escritas, de propósito: uma leitura simulada também é falsa mas **vê-se** (são dados de demonstração à vista, e é para isso que serve o `?simular=1`); uma escrita simulada devolve "gravado" a quem gravou nada, e ninguém vê nada. Verificado: `frontend/testes/guarda-endpoints.js` — apanha o caso real e não apanha nenhum dos quatro recursos que continuam inteiramente simulados* | 40 min | Gui |
 | **✅** | **X-10** | ~~`docs/API.md` desatualizado em dois sítios~~ — corrigido pelo Guilherme a 09/09. A §5 passou a descrever o que o C-26 faz mesmo, e a §4.8 perdeu a justificação repetida. **A correcção foi melhor do que a pedida:** em vez de actualizar a cópia da lista `ENDPOINTS_REAIS` que estava no documento com 4 entradas quando o `api.js` já tinha 15, apagou a cópia e escreveu *"uma lista copiada é uma lista que vai ficar errada"* — passou a dizer o que a lista cobre, não o que ela diz linha a linha | 30 min | Gui |
 
 ---
@@ -190,6 +195,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ⬜ | B-71 | `services/email.js` com Nodemailer + Brevo/Resend | 1 h 30 | B-16 |
 | ⬜ | B-72 | Email de novo pedido para o restaurante + registo em `NOTIFICACAO` | 1 h | B-71 |
 | ⬜ | B-73 | 🔁 *(recuperação)* `GET /api/gestao/reservas` — lista só de leitura | 1 h 30 | B-48 |
+| ⬜ | B-74 | `PUT /api/gestao/categorias/ordem` — *aberta pelo Guilherme a 10/09, ao ligar a F-51. O B-62 trouxe o GET, o POST e o PATCH; **faltou o reordenar**, e é a `ordem` que dá sentido a haver categorias como entidade em vez de um texto dentro do produto. Formato em `docs/API.md` 4.11: recebe a **lista completa de ids** pela ordem nova (`{"ids":[1,2,4,3]}`) e devolve a lista já ordenada. A lista inteira e não "sobe uma posição": com pedidos relativos, duas pessoas a mexer ao mesmo tempo deixam buracos e posições repetidas. O `PATCH /:id` já aceita `ordem` e dá para o fazer com N pedidos, mas se o terceiro de cinco falhar a lista fica meio ordenada e ninguém sabe em que estado — um pedido, ou nenhum. **Não é urgente e não trava nada:** as setas do ecrã falham com uma mensagem e a lista volta atrás, em vez de fingirem que gravaram (ver a nota do X-12)* | 45 min | B-62 |
 
 ---
 
@@ -303,9 +309,9 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | F-48 | Botões de mudança de estado — ficaram **no próprio cartão**, não num painel de detalhe: na cozinha o objetivo é avançar a ronda num toque, sem abrir nada | 1 h | F-47 |
 | ✅ | F-49 | Tabela de produtos com pesquisa e ordenação — pesquisa por nome e descrição **sem acentos** (quem escreve "acores" encontra os "Açores"), filtro por categoria derivado dos próprios produtos, e ordenação por qualquer coluna com `aria-sort` a acompanhar a seta. *Lê do `gestao/produtos`, não do `produtos`: o `produtos` é a vista do CLIENTE e esconde os inativos e os que estão sem stock (`docs/API.md` 4.2) — num ecrã de administração era ao contrário do que faz falta, porque é a ver os inativos que se reativa um produto. Endpoint simulado no `api.js` com o formato acordado, à espera do **B-61**.* Só leitura; criar e editar são o F-50 | 2 h | F-44 |
 | ✅ | F-50 | Formulário de produto (criar / editar / ativar / desativar) — *criar e editar num `<dialog>`, com as duas bandeiras explicadas no próprio formulário porque são a confusão mais provável do ecrã: **"está na carta"** (`ativo`, decisão permanente) e **"há hoje"** (`disponivel`, decisão do dia). **Sem apagar, de propósito:** um produto que já apareceu num pedido não pode desaparecer sem levar o histórico atrás. O preço aceita vírgula — num teclado português escreve-se "16,20", e um `input type=number` devolve string vazia para o que considera inválido, fazendo o preço desaparecer sem dizer porquê. A existência só é editável ao criar ou ao ligar o controlo de stock; a partir daí manda o ecrã de Stock, senão eram dois ecrãs a escrever o mesmo número. Formato proposto em `docs/API.md` 4.9, simulado no `api.js` à espera do **B-61**. Verificado: `frontend/testes/produtos-form.js`* | 2 h | F-49 |
-| ✅ | F-51 | Tabela e formulário de categorias — *é uma **lista com setas de subir e descer**, não uma tabela com uma coluna "ordem": a ordem É o conteúdo deste ecrã (põe as entradas antes das sobremesas na ementa) e números editáveis à mão acabam com duas categorias no 2 e um buraco no 3. Sem arrastar, de propósito — não funciona com teclado, é difícil no telemóvel e não há forma decente de o anunciar a um leitor de ecrã. A reordenação manda a **lista completa de ids**, não "sobe uma", para dois pedidos simultâneos não deixarem buracos. Cada linha mostra quantos produtos tem, que é o número que decide se se pode esconder — e o ecrã bloqueia isso antes de deixar tentar. Nomes repetidos recusados mesmo com maiúsculas ou acentos diferentes. Renomear arrasta os produtos. Formato proposto em `docs/API.md` 4.11, simulado à espera do **B-62**. **Corrigiu um erro que o teste apanhou:** o endpoint `categorias` do cliente tinha a ordem da ementa escrita à mão num array, e por isso mexer na ordem na gestão não mudava nada no site — duas fontes de verdade, e a que o cliente via era a que ninguém podia editar. Verificado: `frontend/testes/categorias.js`* | 1 h 30 | F-49 |
+| ✅ | F-51 | Tabela e formulário de categorias — *é uma **lista com setas de subir e descer**, não uma tabela com uma coluna "ordem": a ordem É o conteúdo deste ecrã (põe as entradas antes das sobremesas na ementa) e números editáveis à mão acabam com duas categorias no 2 e um buraco no 3. Sem arrastar, de propósito — não funciona com teclado, é difícil no telemóvel e não há forma decente de o anunciar a um leitor de ecrã. A reordenação manda a **lista completa de ids**, não "sobe uma", para dois pedidos simultâneos não deixarem buracos. Cada linha mostra quantos produtos tem, que é o número que decide se se pode esconder. **Ligada ao servidor a 10/09** com o B-62 — ler, criar, editar e esconder já são a sério; falta só o reordenar, que é o B-74. Nomes repetidos recusados mesmo com maiúsculas ou acentos diferentes. Renomear arrasta os produtos. Documentado em `docs/API.md` 4.11. **Corrigido a 10/09 um erro meu de desenho:** o interruptor "aparece na ementa" estava *bloqueado* nas categorias com produtos, e isso tapava o caminho que o B-62 tem — o `"confirmar": true`. Uma funcionalidade que existe e não tem botão é uma funcionalidade que não existe, e ninguém a ia descobrir enterrada num `if` do lado errado. E o "move os produtos primeiro" obrigava a mexer em 15 pratos para esconder uma gaveta durante uma semana: esconder as Sobremesas em janeiro não é um engano, é uma decisão sazonal, e não toca em nenhum produto. Agora pergunta-se, com o número que vem no 409 do servidor (e não o da lista do ecrã, que pode ter minutos), o botão passa a dizer `Esconder mesmo assim`, e mexer num campo cancela a confirmação pendente. **Corrigiu um erro que o teste apanhou:** o endpoint `categorias` do cliente tinha a ordem da ementa escrita à mão num array, e por isso mexer na ordem na gestão não mudava nada no site — duas fontes de verdade, e a que o cliente via era a que ninguém podia editar. Verificado: `frontend/testes/categorias.js`* | 1 h 30 | F-49 |
 | ✅ | F-52 | Ecrã de stock: ler, ajustar e mudar o mínimo — *o aviso de stock baixo existia desde a F-62 em dois sítios (cozinha e contador do gerente), mas quem o via não tinha para onde ir. Três operações em vez de um campo que se grava por cima: **entrada** (+), **quebra** (−) e **acerto** (=), porque um valor absoluto perde o porquê e apaga as vendas que a cozinha registou entretanto — este stock mexe-se sozinho (B-58/B-59). O `acerto` fica só para `administrador`. Formato proposto ao João em `docs/API.md` 4.8, **ligado à base de dados a sério desde 09/09** — o B-63 ficou pronto e o formato acordado acertou: bastou acrescentar três caminhos ao `ENDPOINTS_REAIS`, sem mexer numa linha do `stock.js`. A cozinha entra (é quem dá pelas quebras), o balcão não. Trouxe também uma **correção de contraste**: o distintivo vermelho de "stock baixo" estava a 3,80:1 (mínimo 4,5:1 para texto), e mudou o vermelho do texto no `base.css`, o que arrasta a `produtos.html` — o `--perigo` fica igual para molduras e avisos, onde o mínimo é 3:1. E uma de layout: o `.sr-so-leitor` escapava ao `overflow` da tabela e dava scroll horizontal a 360 px. Verificado: `frontend/testes/stock-ecra.js`* | 2 h | F-49 |
-| ⬜ | F-53 | Ecrã de funcionários (tabela + formulário) | 2 h | F-49 |
+| ✅ | F-53 | Ecrã de funcionários (tabela + formulário) — *feito 10/09, **já contra a API a sério** e sem versão simulada intermédia: o B-64 estava pronto antes de o ecrã começar, e por isso não houve nada para converter depois. Ficheiros novos: `funcionarios.html`, `js/funcionarios.js`, `css/funcionarios.css`. **O cargo é a permissão** — não há lista de permissões para escolher, e o acesso que o cargo dá aparece debaixo do `select` a mudar sozinho, o que explica a regra melhor do que um parágrafo. Mandar o `nivel` à parte devolve 400. **A senha só vai, nunca vem:** campo sempre vazio ao editar, e vazio quer dizer "não mexer", nunca "senha vazia" — provado no teste a voltar a entrar com a antiga. Mínimo de 10 caracteres, o mesmo número dos dois lados. Nenhum `password_hash` na resposta, no HTML ou no formulário. **A regra do último administrador está no ecrã, mas NÃO bloqueia:** avisa-se no topo da página sempre que só há um administrador, avisa-se dentro do formulário quando a gravação fecharia a porta, e com o tom certo quando é a própria conta — e depois deixa-se o servidor responder. Bloquear era repetir o erro que a F-51 tinha no mesmo dia: a contagem do ecrã pode ter minutos e, se entretanto alguém promoveu outra pessoa, impedia-se uma coisa que já era possível. Verificado: `frontend/testes/funcionarios-ecra.js` (32 verificações, a regra testada nos dois sentidos)* | 2 h | F-49 |
 | ✅ | F-54 | Responsividade da aplicação de gestão — *zero alvos de toque abaixo de 44 px e zero scroll horizontal, medido em 4 larguras; o pior era o ✕ do painel da conta, a 24×23* | 1 h 30 | F-53 |
 
 | ✅ | F-67 | **Publicar o site.** Descoberto a 04/09: o `vercel.json` estava no repositório desde julho e o `CONTEXTO.md` dizia *"Vercel (já configurado)"*, mas nunca houve deployment — era um plano escrito como se estivesse feito. **No ar a 08/09 em `https://vemproabate.vercel.app`.** O `vercel.json` antigo usava *rewrites*, que mantêm o endereço na barra e faziam os caminhos relativos resolver a partir de `/menu` — o site teria aparecido sem estilos e sem API; passou a um redirecionamento simples da raiz. Verificados no endereço final: a raiz, os estilos e o `api.js`. Havia também dois projetos antigos no Vercel do João, de março: o `vemproabate` estava vazio mas tinha o nome reservado (daí o `DEPLOYMENT_NOT_FOUND`) e foi apagado; o `vemproabatee` continua no ar com a versão de março e vai levar um redirecionamento em vez de ser apagado, para quem tenha o link antigo não cair num 404. *Contas: a Aiven e o Render são do João, o Vercel é do Guilherme — o plano gratuito do Vercel não permite membros, por isso cada um mexe no seu sem esperar pelo outro.* | 1 h | — |
@@ -472,21 +478,41 @@ sem depender de nuvem nenhuma nem da rede da escola.
 
 ## Resumo de esforço
 
-*Contagens a 8 de setembro, refeitas depois de fechar o B-24, o B-65, o F-67, a F-52, a F-50, a C-26, a C-24, a C-25 e o B-63, e de entrar o plano B local.* **Esta é a única tabela de contagens do documento.** Os
+*Contagens refeitas a 10/09, depois de fechar a **F-53** e o **X-12** e de entrar o **B-74**
+(e antes disso: B-24, B-65, F-67, F-52, F-50, C-26, C-24, C-25, B-63, B-61, B-62, B-64 e o
+plano B local).* **Esta é a única tabela de contagens do documento.** Os
 números saem de contar as linhas das tabelas de tarefas acima, uma a uma — não de somar ao
 que aqui estava. Se mudares uma linha lá em cima, esta tabela fica errada até alguém a
 refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 73 | 43 | — | 30 | ≈ 38 h |
-| 🟠 Guilherme (F-) | 68 | 45 | 19 | 4 | ≈ 6 h 15 |
+| 🔵 João (B-) | 74 | 43 | — | 31 | ≈ 38 h 45 |
+| 🟠 Guilherme (F-) | 68 | 46 | 19 | 3 | ≈ 4 h 15 |
 | 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
-| 🐞 Correções (X-) | 10 | 9 | — | 1 | ≈ 30 min |
+| 🐞 Correções (X-) | 11 | 10 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 86 h 15.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
+**Total por fazer: ≈ 85 h.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
 take away, e falta o próprio B-35 do take away), C-01 (falta o Guilherme ler o `CONTEXTO.md`)
 e X-08 (não se conseguiu reproduzir). O B-65 saiu desta lista — os QR Codes estão gerados.
+
+> **Ao Guilherme sobram três tarefas F-, e duas delas esperam por outra pessoa:** a F-61
+> espera pelo B-73 e a F-68 só se faz se a C-27 mostrar que as fontes dão mau aspeto offline.
+> **A única que não depende de ninguém é a F-60** — a revisão visual final. O `contraste.js`
+> já aponta dois problemas reais na `index.html` (o "Ver Menu" e o "Reserve agora a sua
+> mesa!!" a 2,53:1, abaixo dos 4,5:1) e nove títulos com gradiente cuja última paragem cai
+> a 1,7:1. É aí que ela vai começar.
+
+> **Nota do X-11 (do João, 10/09).** Ele foi verificar para me responder sobre a F-53 e
+> encontrou o que ele próprio chamou "a pior das três": desativar uma conta **não lhe tira o
+> acesso na hora**. O `/auth/eu` relê a base, portanto a aplicação da pessoa deixa de abrir no
+> recarregamento seguinte — mas o `autenticar` e o `exigirNivel` decidem só pelo que está
+> dentro do token, sem tocar na base. Quem já tenha um token válido continua a poder chamar a
+> API à mão — confirmar rondas, mexer no stock — até o token expirar, o que pode ser 8 horas.
+> **Num restaurante, é um turno inteiro depois de alguém ser mandado embora.** Nada disto se
+> vê pelo ecrã da F-53, que faz exatamente o que deve: a linha fica "Sem acesso" porque o
+> servidor diz que está `ativo: false`. Vale a pena registar como isto apareceu — não foi um
+> teste nem um relato, foi ele a ir ler o próprio código para escrever uma resposta.
 
 > **Nota dos merges de 09/09 (foram cinco neste bloco, ao todo).** De cada vez, nenhuma das
 > duas versões estava certa — cada um marcava o seu lado sem ver o do outro. Refeito sempre a
@@ -512,11 +538,19 @@ e X-08 (não se conseguiu reproduzir). O B-65 saiu desta lista — os QR Codes e
 >
 > Agora são 68 e 10, e as quatro sequências estão completas: B-1 a B-73, F-1 a F-68,
 > C-1 a C-28, X-1 a X-10 — sem um único código em falta.
+>
+> **A verificação da sequência ganhou o dia outra vez, a 10/09.** Ao marcar a F-51, escrevi
+> um parágrafo dentro da célula com uma linha em branco no meio — e uma linha de tabela em
+> markdown tem de caber numa linha só. A F-51 partiu-se em três e **deixou de existir para a
+> contagem**: deu 67 tarefas F- em vez de 68, e a sequência apontou logo o `falta=[51]`.
+> Não foi ninguém a apagar nada: foi formatação. Mas o sintoma é igual ao do `9303458`, e a
+> mesma verificação apanhou os dois.
 
-*Como estes números foram feitos:* contadas as 179 linhas das tabelas acima uma a uma e
+*Como estes números foram feitos:* contadas as 181 linhas das tabelas acima uma a uma e
 somada a coluna da estimativa só das linhas ⬜ e 🟨. Os quatro prefixos fecham certo
-(73 + 68 + 28 + 10) e não há códigos em falta na sequência. Se mudares uma linha lá em cima,
-refaz isto da mesma maneira — não somes nem subtraias a estes valores.
+(74 + 68 + 28 + 11) e a única falha de sequência é o **X-11**, que o João abriu na mensagem
+mas ainda não tem linha aqui — quando a acrescentar, passa a 182 e X- a 12. Se mudares uma
+linha lá em cima, refaz isto da mesma maneira — não somes nem subtraias a estes valores.
 
 > **Nota do merge de 08/09.** Este bloco veio em conflito porque cada um de nós tinha
 > atualizado a sua metade sem ver a do outro, e **nenhuma das duas versões estava certa**: a
@@ -531,9 +565,10 @@ refaz isto da mesma maneira — não somes nem subtraias a estes valores.
 foi por aí que as tabelas se desencontraram — passou a não ter nenhuma. Os números estão na
 tabela acima.)*
 
-Só as tarefas que **guardam** alguma coisa é que precisam de endpoints: F-50 (B-61),
-F-51 (B-62), F-53 (B-64) e F-61 (B-73) — a F-50 e a F-52 já estão construídas, só lhes falta
-trocar a origem dos dados. **Ler já se pode hoje** — o catálogo,
+Só as tarefas que **guardam** alguma coisa é que precisam de endpoints. **A 10/09 estão
+todas servidas menos uma:** a F-50 (B-61), a F-51 (B-62), a F-52 (B-63) e a F-53 (B-64) já
+gravam a sério. Falta a F-61, que espera pelo B-73, e o reordenar da F-51, que espera pelo
+B-74. **Ler já se pode hoje** — o catálogo,
 as sessões, a fila da cozinha e o balcão já respondem a sério.
 
 A F-50 e a F-52 são o padrão a seguir nas outras: o ecrã constrói-se inteiro, com os

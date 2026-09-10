@@ -48,7 +48,15 @@
  * a ler do mesmo sítio, e acabou a janela em que as quantidades do
  * mesmo produto podiam divergir entre os dois ecrãs.
  *
- * Falta ligar: `gestao/categorias` (B-62) e os funcionários (B-64).
+ * As categorias e os funcionários seguiram a 10/09, com o B-62 e o B-64.
+ * Falta ligar do lado da gestão: só o `gestao/categorias/ordem`, que o
+ * servidor ainda não tem — ver a nota dentro do ENDPOINTS_REAIS e a
+ * guarda `escritaFingidaSobreRecursoReal`, que faz o reordenar falhar
+ * às claras em vez de fingir que gravou.
+ *
+ * Continuam simulados, por não existirem ainda: o `admin/estatisticas`
+ * (F-55), o `gestao/mesas/qrcodes` (B-66), o `gestao/sessoes/:id/conta`
+ * e o `mesas/:token/chamar-empregado`.
  * =====================================================================
  */
 
@@ -194,6 +202,22 @@ const ENDPOINTS_REAIS = [
      divergir entre eles. */
   /^gestao\/produtos$/,            // GET e POST /api/gestao/produtos
   /^gestao\/produtos\/\d+$/,       // PATCH      /api/gestao/produtos/:id
+
+  /* Categorias — B-62 (09/09).
+     NOTA: o `gestao/categorias/ordem` NÃO está aqui, e não é esquecimento
+     — o servidor ainda não tem esse caminho (o B-62 traz GET, POST e
+     PATCH). Enquanto não tiver, reordenar não pode dar-se por gravado:
+     ver a guarda `escritaFingidaSobreRecursoReal` mais abaixo, que faz o
+     pedido falhar em vez de fingir. A F-51 repõe a ordem anterior e
+     mostra o motivo, que é o comportamento certo. */
+  /^gestao\/categorias$/,          // GET e POST /api/gestao/categorias
+  /^gestao\/categorias\/\d+$/,     // PATCH      /api/gestao/categorias/:id
+
+  /* Funcionários — B-64 (09/09). Três caminhos, sem DELETE: quem sai
+     fica `ativo = false`, porque a conta está agarrada ao histórico de
+     estados dos pedidos e aos movimentos de stock. */
+  /^gestao\/funcionarios$/,        // GET e POST /api/gestao/funcionarios
+  /^gestao\/funcionarios\/\d+$/,   // PATCH      /api/gestao/funcionarios/:id
 ];
 
 /**
@@ -242,6 +266,49 @@ function usarServidor(caminho) {
   if (simulacaoForcada()) return false;
   if (!MODO_SIMULACAO) return true;
   return ENDPOINTS_REAIS.some(padrao => padrao.test(caminho));
+}
+
+/* ── A ARMADILHA DO RECURSO MEIO LIGADO (10/09) ────────────────────
+   A lista acima é por CAMINHO, mas um ecrã usa vários caminhos do mesmo
+   recurso. Nada garantia que fossem todos ligados ao mesmo tempo — e um
+   ecrã meio ligado mente sem dar sinal.
+
+   Foi exatamente o que ia acontecer com as categorias. O B-62 trouxe o
+   GET, o POST e o PATCH; não trouxe o `gestao/categorias/ordem`. Sem
+   esta guarda a F-51 ficava assim:
+
+     · a lista vinha do servidor           → verdade
+     · criar e editar iam ao servidor      → verdade
+     · reordenar caía na simulação, que    → MENTIRA
+       devolvia a lista trocada e um 200
+
+   As setas funcionavam à vista, a ordem mudava no ecrã, e ao recarregar
+   a página voltava tudo atrás. Sem erro nenhum, sem aviso nenhum. É a
+   pior forma de falhar: a que parece ter corrido bem.
+
+   A regra, então: não se simula uma ESCRITA sobre um recurso que já é
+   real. Se o `gestao/categorias` está na lista, ninguém finge gravar em
+   `gestao/categorias/qualquer-coisa`.
+
+   Só escritas. Uma leitura simulada também é falsa, mas mostra-se — são
+   dados de demonstração à vista de quem olha, e é para isso que existe
+   o `?simular=1`. Uma escrita simulada devolve "gravado" a quem gravou
+   nada, e ninguém vê nada. É esta que rebenta em silêncio. */
+const METODOS_ESCRITA = ['POST', 'PUT', 'PATCH', 'DELETE'];
+
+function escritaFingidaSobreRecursoReal(caminho, metodo) {
+  if (simulacaoForcada()) return null;          // demonstração: é tudo a fingir de propósito
+  if (!METODOS_ESCRITA.includes(metodo)) return null;
+  if (usarServidor(caminho)) return null;        // já vai ao servidor, não há fingimento
+
+  /* Sobe segmento a segmento à procura de um antepassado já ligado:
+     'gestao/categorias/ordem' → 'gestao/categorias' → 'gestao'. */
+  const partes = caminho.split('/');
+  for (let i = partes.length - 1; i >= 1; i--) {
+    const pai = partes.slice(0, i).join('/');
+    if (ENDPOINTS_REAIS.some(padrao => padrao.test(pai))) return pai;
+  }
+  return null;
 }
 
 const CHAVE_SESSAO = 'vpa_sessao_funcionario';
@@ -401,6 +468,12 @@ async function chamarAPI(endpoint, opcoes = {}) {
     // partir do estado atual (B-32). Sem isto, essa informação
     // desaparecia aqui e quem apanha o erro só sabia que falhou.
     if (corpo && corpo.permitidos) erro.permitidos = corpo.permitidos;
+    /* O 409 do PATCH de categorias traz quantos produtos vão sair da
+       ementa (B-62) e como confirmar. É com esse número que o ecrã
+       pergunta "queres mesmo?" — sem ele, a pergunta era vaga e a
+       resposta um palpite. */
+    if (corpo && corpo.produtos !== undefined) erro.produtos = corpo.produtos;
+    if (corpo && corpo.comoConfirmar) erro.comoConfirmar = corpo.comoConfirmar;
     throw erro;
   }
 
@@ -674,6 +747,171 @@ function validarCategoriaDemo(corpo, completo) {
   return out;
 }
 
+/* ── Funcionários simulados (F-53) ─────────────────────────────────
+   Formato do B-64, campo por campo. Mesmo padrão dos outros: a lista de
+   origem fica intocada e por cima dela vivem as edições e as contas
+   criadas no ecrã.
+
+   ── O `password_hash` NÃO EXISTE AQUI ────────────────────────────────
+   Não é por não haver base de dados: é para o ecrã nunca poder contar
+   com um campo que o servidor não manda. Se a simulação devolvesse um
+   hash, alguém acabava por o pôr num ecrã, e só se descobria contra o
+   servidor real — onde ele não vem. A senha só viaja no sentido da
+   escrita, e nem para lá fica guardada: valida-se o tamanho e
+   esquece-se.
+
+   ── O `id` E O `idUtilizador` SÃO DIFERENTES DE PROPÓSITO ────────────
+   Na base são duas tabelas (`funcionario` e `utilizador`) e dois ids. Se
+   aqui fossem iguais, um ecrã que trocasse um pelo outro funcionava na
+   demonstração e falhava contra o servidor. Ficam desencontrados para o
+   erro aparecer no sítio onde custa pouco. */
+const CHAVE_FUNCIONARIOS_DEMO = 'vpa_funcionarios_demo';
+
+/* Os níveis por cargo, iguais aos do backend/src/routes/gestaoFuncionarios.js.
+   Quem entra por aqui tem de sair com um nível que o login reconheça,
+   senão criava-se uma conta que nunca consegue entrar. */
+const NIVEL_POR_CARGO_DEMO = {
+  administrador:  'administrador',
+  gerente:        'administrador',
+  cozinheiro:     'cozinha',
+  empregado_mesa: 'balcao',
+};
+const CARGOS_DEMO = Object.keys(NIVEL_POR_CARGO_DEMO);
+
+/* Os três primeiros são as contas do CONTAS_DEMO: é preciso que sejam as
+   mesmas para a regra do último administrador poder distinguir "estás a
+   desativar-te a ti" de "estás a desativar outra pessoa".
+
+   Há UM administrador ativo de propósito — é o que faz a regra morder à
+   primeira tentativa, em vez de só morder num cenário que ninguém
+   experimenta. A quarta conta está desativada, porque é a ver uma conta
+   desativada que se reativa uma. */
+const FUNCIONARIOS_DEMO = [
+  { id: 1, idUtilizador: 11, nome: 'Administração', email: 'admin@vemproabate.pt',   telefone: '912 000 001', cargo: 'administrador',  ativo: true,  data_contratacao: '2024-01-15' },
+  { id: 2, idUtilizador: 12, nome: 'Cozinha',       email: 'cozinha@vemproabate.pt', telefone: '912 000 002', cargo: 'cozinheiro',     ativo: true,  data_contratacao: '2024-03-01' },
+  { id: 3, idUtilizador: 13, nome: 'Balcão',        email: 'balcao@vemproabate.pt',  telefone: '912 000 003', cargo: 'empregado_mesa', ativo: true,  data_contratacao: '2024-06-10' },
+  { id: 4, idUtilizador: 14, nome: 'Rui Abreu',     email: 'rui@vemproabate.pt',     telefone: '912 000 004', cargo: 'empregado_mesa', ativo: false, data_contratacao: '2023-09-01' },
+];
+
+function lerFuncionariosDemo() {
+  try {
+    const g = JSON.parse(localStorage.getItem(CHAVE_FUNCIONARIOS_DEMO) || '{}');
+    return { edicoes: g.edicoes || {}, novos: g.novos || [] };
+  } catch (e) { return { edicoes: {}, novos: [] }; }
+}
+
+function gravarFuncionariosDemo(estado) {
+  try { localStorage.setItem(CHAVE_FUNCIONARIOS_DEMO, JSON.stringify(estado)); }
+  catch (e) { /* segue sem persistir */ }
+}
+
+/** funcionariosDemo — os de origem com as edições aplicadas.
+    Ordem igual à do servidor: ativos primeiro, depois por nome. */
+function funcionariosDemo() {
+  const { edicoes, novos } = lerFuncionariosDemo();
+  return FUNCIONARIOS_DEMO
+    .map(f => Object.assign({}, f, edicoes[String(f.id)] || {}))
+    .concat(novos.map(f => Object.assign({}, f)))
+    .sort((a, b) => {
+      if (a.ativo !== b.ativo) return a.ativo ? -1 : 1;
+      return String(a.nome).localeCompare(String(b.nome), 'pt');
+    });
+}
+
+function linhaFuncionarioDemo(f) {
+  return {
+    id: f.id,
+    idUtilizador: f.idUtilizador,
+    nome: f.nome,
+    email: f.email,
+    telefone: f.telefone,
+    cargo: f.cargo,
+    // Deriva do cargo — não se guarda nem se aceita à parte, senão
+    // podiam discordar e ninguém saberia qual manda.
+    nivel: NIVEL_POR_CARGO_DEMO[f.cargo] || null,
+    ativo: f.ativo !== false,
+    data_contratacao: f.data_contratacao,
+  };
+}
+
+/** Quem está com a sessão aberta, pelo email escondido no token demo. */
+function emailDaSessaoDemo() {
+  try {
+    const sessao = obterSessao();
+    if (!sessao || !sessao.token) return null;
+    const partes = String(sessao.token).split('.');
+    if (partes[0] !== 'demo' || !partes[1]) return null;
+    return atob(partes[1]).toLowerCase();
+  } catch (e) { return null; }
+}
+
+/** Administradores ativos que não são este. Ver a regra mais abaixo. */
+function outrosAdminsAtivosDemo(idExcluido) {
+  return funcionariosDemo().filter(f =>
+    f.id !== idExcluido &&
+    f.ativo !== false &&
+    NIVEL_POR_CARGO_DEMO[f.cargo] === 'administrador'
+  ).length;
+}
+
+function validarFuncionarioDemo(corpo, completo) {
+  const out = {};
+  const tem = c => Object.prototype.hasOwnProperty.call(corpo, c);
+
+  if (completo || tem('nome')) {
+    const nome = String(corpo.nome || '').trim();
+    if (nome.length < 2) throw erroSimulado('Falta o nome.', 400);
+    if (nome.length > 120) throw erroSimulado('O nome não pode passar dos 120 caracteres.', 400);
+    out.nome = nome;
+  }
+
+  if (completo || tem('email')) {
+    const email = String(corpo.email || '').trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw erroSimulado('Email inválido.', 400);
+    out.email = email;
+  }
+
+  if (completo || tem('telefone')) {
+    const tel = String(corpo.telefone || '').trim();
+    if (tel.length < 6) throw erroSimulado('Falta o telefone.', 400);
+    out.telefone = tel;
+  }
+
+  if (completo || tem('cargo')) {
+    const cargo = String(corpo.cargo || '').trim();
+    if (!CARGOS_DEMO.includes(cargo)) {
+      throw erroSimulado(`O cargo tem de ser um de: ${CARGOS_DEMO.join(', ')}.`, 400);
+    }
+    out.cargo = cargo;
+  }
+
+  /* A senha é obrigatória a criar e opcional a editar — só muda a senha
+     quem mandar uma senha. O mínimo de 10 é o do servidor; ter o mesmo
+     número dos dois lados evita o ecrã aceitar o que o servidor recusa. */
+  if (completo || tem('password')) {
+    const pw = String(corpo.password || '');
+    if (pw.length < 10) throw erroSimulado('A palavra-passe tem de ter pelo menos 10 caracteres.', 400);
+    if (pw.length > 200) throw erroSimulado('Palavra-passe demasiado longa.', 400);
+    // Validada e esquecida. Não se guarda em sítio nenhum.
+  }
+
+  if (tem('ativo')) out.ativo = corpo.ativo !== false;
+
+  if (tem('data_contratacao')) {
+    const d = String(corpo.data_contratacao || '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) throw erroSimulado('Data no formato AAAA-MM-DD.', 400);
+    out.data_contratacao = d;
+  }
+
+  /* O `nivel` deriva do cargo. Aceitá-lo aqui deixava-o discordar do
+     cargo, e depois nenhum dos dois manda. */
+  if (tem('nivel')) {
+    throw erroSimulado('O nível vem do cargo — não se manda à parte.', 400);
+  }
+
+  return out;
+}
+
 /* Uma linha do `gestao/produtos` (docs/API.md 4.9). As quantidades
    passam pelo stockAtualDemo para o catálogo (F-49) e o ecrã de stock
    (F-52) nunca mostrarem números diferentes do mesmo produto. */
@@ -879,6 +1117,18 @@ async function simularEndpoint(endpoint, opcoes) {
   const [caminho, queryString] = endpoint.split('?');
   const query = new URLSearchParams(queryString || '');
 
+  /* Ver a nota da armadilha do recurso meio ligado, lá em cima. */
+  const recursoReal = escritaFingidaSobreRecursoReal(caminho, metodo);
+  if (recursoReal) {
+    console.warn(
+      `[api] ${metodo} ${caminho} recusado: o "${recursoReal}" já é servido a sério, `
+      + 'mas este caminho ainda não. Simulá-lo dizia "gravado" sem gravar nada.'
+    );
+    throw erroSimulado(
+      `O servidor ainda não tem o "${caminho}". Enquanto não tiver, esta alteração `
+      + 'não fica gravada — por isso não a damos por feita.', 501);
+  }
+
   /* ── health ────────────────────────────────────────────────────── */
   if (caminho === 'health') return { ok: true, ts: new Date().toISOString() };
 
@@ -1072,14 +1322,24 @@ async function simularEndpoint(endpoint, opcoes) {
     }
 
     /* Desativar uma categoria com produtos deixaria os pratos numa
-       gaveta que já não aparece — some da ementa sem ninguém ter
-       decidido isso prato a prato. Recusa-se, e diz-se quantos são. */
-    if (campos.ativo === false) {
+       gaveta que já não aparece — somem da ementa sem ninguém ter
+       decidido isso prato a prato. Recusa-se À PRIMEIRA e diz-se quantos
+       são; quem quiser mesmo repete com `confirmar: true`.
+
+       Isto era diferente até 10/09: aqui recusava-se sempre, e o B-62
+       trouxe a porta de saída. Uma simulação mais restritiva que o
+       servidor é tão má como uma mais permissiva — nesta, o ecrã que se
+       constrói contra ela nunca aprende o caminho que existe mesmo, e a
+       funcionalidade fica lá enterrada sem ninguém lhe chegar. */
+    if (campos.ativo === false && atual.ativo !== false) {
       const quantos = produtosNaCategoria(atual.nome).length;
-      if (quantos > 0) {
-        throw erroSimulado(
-          `Esta categoria tem ${quantos} produto${quantos === 1 ? '' : 's'}. ` +
-          'Move-os para outra categoria antes de a desativar.', 409);
+      if (quantos > 0 && (opcoes.body || {}).confirmar !== true) {
+        const erro = erroSimulado(
+          `A categoria "${atual.nome}" tem ${quantos} produto${quantos === 1 ? '' : 's'} ` +
+          'ativo(s). Desligá-la tira-os todos da ementa do cliente.', 409);
+        erro.produtos = quantos;
+        erro.comoConfirmar = 'Repete o pedido com "confirmar": true.';
+        throw erro;
       }
     }
 
@@ -1132,6 +1392,113 @@ async function simularEndpoint(endpoint, opcoes) {
     });
     gravarCategoriasDemo(estado);
     return categoriasDemo().map(c => linhaCategoriaDemo(c));
+  }
+
+  /* ── gestao/funcionarios — F-53 / B-64 ───────────────────────────
+     Nível administrador, e só. Um ecrã que cria contas e muda cargos é
+     o ecrã que decide quem entra onde: se a cozinha lhe chegasse,
+     bastava mudar o próprio cargo para ter tudo.
+
+     Traz os desativados também. É a ver uma conta desativada que se
+     reativa uma — esconder-los deixava o "readmitir alguém" sem ecrã. */
+  if (caminho === 'gestao/funcionarios' && metodo === 'GET') {
+    const s = obterSessao();
+    if (!s) throw erroSimulado('Sessão inválida ou expirada.', 401);
+    if (s.nivel !== 'administrador') {
+      throw erroSimulado('Só a administração vê as contas dos funcionários.', 403);
+    }
+    return funcionariosDemo().map(f => linhaFuncionarioDemo(f));
+  }
+
+  if (caminho === 'gestao/funcionarios' && metodo === 'POST') {
+    const s = obterSessao();
+    if (!s || s.nivel !== 'administrador') {
+      throw erroSimulado('Só a administração cria contas.', 403);
+    }
+    const campos = validarFuncionarioDemo(opcoes.body || {}, true);
+    const todos = funcionariosDemo();
+
+    /* O email é a credencial de entrada. Dois iguais e o login deixa de
+       saber quem é quem — e quem escolhe qual dos dois entra é a ordem
+       da consulta, que é dizer: ninguém. */
+    if (todos.some(f => String(f.email).toLowerCase() === campos.email)) {
+      throw erroSimulado('Já existe uma conta com esse email.', 409);
+    }
+
+    const estado = lerFuncionariosDemo();
+    const proximoId = Math.max(0, ...todos.map(f => Number(f.id) || 0)) + 1;
+    const novo = {
+      id: proximoId,
+      // Dois ids diferentes, como na base. Ver a nota no FUNCIONARIOS_DEMO.
+      idUtilizador: Math.max(0, ...todos.map(f => Number(f.idUtilizador) || 0)) + 1,
+      ativo: true,
+      data_contratacao: new Date().toISOString().slice(0, 10),
+      ...campos,
+    };
+    estado.novos.push(novo);
+    gravarFuncionariosDemo(estado);
+    return linhaFuncionarioDemo(novo);
+  }
+
+  const funcMatch = caminho.match(/^gestao\/funcionarios\/(\d+)$/);
+  if (funcMatch && metodo === 'PATCH') {
+    const s = obterSessao();
+    if (!s || s.nivel !== 'administrador') {
+      throw erroSimulado('Só a administração muda contas.', 403);
+    }
+
+    const id = Number(funcMatch[1]);
+    const atual = funcionariosDemo().find(f => f.id === id);
+    if (!atual) throw erroSimulado('Esse funcionário não existe.', 404);
+
+    const campos = validarFuncionarioDemo(opcoes.body || {}, false);
+
+    if (campos.email && funcionariosDemo().some(
+      f => f.id !== id && String(f.email).toLowerCase() === campos.email)) {
+      throw erroSimulado('Já existe uma conta com esse email.', 409);
+    }
+
+    /* ── A REGRA DO ÚLTIMO ADMINISTRADOR (B-64) ────────────────────
+       Desativar o último administrador — ou baixar-lhe o cargo — fecha
+       a porta da aplicação de gestão por dentro. Não há ecrã para
+       desfazer, porque o ecrã que desfazia é este, e este acabou de
+       ficar inacessível: a partir daí só se resolve com SQL à mão.
+
+       A conta que faz o pedido não está isenta. Ser quem manda não muda
+       o resultado — muda só a frase, porque quem se desativa a si
+       próprio merece ouvir o que lhe vai acontecer, não uma nota sobre
+       uma terceira pessoa.
+
+       Regra do João, e não estava pedida. Vale a pena dizer isso: é
+       exatamente o género de coisa que só aparece quando quem constrói
+       o servidor pensa no ecrã, em vez de entregar os endpoints e
+       esperar que alguém se lembre. */
+    const vaiDesativar = campos.ativo === false && atual.ativo !== false;
+    const vaiTirarAdmin = campos.cargo !== undefined
+      && NIVEL_POR_CARGO_DEMO[atual.cargo] === 'administrador'
+      && NIVEL_POR_CARGO_DEMO[campos.cargo] !== 'administrador';
+
+    if ((vaiDesativar || vaiTirarAdmin)
+        && NIVEL_POR_CARGO_DEMO[atual.cargo] === 'administrador'
+        && outrosAdminsAtivosDemo(id) === 0) {
+      const proprio = String(atual.email).toLowerCase() === emailDaSessaoDemo();
+      const erro = erroSimulado(proprio
+        ? 'És o único administrador ativo. Se te desativares, ninguém consegue '
+          + 'entrar na aplicação de gestão — nem tu.'
+        : `"${atual.nome}" é o único administrador ativo. Promove outra pessoa `
+          + 'a administrador antes de o desativar.', 409);
+      erro.ultimoAdmin = true;
+      erro.proprio = proprio;
+      throw erro;
+    }
+
+    const estado = lerFuncionariosDemo();
+    const iNovo = estado.novos.findIndex(f => f.id === id);
+    if (iNovo !== -1) estado.novos[iNovo] = { ...estado.novos[iNovo], ...campos };
+    else estado.edicoes[String(id)] = { ...(estado.edicoes[String(id)] || {}), ...campos };
+    gravarFuncionariosDemo(estado);
+
+    return linhaFuncionarioDemo(funcionariosDemo().find(f => f.id === id));
   }
 
   /* ── stock (docs/CONTEXTO.md §6.3, regra 21 — F-62, 04/09) ───────
