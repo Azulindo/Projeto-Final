@@ -196,7 +196,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ⬜ | B-71 | `services/email.js` com Nodemailer + Brevo/Resend | 1 h 30 | B-16 |
 | ⬜ | B-72 | Email de novo pedido para o restaurante + registo em `NOTIFICACAO` | 1 h | B-71 |
 | ⬜ | B-73 | 🔁 *(recuperação)* `GET /api/gestao/reservas` — lista só de leitura | 1 h 30 | B-48 |
-| ⬜ | B-74 | `PUT /api/gestao/categorias/ordem` — *aberta pelo Guilherme a 10/09, ao ligar a F-51. O B-62 trouxe o GET, o POST e o PATCH; **faltou o reordenar**, e é a `ordem` que dá sentido a haver categorias como entidade em vez de um texto dentro do produto. Formato em `docs/API.md` 4.11: recebe a **lista completa de ids** pela ordem nova (`{"ids":[1,2,4,3]}`) e devolve a lista já ordenada. A lista inteira e não "sobe uma posição": com pedidos relativos, duas pessoas a mexer ao mesmo tempo deixam buracos e posições repetidas. O `PATCH /:id` já aceita `ordem` e dá para o fazer com N pedidos, mas se o terceiro de cinco falhar a lista fica meio ordenada e ninguém sabe em que estado — um pedido, ou nenhum. **Não é urgente e não trava nada:** as setas do ecrã falham com uma mensagem e a lista volta atrás, em vez de fingirem que gravaram (ver a nota do X-12)* | 45 min | B-62 |
+| ✅ | B-74 | `PUT /api/gestao/categorias/ordem` — *feito 10/09, formato da secção 4.11 tal como o Guilherme o especificou: recebe a lista completa de ids e devolve a lista já ordenada, tudo numa transacção. Recusa com **409** se a lista não trouxer todas as categorias exactamente uma vez, e diz quais faltam — normalmente isso quer dizer que o ecrã estava a ver uma lista antiga, e reordenar por cima seria gravar uma decisão tomada sobre outra realidade. `SELECT ... FOR UPDATE` nas linhas, para duas pessoas a reordenar ao mesmo tempo não entrelaçarem as escritas e o resultado não ser nenhuma das duas ordens. **Fechei também a outra porta:** o `PATCH /:id` deixou de aceitar `ordem` e dá 400 a apontar este endereço. Duas portas para o mesmo facto, e esta era a errada — cada `PATCH` só sabe da sua categoria e nada impedia duas com `ordem = 2`; uma sequência só é válida vista por inteiro. É o mesmo raciocínio do `quantidade_atual` no produto. **Testado:** ementa invertida com `[4,3,2,1]` e a sequência a sair 1-2-3-4 sem buracos, `[4,3]` recusado com `emFalta: [1,2]`, e a ordem reposta* | 45 min | B-62 |
 
 ---
 
@@ -488,12 +488,12 @@ refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 74 | 45 | — | 29 | ≈ 36 h 15 |
+| 🔵 João (B-) | 74 | 46 | — | 28 | ≈ 35 h 30 |
 | 🟠 Guilherme (F-) | 68 | 46 | 19 | 3 | ≈ 4 h 15 |
 | 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
 | 🐞 Correções (X-) | 12 | 11 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 82 h 30.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
+**Total por fazer: ≈ 81 h 45.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
 (falta o Guilherme ler o `CONTEXTO.md`) e a X-08 (não se conseguiu reproduzir). O B-40 saiu
 desta lista a 10/09 — o B-35 fechou e o take away passou a estar testado. O B-65 já tinha
 saído: os QR Codes estão gerados.
