@@ -19,7 +19,16 @@ const fs = require('fs');
 // As capturas ficam fora do repositório (ver .gitignore).
 fs.mkdirSync(path.join(__dirname, '_capturas'), { recursive: true });
 
-const URL = 'file://' + path.resolve(__dirname, '../cliente/reservas.html');
+/* O `?simular=1` passou a ser obrigatório com o C-09: a ementa e as
+   horas deixaram de estar escritas no ficheiro e vêm da API. Sem a
+   bandeira, o `chamarAPI` tenta o `localhost:3000` (regra do C-26 para
+   páginas abertas de `file://`), não encontra ninguém, e o ecrã segue
+   pelo caminho sem pré-escolha — que é o comportamento certo, mas não
+   é o que este teste quer medir.
+
+   Foi assim que este teste começou a falhar em seis verificações:
+   estava a exercitar o plano B em vez do fluxo. */
+const URL = 'file://' + path.resolve(__dirname, '../cliente/reservas.html') + '?simular=1';
 
 const NOME = 'Guilherme Teste';
 const TEL  = '912345678';

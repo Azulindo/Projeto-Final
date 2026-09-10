@@ -67,61 +67,120 @@ document.addEventListener('DOMContentLoaded', () => {
       menuCategorias: [],   // Lista de categorias a percorrer sequencialmente
       catIndex: 0,          // Índice da categoria atual no fluxo sequencial
       data: null,           // Objeto Date da data escolhida
-      dataStr: '',          // Data formatada 'DD/MM/AAAA'
+      dataStr: '',          // Data formatada 'DD/MM/AAAA', para mostrar
+      dataISO: '',          // A mesma data em 'AAAA-MM-DD', para a API
+      horarios: [],         // Slots do servidor: { hora, livres, disponivel }
       hora: '',             // Hora escolhida ('20:00')
       nome: '',             // Nome completo do cliente
       telefone: '',         // Número de telemóvel
-      codigo: '',           // Código da reserva, preenchido no fim (F-37)
+      codigo: '',           // Código da reserva — vem do servidor (C-09)
+      valorEstimado: null,  // Também do servidor, quando há pré-escolha
       processing: false,    // Bloqueio anti-spam: true quando o bot está a processar
     };
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     SECÇÃO 3 — DADOS DO MENU (EMENTA REAL)
-     Estrutura com categorias e pratos. Cada item tem:
-       id    → identificador único para o carrinho
-       nome  → nome do prato
-       desc  → descrição curta
-       preco → preço em texto
-  ═══════════════════════════════════════════════════════════════ */
-  const MENU = {
-    '🥗 Entradas': [
-      { id: 'en1', nome: 'Abatata Frita',    desc: 'Batatas rústicas com tempero da casa e maionese de alho', preco: '3,90€' },
-      { id: 'en2', nome: 'Vem Pro Abacate',  desc: 'Entrada com abacate, guacamole ou tosta',                 preco: '5,80€' },
-      { id: 'en3', nome: 'Vem p\'ro Alho',   desc: 'Pão de alho no forno',                                    preco: '3,20€' },
-      { id: 'en4', nome: 'Abate-Boca',       desc: 'Mini croquetes de novilho',                               preco: '4,50€' },
-    ],
-    '🥩 Pratos Principais': [
-      { id: 'pp1', nome: 'Borrego Abatido',        desc: 'Borrego assado com batata, alecrim, alho e vinho branco', preco: '15,50€' },
-      { id: 'pp2', nome: 'Francesinha em K.O.',    desc: 'Bife, enchidos, queijo e molho da casa com batata e ovo', preco: '12,20€' },
-      { id: 'pp3', nome: 'Abate Misto',            desc: 'Picanha, chouriço e frango na brasa com arroz e batata',  preco: '16,20€' },
-      { id: 'pp4', nome: 'Prega-me Isto',          desc: 'Bife dos Açores com batata frita',                        preco: '16,90€' },
-      { id: 'pp5', nome: 'Picanha na Brasa Negra', desc: 'Picanha grelhada com arroz e batata frita',               preco: '16,00€' },
-      { id: 'pp6', nome: 'Tábua Rústica do Abate', desc: 'Carnes mistas com migas e batata a murro',                preco: '17,80€' },
-    ],
-    '🍺 Bebidas': [
-      { id: 'be1a', nome: 'Cerveja (Fino/Pressão)', desc: 'Fino ou pressão',                    preco: '1,70€' },
-      { id: 'be1b', nome: 'Cerveja (Caneca)',        desc: 'Caneca de cerveja',                  preco: '2,80€' },
-      { id: 'be2',  nome: 'Panaché',                 desc: 'Cerveja com gasosa',                 preco: '2,20€' },
-      { id: 'be3a', nome: 'Sangria (Copo)',           desc: 'Branca, tinta ou espumante — copo',  preco: '3,20€' },
-      { id: 'be3b', nome: 'Sangria (Jarro)',          desc: 'Branca, tinta ou espumante — jarro', preco: '12,00€' },
-      { id: 'be4',  nome: 'Coca-Cola',                desc: 'Normal ou zero',                     preco: '1,90€' },
-      { id: 'be5',  nome: 'Ice Tea',                  desc: 'Pêssego, limão ou manga',            preco: '1,90€' },
-      { id: 'be6',  nome: 'Sumos Naturais',           desc: 'Laranja ou mistura de frutos',       preco: '3,00€' },
-      { id: 'be7a', nome: 'Água (Mineral)',            desc: 'Água mineral sem gás',               preco: '1,30€' },
-      { id: 'be7b', nome: 'Água (Com Gás)',            desc: 'Água com gás',                       preco: '1,60€' },
-      { id: 'be8',  nome: 'Abate Pingado',             desc: 'Café ou descafeinado',               preco: '1,00€' },
-    ],
-    '🍮 Sobremesas': [
-      { id: 'sb1', nome: 'Abategatoue',        desc: 'Petit gâteau com gelado e chocolate',     preco: '5,20€' },
-      { id: 'sb2', nome: 'Baba do Pastor',      desc: 'Baba de camelo com bolacha',              preco: '3,90€' },
-      { id: 'sb3', nome: 'Cheesecake da Casa',  desc: 'Cheesecake com frutos vermelhos',         preco: '4,60€' },
-      { id: 'sb4', nome: 'Taça Gelada da Casa', desc: 'Gelados, chantilly e chocolate',          preco: '4,20€' },
-    ],
+     SECÇÃO 3 — A EMENTA, VINDA DA API (C-09)
+     ═══════════════════════════════════════════════════════════════
+     ── AQUI ESTAVAM 25 PRODUTOS ESCRITOS À MÃO ────────────────────
+     Nome, descrição e preço de cada um, copiados da ementa. Estiveram
+     certos até 10/09 — comparei os 25 com o `seed.sql` e batiam todos.
+     Isso não era garantia, era sorte com data de validade:
+
+       · até ao B-61, um preço só mudava editando o `seed.sql`, e quem
+         editasse o seed provavelmente lembrava-se deste ficheiro;
+       · desde o B-61, um preço muda no ecrã de Produtos, por uma
+         pessoa que não tem razão nenhuma para saber que estes 25
+         existem.
+
+     O separador foi instalado na manhã de 10/09. Os 25 batiam porque
+     nada os tinha separado ainda — não porque houvesse algo a
+     mantê-los juntos. É a mesma forma da ordem da ementa escrita à mão
+     no endpoint das categorias (apanhada na F-51) e do stock lido de
+     dois sítios (fechado no B-61): duas cópias, uma corrige-se, a
+     outra fica.
+
+     ── E OS IDs ERAM FALSOS ───────────────────────────────────────
+     Havia uma segunda razão, mais dura: os ids eram `en1`, `pp3`,
+     `be7a` — inventados aqui. O `POST /reservas` grava `ITEM_RESERVA`
+     com o `produtoId` REAL da base, portanto uma pré-seleção feita com
+     estes ids não podia sequer ser enviada. O ecrã só funcionava
+     enquanto a reserva não saísse do browser.
+
+     Agora vem tudo do `GET /produtos` e do `GET /categorias`: os
+     mesmos endpoints que a `menu.html`, a `mesa.html` e a
+     `takeaway.html` usam. Sem lista de reserva escrita à mão — com
+     `?simular=1` o `api.js` devolve o catálogo de demonstração, que é
+     a mesma fonte única, e é isso que cobre o plano B sem rede.
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* Emoji de cada categoria, para o cabeçalho do passo. É a única
+     coisa que fica escrita aqui, e é de propósito: um emoji não é um
+     dado da ementa, é decoração deste ecrã. Categoria que apareça na
+     API e não esteja aqui leva 🍽️ e funciona igual. */
+  const EMOJI_CATEGORIA = {
+    'Entradas': '🥗', 'Pratos Principais': '🥩', 'Bebidas': '🍺', 'Sobremesas': '🍮',
   };
 
-  /* Ordem das categorias no fluxo sequencial */
-  const CATEGORIAS_SEQUENCIAIS = Object.keys(MENU);
+  /* Preenchidos pelo `carregarEmenta()`, no arranque. Vazios até lá —
+     e o fluxo da pré-seleção não abre antes de estarem prontos. */
+  let MENU = {};
+  let CATEGORIAS_SEQUENCIAIS = [];
+  let ementaCarregada = false;
+
+  /** Formata como a ementa sempre mostrou: "15,50€". */
+  function precoTexto(valor) {
+    return Number(valor).toFixed(2).replace('.', ',') + '€';
+  }
+
+  /**
+   * carregarEmenta — Traz os produtos e as categorias da API.
+   *
+   * A ordem das categorias é a do servidor (o campo `ordem`, que o ecrã
+   * de gestão edita) e não uma lista daqui — foi exatamente esse o erro
+   * apanhado na F-51, em que reordenar na gestão não mudava nada no
+   * site porque o cliente tinha a ordem escrita à mão.
+   *
+   * O `id` de cada prato passa a ser o `id_produto` da base. Isso faz
+   * com que o `state.carrinho` fique com as chaves certas para o
+   * `POST /reservas` sem nenhuma tradução pelo meio.
+   */
+  async function carregarEmenta() {
+    if (ementaCarregada) return;
+
+    const [produtos, categorias] = await Promise.all([
+      chamarAPI('produtos'),
+      chamarAPI('categorias').catch(function () { return []; }),
+    ]);
+
+    const activos = (Array.isArray(produtos) ? produtos : [])
+      .filter(p => p.ativo !== false && p.disponivel !== false);
+
+    if (!activos.length) throw new Error('A ementa veio vazia.');
+
+    const comProdutos = new Set(activos.map(p => p.categoria));
+    const ordenadas = Array.isArray(categorias) && categorias.length
+      ? categorias.filter(c => comProdutos.has(c.nome)).map(c => c.nome)
+      : [...comProdutos];
+
+    MENU = {};
+    ordenadas.forEach(function (nome) {
+      const rotulo = `${EMOJI_CATEGORIA[nome] || '🍽️'} ${nome}`;
+      MENU[rotulo] = activos
+        .filter(p => p.categoria === nome)
+        .map(p => ({
+          id: p.id,                       // o id_produto REAL
+          nome: p.nome,
+          desc: p.descricao || '',
+          preco: precoTexto(p.preco),     // texto, como o resto do ecrã espera
+          precoNum: Number(p.preco),
+        }));
+    });
+
+    CATEGORIAS_SEQUENCIAIS = Object.keys(MENU);
+    ementaCarregada = true;
+  }
+
 
   /* Horários disponíveis por turno */
   const HORARIOS = {
@@ -526,6 +585,29 @@ document.addEventListener('DOMContentLoaded', () => {
    * Inicia o fluxo sequencial por categorias.
    */
   async function ramoMenu() {
+    /* A ementa vem da API (C-09) e pode demorar: o Render adormece ao
+       fim de 15 minutos e o pedido que o acorda leva quase um minuto.
+       Diz-se que se está a buscar, em vez de deixar o ecrã parado —
+       é a mesma decisão da F-26 na `menu.html`. */
+    if (!ementaCarregada) {
+      await botReply('Vou buscar a ementa… 📖', 400);
+      try {
+        await carregarEmenta();
+      } catch (erro) {
+        /* Sem ementa não há pré-seleção possível: os preços e os ids
+           dos produtos vêm todos de lá. Em vez de mostrar uma lista
+           vazia, manda-se a pessoa pelo caminho que não precisa dela —
+           escolher à mesa — que é uma reserva perfeitamente válida. */
+        await botReply(
+          '😕 Não consegui abrir a ementa agora. Fazemos a reserva sem pré-escolha — '
+          + 'escolhem à mesa, que é como a maioria faz.',
+          700
+        );
+        state.opcaoMenu = 'restaurante';
+        return stepCalendario();
+      }
+    }
+
     // Inicializa as categorias ANTES da mensagem: o texto anuncia a
     // primeira categoria e tem de dizer a verdadeira. (Antes estava
     // escrito "Pratos Principais" à mão e mostrava as Entradas.)
@@ -1146,6 +1228,13 @@ document.addEventListener('DOMContentLoaded', () => {
           const dd = String(d).padStart(2, '0');
           const mm = String(month + 1).padStart(2, '0');
           state.dataStr = `${dd}/${mm}/${year}`;
+          /* A API pede AAAA-MM-DD (C-09). Constrói-se dos mesmos
+             números e NÃO com `toISOString()`: esse converte para UTC,
+             e uma data escolhida à noite em Portugal no verão saía o dia
+             anterior. É o mesmo género de erro do fuso que o João
+             encontrou no back-end — só que aqui bastava um dia de
+             diferença para a reserva ir para a véspera. */
+          state.dataISO = `${year}-${mm}-${dd}`;
 
           // Atualiza o visual de seleção imediatamente
           cal.querySelectorAll('.cal-day--selected')
@@ -1207,6 +1296,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
     clearQR();
 
+    /* ── AS HORAS VÊM DO SERVIDOR (C-09) ─────────────────────────
+       Antes eram duas listas escritas à mão aqui, e todas as horas
+       pareciam livres sempre. Uma pessoa escolhia as 20:00 de um sábado
+       cheio, dava o nome e o telemóvel, e só levava a recusa no fim —
+       depois de escrever tudo.
+
+       O `GET /reservas/horarios?data=` traz `livres` e `disponivel` por
+       slot, e as cheias aparecem cinzentas e não se podem carregar. A
+       recusa passa a estar no sítio onde a decisão se toma.
+
+       Se a consulta falhar, mostram-se as horas todas: mais vale
+       arriscar uma recusa no fim do que impedir a reserva por o
+       servidor estar a acordar. */
+    let slots = [];
+    try {
+      slots = await chamarAPI(`reservas/horarios?data=${encodeURIComponent(state.dataISO)}`);
+    } catch (erro) {
+      slots = [];
+    }
+    state.horarios = Array.isArray(slots) ? slots : [];
+
+    if (state.horarios.length) {
+      const porPeriodo = { almoco: [], jantar: [] };
+      state.horarios.forEach(function (s) {
+        const p = /almo/i.test(s.periodo || '') ? 'almoco' : 'jantar';
+        porPeriodo[p].push(s);
+      });
+
+      const cheios = state.horarios.filter(s => !s.disponivel).length;
+      if (cheios && cheios < state.horarios.length) {
+        await botReply(
+          `Há ${cheios === 1 ? 'uma hora' : `${cheios} horas`} já sem lugares nesse dia — `
+          + 'aparecem a cinzento.', 500);
+      } else if (cheios && cheios === state.horarios.length) {
+        await botReply(
+          '😕 Esse dia está com tudo cheio. Escolhe outro no calendário, '
+          + 'ou telefona-nos que a gente vê o que se pode fazer.', 700);
+        return stepCalendario();
+      }
+
+      desenharTurno('🌞 Almoço', porPeriodo.almoco);
+      const sep = document.createElement('div');
+      sep.className = 'qr-turno-sep';
+      qrContainer.appendChild(sep);
+      desenharTurno('🌙 Jantar', porPeriodo.jantar);
+
+      unlockUI('Ou escreve o horário (ex: 20:30)…');
+      return;
+    }
+
+    /* Sem resposta do servidor: as listas de sempre, todas abertas. */
+
     // ── Label do turno de Almoço ────────────────────────────────
     const almLabel = document.createElement('span');
     almLabel.className = 'qr-turno-label';
@@ -1236,15 +1377,49 @@ document.addEventListener('DOMContentLoaded', () => {
    *
    * @param {string} hora - Horário no formato 'HH:MM'.
    */
-  function appendHorarioBtn(hora) {
+  function appendHorarioBtn(hora, slot) {
     const btn = document.createElement('button');
     btn.className = 'qr-btn';
     btn.textContent = hora;
+
+    /* Uma hora cheia fica visível mas desligada, em vez de desaparecer.
+       Desaparecer faz a lista mudar de tamanho entre dias e não diz
+       nada; a cinzento diz "existe, mas não hoje" — que é a
+       informação. */
+    if (slot && !slot.disponivel) {
+      btn.disabled = true;
+      btn.classList.add('qr-btn--cheio');
+      btn.title = 'Sem lugares a esta hora';
+      btn.setAttribute('aria-label', `${hora} — sem lugares`);
+      qrContainer.appendChild(btn);
+      return;
+    }
+
+    /* Poucos lugares: diz-se o número. Quem vai em grupo de seis
+       precisa de saber que sobram dois antes de escrever o nome. */
+    if (slot && slot.livres > 0 && slot.livres <= 4) {
+      btn.textContent = `${hora} · ${slot.livres}`;
+      btn.title = `${slot.livres} ${slot.livres === 1 ? 'lugar' : 'lugares'} livres`;
+      btn.setAttribute('aria-label',
+        `${hora}, ${slot.livres} ${slot.livres === 1 ? 'lugar livre' : 'lugares livres'}`);
+      btn.classList.add('qr-btn--poucos');
+    }
+
     btn.addEventListener('click', () => {
       if (state.processing) return;
       selectHora(hora);
     });
     qrContainer.appendChild(btn);
+  }
+
+  /** desenharTurno — o rótulo do turno e os seus slots. */
+  function desenharTurno(rotulo, slots) {
+    if (!slots.length) return;
+    const label = document.createElement('span');
+    label.className = 'qr-turno-label';
+    label.textContent = rotulo;
+    qrContainer.appendChild(label);
+    slots.forEach(s => appendHorarioBtn(s.hora, s));
   }
 
   /**
@@ -1561,13 +1736,64 @@ document.addEventListener('DOMContentLoaded', () => {
   async function confirmarReserva() {
     state.step = 'done';
 
-    // Gera o código que o cliente vai guardar (F-37).
-    // Quando o POST /api/reservas existir, este código passa a vir na
-    // resposta do servidor — ver docs/API.md secção 4.5.
-    const codigo = gerarCodigoReserva();
-    state.codigo = codigo;
+    /* ── A RESERVA VAI PARA O SERVIDOR (C-09) ────────────────────
+       Até 10/09 isto gerava um código no browser e guardava a reserva
+       no `localStorage`. Funcionava para mostrar o fluxo, mas:
 
-    // Persiste a reserva no localStorage para consulta futura
+         · o código não existia em sítio nenhum senão naquele browser,
+           portanto o restaurante não o podia confirmar nem encontrar;
+         · duas pessoas em dois telemóveis podiam reservar a mesma hora
+           num sábado cheio, e as duas viam "confirmada";
+         · limpar os dados do browser apagava a reserva.
+
+       Agora o `POST /reservas` grava, e o **código vem na resposta**.
+       Continua a haver uma cópia local, mas passou a ser só uma
+       comodidade para a pessoa reencontrar o código no mesmo
+       telemóvel — a verdade está no servidor, e é o
+       `GET /reservas/:codigo` que a lê. */
+    const corpo = {
+      nome: state.nome,
+      telemovel: state.telefone,
+      pessoas: Number(state.pessoas),
+      data: state.dataISO,
+      hora: state.hora,
+      modo_ementa: state.opcaoMenu === 'menu' ? 'pre_selecionada' : 'no_restaurante',
+    };
+    if (state.observacoes) corpo.observacoes = state.observacoes;
+
+    /* Os itens levam o `produtoId` REAL, que agora existe porque a
+       ementa vem da API. Com os ids inventados de antes (`en1`, `pp3`)
+       isto não podia sequer ser enviado. */
+    const escolhidos = Object.entries(state.carrinho)
+      .filter(([, i]) => i.qty > 0)
+      .map(([id, i]) => ({ produtoId: Number(id), quantidade: i.qty }));
+    if (escolhidos.length) corpo.itens = escolhidos;
+
+    await botReply('A guardar a reserva… ⏳', 400);
+
+    let reserva;
+    try {
+      const r = await chamarAPI('reservas', { method: 'POST', body: corpo });
+      reserva = r.reserva || {};
+    } catch (erro) {
+      /* Uma reserva recusada NÃO pode dizer "confirmada". O caso mais
+         provável é a hora ter enchido entre a escolha e o envio — e aí
+         o certo é voltar às horas, não deixar a pessoa a olhar para um
+         erro no fim de ter escrito tudo. O que ela já preencheu fica. */
+      state.step = 'hora';
+      await botReply(
+        `😕 Não deu para guardar: ${escaparHTML(erro && erro.message ? erro.message : 'erro no servidor')}`,
+        700
+      );
+      await botReply('Vamos tentar outra hora — o resto já está preenchido.', 600);
+      return stepHorario();
+    }
+
+    const codigo = reserva.codigo || gerarCodigoReserva();
+    state.codigo = codigo;
+    state.valorEstimado = reserva.valorEstimado;
+
+    /* Cópia local, só para reencontrar o código neste telemóvel. */
     try {
       const reservas = JSON.parse(localStorage.getItem('vpa_reservas') || '[]');
       reservas.push({
@@ -1587,7 +1813,11 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn('Erro ao guardar reserva localmente:', e);
     }
 
-    await botReply('🎉 <strong>Reserva confirmada com sucesso!</strong>', 700);
+    /* "Registada" e não "confirmada": a reserva fica em `pendente` e é
+       o restaurante que confirma, por telefone. Dizer "confirmada" era
+       prometer uma coisa que ainda não aconteceu — e o estado que o
+       servidor devolve diz exatamente isso. */
+    await botReply('🎉 <strong>Reserva registada!</strong>', 700);
 
     const primeiroNome = state.nome.split(' ')[0];
     await botReply(
@@ -1596,6 +1826,17 @@ document.addEventListener('DOMContentLoaded', () => {
       `Confirmaremos a reserva pelo telemóvel <strong>${escaparHTML(state.telefone)}</strong>.`,
       900
     );
+
+    /* O valor estimado vem do SERVIDOR (a metade da B-52 que estava
+       feita e que eu calculava aqui a partir de preços escritos à mão).
+       Mostra-se o que ele diz, não o que este ecrã soma. */
+    if (state.valorEstimado != null && Number(state.valorEstimado) > 0) {
+      await botReply(
+        `Pela pré-escolha, o valor estimado é <strong>${formatarPreco(Number(state.valorEstimado))}</strong>. `
+        + 'É uma estimativa — o que conta é a conta no fim.',
+        700
+      );
+    }
 
     await pause(300);
     renderCodigoReserva(codigo);
