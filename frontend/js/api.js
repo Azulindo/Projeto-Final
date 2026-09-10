@@ -50,7 +50,7 @@
  *
  * As categorias e os funcionários seguiram a 10/09, com o B-62 e o B-64.
  * Falta ligar do lado da gestão: só o `gestao/categorias/ordem`, que o
- * servidor ainda não tem — ver a nota dentro do ENDPOINTS_REAIS e a
+ * ainda não está ligado — ver a nota dentro do ENDPOINTS_REAIS e a
  * guarda `escritaFingidaSobreRecursoReal`, que faz o reordenar falhar
  * às claras em vez de fingir que gravou.
  *
@@ -189,6 +189,16 @@ const ENDPOINTS_REAIS = [
      de ninguém: quem sabe o número vê o estado, não os contactos. */
   /^pedidos\/takeaway$/,             // POST /api/pedidos/takeaway
   /^pedidos\/takeaway\/[A-Z0-9-]+$/, // GET  /api/pedidos/takeaway/:numero
+
+  /* Reservas — Sprint 3 do back-end, fechado a 10/09. Os três sem
+     login, e o CÓDIGO da reserva faz de credencial no GET, exatamente
+     como o número do take away: não há sessão, há uma coisa que só quem
+     reservou tem.
+     O `horarios?` leva a interrogação no padrão porque é sempre chamado
+     com `?data=` — o mesmo caso do `produtos?`. */
+  /^reservas\/horarios\?/,        // GET  /api/reservas/horarios?data=
+  /^reservas$/,                    // POST /api/reservas
+  /^reservas\/[A-Z0-9-]+$/,        // GET  /api/reservas/:codigo
 
   /* Fila de trabalho — com login. */
   /^pedidos\/ativos$/,             // GET   /api/pedidos/ativos
@@ -1244,8 +1254,14 @@ async function simularEndpoint(endpoint, opcoes) {
       + 'mas este caminho ainda não. Simulá-lo dizia "gravado" sem gravar nada.'
     );
     throw erroSimulado(
-      `O servidor ainda não tem o "${caminho}". Enquanto não tiver, esta alteração `
-      + 'não fica gravada — por isso não a damos por feita.', 501);
+      /* Não diz "o servidor ainda não tem", que era o que dizia até
+         10/09: o João leu a mensagem e foi procurar no back-end um
+         endpoint que já lá estava. O que falta é a entrada no
+         `ENDPOINTS_REAIS` aqui deste lado. O efeito é o mesmo — a
+         alteração não fica gravada — mas a mensagem já não manda
+         ninguém procurar no sítio errado. */
+      `O "${caminho}" ainda não está ligado. Enquanto não estiver, esta `
+      + 'alteração não fica gravada — por isso não a damos por feita.', 501);
   }
 
   /* ── health ────────────────────────────────────────────────────── */

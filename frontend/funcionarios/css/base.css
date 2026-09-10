@@ -31,6 +31,27 @@
   box-sizing: border-box;
 }
 
+/* ── A JANELA VOLTA AO MEIO (X-14, 10/09) ───────────────────────────
+   Encontrado pelo João a testar o ecrã de Stock: a janela de "Ajustar"
+   abria encostada ao canto superior esquerdo. Não era do `stock.css` —
+   é o `* { margin: 0 }` de cima a apagar o `margin: auto` que o browser
+   usa para centrar um `<dialog>` aberto com `showModal()`.
+
+   O `::backdrop` continuava a funcionar, e por isso a janela PARECIA
+   estar a abrir bem — só estava no sítio errado. É o género de coisa
+   que se procura no ficheiro da página durante meia hora antes de olhar
+   para o reset.
+
+   Fica aqui e não no `stock.css` porque apanha as janelas todas da app
+   de uma vez: os Produtos, as Categorias, os Funcionários e o Stock
+   usam todos `<dialog>` com `showModal()`. O `:modal` só acerta em
+   janelas abertas assim — um `<dialog>` aberto com o atributo `open`
+   fica de fora, e é o que se quer, porque esse é conteúdo na página e
+   não uma janela por cima. */
+dialog:modal {
+  margin: auto;
+}
+
 :root {
   /* Superfícies */
   --bg:          #14161a;   /* fundo geral — grafite, não preto puro */

@@ -365,8 +365,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ── Tempo de espera ─────────────────────────────────────────── */
 
+  /**
+   * minutosDesde — Há quantos minutos isto chegou.
+   *
+   * ── O `Math.max(0, …)` ESCONDEU UM BUG DURANTE DIAS (10/09) ───────
+   * Havia dois bugs de datas sobrepostos no back-end: o `seed.sql` com
+   * datas fixas de 1 de setembro, e — escondido atrás desse — o MySQL a
+   * guardar hora local enquanto a API a lia como UTC, o que punha todos
+   * os pedidos UMA HORA NO FUTURO.
+   *
+   * Uma diferença negativa é o que um pedido no futuro produz. O
+   * `Math.max(0, …)` transformava todas em zero, e o `formatarEspera`
+   * mostra "agora mesmo" para menos de um minuto. Resultado: o ecrã
+   * dizia "agora mesmo" a TUDO — inclusive a uma ronda de 28 minutos —
+   * e a escalada de cor (verde → amarelo → vermelho), que estava
+   * construída desde o princípio, nunca se tinha visto a funcionar.
+   *
+   * O clamp em si não estava errado: não se mostra "há -60 min" a
+   * ninguém. **O que estava errado era ser silencioso.** Um relógio
+   * trocado é uma avaria, e o sítio onde ela aparece primeiro é aqui —
+   * este é o único código do projeto que subtrai duas horas de origens
+   * diferentes. Engolir o sinal fez com que a avaria só se visse quando
+   * outra, por cima, foi corrigida.
+   *
+   * Agora avisa uma vez por carregamento. Continua a mostrar 0 no ecrã,
+   * porque a cozinha não tem nada a fazer com um número negativo — mas
+   * quem estiver a olhar para a consola vê que o relógio está trocado,
+   * em vez de ver uma fila inteira a dizer "agora mesmo".
+   */
+  let avisouRelogio = false;
+
   function minutosDesde(iso) {
-    return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+    const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+
+    /* Um minuto de tolerância: relógios de máquinas diferentes andam
+       sempre uns segundos desencontrados, e isso não é avaria. Um
+       pedido um minuto inteiro no futuro já é. */
+    if (diff < -1 && !avisouRelogio) {
+      avisouRelogio = true;
+      console.warn(
+        `[cozinha] Pedido com data no futuro (${diff} min): ${iso}. ` +
+        'O ecrã mostra 0, mas os tempos de espera não são de confiar — ' +
+        'provavelmente é o fuso horário do servidor ou da base de dados.');
+    }
+
+    return Math.max(0, diff);
   }
 
   function nivelDeEspera(minutos) {
