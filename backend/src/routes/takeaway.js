@@ -20,6 +20,7 @@ const express = require('express');
 const { z } = require('zod');
 const { pool } = require('../config/bd');
 const { validar } = require('../middleware/validar');
+const { limiteReservaOuTakeAway, limiteConsultaPorCodigo } = require('../middleware/limites');
 const { validarItens, criarPedido, lerItens } = require('../servicos/pedidos');
 
 const router = express.Router();
@@ -56,7 +57,7 @@ const esquemaTakeAway = z.object({
 // ─────────────────────────────────────────────────────────────────────
 //  POST /api/pedidos/takeaway
 // ─────────────────────────────────────────────────────────────────────
-router.post('/pedidos/takeaway', validar(esquemaTakeAway), async (req, res, next) => {
+router.post('/pedidos/takeaway', limiteReservaOuTakeAway, validar(esquemaTakeAway), async (req, res, next) => {
   const con = await pool.getConnection();
   try {
     await con.beginTransaction();
@@ -123,7 +124,7 @@ router.post('/pedidos/takeaway', validar(esquemaTakeAway), async (req, res, next
 //  encomendou. Quem sabe o numero pode ver o estado da encomenda; nao
 //  tem de poder ver os dados de contacto de ninguem.
 // ─────────────────────────────────────────────────────────────────────
-router.get('/pedidos/takeaway/:numero', async (req, res, next) => {
+router.get('/pedidos/takeaway/:numero', limiteConsultaPorCodigo, async (req, res, next) => {
   try {
     const numero = String(req.params.numero || '').trim().toUpperCase();
 

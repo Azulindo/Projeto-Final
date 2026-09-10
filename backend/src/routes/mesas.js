@@ -20,6 +20,7 @@ const express = require('express');
 const { z } = require('zod');
 const { pool } = require('../config/bd');
 const { validar } = require('../middleware/validar');
+const { limitePedidoMesa } = require('../middleware/limites');
 const { gerarCodigo, validarItens, criarPedido, lerItens } = require('../servicos/pedidos');
 
 const router = express.Router();
@@ -228,7 +229,7 @@ const esquemaPedir = z.object({
 //  Cria uma RONDA: um pedido com os itens desta vez. E a ronda que anda
 //  pelos estados, nao cada item (docs/API.md 3.10).
 // ─────────────────────────────────────────────────────────────────────
-router.post('/mesas/:token/pedir', validar(esquemaPedir), async (req, res, next) => {
+router.post('/mesas/:token/pedir', limitePedidoMesa, validar(esquemaPedir), async (req, res, next) => {
   /*
    *  Aqui e preciso uma LIGACAO propria e uma transacao, porque isto
    *  sao varias escritas que so fazem sentido juntas: o pedido, os
@@ -349,7 +350,7 @@ router.get('/mesas/:token/conta', async (req, res, next) => {
 //  aceita mais pedidos pelo telemovel — quem quiser mais alguma coisa
 //  chama um empregado, que e como funciona num restaurante.
 // ─────────────────────────────────────────────────────────────────────
-router.post('/mesas/:token/pedir-conta', async (req, res, next) => {
+router.post('/mesas/:token/pedir-conta', limitePedidoMesa, async (req, res, next) => {
   try {
     const mesa = await procurarMesa(pool, req.params.token);
     if (!mesa) return res.status(404).json({ erro: 'QR Code invalido.' });

@@ -22,6 +22,7 @@ const { z } = require('zod');
 const { pool } = require('../config/bd');
 const { validar } = require('../middleware/validar');
 const { gerarCodigo } = require('../servicos/pedidos');
+const { limiteReservaOuTakeAway, limiteConsultaPorCodigo } = require('../middleware/limites');
 
 const router = express.Router();
 
@@ -186,7 +187,7 @@ const esquemaReserva = z.object({
 // ─────────────────────────────────────────────────────────────────────
 //  POST /api/reservas                          (B-47, B-48, B-49, B-53)
 // ─────────────────────────────────────────────────────────────────────
-router.post('/reservas', validar(esquemaReserva), async (req, res, next) => {
+router.post('/reservas', limiteReservaOuTakeAway, validar(esquemaReserva), async (req, res, next) => {
   const d = req.body;
 
   const problema = verificarData(d.data);
@@ -363,7 +364,7 @@ router.post('/reservas', validar(esquemaReserva), async (req, res, next) => {
 //  O codigo faz de credencial, como o numero da encomenda de take away
 //  e o token do QR. Nao devolve o telemovel nem o email.
 // ─────────────────────────────────────────────────────────────────────
-router.get('/reservas/:codigo', async (req, res, next) => {
+router.get('/reservas/:codigo', limiteConsultaPorCodigo, async (req, res, next) => {
   try {
     const codigo = String(req.params.codigo || '').trim().toUpperCase();
 
