@@ -164,7 +164,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | 🔁 | B-51 | Carrinho de reserva que preserva quantidades ao navegar para trás — *já não se aplica — descrevia estados de um `fluxoReserva.js` que **nunca chegou a ser preciso**: o fluxo inteiro de perguntas está construído no `frontend/cliente/js/reservas.js` do Guilherme (F-28 a F-43, todas ✅). É a mesma situação das 19 tarefas 🔁 do front-end, ao contrário: aqui foi trabalho do João que o front-end acabou por fazer. O que faltava mesmo era o servidor, e isso são o B-41, o B-47, o B-48, o B-49 e o B-53. Encontrado a 10/09, ao abrir o Sprint 3 — eram ≈ 10 h que ninguém precisava de fazer* | 1 h 30 | B-50 |
 | 🔁 | B-52 | `OBSERVACOES` + `RESUMO_EMENTA` com valor estimado calculado no servidor — *já não se aplica — descrevia estados de um `fluxoReserva.js` que **nunca chegou a ser preciso**: o fluxo inteiro de perguntas está construído no `frontend/cliente/js/reservas.js` do Guilherme (F-28 a F-43, todas ✅). É a mesma situação das 19 tarefas 🔁 do front-end, ao contrário: aqui foi trabalho do João que o front-end acabou por fazer. O que faltava mesmo era o servidor, e isso são o B-41, o B-47, o B-48, o B-49 e o B-53. Encontrado a 10/09, ao abrir o Sprint 3 — eram ≈ 10 h que ninguém precisava de fazer* | 1 h 30 | B-51 |
 | ✅ | B-53 | `POST /api/reservas` estendido — grava `ITEM_RESERVA` com `preco_unitario` à data — *feito 10/09, no mesmo `POST /api/reservas`. **O preço fica gravado à data:** uma reserva feita hoje para daqui a um mês mostra o preço de hoje, e se o prato aumentar entretanto quem reservou não pode ser surpreendido — ler o preço atual do produto fazia exatamente isso. O `valor_estimado` é somado no servidor* | 1 h 30 | B-52 |
-| 🟨 | B-54 | Testes de API dos dois ramos — *ramo A (sem ementa) testado a 10/09 ponta a ponta: horários, reserva, lotação a descer, limite dos 3, consulta pelo código. **Falta o ramo B** — reserva com pratos escolhidos de antemão, que grava o `item_reserva`* | 1 h 30 | B-53 |
+| ✅ | B-54 | Testes de API dos dois ramos — *ramo A (sem ementa) testado a 10/09 ponta a ponta: horários, reserva, lotação a descer, limite dos 3, consulta pelo código. Ramo B testado a 10/09: reserva com dois borregos e duas águas, `item_reserva` gravado com o preço à data, e o `valor_estimado` somado no servidor a dar 33,60 € (31,00 + 2,60). **O Sprint 3 do back-end fica fechado*** | 1 h 30 | B-53 |
 
 > 💡 **Nota:** o Guilherme já construiu este fluxo todo do lado do ecrã. Quando chegares aqui, a tua parte é sobretudo replicar no servidor a lógica que já existe em `reservas.js` — usa esse ficheiro como especificação.
 
@@ -488,12 +488,12 @@ refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 74 | 52 | 8 | 14 | ≈ 18 h 30 |
+| 🔵 João (B-) | 74 | 53 | 8 | 13 | ≈ 17 h |
 | 🟠 Guilherme (F-) | 68 | 46 | 19 | 3 | ≈ 4 h 15 |
 | 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
 | 🐞 Correções (X-) | 12 | 11 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 64 h 45.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
+**Total por fazer: ≈ 63 h 15.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
 (falta o Guilherme ler o `CONTEXTO.md`) e a X-08 (não se conseguiu reproduzir). O B-40 saiu
 desta lista a 10/09 — o B-35 fechou e o take away passou a estar testado. O B-65 já tinha
 saído: os QR Codes estão gerados.
