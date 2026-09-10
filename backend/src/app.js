@@ -21,6 +21,7 @@ const { pool, testarLigacao } = require('./config/bd');
 const catalogoRouter = require('./routes/catalogo');
 const authRouter = require('./routes/auth');
 const mesasRouter = require('./routes/mesas');
+const takeawayRouter = require('./routes/takeaway');
 const pedidosRouter = require('./routes/pedidos');
 const gestaoStockRouter = require('./routes/gestaoStock');
 const gestaoProdutosRouter = require('./routes/gestaoProdutos');
@@ -79,6 +80,12 @@ app.use('/api', catalogoRouter);
 // Cliente a mesa: /api/mesas/:token/sessao, /pedir, /conta, /pedir-conta
 // Sem login — quem faz de credencial e o token do QR Code impresso na mesa.
 app.use('/api', mesasRouter);
+
+// Take away: POST /api/pedidos/takeaway, GET /api/pedidos/takeaway/:numero
+// Tambem sem login — quem encomenda nao tem conta. Montado ANTES do
+// pedidosRouter de proposito: se viesse depois, o /pedidos/:id/estado
+// desse router apanhava o "takeaway" como se fosse um id.
+app.use('/api', takeawayRouter);
 
 // Gestao: /api/pedidos/ativos, /cozinha, /:id/estado, /sessao/:id/fechar
 // Todos exigem sessao iniciada.
