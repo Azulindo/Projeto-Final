@@ -30,7 +30,31 @@ const pool = mysql.createPool({
   connectionLimit: 10,        // maximo de ligacoes abertas ao mesmo tempo
   queueLimit: 0,              // fila de espera sem limite
 
-  timezone: 'Z',              // guarda e le datas em UTC, sem surpresas de fuso
+  /*
+   *  timezone: 'Z' diz ao mysql2 "as datas que vieres buscar a base
+   *  estao em UTC". So que uma coluna DATETIME do MySQL nao guarda
+   *  fuso nenhum — guarda numeros —, e o NOW() do servidor devolve a
+   *  hora LOCAL dele. Em Portugal, no verao, isso e UTC+1.
+   *
+   *  Resultado: cada data era lida como se fosse uma hora mais tarde
+   *  do que e, e todos os pedidos pareciam uma hora mais novos. Com
+   *  pedidos de dias nao se via; com pedidos de 28 minutos, a hora a
+   *  mais empurra-os para o futuro e o ecra da cozinha dizia "agora
+   *  mesmo" a tudo — que e justamente a informacao que a cozinha
+   *  precisa de ter certa, porque e por ela que se decide o que se faz
+   *  a seguir.
+   *
+   *  Descoberto a 10/09 pela conta: o ecra mostrava 212h52 onde a
+   *  diferenca real era 213h52. Uma hora certinha nao e coincidencia.
+   *
+   *  A correcao esta em baixo, no pool.on('connection'): dizer ao
+   *  MySQL que a sessao trabalha em UTC. Assim o NOW() devolve UTC, a
+   *  base guarda UTC, e o 'Z' aqui passa a ser verdade em vez de uma
+   *  suposicao. Vale para o portatil e para o Aiven, que esta noutro
+   *  fuso — e ali o erro seria diferente, o que e pior do que ser
+   *  grande.
+   */
+  timezone: 'Z',
   decimalNumbers: true,       // ver nota abaixo
   charset: 'utf8mb4',
 
@@ -42,6 +66,18 @@ const pool = mysql.createPool({
   ssl: process.env.DB_SSL_CA
     ? { ca: require('fs').readFileSync(require('path').resolve(process.env.DB_SSL_CA)) }
     : undefined,
+});
+
+/*
+ *  Cada ligacao nova do pool comeca por dizer que trabalha em UTC.
+ *
+ *  Tem de ser por ligacao e nao uma vez so: o pool abre varias, e uma
+ *  que ficasse de fora dava datas com uma hora de diferenca das
+ *  outras. Um erro que aparece em algumas linhas e nao noutras e muito
+ *  pior de encontrar do que um erro constante.
+ */
+pool.on('connection', (ligacao) => {
+  ligacao.query("SET time_zone = '+00:00'");
 });
 
 /*

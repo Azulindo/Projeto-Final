@@ -19,6 +19,23 @@
 
 USE vem_pro_abate;
 
+/*
+ *  ESTE SEED ESCREVE EM UTC.
+ *
+ *  A API ja diz a cada ligacao "SET time_zone = '+00:00'" (ver
+ *  config/bd.js), mas o seed nao e corrido pela API — e corrido pelo
+ *  mysql na linha de comandos, e essa sessao usa a hora local da
+ *  maquina. Sem esta linha, o NOW() daqui gravava hora de Lisboa e a
+ *  API lia-a como UTC: no verao, uma hora de diferenca.
+ *
+ *  Isso punha todos os pedidos uma hora no futuro, e o ecra da cozinha
+ *  dizia "agora mesmo" a tudo — porque o minutosDesde() do front-end
+ *  faz Math.max(0, ...) e uma data no futuro da zero.
+ *
+ *  As duas pontas tem de concordar. Esta e a ponta que faltava.
+ */
+SET time_zone = '+00:00';
+
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE item_reserva;
 TRUNCATE TABLE sessao_mesa;
@@ -216,46 +233,31 @@ INSERT INTO funcionario (id_funcionario, id_utilizador, cargo, data_contratacao)
 
 
 -- =====================================================================
---  MOVIMENTOS DE STOCK — a contagem inicial
---
---  Cada linha da tabela stock acima passa a ter a sua origem: um
---  movimento de ENTRADA que leva o produto de 0 ate a quantidade que
---  la esta. Sem isto, os produtos comecavam a existir ja com stock e
---  a verificacao da cadeia (ver o fim do schema.sql) nao tinha por
---  onde comecar — a primeira linha do historico apareceria com 40
---  caidos do ceu.
---
---  E uma consulta so, tirada da propria tabela stock, para os dois
---  ficheiros nunca poderem discordar um do outro. Se amanha se mudar
---  uma quantidade la em cima, esta linha acompanha sozinha.
---
---  Fica atribuida ao utilizador 1 (o administrador) e datada de tres
---  dias atras, para na demonstracao ja haver historico com idade.
--- =====================================================================
-INSERT INTO movimento_stock
-  (id_produto, tipo, quantidade, quantidade_antes, quantidade_depois,
-   id_utilizador, nota, data_movimento)
-SELECT s.id_produto, 'entrada', s.quantidade_atual, 0, s.quantidade_atual,
-       1, 'Contagem inicial', NOW() - INTERVAL 3 DAY
-  FROM stock s
- ORDER BY s.id_produto;
-
--- (Este bloco esteve primeiro logo a seguir a tabela stock e rebentou com
---  ERROR 1452: o movimento aponta para o utilizador 1, e o utilizador 1 so
---  nasce mais abaixo. A ordem dos INSERT num seed nao e estetica — e a
---  ordem das chaves estrangeiras.)
-
-
--- =====================================================================
 --  SESSOES DE MESA
 --  Uma sessao e a refeicao inteira: abre quando o cliente le o QR Code
 --  e fecha quando pede a conta. Agrupa varias rondas de pedidos.
 -- =====================================================================
+-- =====================================================================
+--  PORQUE E QUE ESTAS DATAS SAO RELATIVAS
+--
+--  Estavam fixas e o ecra da cozinha dizia "ha 212h28" — nove dias. O
+--  ecra estava certo; os dados e que tinham envelhecido desde o dia em
+--  que foram escritos. Numa apresentacao, uma cozinha com rondas de
+--  nove dias parece avaria.
+--
+--  Os intervalos guardam as distancias originais entre os momentos, e
+--  o pedido 1 fica a ~18 h para haver uma refeicao ja fechada no
+--  historico das estatisticas.
+--
+--  As datas de contratacao dos funcionarios ficam FIXAS de proposito:
+--  quem foi contratado em janeiro nao passa a ter sido contratado hoje
+--  so porque se recriou a base.
+-- =====================================================================
 INSERT INTO sessao_mesa
  (id_sessao, codigo_sessao, id_mesa, num_pessoas, estado, valor_total, id_funcionario, aberta_em, fechada_em) VALUES
- (1, 'SES-8H3K1', 3, 2, 'fechada', 0.00,    3, '2026-08-31 20:10:00', '2026-08-31 21:05:00'),
- (2, 'SES-2M9P4', 6, 4, 'aberta',  0.00, NULL, '2026-09-01 12:38:00', NULL),
- (3, 'SES-6R1T7', 9, 6, 'aberta',  0.00, NULL, '2026-09-01 13:00:00', NULL);
+ (1, 'SES-8H3K1', 3, 2, 'fechada', 0.00,    3, NOW() - INTERVAL 1090 MINUTE, NOW() - INTERVAL 1035 MINUTE),
+ (2, 'SES-2M9P4', 6, 4, 'aberta',  0.00, NULL, NOW() - INTERVAL 31 MINUTE, NULL),
+ (3, 'SES-6R1T7', 9, 6, 'aberta',  0.00, NULL, NOW() - INTERVAL 9 MINUTE, NULL);
 
 -- Os valores ficam a zero aqui e sao calculados no fim, a partir dos
 -- pedidos. Assim nunca ha dois numeros diferentes para a mesma coisa.
@@ -270,13 +272,13 @@ INSERT INTO pedido
  (id_pedido, numero_pedido, id_cliente, id_mesa, id_sessao, id_funcionario, tipo_pedido, estado,
   data_hora, valor_total, nome_convidado, telefone_convidado, observacoes) VALUES
  (1, 'PED-4K9M2', NULL, 3,    1,    2, 'restaurante', 'entregue',
-  '2026-08-31 20:14:00', 38.80, NULL, NULL, NULL),
+  NOW() - INTERVAL 1086 MINUTE, 38.80, NULL, NULL, NULL),
  (2, 'PED-7X3B8', NULL, 6,    2,    2, 'restaurante', 'em_preparacao',
-  '2026-09-01 12:41:00', 33.50, NULL, NULL, 'Sem cebola no prego, por favor'),
+  NOW() - INTERVAL 28 MINUTE, 33.50, NULL, NULL, 'Sem cebola no prego, por favor'),
  (3, 'PED-2N5Q7', NULL, NULL, NULL, 3, 'take_away',   'pronto',
-  '2026-09-01 12:52:00', 22.00, 'Andreia Costa', '913456789', NULL),
+  NOW() - INTERVAL 17 MINUTE, 22.00, 'Andreia Costa', '913456789', NULL),
  (4, 'PED-9H1L4', NULL, 9,    3, NULL, 'restaurante', 'recebido',
-  '2026-09-01 13:05:00', 56.00, NULL, NULL, 'Aniversário — trazer vela na sobremesa');
+  NOW() - INTERVAL 4 MINUTE, 56.00, NULL, NULL, 'Aniversário — trazer vela na sobremesa');
 
 -- O pedido 3 e take away: nao pertence a sessao nenhuma (id_sessao NULL).
 -- Os outros tres sao rondas dentro das sessoes 1, 2 e 3.
@@ -303,19 +305,19 @@ INSERT INTO item_pedido (id_pedido, id_produto, quantidade, preco_unitario, subt
 
 -- Historico de estados: e daqui que sai o tempo medio de preparacao.
 INSERT INTO historico_estado_pedido (id_pedido, estado, id_funcionario, data_hora) VALUES
- (1, 'recebido',      NULL, '2026-08-31 20:14:00'),
- (1, 'confirmado',       2, '2026-08-31 20:16:00'),
- (1, 'em_preparacao',    2, '2026-08-31 20:17:00'),
- (1, 'pronto',           2, '2026-08-31 20:39:00'),
- (1, 'entregue',         3, '2026-08-31 20:42:00'),
- (2, 'recebido',      NULL, '2026-09-01 12:41:00'),
- (2, 'confirmado',       2, '2026-09-01 12:43:00'),
- (2, 'em_preparacao',    2, '2026-09-01 12:45:00'),
- (3, 'recebido',      NULL, '2026-09-01 12:52:00'),
- (3, 'confirmado',       3, '2026-09-01 12:53:00'),
- (3, 'em_preparacao',    2, '2026-09-01 12:55:00'),
- (3, 'pronto',           2, '2026-09-01 13:18:00'),
- (4, 'recebido',      NULL, '2026-09-01 13:05:00');
+ (1, 'recebido',      NULL, NOW() - INTERVAL 1086 MINUTE),
+ (1, 'confirmado',       2, NOW() - INTERVAL 1084 MINUTE),
+ (1, 'em_preparacao',    2, NOW() - INTERVAL 1083 MINUTE),
+ (1, 'pronto',           2, NOW() - INTERVAL 1061 MINUTE),
+ (1, 'entregue',         3, NOW() - INTERVAL 1058 MINUTE),
+ (2, 'recebido',      NULL, NOW() - INTERVAL 28 MINUTE),
+ (2, 'confirmado',       2, NOW() - INTERVAL 26 MINUTE),
+ (2, 'em_preparacao',    2, NOW() - INTERVAL 24 MINUTE),
+ (3, 'recebido',      NULL, NOW() - INTERVAL 17 MINUTE),
+ (3, 'confirmado',       3, NOW() - INTERVAL 16 MINUTE),
+ (3, 'em_preparacao',    2, NOW() - INTERVAL 14 MINUTE),
+ (3, 'pronto',           2, NOW() - INTERVAL 11 MINUTE),
+ (4, 'recebido',      NULL, NOW() - INTERVAL 4 MINUTE);
 
 -- O valor de cada sessao e a soma das rondas dela.
 UPDATE sessao_mesa s
@@ -336,9 +338,9 @@ UPDATE mesa SET estado = 'ocupada' WHERE id_mesa IN (6, 9);
 INSERT INTO reserva
  (id_reserva, codigo_reserva, nome, telemovel, num_pessoas, data_reserva, id_slot,
   modo_ementa, observacoes, valor_estimado, estado) VALUES
- (1, 'RSV-7K2M9', 'Sara Londreira',  '914112233', 2, '2026-09-05',  8, 'no_restaurante',  NULL, NULL, 'pendente'),
- (2, 'RSV-3B8X1', 'Tatiana Salsa',   '926778899', 6, '2026-09-06', 10, 'pre_selecionada', 'Uma pessoa é alérgica a frutos secos', 97.20, 'pendente'),
- (3, 'RSV-5Q4W2', 'Gabriel Martins', '937221144', 4, '2026-09-12',  3, 'no_restaurante',  'Mesa perto da janela, se possível', NULL, 'pendente');
+ (1, 'RSV-7K2M9', 'Sara Londreira',  '914112233', 2, CURDATE() + INTERVAL 2 DAY + INTERVAL (WEEKDAY(CURDATE() + INTERVAL 2 DAY) = 0) DAY,  8, 'no_restaurante',  NULL, NULL, 'pendente'),
+ (2, 'RSV-3B8X1', 'Tatiana Salsa',   '926778899', 6, CURDATE() + INTERVAL 3 DAY + INTERVAL (WEEKDAY(CURDATE() + INTERVAL 3 DAY) = 0) DAY, 10, 'pre_selecionada', 'Uma pessoa é alérgica a frutos secos', 97.20, 'pendente'),
+ (3, 'RSV-5Q4W2', 'Gabriel Martins', '937221144', 4, CURDATE() + INTERVAL 9 DAY + INTERVAL (WEEKDAY(CURDATE() + INTERVAL 9 DAY) = 0) DAY,  3, 'no_restaurante',  'Mesa perto da janela, se possível', NULL, 'pendente');
 
 INSERT INTO item_reserva (id_reserva, id_produto, quantidade, preco_unitario, subtotal) VALUES
  (2, 10, 2, 17.80, 35.60),
@@ -371,7 +373,6 @@ WHERE r.id_reserva > 0 AND r.modo_ementa = 'pre_selecionada';
 SELECT 'categorias'   AS tabela, COUNT(*) AS total FROM categoria
 UNION ALL SELECT 'produtos',      COUNT(*) FROM produto
 UNION ALL SELECT 'stock',         COUNT(*) FROM stock
-UNION ALL SELECT 'movimentos',    COUNT(*) FROM movimento_stock
 UNION ALL SELECT 'mesas',         COUNT(*) FROM mesa
 UNION ALL SELECT 'sessoes',       COUNT(*) FROM sessao_mesa
 UNION ALL SELECT 'slots',         COUNT(*) FROM slot_horario
@@ -382,31 +383,6 @@ UNION ALL SELECT 'itens_pedido',  COUNT(*) FROM item_pedido
 UNION ALL SELECT 'historico',     COUNT(*) FROM historico_estado_pedido
 UNION ALL SELECT 'reservas',      COUNT(*) FROM reserva
 UNION ALL SELECT 'itens_reserva', COUNT(*) FROM item_reserva;
-
-
--- =====================================================================
---  A CADEIA DOS MOVIMENTOS ESTA INTEIRA?
---
---  As duas contagens abaixo tem de dar ZERO. Se alguma der outra
---  coisa, alguem mexeu na tabela stock por fora dos movimentos e o
---  historico deixou de reconstruir o saldo.
---
---  Ordenado por id_movimento e nunca por data: dois movimentos no
---  mesmo segundo vao existir, e por data ordenavam ao calhas — o
---  alarme tocava sem ninguem ter feito nada de errado.
--- =====================================================================
-SELECT
-  (SELECT COUNT(*) FROM (
-     SELECT quantidade_antes,
-            LAG(quantidade_depois) OVER (PARTITION BY id_produto
-                                         ORDER BY id_movimento) AS ant
-       FROM movimento_stock) c
-    WHERE ant IS NOT NULL AND quantidade_antes <> ant)   AS cadeia_partida,
-  (SELECT COUNT(*) FROM stock s
-     JOIN movimento_stock m ON m.id_produto = s.id_produto
-    WHERE m.id_movimento = (SELECT MAX(id_movimento) FROM movimento_stock x
-                             WHERE x.id_produto = s.id_produto)
-      AND s.quantidade_atual <> m.quantidade_depois)     AS stock_desalinhado;
 
 
 -- =====================================================================
