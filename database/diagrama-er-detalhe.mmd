@@ -1,0 +1,205 @@
+erDiagram
+  utilizador {
+    int id_utilizador PK
+    varchar nome
+    varchar email
+    varchar password_hash
+    varchar telefone
+    enum tipo_utilizador
+    boolean ativo
+    datetime data_registo
+  }
+  cliente {
+    int id_cliente PK
+    int id_utilizador FK
+    varchar morada
+    text alergias
+    text preferencias_alimentares
+  }
+  funcionario {
+    int id_funcionario PK
+    int id_utilizador FK
+    enum cargo
+    date data_contratacao
+  }
+  categoria {
+    int id_categoria PK
+    varchar nome
+    text descricao
+    tinyint ordem
+    boolean ativo
+  }
+  produto {
+    int id_produto PK
+    int id_categoria FK
+    varchar nome
+    text descricao
+    decimal preco
+    varchar imagem_url
+    boolean disponivel
+    int tempo_preparacao
+    boolean controla_stock
+    boolean ativo
+  }
+  stock {
+    int id_stock PK
+    int id_produto FK
+    int quantidade_atual
+    int quantidade_minima
+    datetime data_atualizacao
+  }
+  mesa {
+    int id_mesa PK
+    int numero_mesa
+    int capacidade
+    varchar qr_code
+    enum estado
+    boolean ativo
+  }
+  slot_horario {
+    int id_slot PK
+    time hora
+    enum periodo
+    int lotacao_maxima
+    varchar dias_semana
+    boolean ativo
+  }
+  sessao_mesa {
+    int id_sessao PK
+    varchar codigo_sessao
+    int id_mesa FK
+    int num_pessoas
+    enum estado
+    text observacoes
+    decimal valor_total
+    int id_funcionario FK
+    datetime aberta_em
+    datetime fechada_em
+    int mesa_aberta
+  }
+  pedido {
+    int id_pedido PK
+    varchar numero_pedido
+    int id_cliente FK
+    int id_mesa FK
+    int id_sessao FK
+    int id_funcionario FK
+    enum tipo_pedido
+    enum estado
+    datetime data_hora
+    datetime data_atualizacao
+    decimal valor_total
+    varchar nome_convidado
+    varchar email_convidado
+    varchar telefone_convidado
+    text observacoes
+  }
+  item_pedido {
+    int id_item PK
+    int id_pedido FK
+    int id_produto FK
+    int quantidade
+    decimal preco_unitario
+    decimal subtotal
+    text observacoes
+  }
+  historico_estado_pedido {
+    int id_historico PK
+    int id_pedido FK
+    enum estado
+    int id_funcionario FK
+    datetime data_hora
+  }
+  reserva {
+    int id_reserva PK
+    varchar codigo_reserva
+    varchar nome
+    varchar telemovel
+    varchar email
+    int id_cliente FK
+    int num_pessoas
+    date data_reserva
+    int id_slot FK
+    enum modo_ementa
+    text observacoes
+    decimal valor_estimado
+    enum estado
+    varchar motivo_recusa
+    int id_funcionario FK
+    int id_pedido FK
+    datetime data_criacao
+    datetime data_atualizacao
+  }
+  item_reserva {
+    int id_item_reserva PK
+    int id_reserva FK
+    int id_produto FK
+    int quantidade
+    decimal preco_unitario
+    decimal subtotal
+  }
+  favorito {
+    int id_cliente PK
+    int id_produto PK
+    datetime data_adicao
+  }
+  avaliacao {
+    int id_avaliacao PK
+    int id_cliente FK
+    int id_pedido FK
+    tinyint classificacao
+    text comentario
+    datetime data_avaliacao
+  }
+  notificacao {
+    int id_notificacao PK
+    int id_cliente FK
+    int id_pedido FK
+    varchar email_destinatario
+    varchar assunto
+    text mensagem
+    boolean lida
+    enum estado
+    datetime data_envio
+  }
+  movimento_stock {
+    int id_movimento PK
+    int id_produto FK
+    enum tipo
+    int quantidade
+    int quantidade_antes
+    int quantidade_depois
+    int id_utilizador FK
+    int id_pedido FK
+    varchar nota
+    datetime data_movimento
+  }
+  utilizador ||--o{ cliente : "id_utilizador"
+  utilizador ||--o{ funcionario : "id_utilizador"
+  categoria ||--o{ produto : "id_categoria"
+  produto ||--o{ stock : "id_produto"
+  mesa ||--o{ sessao_mesa : "id_mesa"
+  funcionario |o--o{ sessao_mesa : "id_funcionario"
+  cliente |o--o{ pedido : "id_cliente"
+  mesa ||--o{ pedido : "id_mesa"
+  sessao_mesa |o--o{ pedido : "id_sessao"
+  funcionario |o--o{ pedido : "id_funcionario"
+  pedido ||--o{ item_pedido : "id_pedido"
+  produto ||--o{ item_pedido : "id_produto"
+  pedido ||--o{ historico_estado_pedido : "id_pedido"
+  funcionario |o--o{ historico_estado_pedido : "id_funcionario"
+  slot_horario ||--o{ reserva : "id_slot"
+  cliente |o--o{ reserva : "id_cliente"
+  funcionario |o--o{ reserva : "id_funcionario"
+  pedido |o--o{ reserva : "id_pedido"
+  reserva ||--o{ item_reserva : "id_reserva"
+  produto ||--o{ item_reserva : "id_produto"
+  cliente ||--o{ favorito : "id_cliente"
+  produto ||--o{ favorito : "id_produto"
+  cliente ||--o{ avaliacao : "id_cliente"
+  pedido ||--o{ avaliacao : "id_pedido"
+  cliente |o--o{ notificacao : "id_cliente"
+  pedido ||--o{ notificacao : "id_pedido"
+  produto ||--o{ movimento_stock : "id_produto"
+  utilizador ||--o{ movimento_stock : "id_utilizador"
+  pedido |o--o{ movimento_stock : "id_pedido"

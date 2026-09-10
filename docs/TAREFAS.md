@@ -148,7 +148,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | B-17 | `middleware/erros.js` — tratamento centralizado, mensagens em português, nunca expor o SQL | 45 min | B-16 |
+| ✅ | B-17 | `middleware/erros.js` — tratamento centralizado, mensagens em português, nunca expor o SQL — *feito 10/09. Já existia um tratador escrito à mão dentro do `app.js`; ao passá-lo para ficheiro próprio apareceram **três buracos que ninguém tinha visto**. **(1)** O detalhe verdadeiro do erro era mostrado sempre que o `NODE_ENV` não fosse `production` — ou seja, a segurança da API publicada dependia de alguém se lembrar de pôr uma variável no Render. Se faltasse, a API respondia com o nome das nossas tabelas a quem perguntasse. Agora quem decide é o `ambiente.js` pelo `DB_HOST`, que não se pode esquecer: **um valor que se pode derivar não se declara** — é a lição do indicador LOCAL/NUVEM que mentia. **(2)** Qualquer erro do MySQL saía como 500; "já existe um produto com esse nome" é 409 e o front-end não tinha como distinguir os dois. Ficaram 18 códigos traduzidos, sempre a partir do **código** e nunca da mensagem (um `ER_DUP_ENTRY` traz a tabela, a coluna e o valor lá dentro). **(3)** Escrevia o objeto do erro inteiro no registo, e os erros do `mysql2` trazem o campo `sql` com os valores já substituídos — num INSERT de funcionário isso é **a hash da password a ficar guardada nos registos do Render**. O `ER_CHECK_CONSTRAINT_VIOLATED` ficou de fora da tradução de propósito: a única restrição CHECK do projeto é a aritmética do stock, que o servidor calcula sozinho, por isso se disparar o erro é nosso e não de quem chamou. Cada resposta leva uma `ref` de 6 caracteres que aparece também no registo — no dia da apresentação encontra-se a causa sem abrir o terminal à frente do júri* | 45 min | B-16 |
 | ✅ | B-18 | `middleware/validar.js` — wrapper do zod para body e query — *devolve 400 com a lista de campos que falham, e substitui o original pelo resultado limpo do zod* | 30 min | B-16 |
 | ✅ | B-19 | `POST /api/auth/login` — verifica bcrypt, devolve JWT com `id` e `nivel` — *o `nivel` sai do `funcionario.cargo` (`cozinheiro`→`cozinha`, `empregado_mesa`→`balcao`, `administrador`/`gerente`→`administrador`), traduzido num sítio só. Mesma resposta e mesmo tempo para email inexistente e password errada* | 1 h 30 | B-18 |
 | ✅ | B-20 | `middleware/autenticar.js` — lê e valida o JWT — *distingue token expirado de token inválido na mensagem* | 1 h | B-19 |
@@ -221,9 +221,9 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | B-65 | Gerar os QR Codes das mesas com a biblioteca `qrcode` — *`npm run qrcodes -- https://vemproabate.vercel.app`, 10 PNG em `backend/qrcodes/`, um testado no browser. Os tokens são fixos no `seed.sql`, por isso regravar a base **não** invalida os cartões impressos* | 1 h 30 | B-11 |
 | ✅ | B-66 | `GET /api/gestao/mesas/qrcodes` — *feito 10/09, formato da secção 4.6: `{ id, numero, lugares, qrToken }`, só mesas activas, ordenadas pelo número. O `qrcodes.html` do Guilherme (F-58) deixa de estar à espera. **Níveis: `administrador` e `balcao`, não "qualquer funcionário".** O `qr_code` de uma mesa **é** a credencial dessa mesa — quem o tiver pode abrir a sessão e pedir naquela mesa de onde estiver, que foi a razão de nunca ter sido o número da mesa. Uma lista destes tokens desfaz essa protecção inteira, e de uma vez só para as dez mesas. A cozinha fica de fora porque não há nenhuma altura em que quem cozinha precise de imprimir cartões: **o critério para dar acesso a uma credencial é a necessidade, não a ausência de perigo.** O balcão entra porque é quem substitui um cartão gasto a meio de um serviço. Só mesas activas — um cartão impresso para uma mesa desativada é um cartão numa gaveta a dar acesso a uma sessão que ninguém vigia. **Testado:** 10 mesas com o administrador, 403 com a sessão de cozinha* | 45 min | B-65 |
 | ⬜ | B-67 | Entrada por token de mesa: `/mesa?t=<token>` | 1 h | B-36 |
-| ⬜ | B-68 | `estatisticas.js`: nº de pedidos, faturação diária e mensal, média por pedido | 2 h | B-39 |
-| ⬜ | B-69 | `estatisticas.js`: produtos mais vendidos + tempo médio de preparação | 1 h 30 | B-57 |
-| ⬜ | B-70 | `GET /api/admin/estatisticas` | 45 min | B-68, B-69 |
+| 🟨 | B-68 | `estatisticas.js`: nº de pedidos, faturação diária e mensal, média por pedido — ***escrito a 10/09, por correr.** Os três são o mesmo endpoint (`GET /api/admin/estatisticas`, formato da §4.10) e só passam a ✅ quando o ecrã mostrar números verdadeiros — falta o Guilherme acrescentar o caminho ao `ENDPOINTS_REAIS`. **Hoje o ecrã mostra dois números para a mesma coisa:** o cartão diz 2 produtos abaixo do mínimo (simulação) e a barra lateral diz 1 (servidor). Faturação e contagens de hoje, ontem e do mês, sempre **sem as rondas canceladas** — não se cobra o que a cozinha não fez* | 2 h | B-39 |
+| 🟨 | B-69 | `estatisticas.js`: produtos mais vendidos + tempo médio de preparação — ***escrito a 10/09, por correr.** Os três são o mesmo endpoint (`GET /api/admin/estatisticas`, formato da §4.10) e só passam a ✅ quando o ecrã mostrar números verdadeiros — falta o Guilherme acrescentar o caminho ao `ENDPOINTS_REAIS`. **Hoje o ecrã mostra dois números para a mesma coisa:** o cartão diz 2 produtos abaixo do mínimo (simulação) e a barra lateral diz 1 (servidor). O tempo médio de preparação sai do `historico_estado_pedido`, de `confirmado` a `pronto`: **é para isto que o B-57 guarda cada mudança** em vez de só o estado atual — não se mede a duração de uma coisa de que só se sabe o fim. Devolve `null` e não `0` quando ainda nada ficou pronto* | 1 h 30 | B-57 |
+| 🟨 | B-70 | `GET /api/admin/estatisticas` — ***escrito a 10/09, por correr.** Os três são o mesmo endpoint (`GET /api/admin/estatisticas`, formato da §4.10) e só passam a ✅ quando o ecrã mostrar números verdadeiros — falta o Guilherme acrescentar o caminho ao `ENDPOINTS_REAIS`. **Hoje o ecrã mostra dois números para a mesma coisa:** o cartão diz 2 produtos abaixo do mínimo (simulação) e a barra lateral diz 1 (servidor). **O dia é contado em Lisboa e não em UTC**, no Node e não no MySQL: o `CONVERT_TZ` precisa das tabelas de fusos carregadas e não há garantia disso no Aiven. O aviso era do Guilherme (§4.10) e passou a valer a dobrar depois do X-15 ter posto a base em UTC. Fica escrito o limite conhecido: nos dois dias do ano em que a hora muda, uma barra do gráfico pode levar uma hora do dia vizinho* | 45 min | B-68, B-69 |
 | ⬜ | B-71 | `services/email.js` com Nodemailer + Brevo/Resend | 1 h 30 | B-16 |
 | ⬜ | B-72 | Email de novo pedido para o restaurante + registo em `NOTIFICACAO` | 1 h | B-71 |
 | ⬜ | B-73 | 🔁 *(recuperação)* `GET /api/gestao/reservas` — lista só de leitura | 1 h 30 | B-48 |
@@ -436,12 +436,12 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | C-13 | Escrever a lista de testes | 1 h 30 | — |
+| ✅ | C-13 | Escrever a lista de testes — *feita 10/09, em `docs/TESTES.md`: **67 testes** em oito grupos. Começa por uma secção do que **já foi verificado e quando**, porque um teste feito e não registado volta a ser feito — ou, pior, dá-se por feito sem ter sido. Cada erro que já apanhámos tem lá o seu teste, para não voltar: o HTML no nome (X-01), a mensagem que não chegava ao ecrã (X-13), a ronda de 28 minutos a vermelho (X-15), a janela encostada ao canto. **Regra escrita: um teste que falha não se corrige a meio da sessão** — anota-se e segue-se, senão perde-se o resto da lista, que é onde estão os erros que ninguém previu. E diz o que **não** cobre e porquê: carga, segurança a sério, e o que só o Guilherme pode julgar* | 1 h 30 | — |
 | ⬜ | C-14 | Sessão de testes de robustez — a lista de casos-limite abaixo | 3 h | C-13 |
 | ⬜ | C-15 | Testar em Chrome, Edge, Firefox e Safari + dois telemóveis | 2 h | C-14 |
 | ⬜ | C-16 | Corrigir os erros encontrados, por ordem de prioridade | 4 h | C-15 |
 | ⬜ | C-17 | Relatório final | 5 h | — |
-| ⬜ | C-18 | Documentação técnica: `README.md`, `docs/API.md`, diagrama ER | 2 h | — |
+| 🟨 | C-18 | Documentação técnica: `README.md`, `docs/API.md`, diagrama ER — *o **diagrama ER está feito** (10/09) e é **gerado do `schema.sql`** com `npm run diagrama`, em duas vistas: geral e detalhe. Um diagrama desenhado é uma cópia, e neste projeto já sabemos o que acontece às cópias — a lista de endpoints com 4 entradas quando o ficheiro tinha 15, a ordem da ementa em dois sítios, o README a dizer 17 tabelas no dia em que passaram a 18. Gerado, não consegue discordar. 18 tabelas, 139 colunas, 29 chaves estrangeiras, confirmados por duas contagens independentes. **Falta a passagem final pelo `README` e pelo `API.md`***, no fim de tudo | 2 h | — |
 | ⬜ | C-19 | Manual de utilização (cliente e funcionário) | 1 h 30 | — |
 | ⬜ | C-20 | Apresentação — 12 a 15 diapositivos | 3 h | C-17 |
 | ⬜ | C-21 | Dois ensaios cronometrados | 2 h | C-20 |
@@ -533,13 +533,18 @@ refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 74 | 54 | 7 | 13 | ≈ 17 h |
+| 🔵 João (B-) | 74 | 55 | 7 | 12 | ≈ 16 h 15 |
 | 🟠 Guilherme (F-) | 69 | 49 | 15 | 5 | ≈ 6 h 45 |
-| 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 42 h |
+| 🟢 Os dois (C-) | 28 | 8 | — | 20 | ≈ 40 h 30 |
 | 🐞 Correções (X-) | 17 | 16 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 66 h 15.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
-(falta o Guilherme ler o `CONTEXTO.md`) e a X-08 (não se conseguiu reproduzir). O B-40 saiu
+**Total por fazer: ≈ 64 h.** Sobram **seis** tarefas 🟨, e todas contam como por fazer: as
+**B-68, B-69 e B-70** (escritas a 10/09, por correr — esperam que o Guilherme acrescente o
+caminho ao `ENDPOINTS_REAIS`), a **C-18** (o diagrama ER está feito, falta a passagem final
+pelo `README` e pelo `API.md`), a **C-01** (falta o Guilherme ler o `CONTEXTO.md`) e a
+**X-08** (não se conseguiu reproduzir). Uma tarefa 🟨 é a que tem código escrito e ainda não
+tem prova de que funciona — **e enquanto não tiver prova vale zero**, que é a razão de contar
+como por fazer e não como meia. O B-40 saiu
 desta lista a 10/09 — o B-35 fechou e o take away passou a estar testado. O B-65 já tinha
 saído: os QR Codes estão gerados.
 
