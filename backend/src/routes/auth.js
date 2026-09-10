@@ -181,7 +181,7 @@ router.get('/auth/eu', autenticar, async (req, res, next) => {
      *  ate expirar. Assim perde o acesso na hora.
      */
     const [linhas] = await pool.query(
-      `SELECT u.nome, u.email, u.ativo, f.cargo
+      `SELECT u.id_utilizador, u.nome, u.email, u.ativo, f.cargo
          FROM utilizador u
          JOIN funcionario f ON f.id_utilizador = u.id_utilizador
         WHERE u.id_utilizador = ?`,
@@ -193,7 +193,25 @@ router.get('/auth/eu', autenticar, async (req, res, next) => {
       return res.status(401).json({ erro: 'Sessao invalida.' });
     }
 
+    /*
+     *  O `idUtilizador` chama-se assim e nao `id` de proposito: e
+     *  exatamente o nome que a linha do GET /gestao/funcionarios usa
+     *  para a mesma coisa. Dois nomes para o mesmo numero e um convite
+     *  a comparar os campos errados.
+     *
+     *  Pedido pelo Guilherme (10/09) e a razao e boa: para marcar "a
+     *  tua conta" na lista de funcionarios, a unica coisa que ele
+     *  tinha era o NOME — e dois homonimos davam a marca a pessoa
+     *  errada. Sem isto, so podia marcar quando o nome fosse unico.
+     *
+     *  Nao revela nada: este numero ja vai dentro do token, que o
+     *  cliente tem e consegue ler. A alternativa era ele decodificar
+     *  o token no browser para tirar de la o id — o que funcionava, e
+     *  era pior: passava a haver front-end a interpretar o formato do
+     *  token, e o formato do token e assunto do servidor.
+     */
     res.json({
+      idUtilizador: conta.id_utilizador,
       nome:  conta.nome,
       email: conta.email,
       nivel: NIVEL_POR_CARGO[conta.cargo] || null,

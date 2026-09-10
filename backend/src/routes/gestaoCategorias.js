@@ -31,10 +31,15 @@ const esquemaCriar = z.object({
   ativo: z.boolean().optional(),
 });
 
+const esquemaOrdem = z.object({
+  ids: z.array(z.coerce.number().int().positive())
+    .min(1, 'A lista esta vazia.')
+    .max(100, 'Demasiadas categorias.'),
+});
+
 const esquemaEditar = z.object({
   nome: esquemaCriar.shape.nome.optional(),
   descricao: esquemaCriar.shape.descricao,
-  ordem: esquemaCriar.shape.ordem,
   ativo: esquemaCriar.shape.ativo,
   /*
    *  Ver a nota do "desligar uma categoria" mais abaixo. Isto nao e uma
@@ -42,6 +47,30 @@ const esquemaEditar = z.object({
    */
   confirmar: z.boolean().optional(),
 });
+
+
+/* -------------------------------------------------------------------
+ *  A ORDEM NAO SE MUDA NO PATCH DE UMA CATEGORIA
+ *
+ *  Existe o PUT /gestao/categorias/ordem, que recebe a lista completa.
+ *  Deixar tambem o PATCH mexer na ordem daria duas portas para o mesmo
+ *  facto — e esta seria a porta errada: cada PATCH so sabe da sua
+ *  categoria, e nada impede que fiquem duas com ordem = 2. Uma
+ *  sequencia so e valida vista por inteiro.
+ *
+ *  Verificado ANTES do validar, porque o zod devolve o objeto limpo e
+ *  a essa altura ja nao se saberia que a ordem tinha vindo. E o mesmo
+ *  padrao do quantidade_atual no PATCH do produto.
+ * ----------------------------------------------------------------- */
+function recusarOrdem(req, res, proximo) {
+  if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'ordem')) {
+    return res.status(400).json({
+      erro: 'A ordem das categorias nao se muda aqui.',
+      onde: 'PUT /api/gestao/categorias/ordem, com a lista completa de ids',
+    });
+  }
+  proximo();
+}
 
 function formatar(l) {
   return {
@@ -126,7 +155,7 @@ router.post('/gestao/categorias',
 //  sai da ementa fica `ativo = false`.
 // ─────────────────────────────────────────────────────────────────────
 router.patch('/gestao/categorias/:id',
-  autenticar, exigirNivel('administrador'), validar(esquemaEditar),
+  autenticar, exigirNivel('administrador'), recusarOrdem, validar(esquemaEditar),
   async (req, res, next) => {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id < 1) {
@@ -165,7 +194,6 @@ router.patch('/gestao/categorias/:id',
       const juntar = (col, val) => { partes.push(`${col} = ?`); valores.push(val); };
       if (d.nome !== undefined)      juntar('nome', d.nome);
       if (d.descricao !== undefined) juntar('descricao', d.descricao);
-      if (d.ordem !== undefined)     juntar('ordem', d.ordem);
       if (d.ativo !== undefined)     juntar('ativo', d.ativo);
 
       if (partes.length) {
@@ -178,6 +206,87 @@ router.patch('/gestao/categorias/:id',
       if (erro.code === 'ER_DUP_ENTRY') {
         return res.status(409).json({ erro: 'Ja existe uma categoria com esse nome.' });
       }
+      next(erro);
+    }
+  });
+
+
+
+// ─────────────────────────────────────────────────────────────────────
+//  PUT /api/gestao/categorias/ordem                            (B-74)
+//
+//  Recebe a lista COMPLETA de ids, pela ordem nova.
+//
+//  Porque a lista inteira e nao "sobe esta uma posicao": com pedidos
+//  relativos, duas pessoas a mexer ao mesmo tempo deixam buracos na
+//  sequencia e posicoes repetidas. E reordenar com N pedidos e pior
+//  ainda — se o terceiro de cinco falhar, a lista fica meio ordenada e
+//  ninguem sabe em que estado ficou. Um pedido, ou nenhum.
+//
+//  Argumento do Guilherme (API.md 4.11), e esta certo.
+// ─────────────────────────────────────────────────────────────────────
+router.put('/gestao/categorias/ordem',
+  autenticar, exigirNivel('administrador'), validar(esquemaOrdem),
+  async (req, res, next) => {
+    const { ids } = req.body;
+
+    // Ids repetidos na lista: duas posicoes para a mesma categoria.
+    if (new Set(ids).size !== ids.length) {
+      return res.status(400).json({ erro: 'A lista tem ids repetidos.' });
+    }
+
+    const con = await pool.getConnection();
+    try {
+      await con.beginTransaction();
+
+      /*
+       *  FOR UPDATE trava as linhas ate ao fim. Sem isto, duas pessoas
+       *  a reordenar ao mesmo tempo podiam entrelacar as escritas e o
+       *  resultado nao seria nenhuma das duas ordens.
+       */
+      const [linhas] = await con.query(
+        'SELECT id_categoria FROM categoria FOR UPDATE'
+      );
+      const existentes = linhas.map((l) => l.id_categoria);
+
+      /*
+       *  A lista tem de cobrir TODAS as categorias, nem mais nem menos.
+       *
+       *  Uma lista incompleta nao e meia ordenacao: e uma ordenacao que
+       *  deixa de fora categorias que continuam a ter de aparecer em
+       *  algum sitio, e ninguem decidiu em qual. Mais vale recusar e
+       *  dizer o que falta — normalmente quer dizer que o ecra estava a
+       *  ver uma lista antiga, e nesse caso reordenar por cima era
+       *  gravar uma decisao tomada sobre outra realidade.
+       */
+      const faltam = existentes.filter((id) => !ids.includes(id));
+      const aMais  = ids.filter((id) => !existentes.includes(id));
+
+      if (faltam.length || aMais.length) {
+        await con.rollback(); con.release();
+        return res.status(409).json({
+          erro: 'A lista tem de trazer todas as categorias, exatamente uma vez. '
+              + 'Recarrega a lista e tenta outra vez.',
+          emFalta:  faltam,
+          naoExistem: aMais,
+        });
+      }
+
+      // A posicao e o lugar na lista. 1, 2, 3... sem buracos, por
+      // construcao — e a razao de se receber a lista inteira.
+      for (let i = 0; i < ids.length; i++) {
+        await con.query(
+          'UPDATE categoria SET ordem = ? WHERE id_categoria = ?', [i + 1, ids[i]]
+        );
+      }
+
+      const [novas] = await con.query(`${SELECT_CATEGORIA} ORDER BY c.ordem, c.nome`);
+      await con.commit(); con.release();
+
+      res.json(novas.map(formatar));
+    } catch (erro) {
+      try { await con.rollback(); } catch { /* ligacao ja perdida */ }
+      try { con.release(); } catch { /* idem */ }
       next(erro);
     }
   });

@@ -151,20 +151,20 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | B-41 | `GET /api/reservas/horarios?data=` — slots ativos para aquele dia da semana | 1 h | B-11 |
-| ⬜ | B-42 | `fluxoReserva.js`: estados `NUM_PESSOAS`, `MODO_EMENTA` | 1 h | B-29 |
-| ⬜ | B-43 | `fluxoReserva.js`: estado `DATA` — terça a domingo, de amanhã até 60 dias | 1 h 30 | B-42 |
-| ⬜ | B-44 | `fluxoReserva.js`: estados `PERIODO`, `HORA` | 1 h | B-41, B-43 |
-| ⬜ | B-45 | `fluxoReserva.js`: estados `NOME`, `TELEMOVEL` (9 dígitos, formato PT) | 1 h | B-44 |
-| ⬜ | B-46 | `fluxoReserva.js`: estado `RESUMO` | 1 h | B-45 |
-| ⬜ | B-47 | Gerador de `codigo_reserva` único (ex.: `RSV-7K2M9`) | 30 min | — |
-| ⬜ | B-48 | `POST /api/reservas` — cria a reserva do ramo A em estado `pendente` | 1 h 30 | B-46, B-47 |
-| ⬜ | B-49 | Limite de 3 reservas por telemóvel por dia | 45 min | B-48 |
-| ⬜ | B-50 | `fluxoReserva.js`: os 4 estados da ementa | 2 h 30 | B-27, B-42 |
-| ⬜ | B-51 | Carrinho de reserva que preserva quantidades ao navegar para trás | 1 h 30 | B-50 |
-| ⬜ | B-52 | `OBSERVACOES` + `RESUMO_EMENTA` com valor estimado calculado no servidor | 1 h 30 | B-51 |
-| ⬜ | B-53 | `POST /api/reservas` estendido — grava `ITEM_RESERVA` com `preco_unitario` à data | 1 h 30 | B-52 |
-| ⬜ | B-54 | Testes de API dos dois ramos | 1 h 30 | B-53 |
+| ✅ | B-41 | `GET /api/reservas/horarios?data=` — slots ativos para aquele dia da semana — *feito 10/09. Devolve as horas daquele dia com o que ainda cabe em cada uma. **A lotação é somada, não guardada** — sai de uma soma sobre as reservas daquele dia e daquela hora, porque uma contagem guardada fica errada assim que alguém cancela e ninguém se lembra de a baixar. O `dias_semana` é lido com `FIND_IN_SET` e está em numeração ISO (1=segunda), por isso `2,3,4,5,6,7` é terça a domingo. **A data é validada no servidor** — o calendário do Guilherme já bloqueia segundas, dias passados e além dos 60, mas isso é cortesia para quem usa o site, não uma regra: quem chamar a API diretamente passa ao lado do calendário. Testado: 12 horários numa sexta, e 400 numa segunda* | 1 h | B-11 |
+| 🔁 | B-42 | `fluxoReserva.js`: estados `NUM_PESSOAS`, `MODO_EMENTA` — *já não se aplica — descrevia estados de um `fluxoReserva.js` que **nunca chegou a ser preciso**: o fluxo inteiro de perguntas está construído no `frontend/cliente/js/reservas.js` do Guilherme (F-28 a F-43, todas ✅). É a mesma situação das 19 tarefas 🔁 do front-end, ao contrário: aqui foi trabalho do João que o front-end acabou por fazer. O que faltava mesmo era o servidor, e isso são o B-41, o B-47, o B-48, o B-49 e o B-53. Encontrado a 10/09, ao abrir o Sprint 3 — eram ≈ 10 h que ninguém precisava de fazer* | 1 h | B-29 |
+| 🔁 | B-43 | `fluxoReserva.js`: estado `DATA` — terça a domingo, de amanhã até 60 dias — *já não se aplica — descrevia estados de um `fluxoReserva.js` que **nunca chegou a ser preciso**: o fluxo inteiro de perguntas está construído no `frontend/cliente/js/reservas.js` do Guilherme (F-28 a F-43, todas ✅). É a mesma situação das 19 tarefas 🔁 do front-end, ao contrário: aqui foi trabalho do João que o front-end acabou por fazer. O que faltava mesmo era o servidor, e isso são o B-41, o B-47, o B-48, o B-49 e o B-53. Encontrado a 10/09, ao abrir o Sprint 3 — eram ≈ 10 h que ninguém precisava de fazer* | 1 h 30 | B-42 |
+| 🔁 | B-44 | `fluxoReserva.js`: estados `PERIODO`, `HORA` — *já não se aplica — descrevia estados de um `fluxoReserva.js` que **nunca chegou a ser preciso**: o fluxo inteiro de perguntas está construído no `frontend/cliente/js/reservas.js` do Guilherme (F-28 a F-43, todas ✅). É a mesma situação das 19 tarefas 🔁 do front-end, ao contrário: aqui foi trabalho do João que o front-end acabou por fazer. O que faltava mesmo era o servidor, e isso são o B-41, o B-47, o B-48, o B-49 e o B-53. Encontrado a 10/09, ao abrir o Sprint 3 — eram ≈ 10 h que ninguém precisava de fazer* | 1 h | B-41, B-43 |
+| 🔁 | B-45 | `fluxoReserva.js`: estados `NOME`, `TELEMOVEL` (9 dígitos, formato PT) — *já não se aplica — descrevia estados de um `fluxoReserva.js` que **nunca chegou a ser preciso**: o fluxo inteiro de perguntas está construído no `frontend/cliente/js/reservas.js` do Guilherme (F-28 a F-43, todas ✅). É a mesma situação das 19 tarefas 🔁 do front-end, ao contrário: aqui foi trabalho do João que o front-end acabou por fazer. O que faltava mesmo era o servidor, e isso são o B-41, o B-47, o B-48, o B-49 e o B-53. Encontrado a 10/09, ao abrir o Sprint 3 — eram ≈ 10 h que ninguém precisava de fazer* | 1 h | B-44 |
+| 🔁 | B-46 | `fluxoReserva.js`: estado `RESUMO` — *já não se aplica — descrevia estados de um `fluxoReserva.js` que **nunca chegou a ser preciso**: o fluxo inteiro de perguntas está construído no `frontend/cliente/js/reservas.js` do Guilherme (F-28 a F-43, todas ✅). É a mesma situação das 19 tarefas 🔁 do front-end, ao contrário: aqui foi trabalho do João que o front-end acabou por fazer. O que faltava mesmo era o servidor, e isso são o B-41, o B-47, o B-48, o B-49 e o B-53. Encontrado a 10/09, ao abrir o Sprint 3 — eram ≈ 10 h que ninguém precisava de fazer* | 1 h | B-45 |
+| ✅ | B-47 | Gerador de `codigo_reserva` único (ex.: `RSV-7K2M9`) — *feito 10/09 — reaproveita o `gerarCodigo` do `servicos/pedidos.js` com o prefixo `RSV`, o mesmo alfabeto sem I, O, 0 e 1 (estes códigos são lidos ao telefone) e a mesma repetição em caso de código já usado* | 30 min | — |
+| ✅ | B-48 | `POST /api/reservas` — cria a reserva do ramo A em estado `pendente` — *feito 10/09. Fica em **`pendente`**, não em `confirmada`: o restaurante é que confirma — pode não ter mesa daquele tamanho, pode ser dia de evento —, e dizer "confirmada" a quem acabou de submeter era prometer em nome de quem ainda não sabe. `SELECT ... FOR UPDATE` na linha do horário: sem isso, duas pessoas a reservar as últimas mesas leem as duas "há lugar" e gravam as duas. O telemóvel aceita espaços e normaliza — `912 345 678` é o mesmo número que `912345678`, e recusá-lo por causa disso era pedir à pessoa que adivinhasse o formato. Veio também um `GET /api/reservas/:codigo`, em que o código faz de credencial como o número do take away, e que **não devolve telemóvel nem email**. Testado ponta a ponta* | 1 h 30 | B-46, B-47 |
+| ✅ | B-49 | Limite de 3 reservas por telemóvel por dia — *feito 10/09. Conta-se por **dia da reserva** e não por dia em que se reservou: quem marca cinco sextas ao longo de dois meses é um bom cliente, não um abuso — o que faz mal ao restaurante é uma pessoa a bloquear meia sala na mesma noite. Testado: três aceites, a quarta recusada com 409, e o mesmo número escrito com e sem espaços conta como um só* | 45 min | B-48 |
+| 🔁 | B-50 | `fluxoReserva.js`: os 4 estados da ementa — *já não se aplica — descrevia estados de um `fluxoReserva.js` que **nunca chegou a ser preciso**: o fluxo inteiro de perguntas está construído no `frontend/cliente/js/reservas.js` do Guilherme (F-28 a F-43, todas ✅). É a mesma situação das 19 tarefas 🔁 do front-end, ao contrário: aqui foi trabalho do João que o front-end acabou por fazer. O que faltava mesmo era o servidor, e isso são o B-41, o B-47, o B-48, o B-49 e o B-53. Encontrado a 10/09, ao abrir o Sprint 3 — eram ≈ 10 h que ninguém precisava de fazer* | 2 h 30 | B-27, B-42 |
+| 🔁 | B-51 | Carrinho de reserva que preserva quantidades ao navegar para trás — *já não se aplica — descrevia estados de um `fluxoReserva.js` que **nunca chegou a ser preciso**: o fluxo inteiro de perguntas está construído no `frontend/cliente/js/reservas.js` do Guilherme (F-28 a F-43, todas ✅). É a mesma situação das 19 tarefas 🔁 do front-end, ao contrário: aqui foi trabalho do João que o front-end acabou por fazer. O que faltava mesmo era o servidor, e isso são o B-41, o B-47, o B-48, o B-49 e o B-53. Encontrado a 10/09, ao abrir o Sprint 3 — eram ≈ 10 h que ninguém precisava de fazer* | 1 h 30 | B-50 |
+| 🔁 | B-52 | `OBSERVACOES` + `RESUMO_EMENTA` com valor estimado calculado no servidor — *já não se aplica — descrevia estados de um `fluxoReserva.js` que **nunca chegou a ser preciso**: o fluxo inteiro de perguntas está construído no `frontend/cliente/js/reservas.js` do Guilherme (F-28 a F-43, todas ✅). É a mesma situação das 19 tarefas 🔁 do front-end, ao contrário: aqui foi trabalho do João que o front-end acabou por fazer. O que faltava mesmo era o servidor, e isso são o B-41, o B-47, o B-48, o B-49 e o B-53. Encontrado a 10/09, ao abrir o Sprint 3 — eram ≈ 10 h que ninguém precisava de fazer* | 1 h 30 | B-51 |
+| ✅ | B-53 | `POST /api/reservas` estendido — grava `ITEM_RESERVA` com `preco_unitario` à data — *feito 10/09, no mesmo `POST /api/reservas`. **O preço fica gravado à data:** uma reserva feita hoje para daqui a um mês mostra o preço de hoje, e se o prato aumentar entretanto quem reservou não pode ser surpreendido — ler o preço atual do produto fazia exatamente isso. O `valor_estimado` é somado no servidor* | 1 h 30 | B-52 |
+| ✅ | B-54 | Testes de API dos dois ramos — *ramo A (sem ementa) testado a 10/09 ponta a ponta: horários, reserva, lotação a descer, limite dos 3, consulta pelo código. Ramo B testado a 10/09: reserva com dois borregos e duas águas, `item_reserva` gravado com o preço à data, e o `valor_estimado` somado no servidor a dar 33,60 € (31,00 + 2,60). **O Sprint 3 do back-end fica fechado*** | 1 h 30 | B-53 |
 
 > 💡 **Nota:** o Guilherme já construiu este fluxo todo do lado do ecrã. Quando chegares aqui, a tua parte é sobretudo replicar no servidor a lógica que já existe em `reservas.js` — usa esse ficheiro como especificação.
 
@@ -188,7 +188,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
 | ✅ | B-65 | Gerar os QR Codes das mesas com a biblioteca `qrcode` — *`npm run qrcodes -- https://vemproabate.vercel.app`, 10 PNG em `backend/qrcodes/`, um testado no browser. Os tokens são fixos no `seed.sql`, por isso regravar a base **não** invalida os cartões impressos* | 1 h 30 | B-11 |
-| ✅ | B-66 | `GET /api/gestao/mesas/qrcodes` — *feito 10/09 (dito por ele). Ligado ao `ENDPOINTS_REAIS` no mesmo dia e a `qrcodes.html` deixou de estar à espera. **Nível `administrador` e `balcao`, e não "qualquer funcionário" como estava na 4.6:** o `qr_code` de uma mesa é a credencial dessa mesa, e uma lista deles desfaz de uma vez a proteção das dez. O balcão entra porque substitui um cartão gasto a meio do serviço; a cozinha fica fora porque nunca precisa de imprimir cartões. O critério é a necessidade, não a ausência de perigo. A página já declarava esses dois níveis desde 08/09 — não foi preciso mexer-lhe* | 45 min | B-65 |
+| ✅ | B-66 | `GET /api/gestao/mesas/qrcodes` — *feito 10/09, formato da secção 4.6: `{ id, numero, lugares, qrToken }`, só mesas activas, ordenadas pelo número. O `qrcodes.html` do Guilherme (F-58) deixa de estar à espera. **Níveis: `administrador` e `balcao`, não "qualquer funcionário".** O `qr_code` de uma mesa **é** a credencial dessa mesa — quem o tiver pode abrir a sessão e pedir naquela mesa de onde estiver, que foi a razão de nunca ter sido o número da mesa. Uma lista destes tokens desfaz essa protecção inteira, e de uma vez só para as dez mesas. A cozinha fica de fora porque não há nenhuma altura em que quem cozinha precise de imprimir cartões: **o critério para dar acesso a uma credencial é a necessidade, não a ausência de perigo.** O balcão entra porque é quem substitui um cartão gasto a meio de um serviço. Só mesas activas — um cartão impresso para uma mesa desativada é um cartão numa gaveta a dar acesso a uma sessão que ninguém vigia. **Testado:** 10 mesas com o administrador, 403 com a sessão de cozinha* | 45 min | B-65 |
 | ⬜ | B-67 | Entrada por token de mesa: `/mesa?t=<token>` | 1 h | B-36 |
 | ⬜ | B-68 | `estatisticas.js`: nº de pedidos, faturação diária e mensal, média por pedido | 2 h | B-39 |
 | ⬜ | B-69 | `estatisticas.js`: produtos mais vendidos + tempo médio de preparação | 1 h 30 | B-57 |
@@ -196,7 +196,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ⬜ | B-71 | `services/email.js` com Nodemailer + Brevo/Resend | 1 h 30 | B-16 |
 | ⬜ | B-72 | Email de novo pedido para o restaurante + registo em `NOTIFICACAO` | 1 h | B-71 |
 | ⬜ | B-73 | 🔁 *(recuperação)* `GET /api/gestao/reservas` — lista só de leitura | 1 h 30 | B-48 |
-| ✅ | B-74 | `PUT /api/gestao/categorias/ordem` — *feito 10/09, horas depois de eu a abrir. Lista completa, uma transacção, `SELECT … FOR UPDATE` nas linhas, e devolve a lista já ordenada. Recusa com 409 se não trouxer todas exactamente uma vez e diz quais faltam em `emFalta` — normalmente isso quer dizer que o ecrã estava a ver uma lista antiga, e reordenar por cima seria gravar uma decisão tomada sobre outra realidade. **Tirou o `ordem` do PATCH /:id sem lhe ser pedido**, e o argumento é o certo: cada PATCH só sabia da sua categoria e nada impedia duas com `ordem = 2`. Uma sequência só é válida vista por inteiro — o mesmo raciocínio do `quantidade_atual` no produto. A F-51 fica inteira, e as setas passaram a gravar a sério* | 45 min | B-62 |
+| ✅ | B-74 | `PUT /api/gestao/categorias/ordem` — *feito 10/09, formato da secção 4.11 tal como o Guilherme o especificou: recebe a lista completa de ids e devolve a lista já ordenada, tudo numa transacção. Recusa com **409** se a lista não trouxer todas as categorias exactamente uma vez, e diz quais faltam — normalmente isso quer dizer que o ecrã estava a ver uma lista antiga, e reordenar por cima seria gravar uma decisão tomada sobre outra realidade. `SELECT ... FOR UPDATE` nas linhas, para duas pessoas a reordenar ao mesmo tempo não entrelaçarem as escritas e o resultado não ser nenhuma das duas ordens. **Fechei também a outra porta:** o `PATCH /:id` deixou de aceitar `ordem` e dá 400 a apontar este endereço. Duas portas para o mesmo facto, e esta era a errada — cada `PATCH` só sabe da sua categoria e nada impedia duas com `ordem = 2`; uma sequência só é válida vista por inteiro. É o mesmo raciocínio do `quantidade_atual` no produto. **Testado:** ementa invertida com `[4,3,2,1]` e a sequência a sair 1-2-3-4 sem buracos, `[4,3]` recusado com `emFalta: [1,2]`, e a ordem reposta* | 45 min | B-62 |
 
 ---
 
@@ -502,12 +502,12 @@ refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 74 | 47 | — | 27 | ≈ 34 h 45 |
+| 🔵 João (B-) | 74 | 53 | 8 | 13 | ≈ 17 h |
 | 🟠 Guilherme (F-) | 69 | 48 | 17 | 4 | ≈ 5 h 15 |
 | 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
 | 🐞 Correções (X-) | 12 | 11 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 82 h.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
+**Total por fazer: ≈ 64 h 15.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
 (falta o Guilherme ler o `CONTEXTO.md`) e a X-08 (não se conseguiu reproduzir). O B-40 saiu
 desta lista a 10/09 — o B-35 fechou e o take away passou a estar testado. O B-65 já tinha
 saído: os QR Codes estão gerados.
@@ -581,9 +581,15 @@ nenhuma das quatro sequências.
 > qualquer coisa ser empurrada, e a tarefa passou a F-69.
 >
 > As três vezes de hoje foram por causas diferentes: uma escrita que reverteu linhas, um
-> parágrafo que partiu uma linha de tabela, e agora um número saltado. **A verificação não
-> sabe distinguir nenhuma delas, e é isso que a torna útil:** só sabe dizer que a conta não
-> bate. Se mudares
+> parágrafo que partiu uma linha de tabela, e um número saltado. **A verificação não sabe
+> distinguir nenhuma delas, e é isso que a torna útil:** só sabe dizer que a conta não bate.
+
+> **E foram quatro merges deste bloco num dia.** No último, o lado do João dava 63 h 15 e o
+> meu 82 h — porque ele tinha fechado seis tarefas B- e retirado oito, e eu tinha aberto a
+> F-69 e reposto a F-24 e a F-25. **Nenhum dos dois estava errado sobre o seu lado e nenhum
+> estava certo sobre o total.** Nas duas linhas em conflito que eram tarefas dele (B-66 e
+> B-74), ficou a descrição dele: escreveu-as a partir do código, e eu tinha-as marcado a
+> partir de uma mensagem. Se mudares
 uma linha lá em cima, refaz isto da mesma maneira — não somes nem subtraias a estes valores.
 
 > **Merges de 10/09 — foram dois, com uma hora de intervalo.** No primeiro, nenhum dos dois

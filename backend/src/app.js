@@ -22,10 +22,12 @@ const catalogoRouter = require('./routes/catalogo');
 const authRouter = require('./routes/auth');
 const mesasRouter = require('./routes/mesas');
 const takeawayRouter = require('./routes/takeaway');
+const reservasRouter = require('./routes/reservas');
 const pedidosRouter = require('./routes/pedidos');
 const gestaoStockRouter = require('./routes/gestaoStock');
 const gestaoProdutosRouter = require('./routes/gestaoProdutos');
 const gestaoCategoriasRouter = require('./routes/gestaoCategorias');
+const gestaoMesasRouter = require('./routes/gestaoMesas');
 const gestaoFuncionariosRouter = require('./routes/gestaoFuncionarios');
 
 const app = express();
@@ -87,6 +89,11 @@ app.use('/api', mesasRouter);
 // desse router apanhava o "takeaway" como se fosse um id.
 app.use('/api', takeawayRouter);
 
+// Reservas: /api/reservas/horarios, POST /api/reservas, /api/reservas/:codigo
+// Sem login — quem reserva uma mesa nao tem conta. O que fica na mao do
+// cliente e o codigo da reserva.
+app.use('/api', reservasRouter);
+
 // Gestao: /api/pedidos/ativos, /cozinha, /:id/estado, /sessao/:id/fechar
 // Todos exigem sessao iniciada.
 app.use('/api', pedidosRouter);
@@ -101,6 +108,10 @@ app.use('/api', gestaoProdutosRouter);
 
 // Categorias: /api/gestao/categorias
 app.use('/api', gestaoCategoriasRouter);
+
+// Mesas: /api/gestao/mesas/qrcodes — a lista para imprimir os cartoes.
+// Com login: o qr_code de uma mesa e a credencial dessa mesa.
+app.use('/api', gestaoMesasRouter);
 
 // Contas dos funcionarios: /api/gestao/funcionarios
 app.use('/api', gestaoFuncionariosRouter);
