@@ -23,25 +23,14 @@ const { z } = require('zod');
 const { pool } = require('../config/bd');
 const { validar } = require('../middleware/validar');
 const { autenticar, exigirNivel } = require('../middleware/autenticar');
+const { NIVEL_POR_CARGO, CARGOS, CARGOS_ADMIN } = require('../config/niveis');
 
 const router = express.Router();
 
-/*
- *  Os cargos que dao acesso a aplicacao de gestao, e o nivel de cada
- *  um. E a mesma tabela do auth.js — quem entrar por aqui tem de sair
- *  com um nivel que o login reconheca, senao criava-se uma conta que
- *  nunca consegue entrar.
- */
-const NIVEL_POR_CARGO = {
-  administrador:  'administrador',
-  gerente:        'administrador',
-  cozinheiro:     'cozinha',
-  empregado_mesa: 'balcao',
-};
-const CARGOS = Object.keys(NIVEL_POR_CARGO);
-
-// Os cargos que mandam. Usado na regra do ultimo administrador.
-const CARGOS_ADMIN = CARGOS.filter((c) => NIVEL_POR_CARGO[c] === 'administrador');
+/* A tabela cargo -> nivel, os cargos validos e os que mandam vivem
+   todos em config/niveis.js — um sitio so (X-11, 10/09). Quem entrar
+   por aqui tem de sair com um nivel que o login reconheca, senao
+   criava-se uma conta que nunca consegue entrar. */
 
 /*
  *  Custo 12, como no scripts/gerarHash.js e no auth.js. O bcrypt repete

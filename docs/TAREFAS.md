@@ -84,6 +84,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | **✅** | **X-09** | ~~Caixa de escrita engolia texto sem responder~~ — corrigido com teste | 20 min | Gui |
 | **✅** | **X-12** | ~~Um recurso meio ligado mentia em silêncio~~ — *encontrado e corrigido pelo Guilherme a 10/09, ao ligar as categorias. O `ENDPOINTS_REAIS` é uma lista por **caminho**, mas um ecrã usa vários caminhos do mesmo recurso, e nada garantia que fossem ligados todos ao mesmo tempo. O B-62 trouxe três dos quatro caminhos das categorias, e a F-51 ia ficar assim: a lista vinha do servidor, criar e editar iam ao servidor, e **reordenar caía na simulação, que devolvia a lista trocada e um 200**. As setas funcionavam à vista, a ordem mudava no ecrã, e voltava tudo atrás ao recarregar a página — sem erro nenhum, sem aviso nenhum. É a pior forma de falhar: a que parece ter corrido bem, e a que passa uma apresentação inteira sem ninguém notar. **A regra que ficou:** não se simula uma **escrita** sobre um recurso que já é real — se o `gestao/categorias` está na lista, ninguém finge gravar em `gestao/categorias/qualquer-coisa`. Devolve 501 e o ecrã mostra o motivo. Só escritas, de propósito: uma leitura simulada também é falsa mas **vê-se** (são dados de demonstração à vista, e é para isso que serve o `?simular=1`); uma escrita simulada devolve "gravado" a quem gravou nada, e ninguém vê nada. Verificado: `frontend/testes/guarda-endpoints.js` — apanha o caso real e não apanha nenhum dos quatro recursos que continuam inteiramente simulados* | 40 min | Gui |
 | **✅** | **X-10** | ~~`docs/API.md` desatualizado em dois sítios~~ — corrigido pelo Guilherme a 09/09. A §5 passou a descrever o que o C-26 faz mesmo, e a §4.8 perdeu a justificação repetida. **A correcção foi melhor do que a pedida:** em vez de actualizar a cópia da lista `ENDPOINTS_REAIS` que estava no documento com 4 entradas quando o `api.js` já tinha 15, apagou a cópia e escreveu *"uma lista copiada é uma lista que vai ficar errada"* — passou a dizer o que a lista cobre, não o que ela diz linha a linha | 30 min | Gui |
+| **✅** | **X-11** | ~~Desativar um funcionário não lhe tirava o acesso~~ — corrigido a 10/09. O `exigirNivel` deixou de decidir pelo que está dentro do token e confirma na base a cada pedido autenticado **duas** coisas: se a conta continua ativa, e se o cargo ainda dá o nível que o token diz — a segunda apanha as despromoções, que tinham o mesmo problema. Conta desativada responde **401 e não 403**, de propósito: o 403 diz *"esta sessão não serve para isto"*, o 401 diz *"esta sessão já não serve para nada"*, e é o 401 que faz o `auth-guard` mandar a pessoa para o login em vez de a deixar num ecrã vazio. Se a base não responder, **não** deixa passar: uma verificação de permissões que falha aberta é pior do que não existir. Custo aceite: uma consulta por pedido autenticado, e só nos endpoints de gestão — os do cliente à mesa não levam login. **Apanhou um segundo problema:** a tabela cargo→nível estava escrita em dois sítios (`auth.js` e `gestaoFuncionarios.js`) e este ia ser o terceiro; passou para `src/config/niveis.js`. **Testado:** token da cozinha a ler a fila, conta desativada pelo administrador, o **mesmo** token a dar 401 à primeira, e a funcionar outra vez depois de reativada — sem novo login | 45 min | João |
 
 ---
 
@@ -511,8 +512,16 @@ e X-08 (não se conseguiu reproduzir). O B-65 saiu desta lista — os QR Codes e
 > API à mão — confirmar rondas, mexer no stock — até o token expirar, o que pode ser 8 horas.
 > **Num restaurante, é um turno inteiro depois de alguém ser mandado embora.** Nada disto se
 > vê pelo ecrã da F-53, que faz exatamente o que deve: a linha fica "Sem acesso" porque o
-> servidor diz que está `ativo: false`. Vale a pena registar como isto apareceu — não foi um
-> teste nem um relato, foi ele a ir ler o próprio código para escrever uma resposta.
+> servidor diz que está `ativo: false`.
+>
+> **Fechou-o no mesmo dia, e fez mais do que tinha dito:** o `exigirNivel` passou a confirmar
+> na base não só se a conta continua ativa, mas também se o cargo ainda dá o nível que o
+> token diz — e essa segunda parte apanha as **despromoções**, que tinham exatamente o mesmo
+> problema e que ninguém tinha mencionado.
+>
+> Vale a pena registar como isto apareceu: não foi um teste nem um relato de ninguém. Foi ele
+> a ir ler o próprio código para escrever uma resposta a duas perguntas minhas, e a encontrar
+> pelo caminho uma coisa pior do que as duas.
 
 > **Nota dos merges de 09/09 (foram cinco neste bloco, ao todo).** De cada vez, nenhuma das
 > duas versões estava certa — cada um marcava o seu lado sem ver o do outro. Refeito sempre a
@@ -546,11 +555,15 @@ e X-08 (não se conseguiu reproduzir). O B-65 saiu desta lista — os QR Codes e
 > Não foi ninguém a apagar nada: foi formatação. Mas o sintoma é igual ao do `9303458`, e a
 > mesma verificação apanhou os dois.
 
-*Como estes números foram feitos:* contadas as 181 linhas das tabelas acima uma a uma e
+*Como estes números foram feitos:* contadas as 182 linhas das tabelas acima uma a uma e
 somada a coluna da estimativa só das linhas ⬜ e 🟨. Os quatro prefixos fecham certo
-(74 + 68 + 28 + 11) e a única falha de sequência é o **X-11**, que o João abriu na mensagem
-mas ainda não tem linha aqui — quando a acrescentar, passa a 182 e X- a 12. Se mudares uma
-linha lá em cima, refaz isto da mesma maneira — não somes nem subtraias a estes valores.
+(74 + 68 + 28 + 12) e não há códigos em falta em nenhuma das quatro sequências. Se mudares
+uma linha lá em cima, refaz isto da mesma maneira — não somes nem subtraias a estes valores.
+
+> **Merge de 10/09.** Este bloco veio em conflito outra vez, e outra vez **nenhum dos dois
+> lados estava certo**: o do João dava 180 linhas e não contava o B-74 que eu tinha aberto; o
+> meu dava 181 e não contava o X-11 que ele tinha aberto *e fechado*. Cada um estava a somar
+> o seu lado. Refeito a contar as linhas, como o parágrafo acima manda.
 
 > **Nota do merge de 08/09.** Este bloco veio em conflito porque cada um de nós tinha
 > atualizado a sua metade sem ver a do outro, e **nenhuma das duas versões estava certa**: a
