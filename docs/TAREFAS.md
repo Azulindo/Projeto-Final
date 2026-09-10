@@ -39,6 +39,15 @@
 > com um bot, substituída pela `mesa.html`. **Não estão em falta**: o que garantiam está
 > feito noutra forma. Não as contes no que falta.
 
+> **O varrimento em bloco apanhou quatro tarefas a mais (10/09).** As 19 🔁 foram marcadas de uma vez, quando a
+> `pedido.html` saiu — *"o chatbot saiu, logo estas saem com ele"*. Seis estavam erradas: a **F-24** e a **F-25** (nome e
+> telemóvel do take away, encontradas pelo Guilherme ao ver que nada chamava o `POST /pedidos/takeaway`), a **F-21** e a
+> **F-27**. Ficaram invisíveis precisamente por estarem no meio das outras — **ninguém revê uma linha que já tem um
+> símbolo ao lado**. As 15 restantes foram verificadas uma a uma contra o que existe hoje e estão bem varridas.
+>
+> A lição não é sobre estas quatro: é que marcar em bloco esconde os casos que não pertencem ao bloco.
+
+
 **Estado a 8 de setembro:** **Sprints 0, 1 e o núcleo do 2 fechados, e o projeto está público.** A base está no Aiven, a API em `https://vem-pro-abate-api.onrender.com`, o site em `https://vemproabate.vercel.app` (F-67) e os dois falam um com o outro — o CORS está fechado ao domínio de produção (B-24) e a ementa carrega a partir do site publicado. O ciclo completo de uma refeição funciona ponta a ponta: ler o QR Code abre a sessão, o cliente envia rondas, a cozinha aceita (e o stock desce), o cliente pede a conta e o balcão fecha (e o total congela). Testado a 08/09 contra a base na nuvem. Os 10 QR Codes das mesas estão gerados e um foi aberto no telemóvel (B-65). O login está ligado nos dois lados e cada nível cai no ecrã certo. Do lado da gestão, os ecrãs de **Produtos** (F-49/F-50) e de **Stock** (F-52) estão feitos e a funcionar sobre os formatos simulados.
 
 **O que bloqueia agora, por ordem:** o **B-35** (take away — é o último buraco no ciclo de encomendas, e arrasta o B-40); o **B-66** (endpoint dos QR Codes, com a página do Guilherme já feita à espera dele); e os CRUDs de gestão que faltam — o **B-61** (agora destrancado pelo B-63), e o **B-62** e o **B-64**, que destrancam as duas tarefas do Guilherme que faltam (F-51 e F-53). O **B-63 fechou a 09/09**: falta só o Guilherme acrescentar os dois caminhos ao `ENDPOINTS_REAIS` para a F-52 deixar de ser simulada. Acima de todas elas, e agora **dentro** da lista: o **plano B local** (C-24 a C-28) — o Aiven desligou-se sozinho duas vezes em quatro dias e ainda não se sabe porquê. Esteve escrito aqui duas vezes como aviso solto e não lhe pegou ninguém; passou a ter código, dono e horas.
@@ -288,13 +297,13 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | 🔁 | F-18 | Animação "o bot está a escrever…" | 1 h | F-15 |
 | 🔁 | F-19 | Carrossel horizontal de cards de produto | 2 h | F-07 |
 | 🔁 | F-20 | Seletor de quantidade (– 1 +) | 1 h | F-16 |
-| 🔁 | F-21 | Campo de observações + botão "sem observações" | 1 h | F-16 |
+| ⬜ | F-21 | Campo de observações por item, na `mesa.html` — **desvarrida a 10/09**. *Estava marcada 🔁 com as do chatbot, mas a capacidade não existe em lado nenhum: a `mesa.html` envia só `{produtoId, quantidade}` e a palavra "observações" não aparece uma única vez no ficheiro. **E tudo o resto já está construído à volta dela:** a coluna `item_pedido.observacoes` existe, o `POST /mesas/:token/pedir` aceita `observacao` por item, e o ecrã da cozinha mostra-a **num destaque amarelo** — o "Sem cebola" e o "Com vela" que se vêem lá vieram do seed e de um teste por terminal. Um cliente à mesa não consegue escrever nenhum. A cozinha tem um aviso em destaque alimentado por nada, e o que lá aparece nos exemplos é o que um restaurante mais precisa: uma alergia, uma vela de aniversário* | 45 min | F-16 |
 | 🔁 | F-22 | Ecrã de resumo do pedido (itens, quantidades, subtotais, total) | 2 h | F-16 |
 | 🔁 | F-23 | Botão de remover item no resumo | 1 h | F-22 |
 | ✅ | F-24 | Ecrã de nome + telemóvel do take away, com validação — *feita 10/09 como `cliente/takeaway.html`. **Estava marcada 🔁 por engano** (ver a nota do bloco acima): foi varrida para as tarefas do chatbot, mas o que ela garantia NÃO tinha sido feito noutra forma — a `mesa.html` identifica o cliente pelo token do QR e nunca pede nome nem telemóvel. Ficou um endpoint sem ecrã e o **ponto 5 da definição de concluído** do `CONTEXTO.md` sem front-end. O nome e o telemóvel são obrigatórios, com as MESMAS regras do servidor (o telefone só aceita dígitos, espaços e o `+`, 9 a 20 caracteres) — validar aqui poupa uma ida ao Render, ter as mesmas regras é o que impede o ecrã de aceitar o que o servidor recusa. O ecrã diz para que serve cada contacto, em vez de os pedir sem explicação. As observações da encomenda são **devolvidas** na confirmação: quem escreveu "sem cebola" tem de ver que ficou registado, senão a única forma de confirmar é telefonar — que é o que esta página existe para evitar. Verificado: `frontend/testes/takeaway.js`* | 1 h 30 | F-49 |
 | ✅ | F-25 | Ecrã de confirmação com o **número do pedido em destaque** e botão "copiar" — *feita 10/09, no mesmo `takeaway.html`. Repostas pela mesma razão da F-24. O número é a única coisa que a pessoa TEM de levar dali, por isso é a maior coisa no ecrã, dá para copiar, e vai para o endereço (`?encomenda=PED-XXXXX`) — assim um refresh ou um favorito não perdem a encomenda. **O botão de copiar tem plano B:** o `clipboard` não existe em `file://` nem sem HTTPS, e falhar em silêncio deixava a pessoa a carregar num botão que não faz nada; se não der, o número fica selecionado e o ecrã diz porquê. Ganhou uma coisa que não estava na tarefa original e que o B-35 tornou possível: **o estado da encomenda, relido do servidor** com um botão de atualizar, e uma caixa para consultar pelo número de um separador limpo. Era a razão de o `GET /pedidos/takeaway/:numero` existir. Verificado no mesmo teste* | 1 h 30 | F-24 |
 | ✅ | F-26 | Estados visuais de "a carregar" e de erro de ligação | 1 h | F-15 |
-| 🔁 | F-27 | Testar e afinar tudo em telemóvel real | 2 h | F-25 |
+| ⬜ | F-27 | Testar e afinar tudo em telemóvel real — **desvarrida a 10/09**. *Não tinha nada que ver com o chatbot; foi varrida por estar no meio das outras. A `mesa.html` só se abre por QR Code, ou seja **só existe em telemóvel**, e nunca foi testada num* | 1 h 30 | F-25 |
 
 **Total do sprint: ≈ 17 h 45**
 
@@ -512,11 +521,11 @@ refazer.
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
 | 🔵 João (B-) | 74 | 53 | 8 | 13 | ≈ 17 h |
-| 🟠 Guilherme (F-) | 69 | 48 | 17 | 4 | ≈ 5 h 15 |
+| 🟠 Guilherme (F-) | 69 | 48 | 15 | 6 | ≈ 7 h 30 |
 | 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
 | 🐞 Correções (X-) | 15 | 14 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 64 h 15.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
+**Total por fazer: ≈ 66 h 30.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
 (falta o Guilherme ler o `CONTEXTO.md`) e a X-08 (não se conseguiu reproduzir). O B-40 saiu
 desta lista a 10/09 — o B-35 fechou e o take away passou a estar testado. O B-65 já tinha
 saído: os QR Codes estão gerados.
