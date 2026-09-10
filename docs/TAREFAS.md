@@ -148,7 +148,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
-| ⬜ | B-17 | `middleware/erros.js` — tratamento centralizado, mensagens em português, nunca expor o SQL | 45 min | B-16 |
+| ✅ | B-17 | `middleware/erros.js` — tratamento centralizado, mensagens em português, nunca expor o SQL — *feito 10/09. Já existia um tratador escrito à mão dentro do `app.js`; ao passá-lo para ficheiro próprio apareceram **três buracos que ninguém tinha visto**. **(1)** O detalhe verdadeiro do erro era mostrado sempre que o `NODE_ENV` não fosse `production` — ou seja, a segurança da API publicada dependia de alguém se lembrar de pôr uma variável no Render. Se faltasse, a API respondia com o nome das nossas tabelas a quem perguntasse. Agora quem decide é o `ambiente.js` pelo `DB_HOST`, que não se pode esquecer: **um valor que se pode derivar não se declara** — é a lição do indicador LOCAL/NUVEM que mentia. **(2)** Qualquer erro do MySQL saía como 500; "já existe um produto com esse nome" é 409 e o front-end não tinha como distinguir os dois. Ficaram 18 códigos traduzidos, sempre a partir do **código** e nunca da mensagem (um `ER_DUP_ENTRY` traz a tabela, a coluna e o valor lá dentro). **(3)** Escrevia o objeto do erro inteiro no registo, e os erros do `mysql2` trazem o campo `sql` com os valores já substituídos — num INSERT de funcionário isso é **a hash da password a ficar guardada nos registos do Render**. O `ER_CHECK_CONSTRAINT_VIOLATED` ficou de fora da tradução de propósito: a única restrição CHECK do projeto é a aritmética do stock, que o servidor calcula sozinho, por isso se disparar o erro é nosso e não de quem chamou. Cada resposta leva uma `ref` de 6 caracteres que aparece também no registo — no dia da apresentação encontra-se a causa sem abrir o terminal à frente do júri* | 45 min | B-16 |
 | ✅ | B-18 | `middleware/validar.js` — wrapper do zod para body e query — *devolve 400 com a lista de campos que falham, e substitui o original pelo resultado limpo do zod* | 30 min | B-16 |
 | ✅ | B-19 | `POST /api/auth/login` — verifica bcrypt, devolve JWT com `id` e `nivel` — *o `nivel` sai do `funcionario.cargo` (`cozinheiro`→`cozinha`, `empregado_mesa`→`balcao`, `administrador`/`gerente`→`administrador`), traduzido num sítio só. Mesma resposta e mesmo tempo para email inexistente e password errada* | 1 h 30 | B-18 |
 | ✅ | B-20 | `middleware/autenticar.js` — lê e valida o JWT — *distingue token expirado de token inválido na mensagem* | 1 h | B-19 |
@@ -533,13 +533,18 @@ refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 74 | 54 | 7 | 13 | ≈ 17 h |
+| 🔵 João (B-) | 74 | 55 | 7 | 12 | ≈ 16 h 15 |
 | 🟠 Guilherme (F-) | 69 | 49 | 15 | 5 | ≈ 6 h 45 |
 | 🟢 Os dois (C-) | 28 | 8 | — | 20 | ≈ 40 h 30 |
 | 🐞 Correções (X-) | 17 | 16 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 64 h 45.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
-(falta o Guilherme ler o `CONTEXTO.md`) e a X-08 (não se conseguiu reproduzir). O B-40 saiu
+**Total por fazer: ≈ 64 h.** Sobram **seis** tarefas 🟨, e todas contam como por fazer: as
+**B-68, B-69 e B-70** (escritas a 10/09, por correr — esperam que o Guilherme acrescente o
+caminho ao `ENDPOINTS_REAIS`), a **C-18** (o diagrama ER está feito, falta a passagem final
+pelo `README` e pelo `API.md`), a **C-01** (falta o Guilherme ler o `CONTEXTO.md`) e a
+**X-08** (não se conseguiu reproduzir). Uma tarefa 🟨 é a que tem código escrito e ainda não
+tem prova de que funciona — **e enquanto não tiver prova vale zero**, que é a razão de contar
+como por fazer e não como meia. O B-40 saiu
 desta lista a 10/09 — o B-35 fechou e o take away passou a estar testado. O B-65 já tinha
 saído: os QR Codes estão gerados.
 

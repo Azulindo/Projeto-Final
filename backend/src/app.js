@@ -30,6 +30,7 @@ const gestaoCategoriasRouter = require('./routes/gestaoCategorias');
 const gestaoMesasRouter = require('./routes/gestaoMesas');
 const estatisticasRouter = require('./routes/estatisticas');
 const gestaoFuncionariosRouter = require('./routes/gestaoFuncionarios');
+const { naoEncontrado, tratarErros } = require('./middleware/erros');
 
 const app = express();
 
@@ -180,30 +181,19 @@ app.get('/api/saude', async (_req, res, next) => {
 
 /* -------------------------------------------------------------------
  *  ERROS
- *  Tem de vir SEMPRE depois das rotas.
+ *  Tem de vir SEMPRE depois das rotas, e por esta ordem: primeiro o
+ *  404, depois o tratador. Estavam aqui escritos a mao; passaram para
+ *  o middleware/erros.js no B-17, onde ha espaco para explicar porque
+ *  e que cada erro do MySQL vira o estado que vira.
  * ----------------------------------------------------------------- */
 
 // 404 — nenhuma rota acima correspondeu
-app.use((req, res) => {
-  res.status(404).json({
-    erro: 'Rota nao encontrada',
-    caminho: req.originalUrl,
-  });
-});
+app.use(naoEncontrado);
 
 // Tratamento central de erros.
-// Nunca devolver a mensagem do MySQL ao cliente: revela nomes de
-// tabelas e estrutura da base de dados a quem estiver a bisbilhotar.
-app.use((erro, _req, res, _next) => {
-  console.error('ERRO:', erro);
-
-  const emDesenvolvimento = process.env.NODE_ENV !== 'production';
-
-  res.status(erro.status || 500).json({
-    erro: erro.mensagemPublica || 'Ocorreu um erro no servidor.',
-    ...(emDesenvolvimento && { detalhe: erro.message }),
-  });
-});
+// A regra esta escrita no erros.js: so chega ao cliente uma mensagem
+// que fomos NOS a escrever. Nada que venha do MySQL atravessa.
+app.use(tratarErros);
 
 
 /* -------------------------------------------------------------------
