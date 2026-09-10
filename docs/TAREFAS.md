@@ -156,7 +156,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | B-22 | `GET /api/auth/eu` — devolve os dados do funcionário da sessão — *vai à base em vez de responder com o conteúdo do token, para que uma conta desativada perca o acesso na hora e não só quando o token expirar* | 30 min | B-20 |
 | ✅ | B-23 | Limite de 5 tentativas de login falhadas por email em 15 minutos — *conta por email e não por IP: cozinha, balcão e escritório saem todos pelo mesmo IP do restaurante* | 1 h | B-19 |
 | ✅ | B-24 | Configurar CORS para o domínio do Vercel — *`ORIGEM_PERMITIDA=https://vemproabate.vercel.app` no Render, sem barra no fim. Testado a partir do site publicado a 08/09: a ementa carrega. Só o domínio de produção vai nesta variável — o `localhost` fica no `.env` de cada um. As pré-visualizações do Vercel (ramos que não o `main`) têm endereço próprio e vão falhar o CORS; é aceite* | 30 min | B-16, F-67 |
-| ⬜ | B-25 | `express-rate-limit` nos endpoints públicos | 30 min | B-16 |
+| ✅ | B-25 | `express-rate-limit` nos endpoints públicos — *feito 10/09, no `middleware/limites.js`. **O pacote já estava instalado e já estava a ser usado no login desde o B-23** — o que faltava era o resto, e faltava metade do próprio login. **O buraco do login:** o limite contava por email, cinco tentativas falhadas cada. Só que cada email tem o seu balde, por isso bastava mudar de email para ter cinco tentativas novas — uma lista de emails nunca chegava a limite nenhum. E é pena, porque o `auth.js` já tinha tido o trabalho do `HASH_FALSO` para esconder **quais** os emails que existem: escondia-se isso e depois deixava-se experimentar emails à vontade. Ficaram os dois, cinco por conta e vinte por endereço, ambos só a contar as falhadas. **A decisão de contar por mesa e não por endereço:** as mesas estão todas atrás do mesmo router do restaurante, ou seja de fora **têm todas o mesmo IP** — um limite por endereço seria um limite para a sala inteira e recusava pedidos numa sexta à noite. A chave passou a ser o token do QR Code, que só tem quem está sentado com o cartão à frente. **O limite menos óbvio e o mais útil:** 40 consultas por código em 15 minutos. O código da reserva é a única credencial do cliente e é curto de propósito, para se ditar ao telefone — curto e legível também quer dizer adivinhável à força. **O que de propósito NÃO leva limite:** os GET da sessão e da conta, que a página da mesa pergunta de poucos em poucos segundos — põe-se limite em quem escreve, não em quem olha. As contagens vivem em memória, por isso **reiniciar a API limpa-as todas** (vai para a folha de emergência)* | 30 min | B-16 |
 
 ## Sprint 2 · Sessões de mesa e pedidos (Semanas 3–5: 15 set – 5 out)
 
@@ -533,12 +533,12 @@ refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 74 | 55 | 7 | 12 | ≈ 16 h 15 |
+| 🔵 João (B-) | 74 | 56 | 7 | 11 | ≈ 15 h 45 |
 | 🟠 Guilherme (F-) | 69 | 49 | 15 | 5 | ≈ 6 h 45 |
 | 🟢 Os dois (C-) | 28 | 8 | — | 20 | ≈ 40 h 30 |
 | 🐞 Correções (X-) | 17 | 16 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 64 h.** Sobram **seis** tarefas 🟨, e todas contam como por fazer: as
+**Total por fazer: ≈ 63 h 30.** Sobram **seis** tarefas 🟨, e todas contam como por fazer: as
 **B-68, B-69 e B-70** (escritas a 10/09, por correr — esperam que o Guilherme acrescente o
 caminho ao `ENDPOINTS_REAIS`), a **C-18** (o diagrama ER está feito, falta a passagem final
 pelo `README` e pelo `API.md`), a **C-01** (falta o Guilherme ler o `CONTEXTO.md`) e a

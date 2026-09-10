@@ -18,10 +18,7 @@ const { pool } = require('../config/bd');
 const { validar } = require('../middleware/validar');
 const { autenticar } = require('../middleware/autenticar');
 const { NIVEL_POR_CARGO } = require('../config/niveis');
-
-// O pacote mudou de forma de exportar entre versoes; isto aceita as duas.
-const pacoteLimite = require('express-rate-limit');
-const rateLimit = pacoteLimite.rateLimit || pacoteLimite;
+const { limiteLoginPorEmail, limiteLoginPorIp } = require('../middleware/limites');
 
 const router = express.Router();
 
@@ -47,36 +44,17 @@ const esquemaLogin = z.object({
 
 
 /* -------------------------------------------------------------------
- *  LIMITE DE TENTATIVAS (B-23)
+ *  LIMITE DE TENTATIVAS (B-23, alargado no B-25)
  *
- *  Cinco tentativas falhadas por email em 15 minutos. Sem isto, um
- *  programa pode experimentar milhares de palavras-passe por minuto
- *  ate acertar — e as nossas sao curtas.
+ *  Os dois limites estavam aqui escritos a mao; passaram para o
+ *  middleware/limites.js, que e onde vivem todos os numeros deste
+ *  genero, com a explicacao de cada um ao lado.
  *
- *  Conta-se por EMAIL e nao por endereco de rede de proposito: na
- *  cozinha, no balcao e no escritorio saem todos pelo mesmo IP do
- *  restaurante, e contar por IP bloquearia os tres postos por causa de
- *  um. O skipSuccessfulRequests faz com que quem acerta nao gaste
- *  tentativas.
+ *  Sao DOIS e nao um: cinco tentativas falhadas por email, e vinte
+ *  falhadas a partir do mesmo endereco. So com o primeiro, bastava
+ *  mudar de email para ter cinco tentativas novas — e uma lista de
+ *  emails nunca chegava a limite nenhum.
  * ----------------------------------------------------------------- */
-const limiteLogin = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 5,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipSuccessfulRequests: true,
-  keyGenerator: (req) => {
-    const email = typeof req.body?.email === 'string'
-      ? req.body.email.trim().toLowerCase()
-      : '';
-    return email || 'sem-email';
-  },
-  handler: (_req, res) => {
-    res.status(429).json({
-      erro: 'Demasiadas tentativas falhadas. Tenta outra vez dentro de 15 minutos.',
-    });
-  },
-});
 
 
 /* -------------------------------------------------------------------
@@ -97,7 +75,7 @@ const HASH_FALSO = bcrypt.hashSync(crypto.randomBytes(32).toString('hex'), 12);
 // ─────────────────────────────────────────────────────────────────────
 //  POST /api/auth/login
 // ─────────────────────────────────────────────────────────────────────
-router.post('/auth/login', limiteLogin, validar(esquemaLogin), async (req, res, next) => {
+router.post('/auth/login', limiteLoginPorIp, limiteLoginPorEmail, validar(esquemaLogin), async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
