@@ -492,8 +492,36 @@ async function chamarAPI(endpoint, opcoes = {}) {
   try { corpo = await resposta.json(); } catch (e) { /* resposta sem corpo */ }
 
   if (!resposta.ok) {
-    const erro = new Error(corpo?.erro || `Erro ${resposta.status} ao contactar o servidor.`);
+    /* ── A MENSAGEM ÚTIL NÃO ESTÁ NO `erro` (10/09) ─────────────────
+       Quando a validação do servidor recusa, a resposta é assim:
+
+         { "erro": "Dados invalidos.",
+           "problemas": [ { "campo": "telefone",
+                            "problema": "Telefone invalido. Usa so numeros." } ] }
+
+       Ler só o `erro` mostrava "Dados inválidos." a alguém que escreveu
+       um telefone com letras — verdade, e inútil. A pessoa fica a olhar
+       para um formulário com cinco campos sem saber qual.
+
+       Descobri isto a chamar a API real do Render à mão, não por um
+       teste: os testes correm todos com `?simular=1`, e a simulação
+       daqui devolve a mensagem certa no `erro`. Era um desencontro que
+       só aparecia contra o servidor a sério.
+
+       Junta-se o campo à frente quando ele existe, porque com cinco
+       campos no ecrã saber QUAL é metade da informação. */
+    let mensagem = corpo?.erro || `Erro ${resposta.status} ao contactar o servidor.`;
+    const problemas = Array.isArray(corpo?.problemas) ? corpo.problemas : [];
+    if (problemas.length) {
+      mensagem = problemas
+        .map(p => (p.campo ? `${p.campo}: ${p.problema}` : p.problema))
+        .filter(Boolean)
+        .join(' · ') || mensagem;
+    }
+
+    const erro = new Error(mensagem);
     erro.status = resposta.status;
+    if (problemas.length) erro.problemas = problemas;
     // O 409 do PATCH de estado traz a lista do que era permitido a
     // partir do estado atual (B-32). Sem isto, essa informação
     // desaparecia aqui e quem apanha o erro só sabia que falhou.
