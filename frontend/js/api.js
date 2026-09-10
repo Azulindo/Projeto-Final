@@ -44,11 +44,11 @@
  * ENDPOINTS_REAIS. O formato acordado no docs/API.md 4.8 acertou —
  * não foi preciso mexer numa linha do stock.js.
  *
- * ⚠️ ENQUANTO O B-61 NÃO EXISTIR, dois ecrãs leem de mundos
- * diferentes: o Stock já vem da base de dados a sério, o Produtos
- * ainda vem do PRODUTOS_DEMO daqui. As quantidades de um produto podem
- * não bater entre os dois ecrãs, e não é avaria — é a transição.
- * Desaparece quando o `gestao/produtos` entrar na lista.
+ * O catálogo seguiu a 09/09 com o B-61: o Stock e os Produtos passaram
+ * a ler do mesmo sítio, e acabou a janela em que as quantidades do
+ * mesmo produto podiam divergir entre os dois ecrãs.
+ *
+ * Falta ligar: `gestao/categorias` (B-62) e os funcionários (B-64).
  * =====================================================================
  */
 
@@ -187,6 +187,13 @@ const ENDPOINTS_REAIS = [
   /^gestao\/stock$/,               // GET   /api/gestao/stock
   /^gestao\/stock\/\d+\/movimento$/, // POST  /api/gestao/stock/:id/movimento
   /^gestao\/stock\/\d+\/minimo$/,  // PATCH /api/gestao/stock/:id/minimo
+
+  /* Catálogo — B-61 (09/09). Acaba a transição em que o ecrã de Stock
+     lia da base e o de Produtos lia da simulação: os dois passam a ler
+     do mesmo sítio, e as quantidades do mesmo produto deixam de poder
+     divergir entre eles. */
+  /^gestao\/produtos$/,            // GET e POST /api/gestao/produtos
+  /^gestao\/produtos\/\d+$/,       // PATCH      /api/gestao/produtos/:id
 ];
 
 /**
