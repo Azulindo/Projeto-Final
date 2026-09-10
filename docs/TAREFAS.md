@@ -79,6 +79,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | 🟨 | **X-08** | Banda branca no topo — **não reproduzida** pelo Guilherme em 6 páginas a 1440 e 1920. A causa que eu apontei era real (`html`/`body` sem cor de fundo) e foi tapada com `background-color` + `color-scheme: dark`. Possível artefacto do meu teste: corri em Chromium sem rede, e a fonte Nosifer não carregou | 30 min | Gui |
 | **✅** | **X-09** | ~~Caixa de escrita engolia texto sem responder~~ — corrigido com teste | 20 min | Gui |
 | **✅** | **X-10** | ~~`docs/API.md` desatualizado em dois sítios~~ — corrigido pelo Guilherme a 09/09. A §5 passou a descrever o que o C-26 faz mesmo, e a §4.8 perdeu a justificação repetida. **A correcção foi melhor do que a pedida:** em vez de actualizar a cópia da lista `ENDPOINTS_REAIS` que estava no documento com 4 entradas quando o `api.js` já tinha 15, apagou a cópia e escreveu *"uma lista copiada é uma lista que vai ficar errada"* — passou a dizer o que a lista cobre, não o que ela diz linha a linha | 30 min | Gui |
+| **✅** | **X-11** | ~~Desativar um funcionário não lhe tirava o acesso~~ — corrigido a 10/09. O `exigirNivel` deixou de decidir pelo que está dentro do token e confirma na base a cada pedido autenticado **duas** coisas: se a conta continua ativa, e se o cargo ainda dá o nível que o token diz — a segunda apanha as despromoções, que tinham o mesmo problema. Conta desativada responde **401 e não 403**, de propósito: o 403 diz *"esta sessão não serve para isto"*, o 401 diz *"esta sessão já não serve para nada"*, e é o 401 que faz o `auth-guard` mandar a pessoa para o login em vez de a deixar num ecrã vazio. Se a base não responder, **não** deixa passar: uma verificação de permissões que falha aberta é pior do que não existir. Custo aceite: uma consulta por pedido autenticado, e só nos endpoints de gestão — os do cliente à mesa não levam login. **Apanhou um segundo problema:** a tabela cargo→nível estava escrita em dois sítios (`auth.js` e `gestaoFuncionarios.js`) e este ia ser o terceiro; passou para `src/config/niveis.js`. **Testado:** token da cozinha a ler a fila, conta desativada pelo administrador, o **mesmo** token a dar 401 à primeira, e a funcionar outra vez depois de reativada — sem novo login | 45 min | João |
 
 ---
 
@@ -482,7 +483,7 @@ refazer.
 | 🔵 João (B-) | 73 | 43 | — | 30 | ≈ 38 h |
 | 🟠 Guilherme (F-) | 68 | 45 | 19 | 4 | ≈ 6 h 15 |
 | 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
-| 🐞 Correções (X-) | 10 | 9 | — | 1 | ≈ 30 min |
+| 🐞 Correções (X-) | 11 | 10 | — | 1 | ≈ 30 min |
 
 **Total por fazer: ≈ 86 h 15.** As tarefas 🟨 contam como por fazer: B-40 (falta testar o
 take away, e falta o próprio B-35 do take away), C-01 (falta o Guilherme ler o `CONTEXTO.md`)
@@ -513,9 +514,9 @@ e X-08 (não se conseguiu reproduzir). O B-65 saiu desta lista — os QR Codes e
 > Agora são 68 e 10, e as quatro sequências estão completas: B-1 a B-73, F-1 a F-68,
 > C-1 a C-28, X-1 a X-10 — sem um único código em falta.
 
-*Como estes números foram feitos:* contadas as 179 linhas das tabelas acima uma a uma e
+*Como estes números foram feitos:* contadas as 180 linhas das tabelas acima uma a uma e
 somada a coluna da estimativa só das linhas ⬜ e 🟨. Os quatro prefixos fecham certo
-(73 + 68 + 28 + 10) e não há códigos em falta na sequência. Se mudares uma linha lá em cima,
+(73 + 68 + 28 + 11) e não há códigos em falta na sequência. Se mudares uma linha lá em cima,
 refaz isto da mesma maneira — não somes nem subtraias a estes valores.
 
 > **Nota do merge de 08/09.** Este bloco veio em conflito porque cada um de nós tinha

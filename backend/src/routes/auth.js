@@ -17,6 +17,7 @@ const { z } = require('zod');
 const { pool } = require('../config/bd');
 const { validar } = require('../middleware/validar');
 const { autenticar } = require('../middleware/autenticar');
+const { NIVEL_POR_CARGO } = require('../config/niveis');
 
 // O pacote mudou de forma de exportar entre versoes; isto aceita as duas.
 const pacoteLimite = require('express-rate-limit');
@@ -25,28 +26,9 @@ const rateLimit = pacoteLimite.rateLimit || pacoteLimite;
 const router = express.Router();
 
 
-/* -------------------------------------------------------------------
- *  DO CARGO PARA O NIVEL
- *
- *  A base de dados guarda o CARGO da pessoa (cozinheiro, empregado de
- *  mesa). O front-end trabalha com o NIVEL, que e outra coisa: e o
- *  conjunto de ecras a que aquele posto de trabalho pode chegar.
- *
- *  Sao mesmo conceitos diferentes e vale a pena manter a distincao. Um
- *  gerente e um administrador tem cargos diferentes na vida real, mas
- *  veem os mesmos ecras. Se amanha houver um "subchefe", muda-se aqui
- *  uma linha e mais nada — nem a base de dados nem o front-end mexem.
- *
- *  A traducao acontece num sitio so, tal como o formatarProduto faz no
- *  catalogo. Se estivesse espalhada, mais cedo ou mais tarde dois
- *  sitios discordavam.
- * ----------------------------------------------------------------- */
-const NIVEL_POR_CARGO = {
-  administrador:  'administrador',
-  gerente:        'administrador',
-  cozinheiro:     'cozinha',
-  empregado_mesa: 'balcao',
-};
+/* A tabela cargo -> nivel vive em config/niveis.js. Estava escrita
+   aqui e no gestaoFuncionarios.js; duas copias da mesma regra acabam
+   sempre por discordar (X-11, 10/09). */
 
 
 /* -------------------------------------------------------------------
