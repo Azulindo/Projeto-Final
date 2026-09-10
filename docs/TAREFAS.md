@@ -188,7 +188,7 @@ conseguiu reproduzir — a causa foi tapada na mesma.
 | ✅ | ID | Tarefa | Est. | Depende de |
 |---|---|---|---|---|
 | ✅ | B-65 | Gerar os QR Codes das mesas com a biblioteca `qrcode` — *`npm run qrcodes -- https://vemproabate.vercel.app`, 10 PNG em `backend/qrcodes/`, um testado no browser. Os tokens são fixos no `seed.sql`, por isso regravar a base **não** invalida os cartões impressos* | 1 h 30 | B-11 |
-| ⬜ | B-66 | `GET /api/gestao/mesas/qrcodes` — dados para a página de impressão — *o `qrcodes.html` do Guilherme (F-58) está feito e à espera deste endpoint. Os PNG do B-65 já servem para imprimir, isto é para se poder fazer sem terminal* | 45 min | B-65 |
+| ✅ | B-66 | `GET /api/gestao/mesas/qrcodes` — *feito 10/09, formato da secção 4.6: `{ id, numero, lugares, qrToken }`, só mesas activas, ordenadas pelo número. O `qrcodes.html` do Guilherme (F-58) deixa de estar à espera. **Níveis: `administrador` e `balcao`, não "qualquer funcionário".** O `qr_code` de uma mesa **é** a credencial dessa mesa — quem o tiver pode abrir a sessão e pedir naquela mesa de onde estiver, que foi a razão de nunca ter sido o número da mesa. Uma lista destes tokens desfaz essa protecção inteira, e de uma vez só para as dez mesas. A cozinha fica de fora porque não há nenhuma altura em que quem cozinha precise de imprimir cartões: **o critério para dar acesso a uma credencial é a necessidade, não a ausência de perigo.** O balcão entra porque é quem substitui um cartão gasto a meio de um serviço. Só mesas activas — um cartão impresso para uma mesa desativada é um cartão numa gaveta a dar acesso a uma sessão que ninguém vigia. **Testado:** 10 mesas com o administrador, 403 com a sessão de cozinha* | 45 min | B-65 |
 | ⬜ | B-67 | Entrada por token de mesa: `/mesa?t=<token>` | 1 h | B-36 |
 | ⬜ | B-68 | `estatisticas.js`: nº de pedidos, faturação diária e mensal, média por pedido | 2 h | B-39 |
 | ⬜ | B-69 | `estatisticas.js`: produtos mais vendidos + tempo médio de preparação | 1 h 30 | B-57 |
@@ -488,12 +488,12 @@ refazer.
 
 | | Tarefas | ✅ Feitas | 🔁 Já não se aplica | Por fazer | Estimativa restante |
 |---|---|---|---|---|---|
-| 🔵 João (B-) | 74 | 46 | — | 28 | ≈ 35 h 30 |
+| 🔵 João (B-) | 74 | 47 | — | 27 | ≈ 34 h 45 |
 | 🟠 Guilherme (F-) | 68 | 46 | 19 | 3 | ≈ 4 h 15 |
 | 🟢 Os dois (C-) | 28 | 7 | — | 21 | ≈ 41 h 30 |
 | 🐞 Correções (X-) | 12 | 11 | — | 1 | ≈ 30 min |
 
-**Total por fazer: ≈ 81 h 45.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
+**Total por fazer: ≈ 81 h.** Sobram **duas** tarefas 🟨, e contam como por fazer: a C-01
 (falta o Guilherme ler o `CONTEXTO.md`) e a X-08 (não se conseguiu reproduzir). O B-40 saiu
 desta lista a 10/09 — o B-35 fechou e o take away passou a estar testado. O B-65 já tinha
 saído: os QR Codes estão gerados.

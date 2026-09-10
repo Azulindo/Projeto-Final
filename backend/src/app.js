@@ -26,6 +26,7 @@ const pedidosRouter = require('./routes/pedidos');
 const gestaoStockRouter = require('./routes/gestaoStock');
 const gestaoProdutosRouter = require('./routes/gestaoProdutos');
 const gestaoCategoriasRouter = require('./routes/gestaoCategorias');
+const gestaoMesasRouter = require('./routes/gestaoMesas');
 const gestaoFuncionariosRouter = require('./routes/gestaoFuncionarios');
 
 const app = express();
@@ -101,6 +102,10 @@ app.use('/api', gestaoProdutosRouter);
 
 // Categorias: /api/gestao/categorias
 app.use('/api', gestaoCategoriasRouter);
+
+// Mesas: /api/gestao/mesas/qrcodes — a lista para imprimir os cartoes.
+// Com login: o qr_code de uma mesa e a credencial dessa mesa.
+app.use('/api', gestaoMesasRouter);
 
 // Contas dos funcionarios: /api/gestao/funcionarios
 app.use('/api', gestaoFuncionariosRouter);
