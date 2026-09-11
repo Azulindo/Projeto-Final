@@ -46,6 +46,11 @@ TRUNCATE TABLE avaliacao;
 TRUNCATE TABLE item_pedido;
 TRUNCATE TABLE pedido;
 TRUNCATE TABLE favorito;
+TRUNCATE TABLE movimento_stock;   -- faltava: sem esta linha, correr o
+                                  -- seed duas vezes somava outra vez os
+                                  -- movimentos de abertura aos que ja la
+                                  -- estavam, e o livro de registo passava
+                                  -- a ter duas aberturas para o mesmo dia
 TRUNCATE TABLE stock;
 TRUNCATE TABLE produto;
 TRUNCATE TABLE categoria;
@@ -233,6 +238,53 @@ INSERT INTO funcionario (id_funcionario, id_utilizador, cargo, data_contratacao)
 
 
 -- =====================================================================
+--  ABERTURA DO STOCK
+--
+--  Este bloco tinha sido escrito e desapareceu do ficheiro quando uma
+--  copia velha do seed foi gravada por cima da nova. Ficou por reparar
+--  durante dias porque NADA no ecra depende dele: o painel de stock le
+--  a tabela `stock`, nao os movimentos, por isso uma tabela de
+--  movimentos vazia parece exatamente igual a uma tabela certa.
+--
+--  Fica a nota: os erros que se apanham sao os que alguma coisa mostra.
+--  As datas erradas apanharam-se porque a cozinha dizia "ha 212h"; isto
+--  so se apanhou a contar as tabelas uma a uma.
+--
+--  PORQUE E QUE E UM 'entrada' COM quantidade_antes = 0
+--
+--  A tabela de movimentos e um livro de registo: cada linha diz quanto
+--  havia antes e quanto ficou depois, e a base de dados verifica a
+--  conta (ck_movimento_aritmetica). Um livro tem de comecar em algum
+--  lado, e comeca onde comeca um livro de armazem a serio: numa
+--  contagem fisica. Antes da contagem nao ha registo nenhum, por isso
+--  quantidade_antes = 0 e quantidade_depois = o que se contou.
+--
+--  E por isso que os pedidos antigos mais abaixo NAO descontam stock:
+--  sao anteriores a contagem, e o que consumiram ja esta refletido no
+--  numero que se contou. Descontar outra vez era contar duas vezes.
+-- =====================================================================
+INSERT INTO movimento_stock
+ (id_produto, tipo, quantidade, quantidade_antes, quantidade_depois,
+  id_utilizador, id_pedido, nota, data_movimento)
+SELECT s.id_produto,
+       'entrada',
+       s.quantidade_atual,
+       0,
+       s.quantidade_atual,
+       1,
+       NULL,
+       'Contagem inicial de abertura',
+       NOW() - INTERVAL 1 DAY
+FROM stock s
+ORDER BY s.id_produto;
+
+-- Gerado a partir da tabela `stock` e nao escrito a mao de proposito:
+-- se fosse escrito a mao ficavam dois numeros para a mesma coisa, e
+-- bastava alguem mudar uma quantidade la em cima para o livro passar a
+-- discordar do armazem no primeiro dia.
+
+
+-- =====================================================================
 --  SESSOES DE MESA
 --  Uma sessao e a refeicao inteira: abre quando o cliente le o QR Code
 --  e fecha quando pede a conta. Agrupa varias rondas de pedidos.
@@ -367,6 +419,297 @@ WHERE r.id_reserva > 0 AND r.modo_ementa = 'pre_selecionada';
 -- preferencias, mas e melhor deixar ligado e escrever o WHERE certo.
 
 
+
+
+-- =====================================================================
+--  HISTORICO DE PEDIDOS — 40 PEDIDOS AO LONGO DE 27 DIAS
+--
+--  PORQUE E QUE ISTO EXISTE
+--
+--  Com quatro pedidos ao todo, o ecra de estatisticas mostrava duas
+--  barras e vinte e oito dias vazios. E o ecra que melhor mostra o que
+--  o sistema faz, e era o que parecia mais pobre.
+--
+--  Estes pedidos vao de ha 2 dias ate ha 28 dias. HOJE E ONTEM FICAM
+--  INTACTOS, de proposito: os numeros desses dois dias foram
+--  verificados a mao a 10/09 (111,50 / 3 = 37,17, e o mes menos o dia
+--  dava 38,80 em 1 pedido, que e o que faz o "+200%" e o "+187%").
+--  Mexer neles deitava fora a unica verificacao manual que temos.
+--
+--  PORQUE E QUE NAO HA UM UNICO RAND()
+--
+--  Correr o seed duas vezes tem de dar exatamente a mesma base. Se os
+--  numeros mudassem a cada corrida, nenhuma verificacao servia para
+--  nada — nao se pode confirmar uma conta que muda enquanto se olha
+--  para ela. E no dia 16, se for preciso recriar a base, o plano B tem
+--  de dar os mesmos numeros que deu no ensaio.
+--
+--  Por isso a variedade vem de aritmetica sobre o numero da linha:
+--  restos de divisao por numeros primos entre si, que espalham sem
+--  repetir cedo. O 7 e o 27 nao tem divisores comuns, e e por isso que
+--  os 27 primeiros pedidos calham em 27 dias diferentes — um por dia,
+--  sem falhar nenhum — e so depois e que os 13 restantes comecam a
+--  duplicar dias. Um gerador aleatorio deixava dias em branco.
+--
+--  PORQUE E QUE OS PRECOS NAO ESTAO ESCRITOS AQUI
+--
+--  O preco de cada item vem da tabela `produto` por JOIN. Escrever 40
+--  pedidos com precos a mao era repetir dentro do seed exatamente o
+--  erro que o C-09 acabou de tirar do `reservas.js`: 25 precos escritos
+--  a mao que ficam velhos sozinhos. Duas copias a espera de discordar.
+--
+--  O MESMO PARA OS TOTAIS
+--
+--  Os pedidos entram com valor_total = 0 e o total e calculado no fim,
+--  a partir dos itens. E o mesmo que ja se faz com as sessoes e com as
+--  reservas: nunca ha dois numeros para a mesma coisa.
+-- =====================================================================
+
+-- Esta tabela e a UNICA fonte destes dados. Tudo o que vem a seguir —
+-- sessoes, pedidos, itens, historico de estados — sai daqui por JOIN.
+-- Se as formulas estivessem repetidas em cada INSERT, bastava mudar
+-- uma para as tabelas deixarem de bater certo entre si.
+--
+-- E UMA TABELA NORMAL E NAO UMA TEMPORARY, e a razao aprendeu-se a
+-- custa de um erro:
+--
+--   ERROR 1137 (HY000): Can't reopen table: 't'
+--
+-- Uma tabela TEMPORARY do MySQL so pode ser LIDA UMA VEZ dentro da
+-- mesma consulta. O INSERT do historico de estados mais abaixo le esta
+-- tabela SEIS vezes num so UNION ALL — uma por cada estado — e o MySQL
+-- recusa. Nao e um limite obvio nem aparece ao escrever: aparece a
+-- correr, e so naquela linha.
+--
+-- Uma tabela normal nao tem esse limite. O preco e ter de a apagar a
+-- mao no fim (o DROP la em baixo), e e por isso que ha tambem um DROP
+-- aqui em cima: se o seed rebentar a meio, a tabela fica para tras e
+-- a corrida seguinte comeca por a limpar.
+DROP TABLE IF EXISTS tmp_historico;
+
+CREATE TABLE tmp_historico (
+  i               INT NOT NULL,
+  id_pedido       INT NOT NULL,
+  id_sessao       INT NULL,
+  momento         DATETIME NOT NULL,
+  tipo_pedido     VARCHAR(20) NOT NULL,
+  id_mesa         INT NULL,
+  num_pessoas     INT NULL,
+  estado          VARCHAR(20) NOT NULL,
+  id_funcionario  INT NOT NULL,
+  minutos_prep    INT NOT NULL,
+  PRIMARY KEY (i)
+) ENGINE=InnoDB;
+
+INSERT INTO tmp_historico
+ (i, id_pedido, id_sessao, momento, tipo_pedido, id_mesa, num_pessoas,
+  estado, id_funcionario, minutos_prep)
+WITH RECURSIVE n(i) AS (
+  SELECT 1
+  UNION ALL
+  SELECT i + 1 FROM n WHERE i < 40
+)
+SELECT
+  n.i,
+  100 + n.i,                                                    -- ids 101..140, longe dos 1..4 que ja existem
+  CASE WHEN n.i % 5 = 0 THEN NULL ELSE 100 + n.i END,           -- take away nao tem sessao
+  -- Dia: 2 a 28 dias atras. Hora 13h ou 20h (almoco e jantar), nunca
+  -- perto da meia-noite: a base guarda em UTC e o dia e contado em
+  -- Lisboa, por isso um pedido as 23h50 podia cair no dia seguinte.
+  DATE_SUB(DATE(NOW()), INTERVAL (2 + ((n.i * 7) % 27)) DAY)
+    + INTERVAL (CASE WHEN n.i % 2 = 0 THEN 13 ELSE 20 END) HOUR
+    + INTERVAL ((n.i * 13) % 60) MINUTE,
+  CASE WHEN n.i % 5 = 0 THEN 'take_away' ELSE 'restaurante' END, -- 1 em cada 5 e take away
+  CASE WHEN n.i % 5 = 0 THEN NULL ELSE ((n.i * 3) % 10) + 1 END, -- mesas 1 a 10
+  NULL,                                                          -- preenchido a seguir, a partir da mesa
+  -- Tres pedidos cancelados (i = 13, 26, 39), e nao zero: e o que
+  -- prova no ecra que a faturacao NAO os conta. Uma regra que nunca
+  -- se ve a funcionar e uma regra em que ninguem acredita.
+  CASE WHEN n.i % 13 = 0 THEN 'cancelado' ELSE 'entregue' END,
+  CASE WHEN n.i % 2 = 0 THEN 2 ELSE 3 END,
+  10 + (n.i % 21)                                                -- 10 a 30 minutos de preparacao
+FROM n;
+
+-- O numero de pessoas nunca passa a capacidade da mesa. Sai da propria
+-- tabela `mesa` em vez de ser inventado: nao ha CHECK nenhum a impedir
+-- seis pessoas numa mesa de dois, e dados impossiveis num seed sao a
+-- maneira mais rapida de perder uma tarde a procurar um erro que nao
+-- existe no codigo.
+UPDATE tmp_historico t
+JOIN mesa m ON m.id_mesa = t.id_mesa
+SET t.num_pessoas = LEAST(((t.i * 2) % 4) + 2, m.capacidade)
+WHERE t.i > 0;
+
+
+-- ---- Sessoes (uma por pedido de restaurante) ------------------------
+INSERT INTO sessao_mesa
+ (id_sessao, codigo_sessao, id_mesa, num_pessoas, estado, valor_total,
+  id_funcionario, aberta_em, fechada_em)
+SELECT t.id_sessao,
+       CONCAT('SES-H', LPAD(t.i, 3, '0')),
+       t.id_mesa,
+       t.num_pessoas,
+       'fechada',
+       0.00,
+       3,
+       t.momento - INTERVAL 10 MINUTE,
+       t.momento + INTERVAL 75 MINUTE
+FROM tmp_historico t
+WHERE t.id_sessao IS NOT NULL;
+
+-- Todas fechadas. A coluna virtual `mesa_aberta` so tem valor enquanto
+-- a sessao esta aberta, por isso estas 32 sessoes na mesma mesa nao
+-- chocam com o UNIQUE que impede duas sessoes abertas ao mesmo tempo.
+
+
+-- ---- Pedidos --------------------------------------------------------
+INSERT INTO pedido
+ (id_pedido, numero_pedido, id_cliente, id_mesa, id_sessao, id_funcionario,
+  tipo_pedido, estado, data_hora, valor_total, nome_convidado, telefone_convidado)
+SELECT t.id_pedido,
+       CONCAT('PED-H', LPAD(t.i, 3, '0')),
+       NULL,
+       t.id_mesa,
+       t.id_sessao,
+       t.id_funcionario,
+       t.tipo_pedido,
+       t.estado,
+       t.momento,
+       0.00,                                    -- calculado no fim, a partir dos itens
+       CASE WHEN t.tipo_pedido = 'take_away' THEN
+         ELT(1 + (t.i % 8), 'Ana Loureiro', 'Bruno Matias', 'Carla Pinto',
+                            'Diogo Serra', 'Eva Nunes', 'Filipe Gama',
+                            'Goncalo Reis', 'Helena Cruz')
+       END,
+       CASE WHEN t.tipo_pedido = 'take_away' THEN
+         CONCAT('91', LPAD((t.i * 137) % 10000000, 7, '0'))
+       END
+FROM tmp_historico t;
+
+
+-- ---- Itens ----------------------------------------------------------
+-- Tres itens por pedido: um prato principal, uma bebida e um extra.
+-- O preco vem SEMPRE do JOIN a tabela `produto` — e a mesma razao por
+-- que o preco_unitario existe na tabela: guarda o preco a data, mas
+-- quem o poe la e a ementa, nao alguem a copiar numeros.
+
+-- prato principal (produtos 5 a 10)
+-- O multiplicador e 5 e nao 3: 3 e 6 tem o 3 como divisor comum, e
+-- (i * 3) % 6 so consegue dar 0 ou 3 — os 40 pedidos ficavam todos
+-- com dois pratos, o 5 e o 8. Foi assim que estava escrito a
+-- primeira vez e so se viu ao contar os restos possiveis. O mesmo
+-- cuidado vale para os outros: 5 e 11, 3 e 10, 7 e 27 — todos sem
+-- divisores comuns, todos a percorrer o intervalo inteiro.
+INSERT INTO item_pedido (id_pedido, id_produto, quantidade, preco_unitario, subtotal)
+SELECT t.id_pedido, p.id_produto, 1 + (t.i % 3), p.preco, (1 + (t.i % 3)) * p.preco
+FROM tmp_historico t
+JOIN produto p ON p.id_produto = 5 + ((t.i * 5) % 6);
+
+-- bebida (produtos 11 a 21)
+INSERT INTO item_pedido (id_pedido, id_produto, quantidade, preco_unitario, subtotal)
+SELECT t.id_pedido, p.id_produto, 1 + (t.i % 4), p.preco, (1 + (t.i % 4)) * p.preco
+FROM tmp_historico t
+JOIN produto p ON p.id_produto = 11 + ((t.i * 5) % 11);
+
+-- extra: sobremesa de tres em tres pedidos, entrada nos restantes
+INSERT INTO item_pedido (id_pedido, id_produto, quantidade, preco_unitario, subtotal)
+SELECT t.id_pedido, p.id_produto, 1, p.preco, p.preco
+FROM tmp_historico t
+JOIN produto p ON p.id_produto = CASE WHEN t.i % 3 = 0
+                                      THEN 22 + (t.i % 4)      -- sobremesas
+                                      ELSE 1  + (t.i % 4) END; -- entradas
+
+
+-- ---- Totais, calculados e nao escritos ------------------------------
+UPDATE pedido p
+SET p.valor_total = (
+  SELECT COALESCE(SUM(i.subtotal), 0) FROM item_pedido i WHERE i.id_pedido = p.id_pedido
+)
+WHERE p.id_pedido > 100;
+
+UPDATE sessao_mesa s
+SET s.valor_total = (
+  SELECT COALESCE(SUM(p.valor_total), 0)
+  FROM pedido p
+  WHERE p.id_sessao = s.id_sessao AND p.estado <> 'cancelado'
+)
+WHERE s.id_sessao > 100;
+
+
+-- ---- Historico de estados -------------------------------------------
+-- Sem isto o tempo medio de preparacao nao existe para estes pedidos.
+-- Os cancelados param em 'cancelado' e nunca chegam a 'pronto', que e
+-- exatamente o que faz com que nao entrem na media.
+INSERT INTO historico_estado_pedido (id_pedido, estado, id_funcionario, data_hora)
+SELECT h.id_pedido, h.estado, h.id_funcionario, h.data_hora FROM (
+            SELECT t.id_pedido, 'recebido'      AS estado, NULL AS id_funcionario, t.momento AS data_hora FROM tmp_historico t
+  UNION ALL SELECT t.id_pedido, 'confirmado',    t.id_funcionario, t.momento + INTERVAL 2 MINUTE FROM tmp_historico t
+  UNION ALL SELECT t.id_pedido, 'em_preparacao', 2, t.momento + INTERVAL 3 MINUTE                        FROM tmp_historico t WHERE t.estado <> 'cancelado'
+  UNION ALL SELECT t.id_pedido, 'pronto',        2, t.momento + INTERVAL (2 + t.minutos_prep) MINUTE     FROM tmp_historico t WHERE t.estado <> 'cancelado'
+  UNION ALL SELECT t.id_pedido, 'entregue',      3, t.momento + INTERVAL (7 + t.minutos_prep) MINUTE     FROM tmp_historico t WHERE t.estado <> 'cancelado'
+  UNION ALL SELECT t.id_pedido, 'cancelado',     3, t.momento + INTERVAL 6 MINUTE                        FROM tmp_historico t WHERE t.estado =  'cancelado'
+) AS h
+ORDER BY h.id_pedido, h.data_hora;
+
+-- O ORDER BY nao muda os dados, muda a ordem por que entram — e assim
+-- o id_historico cresce ao mesmo tempo que a data dentro de cada
+-- pedido. Se um dia alguem procurar o ultimo estado pelo maior id em
+-- vez de pela data mais recente, encontra a resposta certa. E o mesmo
+-- cuidado que a verificacao da cadeia de stock tem ao ordenar por
+-- id_movimento.
+
+-- Apagada a mao: nao e TEMPORARY, por isso nao desaparece sozinha.
+-- Enquanto existir, o /api/saude contava 19 tabelas em vez de 18.
+DROP TABLE tmp_historico;
+
+
+-- =====================================================================
+--  VERIFICACAO DO HISTORICO
+--  Estas tres contas TEM de dar zero. Nao estao comentadas de
+--  proposito: um bloco gerado que ninguem verifica e pior do que um
+--  bloco escrito a mao, porque o erro entra 40 vezes em vez de uma.
+-- =====================================================================
+SELECT 'pedidos cujo total nao bate com os itens' AS verificacao, COUNT(*) AS tem_de_ser_zero
+FROM (
+  -- O valor_total tem de entrar no GROUP BY para poder ser usado no
+  -- HAVING: com o ONLY_FULL_GROUP_BY ligado (que e o normal no MySQL 8)
+  -- o HAVING so fala de colunas agrupadas ou de funcoes de agregacao.
+  -- Nao muda o agrupamento, porque o id_pedido ja e a chave primaria e
+  -- cada pedido so tem um valor_total.
+  SELECT p.id_pedido
+  FROM pedido p JOIN item_pedido i ON i.id_pedido = p.id_pedido
+  GROUP BY p.id_pedido, p.valor_total
+  HAVING ABS(p.valor_total - SUM(i.subtotal)) > 0.005
+) AS x
+UNION ALL
+SELECT 'pedidos de restaurante sem mesa',
+       COUNT(*) FROM pedido WHERE tipo_pedido = 'restaurante' AND id_mesa IS NULL
+UNION ALL
+SELECT 'pedidos com data no futuro',
+       COUNT(*) FROM pedido WHERE data_hora > NOW()
+UNION ALL
+SELECT 'pessoas a mais para a capacidade da mesa',
+       COUNT(*) FROM sessao_mesa s JOIN mesa m ON m.id_mesa = s.id_mesa
+       WHERE s.num_pessoas > m.capacidade
+UNION ALL
+SELECT 'movimentos de stock com a conta errada',
+       COUNT(*) FROM movimento_stock
+       WHERE (tipo = 'acerto'                 AND quantidade_depois <> quantidade)
+          OR (tipo IN ('entrada','reposicao') AND quantidade_depois <> quantidade_antes + quantidade)
+          OR (tipo IN ('quebra','consumo')    AND quantidade_depois <> quantidade_antes - quantidade);
+
+-- E este e informativo: diz quantos dias do ultimo mes tem faturacao.
+-- Com os 4 pedidos originais dava 3; agora tem de dar 27 ou 28.
+--
+-- Nao sao 29 e a razao e util: dos 27 dias antigos, o dia 22 tem um so
+-- pedido e esse esta cancelado, por isso nao conta como dia com
+-- faturacao. Junta-se hoje e ontem e da 28 — ou 27, se o seed correr a
+-- horas em que o pedido mais antigo de hoje ainda calha no mesmo dia.
+SELECT COUNT(DISTINCT DATE(data_hora)) AS dias_com_faturacao_no_ultimo_mes
+FROM pedido
+WHERE estado <> 'cancelado' AND data_hora >= NOW() - INTERVAL 30 DAY;
+
+
 -- =====================================================================
 --  VERIFICACAO
 -- =====================================================================
@@ -381,6 +724,7 @@ UNION ALL SELECT 'funcionarios',  COUNT(*) FROM funcionario
 UNION ALL SELECT 'pedidos',       COUNT(*) FROM pedido
 UNION ALL SELECT 'itens_pedido',  COUNT(*) FROM item_pedido
 UNION ALL SELECT 'historico',     COUNT(*) FROM historico_estado_pedido
+UNION ALL SELECT 'movimentos',    COUNT(*) FROM movimento_stock
 UNION ALL SELECT 'reservas',      COUNT(*) FROM reserva
 UNION ALL SELECT 'itens_reserva', COUNT(*) FROM item_reserva;
 
@@ -424,6 +768,13 @@ UNION ALL SELECT 'itens_reserva', COUNT(*) FROM item_reserva;
 -- 6) Confirmar que o total de cada pedido bate certo com os itens
 -- SELECT p.numero_pedido, p.valor_total, SUM(i.subtotal) AS soma_itens
 -- FROM pedido p JOIN item_pedido i ON i.id_pedido = p.id_pedido
--- GROUP BY p.id_pedido
+-- GROUP BY p.id_pedido, p.valor_total
 -- HAVING ABS(p.valor_total - SUM(i.subtotal)) > 0.01;
 --   ^ se esta consulta devolver linhas, ha contas mal feitas
+--
+-- Esta consulta esteve aqui escrita com "GROUP BY p.id_pedido" apenas,
+-- e assim nao corre: da ERROR 1054, Unknown column 'p.valor_total' in
+-- 'having clause'. Ninguem reparou porque uma consulta comentada nunca
+-- corre — e uma verificacao que nunca correu nao e uma verificacao, e
+-- uma intencao. So se descobriu quando a mesma consulta foi escrita a
+-- serio no bloco de verificacao do historico, la em cima.
