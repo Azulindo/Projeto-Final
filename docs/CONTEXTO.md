@@ -325,11 +325,22 @@ recebido → confirmado → em_preparacao → pronto → entregue
 
 ## 7. Modelo de dados
 
-O diagrama está em `database/diagrama-er.png`. O esquema final tem **17 tabelas**.
+O diagrama está em `database/diagrama-er.png`. O esquema final tem **18 tabelas** (era 17
+até a `movimento_stock` entrar, a 09/09).
+
+> ⚠️ **O `diagrama-er.png` ainda desenha 17 e não tem a `movimento_stock` — ver o X-22.**
+> A imagem é de 07/09 e não tem gerador; quem gera é o `npm run diagrama`, mas esse só
+> escreve os dois `.mmd`, que estão certos. Esta nota fica aqui até o X-22 fechar, porque
+> um diagrama errado sem aviso é pior do que um diagrama errado com aviso.
 
 **Do diagrama original:** `UTILIZADOR` · `CLIENTE` · `FUNCIONARIO` · `CATEGORIA` · `PRODUTO` · `STOCK` · `MESA` · `PEDIDO` · `ITEM_PEDIDO` · `FAVORITO` · `AVALIACAO` · `NOTIFICACAO`
 
-**Acrescentadas:** `RESERVA` · `ITEM_RESERVA` · `SLOT_HORARIO` · `HISTORICO_ESTADO_PEDIDO` · `SESSAO_MESA`
+**Acrescentadas:** `RESERVA` · `ITEM_RESERVA` · `SLOT_HORARIO` · `HISTORICO_ESTADO_PEDIDO` · `SESSAO_MESA` · `MOVIMENTO_STOCK`
+
+> A `MOVIMENTO_STOCK` faltava nesta lista, que somava 17 (12 + 5). Entrou a 09/09 e ficou
+> de fora de todas as contagens escritas à mão: desta lista, do subtítulo do diagrama, e
+> da base publicada (o X-20). **Quatro sítios a dizer 17 e um só a dizer 18**, e o que
+> dizia 18 era o único calculado — o `/api/saude`, que conta a base em vez de a descrever.
 
 ### 7.1 Tabelas criadas mas não usadas nesta versão
 
