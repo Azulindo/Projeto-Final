@@ -546,9 +546,36 @@ async function chamarAPI(endpoint, opcoes = {}) {
         .join(' · ') || mensagem;
     }
 
-    const erro = new Error(mensagem);
+    /* ── O `ref` TEM DE CHEGAR AO ECRÃ (B-17, 10/09) ────────────────
+       Cada resposta de erro traz um `ref` de seis caracteres que aparece
+       também no registo do servidor, e o João disse: "manda-me o ref e
+       encontro a causa sem teres de reproduzir nada".
+
+       Isso só funciona se a pessoa que apanha o erro conseguir LER o
+       ref. Guardado só no objeto de erro, ninguém o vê — e quem está na
+       cozinha às oito da noite não abre a consola do browser.
+
+       Por isso vai para o fim da mensagem, entre parênteses e discreto:
+       quem não precisa dele ignora-o, e quem precisa tem-no à mão para
+       copiar. É a diferença entre um mecanismo de diagnóstico existir e
+       ser utilizável. */
+    const ref = corpo && corpo.ref ? String(corpo.ref) : null;
+
+    const erro = new Error(ref ? `${mensagem} (ref ${ref})` : mensagem);
     erro.status = resposta.status;
+    erro.ref = ref;
+    /* A mensagem sem o ref, para quem quiser mostrá-la sozinha. */
+    erro.mensagem = mensagem;
     if (problemas.length) erro.problemas = problemas;
+
+    /* O 503 é a base de dados em baixo: não é culpa de quem está a usar
+       a aplicação e não se resolve a insistir no mesmo botão. O `erro`
+       do servidor já vem como frase pronta; acrescenta-se só o que a
+       pessoa deve fazer. */
+    if (resposta.status === 503) {
+      erro.message = (ref ? `${mensagem} (ref ${ref})` : mensagem)
+        + ' — a base de dados não está a responder. Tenta outra vez dentro de um minuto.';
+    }
     // O 409 do PATCH de estado traz a lista do que era permitido a
     // partir do estado atual (B-32). Sem isto, essa informação
     // desaparecia aqui e quem apanha o erro só sabia que falhou.

@@ -106,7 +106,21 @@ document.addEventListener('DOMContentLoaded', () => {
          tentar e a estender o bloqueio. (B-23, cinco tentativas.) */
       let mensagem = erro.message || 'Não foi possível iniciar sessão.';
       if (erro.status === 429) {
-        mensagem = 'Demasiadas tentativas falhadas. Por segurança, esta conta fica bloqueada durante 15 minutos.';
+        /* ── DOIS LIMITES, NÃO UM (B-25, 10/09) ───────────────────────
+           Esta mensagem dizia sempre "esta conta fica bloqueada". Com o
+           B-25 passaram a existir DOIS limites: cinco falhas por email
+           e vinte por endereço. Num restaurante, as máquinas da sala
+           saem todas pelo mesmo endereço — e alguém cuja conta está
+           perfeitamente bem podia ler que a conta dele foi bloqueada,
+           quando o que se esgotou foi o limite do sítio.
+
+           O servidor distingue os dois casos e manda a frase certa.
+           Passa a ser essa que se mostra; a minha só serve se ele não
+           mandar nenhuma. É o mesmo raciocínio do X-13: a mensagem
+           útil é a dele, não a minha. */
+        mensagem = erro.mensagem || erro.message
+          || 'Demasiadas tentativas. Por segurança, é preciso esperar 15 minutos.';
+        if (erro.ref) mensagem += ` (ref ${erro.ref})`;
       }
 
       mostrarErroGeral(mensagem);
