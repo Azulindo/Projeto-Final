@@ -219,7 +219,13 @@ router.get('/admin/estatisticas',
              JOIN produto pr ON pr.id_produto = i.id_produto
             WHERE p.${NAO_CANCELADO}
             GROUP BY pr.id_produto, pr.nome
-            ORDER BY quantidade DESC
+            -- O id entra na ordenacao como DESEMPATE, e nao por gosto:
+            -- sem ele, duas linhas com a mesma quantidade podem sair por
+            -- qualquer ordem, e o MySQL nao promete a mesma duas vezes
+            -- seguidas. A lista mudava de ordem sozinha entre dois F5,
+            -- sem nada ter mudado nos dados. Ha empate a serio nestes
+            -- dados: a Coca-Cola e a Cerveja (Fino) tem 11 unidades cada.
+            ORDER BY quantidade DESC, pr.id_produto ASC
             LIMIT 5`),
       ]);
 

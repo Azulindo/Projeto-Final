@@ -422,7 +422,7 @@ WHERE r.id_reserva > 0 AND r.modo_ementa = 'pre_selecionada';
 
 
 -- =====================================================================
---  HISTORICO DE PEDIDOS — 40 PEDIDOS AO LONGO DE 27 DIAS
+--  HISTORICO DE PEDIDOS — 100 PEDIDOS AO LONGO DE SEIS MESES
 --
 --  PORQUE E QUE ISTO EXISTE
 --
@@ -430,7 +430,22 @@ WHERE r.id_reserva > 0 AND r.modo_ementa = 'pre_selecionada';
 --  barras e vinte e oito dias vazios. E o ecra que melhor mostra o que
 --  o sistema faz, e era o que parecia mais pobre.
 --
---  Estes pedidos vao de ha 2 dias ate ha 28 dias. HOJE E ONTEM FICAM
+--  Sao 100 pedidos em duas faixas: 40 no ultimo mes (de ha 2 a ha 28
+--  dias), que enchem o grafico dos 30 dias, e 60 espalhados pelos
+--  cinco meses anteriores, que enchem o grafico dos seis meses. O
+--  grafico por mes tinha duas barras em seis, num restaurante com
+--  funcionarios contratados desde janeiro.
+--
+--  Sao MAIS densos perto do fim de proposito: cerca de dez pedidos por
+--  mes na primavera e quase trinta em agosto. Um restaurante que
+--  comeca a usar um sistema novo usa-o pouco ao principio, e um
+--  grafico plano parece inventado — porque e.
+--
+--  As duas faixas saem do MESMO gerador, com a data a ramificar. Um
+--  segundo bloco copiado seria uma segunda copia das mesmas formulas,
+--  dentro de um ficheiro cuja licao e precisamente essa.
+--
+--  Estes pedidos vao de ha 2 dias ate ha 183 dias. HOJE E ONTEM FICAM
 --  INTACTOS, de proposito: os numeros desses dois dias foram
 --  verificados a mao a 10/09 (111,50 / 3 = 37,17, e o mes menos o dia
 --  dava 38,80 em 1 pedido, que e o que faz o "+200%" e o "+187%").
@@ -449,7 +464,10 @@ WHERE r.id_reserva > 0 AND r.modo_ementa = 'pre_selecionada';
 --  repetir cedo. O 7 e o 27 nao tem divisores comuns, e e por isso que
 --  os 27 primeiros pedidos calham em 27 dias diferentes — um por dia,
 --  sem falhar nenhum — e so depois e que os 13 restantes comecam a
---  duplicar dias. Um gerador aleatorio deixava dias em branco.
+--  duplicar dias. O mesmo na faixa antiga, com 43 e 154. Um gerador
+--  aleatorio deixava dias em branco.
+--
+--  Ao todo: 87 dias diferentes em 100 pedidos.
 --
 --  PORQUE E QUE OS PRECOS NAO ESTAO ESCRITOS AQUI
 --
@@ -507,22 +525,28 @@ INSERT INTO tmp_historico
 WITH RECURSIVE n(i) AS (
   SELECT 1
   UNION ALL
-  SELECT i + 1 FROM n WHERE i < 40
+  SELECT i + 1 FROM n WHERE i < 100
 )
 SELECT
   n.i,
-  100 + n.i,                                                    -- ids 101..140, longe dos 1..4 que ja existem
+  100 + n.i,                                                    -- ids 101..200, longe dos 1..4 que ja existem
   CASE WHEN n.i % 5 = 0 THEN NULL ELSE 100 + n.i END,           -- take away nao tem sessao
-  -- Dia: 2 a 28 dias atras. Hora 13h ou 20h (almoco e jantar), nunca
-  -- perto da meia-noite: a base guarda em UTC e o dia e contado em
-  -- Lisboa, por isso um pedido as 23h50 podia cair no dia seguinte.
-  DATE_SUB(DATE(NOW()), INTERVAL (2 + ((n.i * 7) % 27)) DAY)
+  -- Duas faixas no mesmo calculo: as primeiras 40 linhas caem no
+  -- ultimo mes, as 60 seguintes nos cinco meses anteriores.
+  --
+  -- Hora 13h ou 20h (almoco e jantar), nunca perto da meia-noite: a
+  -- base guarda em UTC e o dia e contado em Lisboa, por isso um pedido
+  -- as 23h50 podia cair no dia seguinte.
+  DATE_SUB(DATE(NOW()), INTERVAL (CASE WHEN n.i <= 40
+                                       THEN  2 + ((n.i * 7) % 27)
+                                       ELSE 32 + (((n.i - 40) * 43) % 154)
+                                  END) DAY)
     + INTERVAL (CASE WHEN n.i % 2 = 0 THEN 13 ELSE 20 END) HOUR
     + INTERVAL ((n.i * 13) % 60) MINUTE,
   CASE WHEN n.i % 5 = 0 THEN 'take_away' ELSE 'restaurante' END, -- 1 em cada 5 e take away
   CASE WHEN n.i % 5 = 0 THEN NULL ELSE ((n.i * 3) % 10) + 1 END, -- mesas 1 a 10
   NULL,                                                          -- preenchido a seguir, a partir da mesa
-  -- Tres pedidos cancelados (i = 13, 26, 39), e nao zero: e o que
+  -- Sete pedidos cancelados (i = 13, 26, ..., 91), e nao zero: e o que
   -- prova no ecra que a faturacao NAO os conta. Uma regra que nunca
   -- se ve a funcionar e uma regra em que ninguem acredita.
   CASE WHEN n.i % 13 = 0 THEN 'cancelado' ELSE 'entregue' END,
@@ -558,7 +582,7 @@ FROM tmp_historico t
 WHERE t.id_sessao IS NOT NULL;
 
 -- Todas fechadas. A coluna virtual `mesa_aberta` so tem valor enquanto
--- a sessao esta aberta, por isso estas 32 sessoes na mesma mesa nao
+-- a sessao esta aberta, por isso estas 80 sessoes na mesma mesa nao
 -- chocam com o UNIQUE que impede duas sessoes abertas ao mesmo tempo.
 
 
@@ -700,6 +724,9 @@ SELECT 'movimentos de stock com a conta errada',
 
 -- E este e informativo: diz quantos dias do ultimo mes tem faturacao.
 -- Com os 4 pedidos originais dava 3; agora tem de dar 27 ou 28.
+-- Os 60 pedidos da faixa antiga nao entram nesta conta — estao todos a
+-- mais de 30 dias — por isso este numero NAO muda por causa deles, e e
+-- essa a razao de ele continuar a servir de verificacao.
 --
 -- Nao sao 29 e a razao e util: dos 27 dias antigos, o dia 22 tem um so
 -- pedido e esse esta cancelado, por isso nao conta como dia com

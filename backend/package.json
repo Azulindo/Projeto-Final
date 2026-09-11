@@ -7,7 +7,8 @@
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "qrcodes": "node scripts/gerarQRCodes.js",
-    "diagrama": "node scripts/gerarDiagramaER.js"
+    "diagrama": "node scripts/gerarDiagramaER.js",
+    "numeros": "node scripts/verificarNumeros.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
