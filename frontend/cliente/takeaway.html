@@ -10,31 +10,35 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          carvao:  '#121212',
-          carvao2: '#1a1a1a',
-          carvao3: '#242424',
-          copper:  '#c9832f',
-          copperdark: '#8a5a1f',
-          gold:    '#e8b34f',
-        },
-        fontFamily: {
-          display: ['"Playfair Display"', 'serif'],
-          sans: ['Inter', 'system-ui', 'sans-serif'],
-        },
-        boxShadow: {
-          soft: '0 10px 30px -8px rgba(0,0,0,0.55)',
-          liftup: '0 -8px 24px -6px rgba(0,0,0,0.55)',
-        },
-      },
-    },
-  };
-</script>
+<!-- ── O TAILWIND ESTÁ GUARDADO NO REPOSITÓRIO (F-70, 11/09) ──────────
+     Aqui estava `<script src="https://cdn.tailwindcss.com">` com a
+     configuração em linha a seguir. Funcionava — enquanto houvesse rede.
+
+     Sem rede, esta página ficava INUTILIZÁVEL: o `tailwind.config`
+     lançava "tailwind is not defined", o ecrã de carregamento e o de
+     erro ficavam os DOIS visíveis ao mesmo tempo (a classe `hidden` não
+     existe sem o Tailwind), e o texto ficava preto sobre preto. Os
+     produtos carregavam bem — era só o estilo que desaparecia por
+     inteiro.
+
+     Descobri-o por acidente, a tentar fotografar os ecrãs para o
+     relatório num sítio sem rede, na véspera do ensaio do plano B.
+     **E esta é a página para onde os QR Codes das mesas apontam.**
+
+     O `css/tailwind.css` é gerado pela ferramenta oficial a partir
+     destes ficheiros, com a configuração que estava aqui em linha —
+     19 KB em vez dos ~400 KB do CDN, porque só leva as classes que
+     estas páginas usam mesmo.
+
+     PARA REGERAR, depois de mexer nas classes de qualquer destas duas
+     páginas ou do `js/ementa-comum.js`:
+         npx tailwindcss@3 -c tailwind.config.js -i entrada.css \
+             -o frontend/cliente/css/tailwind.css --minify
+     A configuração está em `frontend/cliente/css/tailwind.config.js`.
+
+     As outras 16 páginas do projeto nunca tiveram este problema: usam
+     CSS próprio. Eram só estas duas. -->
+<link rel="stylesheet" href="css/tailwind.css">
 
 <style>
   @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -96,7 +100,7 @@
              onerror="this.style.display='none'">
         <div class="leading-tight min-w-0">
           <p class="font-display text-base sm:text-lg font-bold text-white tracking-wide truncate">Vem Pro Abate</p>
-          <p class="text-[11px] text-neutral-400 -mt-0.5 tracking-wide">STEAKHOUSE</p>
+          <p class="text-xs text-neutral-400 -mt-0.5 tracking-wide">STEAKHOUSE</p>
         </div>
       </a>
 
