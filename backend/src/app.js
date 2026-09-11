@@ -30,6 +30,7 @@ const gestaoCategoriasRouter = require('./routes/gestaoCategorias');
 const gestaoMesasRouter = require('./routes/gestaoMesas');
 const estatisticasRouter = require('./routes/estatisticas');
 const gestaoFuncionariosRouter = require('./routes/gestaoFuncionarios');
+const gestaoReservasRouter = require('./routes/gestaoReservas');
 const { naoEncontrado, tratarErros } = require('./middleware/erros');
 
 const app = express();
@@ -121,6 +122,13 @@ app.use('/api', estatisticasRouter);
 // Contas dos funcionarios: /api/gestao/funcionarios
 app.use('/api', gestaoFuncionariosRouter);
 
+// Agenda de reservas: /api/gestao/reservas — so leitura.
+// Montado DEPOIS do reservasRouter, e nao faz diferenca nenhuma: os
+// caminhos publicos comecam em /reservas e este em /gestao/reservas,
+// por isso nao ha nenhum :codigo que possa apanhar a palavra "gestao".
+// Ao contrario do que acontecia com o take away, onde a ordem contava.
+app.use('/api', gestaoReservasRouter);
+
 /**
  * GET /api/saude
  * Diz se a API esta de pe e se consegue falar com a base de dados.
@@ -143,10 +151,17 @@ app.get('/api/saude', async (_req, res, next) => {
      *  Tabelas e vistas contadas em SEPARADO, de proposito.
      *
      *  O information_schema.TABLES do MySQL inclui as vistas, por isso
-     *  um COUNT(*) simples devolvia 18 quando o diagrama ER mostra 17.
-     *  Nenhum dos numeros estava errado — contavam coisas diferentes —
-     *  mas o diagrama e entregavel e alguem ia contar. Agora a resposta
-     *  diz o que e cada coisa: 17 tabelas e 1 vista (vw_total_sessao).
+     *  um COUNT(*) simples dava um numero a mais do que o diagrama ER.
+     *  Nenhum dos dois estava errado — contavam coisas diferentes — mas
+     *  o diagrama e entregavel e alguem ia contar. Agora a resposta diz
+     *  o que e cada coisa, em vez de somar as duas.
+     *
+     *  E repara que aqui nao esta escrito QUANTAS sao. Estava: dizia
+     *  "17 tabelas e 1 vista", e ficou errado no dia em que a
+     *  movimento_stock entrou e passaram a ser 18 — o mesmo numero
+     *  velho que o relatorio tambem tinha em dois sitios. Um comentario
+     *  que repete um numero que a consulta ja devolve e mais uma copia
+     *  a espera de discordar. O numero certo e o que sai da consulta.
      */
     const [[{ tabelas, vistas }]] = await pool.query(
       `SELECT SUM(TABLE_TYPE = 'BASE TABLE') AS tabelas,

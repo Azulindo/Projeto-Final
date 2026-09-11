@@ -629,7 +629,7 @@ oito minutos não são a mesma coisa para quem está a decidir a que mesa vai pr
 **Limpar:** `POST /api/gestao/sessoes/:id/atendida` (ou o nome que preferires) — o balcão
 chama-o quando alguém vai à mesa.
 
-### 4.5 Reservas — **nada disto existe ainda**
+### 4.5 Reservas — ~~**nada disto existe ainda**~~ · **os dois primeiros FEITOS (10/09)**, o terceiro na 4.14
 
 O fluxo de reservas (`frontend/cliente/reservas.html`) está completo do lado do cliente mas
 grava em `localStorage`. Não há tabelas nem endpoints. Mínimo necessário:
@@ -1122,6 +1122,115 @@ mesmas, e um salto inválido dá o mesmo 409.
 *O ecrã do cliente é a `frontend/cliente/takeaway.html` (F-24 + F-25). A simulação no
 `api.js` tem os dois caminhos com os mesmos limites e as mesmas mensagens, para os testes e
 para o plano B correrem sem base de dados.*
+
+---
+
+### 4.14 `GET /api/gestao/reservas` (**B-73**) · *proposta, 11/09*
+
+A secção 4.5 previa este caminho numa linha — *"lista para o painel"* — e nunca disse
+que forma tinha. Vai aqui a proposta **antes** de estar escrito, que é a regra da casa:
+diz o que achas e só depois construo. A F-61 depende disto e é melhor discordares agora
+do que depois de teres a tabela desenhada.
+
+**Hoje um cliente reserva e ninguém no restaurante consegue ver a reserva.** É o único
+sítio do sistema em que a informação entra e não sai.
+
+#### Pedido
+
+```
+GET /api/gestao/reservas
+GET /api/gestao/reservas?data=2026-09-20
+GET /api/gestao/reservas?dias=14
+GET /api/gestao/reservas?estado=pendente
+```
+
+Com login. Níveis **administrador** e **balcão**.
+
+A cozinha fica de fora pelo mesmo critério do 4.6: a necessidade, e não a ausência de
+perigo. Se disseres que a cozinha precisa de saber quantas pessoas há marcadas para
+preparar o serviço, acrescento — é um argumento e não uma preferência.
+
+| parâmetro | omitido | o que faz |
+|---|---|---|
+| `data` | — | um dia só, exatamente esse |
+| `dias` | 7 | de hoje até N dias à frente; ignorado se houver `data` |
+| `estado` | todos | filtra por um dos estados da reserva |
+
+Sem parâmetros: **de hoje a sete dias**. O passado não aparece por omissão — quem abre
+este ecrã quer saber quem vem aí, não quem veio. Para ver o que passou, pede-se a `data`.
+
+#### Resposta
+
+```json
+{
+  "reservas": [
+    {
+      "codigo": "RSV-7K2M9",
+      "nome": "Ana Loureiro",
+      "telemovel": "912345678",
+      "pessoas": 4,
+      "data": "2026-09-13",
+      "hora": "20:00",
+      "periodo": "jantar",
+      "estado": "pendente",
+      "modo_ementa": "pre_selecionada",
+      "observacoes": "Aniversário",
+      "valorEstimado": 74.40,
+      "criadaEm": "2026-09-11T14:22:05.000Z",
+      "itens": [
+        { "produtoId": 9, "nome": "Picanha na Brasa Negra",
+          "quantidade": 2, "precoUnit": 16.00, "subtotal": 32.00 }
+      ]
+    }
+  ],
+  "truncado": false
+}
+```
+
+#### Cinco decisões, para discordares de alguma
+
+**1. O telemóvel vem, e o código da reserva também.** No take away decidimos o contrário
+— o `GET /pedidos/takeaway/:numero` não devolve telefone nem email. A diferença é quem
+pergunta: ali é qualquer pessoa com um número de encomenda, aqui é um funcionário com
+sessão iniciada, e ligar ao cliente para confirmar ou avisar de um atraso é a razão de
+ser do ecrã. Um telemóvel atrás de login é uma ferramenta; o mesmo telemóvel num
+endpoint público é uma fuga.
+
+**2. Não há campo de stock baixo, e é de propósito.** A F-61 quer avisar quando um prato
+pré-selecionado está em baixo. Se eu devolvesse aqui um `stockBaixo: true`, passava a
+haver **dois sítios a responder à mesma pergunta** — este e o `GET /gestao/stock` — e
+foi exatamente isso que corrigiste esta semana no cartão do painel. Por isso devolvo o
+`produtoId` de cada item e o aviso sai do cruzamento com a lista que já tens. Uma fonte,
+dois ecrãs.
+
+**3. Não há `total`.** Se a lista vem inteira, o total é o comprimento do vetor, e
+mandar o número ao lado era mandar a mesma coisa duas vezes. O que vai é o `truncado`,
+que diz outra coisa: *há mais e não couberam*. O limite é 200 reservas por resposta.
+
+**4. Os itens vêm dentro de cada reserva, não numa lista à parte.** São duas consultas
+do meu lado (uma para as reservas, outra para os itens de todas elas de uma vez, nunca
+uma por reserva) e uma junção em memória. Assim não tens de as cruzar no ecrã. Reservas
+com `modo_ementa: "no_restaurante"` trazem `itens: []` e não `null` — um vetor vazio
+percorre-se sem verificação prévia.
+
+**5. A ordem é `data`, depois `hora`, depois `codigo`.** O código entra como desempate
+e não por enfeite: duas reservas à mesma hora do mesmo dia podiam sair por qualquer
+ordem, e o MySQL não promete a mesma duas vezes seguidas. Apanhei isso ontem na lista
+dos mais vendidos, onde a Coca-Cola e a Cerveja empatavam a 11 e trocavam de lugar entre
+dois F5.
+
+#### Erros
+
+| código | quando |
+|---|---|
+| `400` | `data` que não é uma data, `dias` fora de 1–90, `estado` que não existe |
+| `401` | sem sessão, sessão expirada ou conta desativada |
+| `403` | sessão de cozinha |
+
+Só leitura. **Confirmar, recusar ou cancelar uma reserva não está aqui** e fica para
+depois da apresentação: mudar o estado de uma reserva obriga a decidir o que acontece à
+lotação do horário quando uma reserva é recusada, e isso é uma conversa, não um
+endpoint.
 
 ---
 
