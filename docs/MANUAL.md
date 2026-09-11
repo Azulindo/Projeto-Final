@@ -58,7 +58,7 @@ A reserva faz-se por conversa, uma pergunta de cada vez:
    pode escrever-se com espaços.
 6. **Confirmar** no resumo, que mostra tudo antes de gravar.
 
-No fim aparece um **código de reserva** (por exemplo `RES-K4M2P`) em
+No fim aparece um **código de reserva** (por exemplo `RSV-K4M2P`) em
 destaque, com um botão para copiar.
 
 > **Guarde o código.** É por ele que a reserva se identifica ao telefone
