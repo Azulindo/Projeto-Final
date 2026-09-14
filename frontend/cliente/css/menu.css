@@ -325,16 +325,11 @@
      botão mais importante da página. */
   min-height: 48px;
   padding: 14px 32px;
-  /* O papel RÓTULO, igual aos outros três botões. Ficou desencontrado
-     durante uma hora a 14/09: a F-72 pôs os outros três em maiúsculas
-     com `0.06em` e deixou este a `0.01em` sem maiúsculas — e este está
-     LADO A LADO com o da galeria, na mesma página. Apanhado pelo
-     Guilherme a olhar para os dois. */
-  font-family: var(--fonte-rotulo);
+  /* O papel vem da `.vpa-rotulo` no `nav.css` (F-76). Este botão
+     esteve uma hora desencontrado dos outros três, a 14/09, por eu ter
+     mudado três e deixado este — o que deixa de poder acontecer agora
+     que a definição vive num sítio só. */
   font-size: 1.15rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   cursor: pointer;
   border-radius: 25px;
   box-shadow: 0 6px 22px rgba(255,120,0,0.55);
@@ -369,29 +364,11 @@
   color: #0d0b07;
   border: none;
   padding: 15px 30px;
-  /* ── NOSIFER SAI DOS BOTÕES (14/09) ──────────────────────────────
-     A decisão já estava tomada e escrita neste projeto, no
-     `.takeaway-btn` do `menu.css`: *"Nosifer NÃO se usa aqui: é uma
-     fonte de títulos curtos"*. Foi aplicada a UM botão e ficou por
-     aplicar nos outros três — e um rótulo de botão é a coisa que o
-     cliente tem de ler mais depressa da página inteira, porque é o
-     que ele está à procura.
-
-     Nosifer é uma fonte de terror, com pingos a escorrer das letras.
-     Num TÍTULO curto faz o efeito que se quer; num rótulo de acção faz
-     o cliente parar para decifrar. O `--gradiente-fogo`, a brasa por
-     baixo e o recorte ficam todos: *o calor está na moldura, nunca nos
-     dados* (F-08). O que muda é a letra do rótulo, que é o dado.
-
-     O mesmo tratamento nos três botões do site — `.btn`, `.reservas` e
-     `.galeria-btn` — para não ficar outra vez um por aplicar, que foi
-     exactamente o que aconteceu ao `--texto-fraco` (corrigido em três
-     ficheiros sem ninguém tocar na variável) e ao `--gradiente-fogo`
-     (escrito nove vezes em seis ficheiros). */
-  font-family: var(--fonte-rotulo);
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  /* A família, o peso, a caixa e o espaçamento vêm da `.vpa-rotulo`
+     no `nav.css` (F-76). Estavam escritos aqui e em mais três sítios —
+     quatro cópias do mesmo papel, ao lado da classe criada para as
+     substituir e que ninguém tinha aplicado. Só o TAMANHO fica,
+     porque esse é deste botão. */
   font-size: 1.15rem;
   cursor: pointer;
   border-radius: 25px;

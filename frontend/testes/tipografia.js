@@ -15,8 +15,14 @@
  *      e a terceira do mesmo dia. Mede agora em sete larguras.
  *   4. Cada página declara `lang="pt"`.
  *   5. Cada página tem **um** `<h1>`.
- *   6. Os quatro botões do site têm o mesmo papel: mesma família, mesmo
- *      peso, mesma caixa, mesmo espaçamento.
+ *   6. Os quatro botões de MARCA têm o mesmo papel: mesma família,
+ *      mesmo peso, mesma caixa, mesmo espaçamento — e todos declaram
+ *      a classe `.vpa-rotulo`, que é onde esse papel vive.
+ *   7. Os CONTROLOS de interface (o ✕ e as setas do lightbox, o enviar
+ *      do chat) são um papel à parte e levam a letra do corpo. Pôr uma
+ *      letra de display num ✕ não quer dizer nada, e foi a tentar
+ *      meter os dois no mesmo papel que este teste falhou quando o
+ *      Nosifer entrou nos botões de marca.
  *
  * ── PORQUE É QUE ISTO EXISTE ────────────────────────────────────────
  * Porque `"Metal Mania", sans-serif` estava escrito **14 vezes em 6
@@ -98,7 +104,21 @@ const primeiro = f => f.split(',')[0].replace(/["']/g, '').trim();
         if (!visivel(el)) continue;
         const t = el.tagName.toLowerCase();
         let papel = null;
-        if (t === 'button' || (t === 'a' && /\b(btn|reservas|takeaway-btn|galeria-btn)\b/.test(String(el.className)))) papel = 'rótulo';
+        /* ── DOIS TIPOS DE BOTÃO, E NÃO UM (F-76) ─────────────────────
+           Um botão de MARCA ("Ver Menu", "Reservar mesa") leva a letra
+           dos títulos; um CONTROLO de interface (o ✕ e as setas do
+           lightbox, o enviar do chat) leva a do corpo, porque pôr uma
+           letra de display num ✕ não quer dizer nada.
+
+           A distinção lê-se da classe `.vpa-rotulo` no HTML e não de
+           uma lista de selectores aqui — assim o teste pergunta pela
+           INTENÇÃO declarada, em vez de a adivinhar. E por isso há mais
+           abaixo uma verificação de que os quatro botões de marca ainda
+           têm a classe: sem ela, tirar a classe a um botão fazia-o
+           passar a "controlo" e o teste ficava verde com o botão
+           errado. */
+        if (/\bvpa-rotulo\b/.test(String(el.className))) papel = 'rótulo de marca';
+        else if (t === 'button') papel = 'controlo de interface';
         else if (/^h[1-6]$/.test(t)) papel = t.toUpperCase();
         else if (el.classList.contains('h1')) papel = 'H1';
         if (!papel) continue;
@@ -170,6 +190,24 @@ const primeiro = f => f.split(',')[0].replace(/["']/g, '').trim();
 
   /* ── 2. Os botões, todos com o mesmo papel e todos legíveis ─────── */
   console.log('\nOS BOTÕES DO SITE');
+
+  /* Sem isto, tirar a `.vpa-rotulo` a um botão tirava-o do papel de
+     marca e o teste ficava verde — a passar por não estar a olhar. */
+  for (const [pag, sel] of BOTOES) {
+    const p = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await p.goto(RAIZ + pag, { waitUntil: 'domcontentloaded' });
+    const tem = await p.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      return el ? el.classList.contains('vpa-rotulo') : null;
+    }, sel);
+    /* A explicação só se escreve quando FALHA. A primeira versão desta
+       linha imprimia "sem a classe" ao lado de um ✅ — uma saída que
+       contradiz o próprio veredicto, que é o defeito contra o qual
+       este ficheiro tem um parágrafo escrito. */
+    check(`${pag} · ${sel} declara .vpa-rotulo`, tem === true,
+      tem === true ? '' : (tem === null ? 'não existe' : 'sem a classe'));
+    await p.close();
+  }
   let medidos = 0;
   for (const largura of LARGURAS_BOTOES) {
     const assinaturas = new Map();

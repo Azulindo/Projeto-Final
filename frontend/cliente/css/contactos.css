@@ -198,16 +198,17 @@
 }
 
 .info-item h3 {
-  /* Nosifer saiu daqui (F-74). Está escrito neste projeto, no
-     `.takeaway-btn` do `menu.css`, que *"Nosifer é uma fonte de
-     títulos curtos"* — e isto são frases: "Horário de Funcionamento",
-     "Política de Reserva". Terceira vez que esta decisão é aplicada:
-     saiu do `.galeria-text`, saiu dos quatro botões, sai agora dos
-     subtítulos. Passam ao papel RÓTULO, definido no `nav.css`. */
-  font-family: var(--fonte-rotulo);
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  /* ── ESTES SUBTÍTULOS VOLTAM AO NOSIFER (F-76) ──────────────────
+     Foi daqui que o Guilherme tirou a referência: *"o tipo de letra
+     destes subtítulos"*. Eu tinha-os passado ao papel RÓTULO na F-74,
+     a aplicar a regra escrita no `.takeaway-btn` — *"Nosifer é uma
+     fonte de títulos curtos"* —, e ele pediu o contrário: quer esta
+     letra em todos os títulos e botões do site.
+
+     Voltam ao papel TÍTULO, que agora É o Nosifer. O peso, a caixa e
+     o espaçamento saem: era assim que estavam quando ele os viu e
+     gostou, e o peso vem do `nav.css` (o Nosifer só tem 400). */
+  font-family: var(--fonte-titulo);
   margin-bottom: 10px;
   color: #ffcc00;
 }

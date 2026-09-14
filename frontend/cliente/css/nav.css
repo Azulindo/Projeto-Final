@@ -92,9 +92,57 @@
      Funcionamento" e "Política de Reserva", que são frases. É a
      terceira vez que esta decisão é aplicada (saiu do `.galeria-text`,
      saiu dos quatro botões, sai agora dos subtítulos). */
-  --fonte-titulo: "Metal Mania", system-ui, sans-serif;
+  /* ── O NOSIFER PASSA A SER A VOZ DOS TÍTULOS (F-76, 14/09) ────────
+     Pedido do Guilherme, depois de eu lho ter tirado: *"eu queria o
+     tipo de letra destes subtítulos nos títulos e botões de todo o
+     site"* — *"dava mais vida ao site"*. É a casa dele e é a decisão
+     dele, e esta troca são DUAS LINHAS porque a F-74 juntou as vozes
+     aqui. Ontem eram 14 edições em seis ficheiros, e foi assim que o
+     Nosifer ficou meio aplicado da última vez.
+
+     ── O QUE MEDI ANTES DE TROCAR ──────────────────────────────────
+     O contentor onde eu trabalho não alcança o Google Fonts, por isso
+     medi no browser do Guilherme, no site publicado, com a fonte a
+     sério. Larguras de texto:
+
+       · nos TÍTULOS o Nosifer é ~2× mais largo do que o Metal Mania
+         ao mesmo tamanho ("O nosso prato mais prestigiado" a 40px:
+         470px → 951px). Cabe numa linha no computador; ao telemóvel
+         parte em mais linhas — parte, não transborda;
+       · nos BOTÕES é só ~1,2× mais largo do que o Inter 800, bem
+         menos do que eu supunha.
+
+     ── O QUE MUDOU POR CAUSA DA MEDIÇÃO ────────────────────────────
+     As maiúsculas e o peso 800 que eu tinha posto nos botões saem:
+     o Nosifer só existe em peso 400, portanto o 800 pedia ao browser
+     um negrito SINTÉTICO — engrossa os traços por cálculo e borra uma
+     letra que já tem pingas. E as maiúsculas custavam mais 7% de
+     largura (399px contra 371px) para nada, porque o Nosifer já é uma
+     letra de display.
+
+     ── A RESERVA QUE FICA ESCRITA ──────────────────────────────────
+     O rótulo de um botão é a coisa que o cliente tem de ler mais
+     depressa da página inteira, e o Nosifer é uma letra de terror com
+     pingas a escorrer. A medição diz que CABE; não diz que se lê
+     depressa. Se no dia 16 alguém hesitar em frente a um botão, a
+     troca é uma linha: `--fonte-rotulo: var(--fonte-corpo)` põe os
+     botões de volta em Inter e deixa os títulos como estão.
+
+     ── E O FIM DO `cursive` ────────────────────────────────────────
+     O recurso do Nosifer era `cursive`, que em vários sistemas é Comic
+     Sans. Um restaurante de grelhados com os títulos em Comic Sans,
+     se a Google não responder, é pior do que qualquer alternativa —
+     e "se a Google não responder" é literalmente o cenário da C-27.
+     Passa a cair no Metal Mania, que é a outra letra da marca. */
+  --fonte-titulo: "Nosifer", "Metal Mania", system-ui, sans-serif;
   --fonte-corpo:  "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --fonte-rotulo: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Aponta para o título em vez de repetir a cadeia. Na revisão de
+     hoje apanhei estas duas variáveis a guardar a MESMA cadeia escrita
+     duas vezes — exactamente a divergência que elas existem para
+     impedir. Assim não podem separar-se por acidente; para as separar
+     de propósito basta escrever outra cadeia aqui. */
+  --fonte-rotulo: var(--fonte-titulo);
 
   /* ── A ESCALA DOS TÍTULOS (F-75, 14/09) ───────────────────────────
      ── O QUE ESTAVA MAL, E É PIOR DO QUE AS FONTES ─────────────────
@@ -125,8 +173,26 @@
      O mínimo do `<h1>` (28px) foi medido: a 320px o título do hero da
      entrada cabe sem transbordo, o que os 17,6px de antes nem
      precisavam de verificar. */
+  /* Os mínimos NÃO são gosto — são o limiar de "texto grande" da WCAG.
+     Acima de 24px um texto só precisa de 3:1 de contraste; abaixo,
+     precisa de 4,5:1. Os títulos de secção da galeria são texto com
+     gradiente e chegam a **3,05:1** no extremo escuro do
+     `--gradiente-fogo`.
+
+     A primeira versão desta escala tinha o mínimo do `--t-h2` em
+     **22px**, e isso rebentou-os: até aqui tinham 32px fixos, passavam
+     como texto grande, e a 22px passaram a ser texto normal a 3,05:1 —
+     **falha de acessibilidade que eu introduzi**, apanhada a rever o
+     meu próprio trabalho e não por um teste, porque o `contraste.js`
+     põe o texto com gradiente num balde de avisos em vez de falhar.
+     Confirmei a atribuição a correr o teste contra a versão anterior:
+     antes da minha alteração a secção dos gradientes não tinha uma
+     única entrada.
+
+     Com o mínimo a 24px o `<h2>` é sempre texto grande e 3,05:1 basta.
+     A ordem também se mantém com folga: 28 > 24 > 18. */
   --t-h1: clamp(1.75rem,  5.5vw, 3rem);      /* 28 → 48px */
-  --t-h2: clamp(1.375rem, 4vw,   2.5rem);    /* 22 → 40px */
+  --t-h2: clamp(1.5rem,   4vw,   2.5rem);    /* 24 → 40px  (24 = limiar WCAG) */
   --t-h3: clamp(1.125rem, 2.2vw, 1.5rem);    /* 18 → 24px */
 }
 
@@ -186,11 +252,23 @@ button, input, select, textarea, optgroup {
    Botões e etiquetas. Maiúsculas com espaçamento porque são coisas
    curtas que se lêem de relance; um rótulo de botão é o que o cliente
    tem de ler mais depressa da página inteira. */
+/* ── O PAPEL "RÓTULO", AGORA LIGADO AOS BOTÕES ─────────────────────
+   Esta classe existia desde a F-74 e **não estava aplicada a nenhum
+   elemento** — CSS morto que eu próprio encontrei ao revisitar o meu
+   trabalho, e do pior género: construí a solução para a duplicação e
+   deixei as quatro cópias no lugar. Agora os quatro botões levam-na no
+   HTML e as quatro cópias saíram do `index.css` e do `menu.css`.
+
+   O `nav.css` é a última folha das seis páginas, portanto ganha os
+   empates de especificidade contra `.btn`, `.reservas`, `.galeria-btn`
+   e `.takeaway-btn`. Verificado ficheiro a ficheiro antes de escrever
+   isto — se algum dia uma página carregar o `nav.css` primeiro, estas
+   quatro propriedades deixam de se aplicar em silêncio. */
 .vpa-rotulo {
   font-family: var(--fonte-rotulo);
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-weight: 400;          /* o Nosifer só tem 400 — ver acima */
+  text-transform: none;      /* custava 7% de largura por nada */
+  letter-spacing: 0.02em;    /* o Nosifer já vem folgado */
 }
 
 /* ── A ESCALA APLICADA ─────────────────────────────────────────────
@@ -198,16 +276,22 @@ button, input, select, textarea, optgroup {
    `.h1-menu`, `.h1-sobre`, `.h1-contactos`, `.h1-reservas`) porque
    estão posicionados por cima de uma imagem, cada um à sua maneira.
    O TAMANHO, porém, é o mesmo papel nas seis, e por isso vive aqui. */
+/* O peso 400 é obrigatório e não é gosto: o Nosifer só tem esse peso,
+   e o `bold` que o browser dá por omissão a um `<h1>` faz um negrito
+   sintético que borra os pingos. */
 h1, .h1, .h1-menu, .h1-sobre, .h1-contactos, .h1-reservas {
   font-size: var(--t-h1);
+  font-weight: 400;
 }
 
 h2, .section-title {
   font-size: var(--t-h2);
+  font-weight: 400;
 }
 
 h3 {
   font-size: var(--t-h3);
+  font-weight: 400;
 }
 
 
