@@ -12,6 +12,7 @@
  *   6. Peso das imagens que a página vai buscar.
  */
 const { chromium } = require('playwright');
+const { execSync } = require('child_process');
 const path = require('path');
 
 const RAIZ = 'file://' + path.resolve(__dirname, '..');
@@ -178,7 +179,7 @@ function medir() {
             if (t === 'image') {
               try {
                 const b = (await r.body()).length;
-                bytes.push({ url: r.url().split('/').pop(), b });
+                bytes.push({ url: r.url().split('/').pop(), b, href: r.url() });
               } catch (e) { /* ignora */ }
             }
           });
@@ -268,16 +269,77 @@ function medir() {
     console.log('  (sem internet, esta página renderiza em bruto; tem de ser vista num browser com rede)');
   }
 
+  /* ── X-26 (14/09): ESTE TESTE MEDE O DISCO DE ONDE CORRE ──────────
+     E até 14/09 dizia o que encontrava como se fosse o repositório.
+
+     No contentor do Claude reportou **"Mesa (QR) — logotipo.jpg —
+     2,51 MB"**; na máquina do Guilherme esse ficheiro tem **40 KB**
+     desde 04/09. A diferença era um espelho velho, anterior à
+     optimização das imagens — e o número errado saiu com a mesma
+     confiança dos certos.
+
+     É a pior versão do defeito da casa: não é um documento a envelhecer,
+     é uma **verificação** a envelhecer, e uma verificação que mente
+     estraga tudo o que se decidir com ela.
+
+     A reparação é comparar com o Git, que é a única fonte que não é uma
+     cópia. E quando o Git não estiver ali, **dizê-lo em voz alta** em vez
+     de calar: um teste que não consegue verificar tem de conseguir dizer
+     que não conseguiu. */
+  const gitTamanho = (() => {
+    let raizGit = null;
+    try {
+      raizGit = execSync('git rev-parse --show-toplevel', {
+        cwd: __dirname, stdio: ['ignore', 'pipe', 'ignore'],
+      }).toString().trim();
+    } catch (e) { return null; }
+
+    return (caminhoAbs) => {
+      const rel = path.relative(raizGit, caminhoAbs).split(path.sep).join('/');
+      try {
+        return Number(execSync(`git cat-file -s HEAD:"${rel}"`, {
+          cwd: raizGit, stdio: ['ignore', 'pipe', 'ignore'],
+        }).toString().trim());
+      } catch (e) { return null; }   // não versionado, ou fora do HEAD
+    };
+  })();
+
   console.log('\n🖼️  PESO DAS IMAGENS POR PÁGINA');
   console.log(linha);
+
+  if (!gitTamanho) {
+    console.log('  ⚠️  SEM GIT AQUI — os pesos abaixo são os dos ficheiros neste disco e');
+    console.log('      NÃO FORAM CONFIRMADOS contra o repositório. Se isto está a correr');
+    console.log('      fora da máquina de trabalho, podem ser de uma cópia velha. Ver X-26.');
+  }
+
+  const desencontros = [];
   Object.entries(pesoPorPagina).forEach(([nome, imgs]) => {
     const total = imgs.reduce((a, i) => a + i.b, 0);
     const mb = (total / 1048576).toFixed(1);
     const aviso = total > 3 * 1048576 ? '  ⚠️' : '';
     console.log(`  ${nome.padEnd(14)} ${String(imgs.length).padStart(2)} imagens · ${mb.padStart(5)} MB${aviso}`);
-    imgs.sort((a, b) => b.b - a.b).slice(0, 2).forEach(i =>
-      console.log(`      ↳ ${i.url} — ${(i.b / 1048576).toFixed(2)} MB`));
+    imgs.sort((a, b) => b.b - a.b).slice(0, 2).forEach(i => {
+      let nota = '';
+      if (gitTamanho && i.href && i.href.startsWith('file://')) {
+        const abs = decodeURIComponent(i.href.replace(/^file:\/\//, ''));
+        const noGit = gitTamanho(abs);
+        if (noGit !== null && noGit !== i.b) {
+          nota = `   ❌ o Git tem ${(noGit / 1048576).toFixed(2)} MB`;
+          desencontros.push({ pag: nome, ficheiro: i.url, disco: i.b, git: noGit });
+        }
+      }
+      console.log(`      ↳ ${i.url} — ${(i.b / 1048576).toFixed(2)} MB${nota}`);
+    });
   });
+
+  if (desencontros.length) {
+    console.log('\n❌ ESPELHO DESACTUALIZADO — ' + desencontros.length + ' ficheiro(s)');
+    console.log(linha);
+    desencontros.forEach(d =>
+      console.log(`  ${d.ficheiro}: no disco ${(d.disco / 1048576).toFixed(2)} MB, no Git ${(d.git / 1048576).toFixed(2)} MB`));
+    console.log('  Os pesos deste relatório NÃO valem. Actualiza a cópia e corre outra vez.');
+  }
 
   console.log('\n' + '═'.repeat(66));
   console.log(`TOTAL: ${problemas.length} problemas em ${PAGINAS.length + PAGINAS_GESTAO.length} páginas × ${ECRAS.length} larguras`);

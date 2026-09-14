@@ -12,7 +12,9 @@
 ## 1 · Antes de sair de casa
 
 - [ ] Portátil carregado **e** carregador na mochila
-- [ ] Ensaio (C-27) feito pelo menos uma vez **com o Wi-Fi desligado**
+- [ ] Ensaio (C-27) feito pelo menos uma vez **com o Wi-Fi desligado**,
+      **na máquina que vai à sala** — ver a caixa do §4
+- [ ] **Confirmado por quem sabe qual é essa máquina**, e não por suposição
 - [ ] Esta folha impressa, com as três palavras-passe escritas à mão
 - [ ] Cartões de QR impressos — **os do endereço público**, ver §6
 - [ ] **Um cartão lido com o telemóvel, antes de sair de casa.** Tem de abrir
@@ -52,7 +54,28 @@ sala a olhar.
 
 ## 4 · Plano B — tudo no portátil
 
-**Três comandos, por esta ordem.** Todos no PowerShell, na pasta `Projeto-Final`.
+> ⚠️ **QUAL PORTÁTIL? A DECIDIR — e tem de ficar decidido antes do ensaio.**
+>
+> A 14/09 verificou-se o portátil do **Guilherme** e o plano B **não corre lá**:
+> não tem o MySQL instalado, não tem base de dados local, e não tem
+> `backend/.env.local` (esse e o `.env` estão no `.gitignore`, portanto nunca
+> vieram no repositório). O `npm install` do backend foi feito nesse dia e
+> resolveu só a primeira das três coisas.
+>
+> As **C-24** e **C-25** estão ✅ porque foram feitas no portátil do **João** —
+> é lá que existe a base local com as 18 tabelas e a API a arrancar em `LOCAL`.
+>
+> O Guilherme disse *"acho que é o do João"*, e **um "acho" não serve para a
+> única coisa que só importa quando tudo o resto já falhou.** Quem confirma é
+> o João, e confirma-se fazendo: o ensaio (C-27) corre-se **na máquina que vai
+> à sala**. Se for a do Guilherme, falta instalar o MySQL, criar a base com o
+> `schema.sql` e o `seed.sql`, e escrever o `.env.local` — é uma tarde, não
+> cinco minutos.
+>
+> **Enquanto esta caixa estiver aqui, o plano B tem dono mas não tem endereço.**
+
+**Três comandos, por esta ordem.** Todos no PowerShell, na pasta `Projeto-Final`,
+**na máquina onde o plano B está montado** (ver a caixa acima).
 
 **1.** Refazer a base *(só se estiver estragada; se estiver boa, salta)*
 
