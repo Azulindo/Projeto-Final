@@ -59,6 +59,10 @@ A reserva faz-se por conversa, uma pergunta de cada vez:
    do país à frente (`+351912345678`).
 6. **Confirmar** no resumo, que mostra tudo antes de gravar.
 
+![O passo das horas, com as cheias a cinzento e riscadas](imagens/reservas-horas.png)
+*O passo das horas. As cheias aparecem a cinzento e riscadas, e as que têm
+poucos lugares mostram quantos sobram.*
+
 No fim aparece um **código de reserva** (por exemplo `RSV-K4M2P`) em
 destaque, com um botão para copiar.
 
@@ -123,6 +127,10 @@ telemóvel abre a ementa dessa mesa.
 - **Pedir Itens** manda para a cozinha. Pode pedir mais vezes ao longo
   da refeição — cada envio é uma ronda, e a conta vai somando.
 - **Chamar empregado** e **Pedir a conta** estão no mesmo painel.
+
+![A ementa da mesa, com uma nota escrita num prato](imagens/mesa.png)
+*A ementa da mesa. A nota — aqui uma alergia — vai colada àquele prato e
+aparece destacada no ecrã da cozinha.*
 
 A mesa é identificada pelo QR Code, por isso não é preciso dizer o
 número da mesa nem dar o nome.
@@ -189,6 +197,11 @@ existências nenhumas, porque uma pré-escolha não é um pedido.
 muda-se pelo telefone. Falta decidir o que acontece à lotação da hora
 quando uma reserva é recusada, e isso é uma conversa e não um botão.
 
+![A tabela de reservas, com um aviso de stock baixo](imagens/reservas-painel.png)
+*Sessão de Administração. A reserva da Ana pré-escolheu a Tábua Rústica, que
+está com stock baixo — daí o aviso. A do Bruno pré-escolheu Picanha, que não
+está, e por isso não leva aviso nenhum.*
+
 Numa sessão de **Cozinha** esta secção não aparece: quem cozinha não
 precisa da lista de reservas nem dos contactos de ninguém.
 
@@ -197,8 +210,12 @@ precisa da lista de reservas nem dos contactos de ninguém.
 O ecrã onde se trabalha durante o serviço. Recarrega sozinho a cada 10
 segundos.
 
-Quatro colunas, pela ordem do trabalho: **Recebido → Confirmado → Em
+Quatro colunas, pela ordem do trabalho: **Recebido → Aceite → Em
 preparação → Pronto**.
+
+> A segunda coluna diz **Aceite** no ecrã. Na API o estado chama-se
+> `confirmado` — é o mesmo, com dois nomes: um para quem programa, outro
+> para quem trabalha. Este manual usa sempre o que está no ecrã.
 
 Cada cartão mostra de onde vem, há quanto tempo chegou, o número, e os
 itens. As **notas do cliente aparecem em destaque** — é aí que está a
@@ -212,6 +229,11 @@ sempre a mesma coisa.
 Os pedidos para levar aparecem na mesma fila, marcados **🥡 TAKE AWAY**
 e com o nome de quem vem buscar em vez de um número de mesa. Para quem
 está na grelha não há diferença: o prato é o mesmo.
+
+![O ecrã da cozinha, com duas rondas em espera](imagens/cozinha.png)
+*Sessão de Cozinha — daí a barra lateral ter só três itens. A ronda de 28
+minutos tem a moldura vermelha, a de 4 minutos verde. "Bem tostada" é a nota
+do cliente. Em cima, o stock de hoje, com dois produtos em alerta.*
 
 **Aceitar** faz a ronda avançar. Confirmar uma ronda é o que **desconta
 o stock** — não é quando o cliente pede, porque a cozinha ainda pode
@@ -286,6 +308,10 @@ isso é uma decisão de quem responde pelo inventário.
 
 **Definir mínimo** muda a partir de quando o produto entra em alerta.
 
+![O ecrã de stock](imagens/stock.png)
+*Os produtos abaixo do mínimo vêm em cima e destacados. O contador na barra
+lateral mostra quantos são, em qualquer ecrã da aplicação.*
+
 ## 2.9 Funcionários (administração)
 
 Criar contas, editar, e desativar quem sai.
@@ -313,6 +339,10 @@ São **três gráficos**: *Faturação por dia*, *Faturação por mês* e
 *Produtos mais vendidos*. **Cada um traz a tabela com os mesmos números
 por baixo**, para quem não distingue as cores ou usa leitor de ecrã ver
 o mesmo que os outros.
+
+![Os cartões e os gráficos das estatísticas](imagens/estatisticas.png)
+*Cada valor comparável traz a diferença em relação a ontem. Os gráficos são
+SVG desenhado à mão e cada um tem a tabela dos números por baixo.*
 
 O **tempo médio de preparação** não é um gráfico — é um dos cartões do
 topo. Aparece **vazio, e não zero**, quando ainda nada ficou pronto no

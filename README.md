@@ -17,18 +17,32 @@ Sistema web para o restaurante *Vem Pro Abate* (Amadora), composto por duas apli
 
 ## 📌 Estado do projeto
 
-*Atualizado a 8 de setembro de 2026. As contagens por tarefa estão no
-[`docs/TAREFAS.md`](docs/TAREFAS.md) — aqui só o estado de cada módulo.*
+*Atualizado a 14 de setembro de 2026. As contagens por tarefa estão no
+[`docs/TAREFAS.md`](docs/TAREFAS.md) e recalculam-se com `npm run numeros` — aqui só o
+estado de cada módulo.*
 
 | Módulo | Estado |
 |---|---|
-| Base de dados | ✅ 18 tabelas + vista, alojada no Aiven |
-| API / back-end | ✅ No ar no Render — catálogo, login, sessões de mesa e cozinha |
+| Base de dados | ✅ 18 tabelas + 1 vista, alojada no Aiven |
+| API / back-end | ✅ No ar no Render — **os 34 caminhos**: catálogo, login, sessões de mesa, take away, fila de trabalho, stock, produtos, categorias, funcionários, estatísticas, QR Codes e reservas |
 | Site institucional (início, menu, galeria, sobre, contactos) | ✅ Concluído · ementa lida da API |
-| Chatbot de reservas (interface) | ✅ Concluído · ainda sobre dados simulados |
-| Pedido à mesa (interface) | ✅ Ligado à API |
-| Aplicação de gestão (interface) | 🟨 Login, cozinha e balcão a funcionar; falta produtos, stock e estatísticas |
+| Chatbot de reservas (interface) | ✅ Concluído · **ligado à API a sério** desde 10/09 |
+| Pedido à mesa (interface) | ✅ Ligado à API · com notas por prato e take away |
+| Aplicação de gestão (interface) | ✅ **Os dez ecrãs** — Início com as reservas, Cozinha, Balcão, QR Codes, Produtos, Categorias, Stock, Funcionários, Estatísticas e Login |
 | Publicação do site | ✅ No ar no Vercel — ver **Ligações** |
+
+> **Três linhas desta tabela estavam desactualizadas até 14/09**, e a pior dizia que à
+> aplicação de gestão *"falta produtos, stock e estatísticas"* — os três estavam feitos
+> desde 09/09, com mais quatro ecrãs por cima. Um README que diz menos do que o projeto
+> faz é um problema real e não uma desarrumação: é o primeiro documento que alguém abre,
+> e estava a subvender o trabalho a quem o fosse avaliar. As outras duas diziam que o
+> chatbot corria sobre dados simulados (deixou a 10/09) e listavam quatro áreas da API
+> quando são doze.
+>
+> **Uma tabela de estado escrita à mão envelhece sozinha** — é a mesma família de tudo o
+> que este projeto foi encontrando. O que a mantém honesta é a data em cima ser real e
+> as contagens não viverem aqui: estão na `docs/TAREFAS.md` e no `npm run numeros`, que
+> as recalcula do repositório.
 
 ---
 
@@ -263,7 +277,7 @@ ORIGEM_PERMITIDA=
 | [`docs/PLANEAMENTO.md`](docs/PLANEAMENTO.md) | Calendário, sprints, prioridades e gestão de risco |
 | [`docs/TAREFAS.md`](docs/TAREFAS.md) | Lista de tarefas dividida por pessoa, com estimativas e dependências |
 | [`docs/API.md`](docs/API.md) | Contrato dos endpoints. **A secção 3.10 é a que vale** — substitui as anteriores |
-| `database/` | Diagrama ER (18 tabelas, notação pé-de-galinha), `schema.sql` e `seed.sql` |
+| `database/` | Diagrama ER (notação pé-de-galinha), `schema.sql` e `seed.sql`. ⚠️ O `.mmd` está gerado do esquema e tem as 18 tabelas; **o `.png`/`.svg`/`.pdf` são de 07/09 e ainda desenham 17, sem a `movimento_stock` — ver o X-22** |
 
 ---
 
