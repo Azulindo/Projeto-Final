@@ -96,7 +96,7 @@
 
 /* Uma categoria vazia não é um erro, mas é o caso em que se pode
    mexer — vale a pena distinguir-se do resto sem parecer um alarme. */
-.cat-vazia { color: var(--texto-fraco); font-style: italic; }
+.cat-vazia { color: var(--texto-suave); font-style: italic; }
 
 .cat-item .btn-editar { flex: 0 0 auto; min-height: 36px; padding: 7px 14px; }
 .cat-item .badge { flex: 0 0 auto; }

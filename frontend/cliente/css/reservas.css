@@ -161,7 +161,7 @@
   font-family: "Metal Mania", sans-serif;
   font-size: 3rem;
   text-align: center;
-  background: linear-gradient(180deg, #ffcc00 10%, #ff4500 50%, #7a0000 90%);
+  background: var(--gradiente-fogo);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

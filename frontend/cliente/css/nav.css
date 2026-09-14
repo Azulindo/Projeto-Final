@@ -9,6 +9,33 @@
    Carregada DEPOIS da folha de cada página, porque é isso que lhe
    permite corrigir as regras antigas (que usam !important).
 
+   ── O GRADIENTE DOS TÍTULOS, NUM SÍTIO SÓ (11/09, F-60) ─────────────
+   Estava escrito **nove vezes**, palavra por palavra, em seis
+   ficheiros: index, menu (×2), galeria (×3), sobre, contactos e
+   reservas. Nove cópias do mesmo valor é a coleção deste projeto — como
+   a ordem da ementa escrita à mão, o stock lido de dois sítios, os 25
+   preços da `reservas.js` e o `--texto-fraco` corrigido três vezes em
+   três ficheiros sem ninguém tocar na variável. A diferença é que esta
+   se apanhou ao ir mudar o valor: nove sítios a mudar à mão é
+   precisamente o momento em que um fica atrás.
+
+   **A última paragem mudou de `#7a0000` para `#b52d00`**, que é o que a
+   F-60 pedia. Estes títulos usam `background-clip: text` — o gradiente
+   É a letra —, e o `contraste.js` mede as paragens contra o fundo da
+   página: a última dava **1,67:1 na galeria e 1,72:1 nas outras cinco**,
+   quando o mínimo para texto grande é 3:1. Não era um título ilegível,
+   que 90% da letra está muito acima do mínimo — falhava a base das
+   letras. O `#b52d00` põe as nove acima de 3:1 e continua a ler-se como
+   brasa: mais laranja queimado, menos vermelho-sangue.
+
+   Fica aqui e não num `comum.css` novo pela razão que este ficheiro já
+   dá em cima, e por uma prática: um ficheiro novo obrigava a mexer em
+   seis `<head>`, que são seis oportunidades de esquecer um. A ordem de
+   carregamento não atrapalha — uma propriedade personalizada resolve-se
+   no momento em que é USADA e não no momento em que é lida, por isso
+   este `:root` serve as folhas que vêm antes dele.
+   ---------------------------------------------------------------------
+
    ── O PROBLEMA QUE ISTO RESOLVE ─────────────────────────────────────
    A barra tentava manter o menu aos lados do logótipo, como no
    computador, encolhendo a letra até caber: 12px → 11px → 9px → 8px,
@@ -30,6 +57,11 @@
    coisas atrás de um botão que é preciso descobrir e tocar seria dar
    mais trabalho ao cliente, não menos.
    ===================================================================== */
+
+:root {
+  --gradiente-fogo: linear-gradient(180deg, #ffcc00 10%, #ff4500 50%, #b52d00 90%);
+}
+
 
 /* ── Fundo da página, em todas as larguras ────────────────────────
    O `html` e o `body` destas seis páginas não tinham cor de fundo: o

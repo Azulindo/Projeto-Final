@@ -234,12 +234,17 @@ body[data-pagina="dashboard"] #conteudoPagina {
 .res-cancelada,
 .res-faltou     { background: rgba(255, 255, 255, 0.06); color: var(--texto-suave); }
 
-/* O --perigo (#ef4444) dá 4,01:1 sobre o --bg-card e o mínimo para
+/* O --perigo (#ef4444) dá 4,14:1 sobre o --bg-card e o mínimo para
    texto normal é 4,5:1 — passava por pouco e passava mal, num tamanho
-   de 11px que é onde menos se pode arriscar. Trocado pelo tom claro do
-   mesmo vermelho (#f87171), que dá 5,72:1 e lê-se igualmente como
-   vermelho. */
-.res-recusada   { background: rgba(239, 68, 68, 0.14);   color: #f87171; }
+   de 11px que é onde menos se pode arriscar.
+
+   Escrevi aqui o #f87171 à mão de manhã, ao construir a F-61, e à tarde
+   a F-60 encontrou o mesmo problema em mais nove sítios — o que quer
+   dizer que o meu remendo local era o quarto de uma série e eu não sabia.
+   Passa a ser o `--perigo-texto` do base.css: uma cor escrita à mão num
+   ficheiro é outra fonte de verdade a envelhecer sozinha, e este projeto
+   já tem coleção. */
+.res-recusada   { background: rgba(239, 68, 68, 0.14);   color: var(--perigo-texto); }
 
 /* ── A nota de quando o stock não pode ser lido ─────────────────── */
 .nota-sem-stock {

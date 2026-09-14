@@ -13,6 +13,26 @@ const path = require('path');
 
 const PAGS = ['index','menu','galeria','sobre','contactos','reservas'];
 
+/* ── Os ecrãs de GESTÃO (acrescentados 11/09, F-60) ────────────────────
+   Este teste mediu durante dias só as seis páginas do cliente e dizia
+   "nada a apontar" — mas a aplicação de gestão são dez ecrãs, com
+   tabelas, etiquetas de estado e formulários, e nunca foram medidos.
+   Um teste que cobre metade do projeto e relata em voz de quem cobriu
+   tudo é o mesmo defeito da auditoria responsiva a medir uma página sem
+   estilos: a verificação passava por não estar a olhar para tudo.
+
+   Um `administrador` chega a todos os nove — os `data-niveis` de todos
+   incluem `administrador` —, por isso basta uma sessão. O `login.html`
+   mede-se sem sessão nenhuma, que é como ele é visto.
+
+   A 1440 e não a 390: esta aplicação vive num portátil ou num monitor
+   de parede. A largura importa porque o limite da WCAG depende do
+   tamanho da letra (3:1 acima de 24px, ou 18,66px a negrito; 4,5:1 no
+   resto), e CSS responsivo muda tamanhos. O cliente continua a ser
+   medido ao telemóvel, que é onde ele é usado. */
+const GESTAO = ['dashboard','cozinha','balcao','qrcodes','produtos',
+                'categorias','funcionarios','stock','estatisticas'];
+
 function lum([r, g, b]) {
   const f = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
   return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
@@ -22,19 +42,16 @@ function razao(a, b) {
   return (x + 0.05) / (y + 0.05);
 }
 
-(async () => {
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
-  const maus = [];
-  const naoMedidos = [];
-  const letras = [];
-
-  for (const nome of PAGS) {
-    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
-    const p = await ctx.newPage();
-    await p.goto('file://' + path.resolve(__dirname, `../cliente/${nome}.html`));
-    await p.waitForTimeout(1200);
-
-    const amostras = await p.evaluate(() => {
+/**
+ * amostrar — as cores de cada texto visível de uma página.
+ *
+ * Está numa função e não escrita duas vezes, uma para o cliente e outra
+ * para a gestão. Duas cópias desta lógica acabariam como as outras
+ * cópias deste projeto acabaram: uma ganha uma correção e a outra não,
+ * e depois há dois testes de contraste a discordar.
+ */
+async function amostrar(p) {
+    return p.evaluate(() => {
       const rgb = s => (s.match(/\d+/g) || []).slice(0, 3).map(Number);
       // Sobe pelos pais até encontrar um fundo opaco de verdade
       function fundo(el) {
@@ -92,7 +109,17 @@ function razao(a, b) {
       });
       return saida;
     });
+}
 
+/**
+ * avaliar — dado o que a página tinha, o que é que fica abaixo do mínimo.
+ *
+ * Também numa função só, pela mesma razão. Escreve nos três cestos que
+ * recebe: os ilegíveis, as letras em gradiente e o que não deu para
+ * medir.
+ */
+function avaliar(nome, amostras, cestos) {
+  const { maus, letras, naoMedidos } = cestos;
     for (const a of amostras) {
       const grande = a.px >= 24 || (a.px >= 18.66 && +a.peso >= 700);
       const minimo = grande ? 3 : 4.5;
@@ -140,10 +167,66 @@ function razao(a, b) {
         (a.gradienteNaLetra ? letras : maus).push(achado);
       }
     }
+}
+
+/* Entra na aplicação de gestão. Com `?simular=1`, como todos os outros
+   testes: o `auth/login` fala com o Render a sério desde 04/09, e um
+   teste que precisa da nuvem deixa de se poder correr antes de um
+   commit. */
+async function entrarNaGestao(ctx, base) {
+  const p = await ctx.newPage();
+  p.on('pageerror', () => {});
+  await p.goto(`${base}/login.html?simular=1`);
+  await p.evaluate(() => { try { localStorage.clear(); } catch (e) {} });
+  await p.goto(`${base}/login.html?simular=1`);
+  await p.fill('#email', 'admin@vemproabate.pt');
+  await p.fill('#password', 'abate2026');
+  await p.click('#btnEntrar');
+  await p.waitForTimeout(1600);
+  return p;
+}
+
+(async () => {
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  const cestos = { maus: [], letras: [], naoMedidos: [] };
+  const { maus, letras, naoMedidos } = cestos;
+
+  /* ── 1. O site do cliente, ao telemóvel ──────────────────────────── */
+  for (const nome of PAGS) {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
+    const p = await ctx.newPage();
+    p.on('pageerror', () => {});
+    await p.goto('file://' + path.resolve(__dirname, `../cliente/${nome}.html`));
+    await p.waitForTimeout(1200);
+    avaliar(nome, await amostrar(p), cestos);
     await ctx.close();
   }
 
+  /* ── 2. A aplicação de gestão, num ecrã de trabalho ──────────────── */
+  const base = 'file://' + path.resolve(__dirname, '..', 'funcionarios');
+  const ctxG = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+
+  /* O login primeiro, e sem sessão — é assim que ele é visto. */
+  const pLogin = await ctxG.newPage();
+  pLogin.on('pageerror', () => {});
+  await pLogin.goto(`${base}/login.html?simular=1`);
+  await pLogin.waitForTimeout(900);
+  avaliar('login', await amostrar(pLogin), cestos);
+  await pLogin.close();
+
+  const pg = await entrarNaGestao(ctxG, base);
+  for (const nome of GESTAO) {
+    await pg.goto(`${base}/${nome}.html?simular=1`);
+    /* 2,2 s porque estes ecrãs desenham as tabelas depois de a página
+       abrir. Medir enquanto diz "A carregar…" media o ecrã errado — e
+       era exactamente esse o erro da auditoria responsiva. */
+    await pg.waitForTimeout(2200);
+    avaliar(nome, await amostrar(pg), cestos);
+  }
+  await ctxG.close();
+
   await browser.close();
+  console.log(`\nMEDIDAS: ${PAGS.length} páginas de cliente (390px) + ${GESTAO.length + 1} ecrãs de gestão (1440px)`);
   console.log('\nCONTRASTE ABAIXO DO MÍNIMO (WCAG AA)');
   console.log('─'.repeat(66));
   if (!maus.length) {

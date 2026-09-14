@@ -114,7 +114,13 @@
   height: 16px;
   padding: 0 4px;
   border-radius: 999px;
-  background: var(--perigo);
+  /* Era o --perigo (#ef4444): branco por cima dava 3,76:1, e o mínimo é
+     4,5:1. Uma etiqueta de 10px não pode fugir pelo limite dos 3:1 do
+     "texto grande" — esse começa nos 24px, ou nos 18,66px a negrito.
+     Portanto ou escurece o vermelho ou o número não se lê, e este
+     número aparece nos NOVE ecrãs da aplicação, sempre no mesmo canto.
+     O --perigo-fundo dá 4,85:1 e à vista continua vermelho de alarme. */
+  background: var(--perigo-fundo);
   color: #fff;
   font-size: 10px;
   font-weight: 700;
@@ -139,7 +145,7 @@
   background: var(--bg-card);
   padding: 3px 7px;
   border-radius: 999px;
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
   flex-shrink: 0;
 }
 
@@ -148,7 +154,7 @@
   padding-top: 12px;
   margin-top: 10px;
   font-size: 10.5px;
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
   padding-left: 8px;
 }
 

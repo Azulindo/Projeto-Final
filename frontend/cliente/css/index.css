@@ -283,7 +283,7 @@ section{
 
 
   /* CORES FIXAS - Estilo brasa quente */
-  background: linear-gradient(180deg, #ffcc00 10%, #ff4500 50%, #7a0000 90%);
+  background: var(--gradiente-fogo);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
