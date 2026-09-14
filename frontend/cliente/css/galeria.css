@@ -115,7 +115,6 @@
 /* TEXTO HERO MENU */
 .h1-menu {
   font-family: var(--fonte-titulo);
-  font-size: 3rem;
   text-align: center;
   background: var(--gradiente-fogo);
   -webkit-background-clip: text;
@@ -178,7 +177,6 @@
 
 .section-title {
   font-family: var(--fonte-titulo);
-  font-size: 2rem;
   text-align: center;
   margin-bottom: 25px;
   background: var(--gradiente-fogo);
@@ -491,9 +489,6 @@
     padding: 30px 20px;
   }
 
-  .h1-menu {
-    font-size: 2rem;
-  }
   
   .galeria-container {
     flex-direction: column;
@@ -561,9 +556,6 @@
     padding: 20px 10px;
   }
 
-  .h1-menu {
-    font-size: 1.5rem !important;
-  }
 
   .hero-logo-menu {
     height: 180px !important;
@@ -592,9 +584,6 @@
     padding: 15px 10px;
   }
 
-  .h1-menu {
-    font-size: 1.3rem !important;
-  }
 
   .hero-logo-menu {
     height: 150px !important;
@@ -627,9 +616,6 @@
     padding: 12px 8px;
   }
 
-  .h1-menu {
-    font-size: 1.1rem !important;
-  }
 
   .hero-logo-menu {
     height: 120px !important;

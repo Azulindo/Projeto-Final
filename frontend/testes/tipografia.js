@@ -6,8 +6,13 @@
  *      site: título de página, título de secção, subtítulo, rótulo de
  *      botão e corpo de texto.
  *   2. Nenhum `<button>` cai na fonte do sistema.
- *   3. A hierarquia não está invertida: num documento, nenhum `<h2>`
- *      é maior do que o `<h1>` da mesma página.
+ *   3. A hierarquia não está invertida **em nenhuma largura**: o
+ *      `<h2>` é sempre menor do que o `<h1>` da sua página, e o `<h3>`
+ *      menor do que o `<h2>`. A primeira versão desta verificação
+ *      media só a **1440px** e dava verde — e a 320px o `<h1>` da
+ *      entrada tinha 17,6px contra os 24px do `<h2>`. *Mais uma
+ *      verificação a passar por não estar a olhar para a coisa real*,
+ *      e a terceira do mesmo dia. Mede agora em sete larguras.
  *   4. Cada página declara `lang="pt"`.
  *   5. Cada página tem **um** `<h1>`.
  *   6. Os quatro botões do site têm o mesmo papel: mesma família, mesmo
@@ -59,6 +64,11 @@ const BOTOES = [
 
 const LARGURAS_BOTOES = [1440, 768, 480, 375, 320];
 
+/* A hierarquia mede-se em TODAS as larguras, não na do computador.
+   Ao computador a ordem estava certa nas cinco páginas; era só ao
+   telemóvel que se invertia, e é o telemóvel que o cliente tem. */
+const LARGURAS_ESCALA = [1440, 1024, 768, 600, 480, 375, 320];
+
 const falhas = [];
 const check = (n, c, e = '') => {
   console.log(`${c ? '✅' : '❌'} ${n}${e ? ' — ' + e : ''}`);
@@ -101,11 +111,7 @@ const primeiro = f => f.split(',')[0].replace(/["']/g, '').trim();
                    tam: parseFloat(corpo.fontSize), onde: 'body' });
 
       const h1s = [...document.querySelectorAll('h1, .h1')].filter(visivel);
-      const maiorH1 = Math.max(0, ...h1s.map(e => parseFloat(getComputedStyle(e).fontSize)));
-      const maiorH2 = Math.max(0, ...[...document.querySelectorAll('h2')].filter(visivel)
-                                     .map(e => parseFloat(getComputedStyle(e).fontSize)));
-
-      return { itens, lang: document.documentElement.lang, nH1: h1s.length, maiorH1, maiorH2 };
+      return { itens, lang: document.documentElement.lang, nH1: h1s.length };
     });
 
     for (const it of m.itens) {
@@ -118,10 +124,37 @@ const primeiro = f => f.split(',')[0].replace(/["']/g, '').trim();
 
     check(`${pag} · lang="pt"`, m.lang === 'pt', `lang="${m.lang}"`);
     check(`${pag} · um só <h1>`, m.nH1 === 1, `${m.nH1} <h1>`);
-    check(`${pag} · nenhum <h2> maior do que o <h1>`,
-      m.maiorH2 === 0 || m.maiorH2 <= m.maiorH1,
-      `h1 ${m.maiorH1}px, maior h2 ${m.maiorH2}px`);
 
+    await p.close();
+  }
+
+  /* ── 1b. A escala, em sete larguras ─────────────────────────────── */
+  console.log('\nA ESCALA DOS TÍTULOS, LARGURA A LARGURA');
+  for (const pag of PAGINAS) {
+    const p = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await p.goto(RAIZ + pag, { waitUntil: 'domcontentloaded' });
+    const fora = [];
+    for (const largura of LARGURAS_ESCALA) {
+      await p.setViewportSize({ width: largura, height: 900 });
+      await p.waitForTimeout(220);
+      const m = await p.evaluate(() => {
+        const vis = e => e.getBoundingClientRect().width > 0;
+        const tam = sel => [...document.querySelectorAll(sel)].filter(vis)
+                              .map(e => parseFloat(getComputedStyle(e).fontSize));
+        return {
+          h1: Math.max(0, ...tam('h1, .h1')),
+          h2: Math.max(0, ...tam('h2, .section-title')),
+          h3: Math.max(0, ...tam('h3')),
+          transbordo: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        };
+      });
+      const ordemOk = (m.h2 === 0 || m.h2 < m.h1) && (m.h3 === 0 || m.h2 === 0 || m.h3 < m.h2);
+      if (!ordemOk || m.transbordo > 0) {
+        fora.push(`${largura}px (h1 ${m.h1} h2 ${m.h2} h3 ${m.h3}${m.transbordo ? `, transbordo ${m.transbordo}px` : ''})`);
+      }
+    }
+    check(`${pag} · h1 > h2 > h3 nas ${LARGURAS_ESCALA.length} larguras`,
+      fora.length === 0, fora.join(' | '));
     await p.close();
   }
 

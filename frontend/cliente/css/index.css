@@ -176,7 +176,6 @@
    que os `<h2>` das outras cinco já usam. */
 .menu h2, .prego h2, .gerentes h2{
   font-family: var(--fonte-titulo);
-  font-size: 40px;
   font-weight: 400;             /* Metal Mania só tem um peso */
   line-height: 1.15;
   text-align: center;
@@ -289,7 +288,6 @@ section{
 }
 .h1 {
   font-family: var(--fonte-titulo);
-  font-size: 2.6rem;
   text-align: center;
   position: fixed;
   top: 60%;
@@ -748,7 +746,6 @@ section{
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
     width: 90% !important;
-    font-size: 2rem !important;
     text-align: center !important;
     white-space: normal !important;
     line-height: 1.3;
@@ -790,7 +787,6 @@ section{
   }
 
   .menu h2 {
-    font-size: 32px !important;
     text-align: left !important;
   }
 
@@ -828,7 +824,6 @@ section{
   }
 
   .prego h2 {
-    font-size: 32px !important;
     text-align: left !important;
   }
 
@@ -852,9 +847,6 @@ section{
   }
 
   /* Gerentes / Creators */
-  .menu h2, .prego h2, .gerentes h2 {
-    font-size: 32px !important;
-  }
 
   .creators-row {
     flex-direction: row !important;
@@ -922,9 +914,6 @@ section{
     margin-top: 70vh !important;
   }
 
-  .h1 {
-    font-size: 1.5rem !important;
-  }
 
   .hero-logo {
     width: 200px !important;
@@ -935,9 +924,6 @@ section{
     padding: 12px 20px !important;
   }
 
-  .menu h2, .prego h2 {
-    font-size: 26px !important;
-  }
 
   .prato-favorito, .prego-tatiana {
     width: 100% !important;
@@ -963,7 +949,6 @@ section{
   }
 
   .h1 {
-    font-size: 1.3rem !important;
     padding: 0 10px;
   }
 
@@ -980,9 +965,6 @@ section{
     font-size: 0.95rem !important;
   }
 
-  .menu h2, .prego h2 {
-    font-size: 22px !important;
-  }
 
   .creators-row {
     margin-top: 35px !important;
@@ -1024,7 +1006,6 @@ section{
   }
 
   .h1 {
-    font-size: 1.1rem !important;
     top: 55% !important;
   }
 
@@ -1038,13 +1019,7 @@ section{
     top: 70% !important;
   }
 
-  .menu h2, .prego h2 {
-    font-size: 20px !important;
-  }
 
-  .menu h2, .prego h2, .gerentes h2 {
-    font-size: 24px !important;
-  }
 
   .creator-moldura {
     width: 160px !important;

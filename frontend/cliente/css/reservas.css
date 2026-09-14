@@ -159,7 +159,6 @@
 /* Título com efeito de fogo */
 .h1-reservas {
   font-family: var(--fonte-titulo);
-  font-size: 3rem;
   text-align: center;
   background: var(--gradiente-fogo);
   -webkit-background-clip: text;
@@ -222,7 +221,6 @@
 
 .reservas-content h2 {
   font-family: var(--fonte-titulo);
-  font-size: 2.5rem;
   margin-bottom: 20px;
   color: #ff4500;
 }
@@ -1413,7 +1411,6 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  font-size: 1.3rem;
   margin-bottom: 10px;
   color: #ffcc00;
 }
@@ -1475,13 +1472,11 @@ html { scroll-behavior: smooth; }
 
   /* Hero */
   .hero-reservas       { height: 50vh !important; }
-  .h1-reservas         { font-size: 1.8rem !important; }
   .hero-logo-reservas  { height: 80px !important; }
 
   /* Conteúdo principal */
   .page-reservas       { padding: 30px 15px !important; }
   .reservas-content    { max-width: 100% !important; }
-  .reservas-content h2 { font-size: 1.8rem !important; }
   .reservas-content > p{ font-size: 1rem !important; }
 
   /* Chatbot: altura reduzida para caber no ecrã */
@@ -1548,10 +1543,7 @@ html { scroll-behavior: smooth; }
 @media (max-width: 480px) {
 
   /* Hero: título ainda mais compacto */
-  .h1-reservas         { font-size: 1.4rem !important; }
   .hero-logo-reservas  { height: 60px !important; }
-  .reservas-content h2 { font-size: 1.5rem !important; }
-  .info-item h3        { font-size: 1.1rem !important; }
 
   /* Chatbot: altura compacta para smartphones */
   .chatbot-wrapper { height: 460px; }

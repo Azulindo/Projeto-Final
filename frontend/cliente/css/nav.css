@@ -95,6 +95,39 @@
   --fonte-titulo: "Metal Mania", system-ui, sans-serif;
   --fonte-corpo:  "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --fonte-rotulo: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* ── A ESCALA DOS TÍTULOS (F-75, 14/09) ───────────────────────────
+     ── O QUE ESTAVA MAL, E É PIOR DO QUE AS FONTES ─────────────────
+     Havia **48 declarações de `font-size` em títulos**, espalhadas por
+     6 ficheiros e 5 degraus de media query, nenhuma coordenada com as
+     outras: só o `index.css` tinha 13. Cada página foi afinada à mão
+     ao seu telemóvel, em dias diferentes, e o resultado medido foi
+     este — **em telemóvel o `<h2>` era MAIOR do que o `<h1>`** em
+     quatro das cinco páginas:
+
+       index.html    320px:  h1 17,6px  ·  h2 24px
+       galeria.html  375px:  h1 20,8px  ·  h2 32px
+       reservas.html 480px:  h1 22,4px  ·  h2 24px
+       sobre.html    320px:  h1 17,6px  ·  h2 19,2px
+
+     O `<h1>` levou escala de telemóvel em todas as páginas; o `<h2>`
+     não levou em nenhuma. Ao computador a ordem estava certa, e por
+     isso ninguém viu: **é ao telemóvel que o título da secção grita
+     mais alto do que o título da página**, e é o telemóvel que o
+     cliente tem na mão.
+
+     ── PORQUE É QUE SÃO `clamp()` E NÃO MEDIA QUERIES ──────────────
+     Porque com três `clamp()` cujas curvas não se cruzam, a ordem
+     fica garantida em **qualquer** largura — não só nas cinco que
+     alguém se lembrou de testar. Um degrau novo não pode inverter uma
+     hierarquia que não tem degraus.
+
+     O mínimo do `<h1>` (28px) foi medido: a 320px o título do hero da
+     entrada cabe sem transbordo, o que os 17,6px de antes nem
+     precisavam de verificar. */
+  --t-h1: clamp(1.75rem,  5.5vw, 3rem);      /* 28 → 48px */
+  --t-h2: clamp(1.375rem, 4vw,   2.5rem);    /* 22 → 40px */
+  --t-h3: clamp(1.125rem, 2.2vw, 1.5rem);    /* 18 → 24px */
 }
 
 
@@ -159,6 +192,24 @@ button, input, select, textarea, optgroup {
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
+
+/* ── A ESCALA APLICADA ─────────────────────────────────────────────
+   Os títulos do hero de cada página têm classe própria (`.h1`,
+   `.h1-menu`, `.h1-sobre`, `.h1-contactos`, `.h1-reservas`) porque
+   estão posicionados por cima de uma imagem, cada um à sua maneira.
+   O TAMANHO, porém, é o mesmo papel nas seis, e por isso vive aqui. */
+h1, .h1, .h1-menu, .h1-sobre, .h1-contactos, .h1-reservas {
+  font-size: var(--t-h1);
+}
+
+h2, .section-title {
+  font-size: var(--t-h2);
+}
+
+h3 {
+  font-size: var(--t-h3);
+}
+
 
 /* ── Contraste do link do rodapé ──────────────────────────────────
    O "Área de funcionários" estava em #6a6a6a sobre fundo escuro: 3,54:1,
