@@ -101,6 +101,36 @@
     <button id="btnTentarNovamente" class="mt-2 bg-gradient-to-r from-gold to-copper text-carvao font-bold rounded-2xl px-6 py-3 text-sm">
       Tentar novamente
     </button>
+
+    <!-- ── O QUE FALHOU, EM LETRA PEQUENA (X-24, 14/09) ──────────────
+         Este ecrã dizia só "QR Code invalido" e mais nada. Custou-nos
+         meia hora e três tentativas ao telemóvel: eu a adivinhar causas
+         à distância e o Guilherme a escrever endereços à mão. Eram DOIS
+         problemas diferentes com a mesma frase no ecrã — um cartão de
+         demonstração com um token que não existe no servidor, e eu a
+         dar-lhe `?t=` quando a página lê `?mesa=`.
+
+         Se este bloco existisse, a primeira fotografia do ecrã tinha
+         resolvido o caso.
+
+         Não é informação sensível: o token já está na barra do endereço,
+         à vista de quem tem o telefone na mão. E fica em letra pequena e
+         discreta, porque é para quem está a resolver o problema — não
+         para o cliente com fome, que só precisa do botão de cima. -->
+    <details id="erroDetalhes" class="mt-4 text-left max-w-xs w-full hidden">
+      <summary class="text-[11px] text-neutral-500 cursor-pointer select-none">
+        Detalhes técnicos
+      </summary>
+      <dl class="mt-2 text-[11px] leading-relaxed">
+        <dt class="text-neutral-500">Código da mesa lido do endereço</dt>
+        <dd id="erroToken" class="text-neutral-300 font-mono break-all mb-1.5">—</dd>
+        <dt class="text-neutral-500">Servidor a que a página falou</dt>
+        <dd id="erroServidor" class="text-neutral-300 font-mono break-all mb-1.5">—</dd>
+        <dt class="text-neutral-500">Modo</dt>
+        <dd id="erroModo" class="text-neutral-300 mb-1.5">—</dd>
+      </dl>
+      <p id="erroPista" class="text-[11px] text-copper mt-1"></p>
+    </details>
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════
@@ -237,6 +267,11 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ── REFERÊNCIAS AO DOM ─────────────────────────────────────── */
   const ecraCarregamento = document.getElementById('ecraCarregamento');
   const ecraErro         = document.getElementById('ecraErro');
+  const erroDetalhes     = document.getElementById('erroDetalhes');
+  const erroTokenEl      = document.getElementById('erroToken');
+  const erroServidorEl   = document.getElementById('erroServidor');
+  const erroModoEl       = document.getElementById('erroModo');
+  const erroPistaEl      = document.getElementById('erroPista');
   const erroMensagem     = document.getElementById('erroMensagem');
   const btnTentarNovamente = document.getElementById('btnTentarNovamente');
 
@@ -302,13 +337,31 @@ document.addEventListener('DOMContentLoaded', () => {
   ═══════════════════════════════════════════════════════════ */
   async function init() {
     const params = new URLSearchParams(location.search);
-    const emSimulacao = typeof MODO_SIMULACAO !== 'undefined' && MODO_SIMULACAO;
-    // O QR Code de cada mesa aponta para ...mesa.html?mesa=<qrToken>.
-    // Sem parâmetro, em modo de demonstração abrimos uma mesa de exemplo.
-    state.token = params.get('mesa') || (emSimulacao ? 'demo-mesa-3' : null);
+
+    /* ── O QR Code aponta para ...mesa.html?mesa=<qrToken> ────────────
+       A mesa de exemplo só entra quando a simulação está MESMO a ser
+       usada — ou seja, com `?simular=1` — e não sempre que o
+       `MODO_SIMULACAO` é true.
+
+       X-25 (14/09): isto dizia `MODO_SIMULACAO`, que é o interruptor
+       mestre e vale **sempre** true; a `ENDPOINTS_REAIS` é que decide,
+       caminho a caminho, o que vai ao servidor. Resultado: abrir esta
+       página sem `?mesa=` não dava "falta o código da mesa" — punha
+       `demo-mesa-3` em silêncio, e como o `mesas/:token/sessao` já é
+       real, o servidor respondia 404 "QR Code invalido".
+
+       Custou-nos três tentativas ao telemóvel: o Guilherme abriu um
+       endereço meu com `?t=` em vez de `?mesa=`, e em vez de lhe dizerem
+       que faltava o parâmetro, disseram-lhe que o QR Code era inválido —
+       sobre um token que ele nunca escreveu. **A mensagem certa existia
+       e era inalcançável.** Uma substituição silenciosa troca um
+       problema claro por um confuso, e é a mesma família do
+       `Math.max(0, …)` do X-17: engolir o sinal em vez de o mostrar. */
+    const emDemonstracao = typeof simulacaoForcada === 'function' && simulacaoForcada();
+    state.token = params.get('mesa') || (emDemonstracao ? 'demo-mesa-3' : null);
 
     if (!state.token) {
-      mostrarErro('Falta o código da mesa. Lê outra vez o QR Code da tua mesa.');
+      mostrarErro('Falta o código da mesa no endereço. Lê outra vez o QR Code da tua mesa.');
       return;
     }
 
@@ -364,8 +417,47 @@ document.addEventListener('DOMContentLoaded', () => {
   function mostrarErro(mensagem) {
     mostrarCarregamento(false);
     erroMensagem.textContent = mensagem;
+    preencherDetalhesDoErro();
     ecraErro.classList.remove('hidden');
     ecraErro.classList.add('flex');
+  }
+
+  /**
+   * preencherDetalhesDoErro — o que é preciso para diagnosticar (X-24).
+   *
+   * Três factos e uma pista. Os factos são o que a página fez; a pista é
+   * a leitura mais provável, e só aparece quando há uma que valha a pena
+   * — um palpite escrito com confiança é pior do que palpite nenhum.
+   */
+  function preencherDetalhesDoErro() {
+    if (!erroDetalhes) return;
+
+    const params = new URLSearchParams(location.search);
+    const bruto = params.get('mesa');
+    const simulado = typeof simulacaoForcada === 'function' ? simulacaoForcada() : false;
+
+    erroTokenEl.textContent = bruto
+      ? bruto
+      : (params.toString() ? `(sem ?mesa= — o endereço tem: ?${params.toString()})` : '(o endereço não traz parâmetro nenhum)');
+
+    erroServidorEl.textContent = simulado
+      ? '(nenhum — dados de demonstração)'
+      : (typeof API_BASE === 'string' ? API_BASE : '(desconhecido)');
+
+    erroModoEl.textContent = simulado ? 'demonstração (?simular=1)' : 'servidor a sério';
+
+    /* As duas pistas que já nos custaram tempo a nós. */
+    let pista = '';
+    if (!bruto && params.toString()) {
+      pista = 'O parâmetro da página é ?mesa= — não ?t=, que é o da API.';
+    } else if (bruto && /^demo-mesa-/.test(bruto) && !simulado) {
+      pista = 'Este é um código de DEMONSTRAÇÃO e não existe no servidor. '
+            + 'O cartão foi impresso com o ecrã de QR Codes em modo de demonstração.';
+    }
+    erroPistaEl.textContent = pista;
+    erroPistaEl.classList.toggle('hidden', !pista);
+
+    erroDetalhes.classList.remove('hidden');
   }
 
   btnTentarNovamente.addEventListener('click', () => {

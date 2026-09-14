@@ -48,6 +48,19 @@
           </div>
 
           <div class="aviso aviso-info" id="avisoOrigem"></div>
+
+          <!-- X-23: aparece quando as mesas vêm da simulação. Fica no
+               painel de configuração, que NÃO sai na impressão — a marca
+               que viaja com o papel é a tarja em cada cartão. -->
+          <div class="aviso aviso-demo hidden" id="avisoDemo">
+            🧪 <strong>Estes cartões são de demonstração.</strong>
+            As mesas estão a vir da simulação do browser, e os códigos
+            (<code>demo-mesa-…</code>) <strong>não existem no servidor</strong> —
+            um telemóvel que leia estes QR Codes no site publicado recebe
+            <em>“QR Code invalido”</em>.
+            Para gerar cartões que funcionem, abre este ecrã <strong>sem</strong>
+            <code>?simular=1</code>, com sessão de administração ou balcão.
+          </div>
         </section>
 
         <!-- ── Estado de carregamento / erro ── -->

@@ -15,6 +15,11 @@
 - [ ] Ensaio (C-27) feito pelo menos uma vez **com o Wi-Fi desligado**
 - [ ] Esta folha impressa, com as três palavras-passe escritas à mão
 - [ ] Cartões de QR impressos — **os do endereço público**, ver §6
+- [ ] **Um cartão lido com o telemóvel, antes de sair de casa.** Tem de abrir
+      a ementa com o número da mesa certo no topo. Olha para a barra do
+      endereço: se disser `?mesa=msa_…` está bom; se disser `?mesa=demo-…`
+      os cartões são de demonstração e **não funcionam** — foram gerados com
+      o ecrã de QR Codes em `?simular=1`. Gera outra vez, sem essa bandeira.
 - [ ] Telemóvel com dados móveis e bateria
 - [ ] Vídeo de 3 minutos (C-22) no portátil, **fora da internet**
 
@@ -88,6 +93,13 @@ O endereço tem de ser **`127.0.0.1:5500`**. Se for outro, vai ao §5.
 ## 6 · Cartões de QR — decisão já tomada
 
 Os cartões impressos levam **`https://vemproabate.vercel.app`**, o endereço público.
+
+> ⚠️ **O endereço certo não basta — o CÓDIGO da mesa também tem de ser o certo.**
+> Aconteceu a 14/09: cartões com o endereço público e com códigos
+> `demo-mesa-…`, que só existem na simulação do browser. O telemóvel abre o
+> site, o site fala com a API a sério, e a API responde *"QR Code invalido"*.
+> Desde o X-23 o ecrã avisa e cada cartão de demonstração sai com uma tarja
+> amarela a dizê-lo; até essa data, nada avisava.
 
 **Se estiveres em plano B, os cartões não vão para cima da mesa.** Com a nuvem em baixo,
 levam o telemóvel a um site que abre e não mostra dados — pior do que não haver cartão.

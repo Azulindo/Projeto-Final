@@ -20,6 +20,33 @@
 const CHAVE_URL_BASE = 'vpa_url_base_qrcodes';
 const CAMINHO_MESA = 'frontend/cliente/mesa.html';
 
+/**
+ * dadosSimulados — estes tokens vêm do servidor ou da simulação? (X-23)
+ *
+ * Pergunta-se ao `api.js` pelo próprio caminho em vez de se adivinhar
+ * pela forma do token. O `usarServidor()` responde à pergunta certa —
+ * *"esta chamada foi ao servidor?"* — e cobre os dois casos: o
+ * `?simular=1` e o caminho ainda não estar na `ENDPOINTS_REAIS`.
+ *
+ * ── PORQUE É QUE ISTO PRECISA DE EXISTIR ────────────────────────────
+ * 14/09: o Guilherme leu um cartão desta folha com o telemóvel, no site
+ * publicado, e levou **"QR Code invalido"**. Os cartões tinham sido
+ * gerados com este ecrã em `?simular=1`, e nesse modo as mesas são
+ * `demo-mesa-1` a `demo-mesa-10` — tokens que só existem dentro do
+ * browser. Confirmado contra a API a sério: `demo-mesa-4` devolve
+ * `404 {"erro":"QR Code invalido."}`.
+ *
+ * É a armadilha do X-12 — *não se simula uma escrita sobre um recurso
+ * que já é real* — num sítio onde não tínhamos pensado nela: **um
+ * artefacto que sai do ecrã e vai para o papel.** Uma leitura simulada
+ * normalmente vê-se, porque são dados de demonstração à vista de quem
+ * olha. Um cartão impresso não: sai da simulação, fica em cima da mesa,
+ * e só falha quando alguém aponta a câmara — possivelmente no dia 16.
+ */
+function dadosSimulados() {
+  return typeof usarServidor === 'function' && !usarServidor('gestao/mesas/qrcodes');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const inputUrl    = document.getElementById('urlBase');
   const btnImprimir = document.getElementById('btnImprimir');
@@ -27,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const estadoMsg   = document.getElementById('estadoMsg');
   const avisoUrl    = document.getElementById('avisoUrl');
   const avisoOrigem = document.getElementById('avisoOrigem');
+  const avisoDemo   = document.getElementById('avisoDemo');
 
   if (!folha) return;
 
@@ -103,6 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
     folha.innerHTML = '';
     avisoUrl.classList.toggle('hidden', urlUtilizavel());
 
+    const demo = dadosSimulados();
+    avisoDemo.classList.toggle('hidden', !demo);
+
     mesas.forEach(mesa => {
       const url = urlDaMesa(mesa);
 
@@ -130,6 +161,20 @@ document.addEventListener('DOMContentLoaded', () => {
       token.textContent = mesa.qrToken;
 
       cartao.append(topo, numero, caixaQr, instrucao, token);
+
+      /* A MARCA VAI NO CARTÃO, e não só no painel de cima (X-23).
+         O painel é `painel-config` e não sai na impressão — um aviso que
+         não viaja com o artefacto é um aviso que não existe no momento
+         em que faz falta, que é com a folha na mão. Por isso a tarja é
+         filha do cartão e imprime com ele. */
+      if (demo) {
+        cartao.classList.add('cartao-demo');
+        const tarja = document.createElement('div');
+        tarja.className = 'cartao-demo-tarja';
+        tarja.textContent = 'DEMONSTRAÇÃO — não funciona';
+        cartao.appendChild(tarja);
+      }
+
       folha.appendChild(cartao);
     });
   }
@@ -164,13 +209,21 @@ document.addEventListener('DOMContentLoaded', () => {
   let avisoJaDado = false;
 
   btnImprimir.addEventListener('click', () => {
-    if (!urlUtilizavel() && !avisoJaDado) {
+    /* Duas razões para travar o primeiro clique, e a mesma resposta:
+       avisar, e deixar imprimir ao segundo. Imprimir dez cartões
+       inúteis gasta papel; imprimir dez que PARECEM bons e falham na
+       sala é pior. */
+    const problema = !urlUtilizavel()
+      ? avisoUrl
+      : (dadosSimulados() ? avisoDemo : null);
+
+    if (problema && !avisoJaDado) {
       avisoJaDado = true;
-      avisoUrl.classList.remove('hidden');
-      avisoUrl.classList.add('a-piscar');
-      setTimeout(() => avisoUrl.classList.remove('a-piscar'), 1200);
+      problema.classList.remove('hidden');
+      problema.classList.add('a-piscar');
+      setTimeout(() => problema.classList.remove('a-piscar'), 1200);
       btnImprimir.textContent = '🖨️ Imprimir mesmo assim';
-      inputUrl.focus();
+      if (problema === avisoUrl) inputUrl.focus();
       return;
     }
     window.print();
