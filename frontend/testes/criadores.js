@@ -15,6 +15,19 @@
  *      `#0f0f0f` da `.page`; o `--gradiente-fogo` chegava a 3,0:1 no
  *      ponto mais escuro, e a 3,0:1 o tamanho passa a ser obrigatório.
  *   4. O texto não sai da coluna, e a coluna não sai da `.page`.
+ *   5. O fio da moldura continua FINO (1 a 2px). A primeira moldura
+ *      tinha 6px de gradiente e o Guilherme recusou-a por ser gorda;
+ *      sem esta verificação, uma linha de CSS devolvia-a sem aviso.
+ *   6. As duas fotografias continuam com o tom único (`grayscale` +
+ *      `sepia`). Se alguém tirar o `filter`, o par volta a bater — uma
+ *      com fundo de praia e camisola vermelha, a outra com equipamento
+ *      verde — e **isso não dá erro nenhum, fica só feio.**
+ *
+ * O espaço útil da moldura é MEDIDO (padding + borda pelo
+ * `getComputedStyle`) e não assumido. Estava aqui escrito à mão como
+ * "6px de cada lado", e o passe-partout passou a percentagem para
+ * acompanhar os quatro degraus de largura — o teste teria começado a
+ * falhar por ter uma cópia do número que vive no CSS.
  *
  * ── PORQUE É QUE ESTE TESTE FAZ SCROLL E ESPERA PELO `onload` ───────
  * Porque sem isso passava a dizer que estava tudo bem quando não
@@ -98,6 +111,14 @@ const check = (n, c, e = '') => {
           colEsq: rc.left, colDir: rc.right,
           moldW: Math.round(rm.width), moldH: Math.round(rm.height),
           imgW: Math.round(ri.width), imgH: Math.round(ri.height),
+          /* O passe-partout está em PERCENTAGEM, por isso o teste tem
+             de o medir. Estava aqui escrito à mão como 6px de cada
+             lado — mais um número repetido fora do sítio onde vive,
+             que é o defeito que esta tarefa veio corrigir. */
+          padEsq: parseFloat(getComputedStyle(moldura).paddingLeft),
+          padTopo: parseFloat(getComputedStyle(moldura).paddingTop),
+          borda: parseFloat(getComputedStyle(moldura).borderLeftWidth),
+          filtro: getComputedStyle(img).filter,
           completa: img.complete && img.naturalWidth > 0,
           objFit: getComputedStyle(img).objectFit,
           nomePx: parseFloat(getComputedStyle(nome).fontSize),
@@ -130,10 +151,23 @@ const check = (n, c, e = '') => {
         Math.abs(razao - RAZAO) <= 0.02,
         `${c.moldW}×${c.moldH} = ${razao.toFixed(3)}`);
 
-      /* A imagem enche a moldura menos o padding (6px de cada lado). */
+      /* A imagem enche a caixa de conteúdo: a moldura menos o fio e
+         menos o passe-partout, dos dois lados. Medido, não assumido. */
+      const dentroW = Math.round(c.moldW - 2 * (c.padEsq + c.borda));
+      const dentroH = Math.round(c.moldH - 2 * (c.padTopo + c.borda));
       check(`${et} · imagem ${i + 1} enche a moldura`,
-        c.imgW === c.moldW - 12 && c.imgH === c.moldH - 12,
-        `${c.imgW}×${c.imgH} dentro de ${c.moldW}×${c.moldH}`);
+        Math.abs(c.imgW - dentroW) <= 1 && Math.abs(c.imgH - dentroH) <= 1,
+        `${c.imgW}×${c.imgH} contra ${dentroW}×${dentroH} de espaço útil`);
+
+      /* O fio de cobre existe e é fino. Uma moldura sem fio não é uma
+         moldura, e um fio grosso era a versão que o Guilherme recusou. */
+      check(`${et} · moldura ${i + 1} com fio fino`,
+        c.borda >= 1 && c.borda <= 2, `${c.borda}px`);
+
+      /* O tom único. Se alguém tirar o `filter`, as duas fotografias
+         voltam a bater uma com a outra — e isso não dá erro nenhum. */
+      check(`${et} · fotografia ${i + 1} com o tom único`,
+        /grayscale/.test(c.filtro) && /sepia/.test(c.filtro), c.filtro.slice(0, 46));
 
       check(`${et} · imagem ${i + 1} corta em vez de esticar`,
         c.objFit === 'cover', c.objFit);

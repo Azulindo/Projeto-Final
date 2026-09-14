@@ -416,11 +416,35 @@ section{
    `aspect-ratio: 3 / 4` com `object-fit: cover`: corta o que sobra em
    vez de esticar. As duas ficam iguais e nenhuma fica deformada.
 
-   O calor vai na MOLDURA, não nos dados (a regra da F-08): o gradiente
-   dos botões (`#ff4500 → #957806`) faz a espessura da moldura e a
-   brasa por baixo; o nome, que é um dado para ler, fica em dourado
-   sólido `#e8b34f` — 9,9:1 sobre o `#0f0f0f` da `.page`, contra os
-   3,0:1 a que o `--gradiente-fogo` chegaria no seu ponto mais escuro.
+   ── PORQUE É QUE ESTA MOLDURA É UM ARCO, E NÃO UMA BRASA ────────────
+   A primeira versão desta moldura levava o gradiente dos botões
+   (`#ff4500 → #957806`) com 6px de espessura e um brilho por fora.
+   Era coerente com o site e era gorda: **o peso ficava na moldura e
+   não na cara das pessoas.** O Guilherme viu e disse que queria "algo
+   mais requintado" — e tinha razão.
+
+   O que está aqui agora é o arco: um **fio de cobre de 1px**, uma
+   margem escura entre o fio e a fotografia (o passe-partout com que se
+   emolduram gravuras) e o topo redondo de um **nicho de parede**. A
+   forma vem da arquitectura de taberna, que é o mundo desta casa, e
+   não de um `border-radius` de conveniência. O requinte vem do vazio,
+   não da espessura.
+
+   ── E O TOM ÚNICO NAS FOTOGRAFIAS ───────────────────────────────────
+   As duas fotos foram tiradas em sítios diferentes: uma tem fundo de
+   praia e camisola vermelha, a outra um equipamento verde num
+   snack-bar. **Uma moldura fina só assenta em fotografias calmas** —
+   com estas, por mais fina que fosse a moldura, o par continuava a
+   bater. O `filter` põe as duas num tom quente único e elas passam a
+   ler-se como um par. É o que resolve mais com menos, e é reversível
+   numa linha se algum dia houver duas fotografias tiradas contra a
+   mesma parede.
+
+   O calor continua na MOLDURA e não nos dados (a regra da F-08), só
+   que agora sussurrado em vez de gritado: o cobre no fio, o âmbar no
+   tom das fotos, e o nome em dourado sólido `#e8b34f` — 9,9:1 sobre o
+   `#0f0f0f` da `.page`, contra os 3,0:1 a que o `--gradiente-fogo`
+   chegaria no seu ponto mais escuro.
    ------------------------------------------------------------------ */
 .creators-row{
   display: flex;
@@ -462,19 +486,41 @@ section{
   min-height: 0;
   overflow: hidden;
 
-  padding: 6px;                 /* a espessura da moldura */
-  border-radius: 22px;
-  background: linear-gradient(45deg, #ff4500, #957806);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.55), 0 0 18px rgba(255,69,0,0.30);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  /* O passe-partout em PERCENTAGEM e não em píxeis. A moldura muda de
+     largura em quatro degraus (260 → 220 → 190 → 160), e uma margem
+     fixa de 6px que fica elegante a 260 fica grossa a 160. Em
+     percentagem a margem acompanha sozinha — e, mais importante, **não
+     há um valor para repetir em cada media query**, que é exactamente
+     como a medida desta foto acabou escrita em cinco sítios. */
+  padding: 2.6%;
+
+  /* O arco: o topo redondo de um nicho. As duas primeiras medidas são
+     relativas de propósito (50% na horizontal, 31% na vertical), por
+     isso a curva mantém a mesma forma em qualquer largura. */
+  border-radius: 50% 50% 5px 5px / 31% 31% 2% 2%;
+
+  border: 1px solid rgba(201,131,47,0.62);   /* o fio de cobre */
+  background: #0a0907;                       /* o mate por trás da foto */
+  box-shadow: 0 20px 44px rgba(0,0,0,0.60);
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
+/* Ao passar o rato, o fio acende de cobre para dourado e a fotografia
+   recupera cor — o tom calmo é o estado de repouso, a cor é a
+   recompensa de olhar. Num telemóvel não há `:hover`, portanto o que se
+   vê lá é sempre o estado calmo, que é o que se escolheu. */
 .creator-moldura:hover{
-  transform: translateY(-4px);
-  box-shadow: 0 16px 38px rgba(0,0,0,0.6), 0 0 26px rgba(255,69,0,0.45);
+  transform: translateY(-3px);
+  border-color: rgba(232,179,79,0.85);
+  box-shadow: 0 24px 52px rgba(0,0,0,0.66), 0 0 22px rgba(201,131,47,0.22);
 }
 
-/* Quem tem o sistema com "reduzir movimento" ligado não leva o salto. */
+.creator-moldura:hover img{
+  filter: grayscale(0.25) sepia(0.12) saturate(1.15) contrast(1.02) brightness(0.98);
+}
+
+/* Quem tem o sistema com "reduzir movimento" ligado não leva o salto.
+   O fio e a cor continuam a acender — isso não é movimento. */
 @media (prefers-reduced-motion: reduce) {
   .creator-moldura, .creator-moldura:hover { transition: none; transform: none; }
 }
@@ -491,9 +537,39 @@ section{
      e a 3:4 perde 44% da altura. Com o valor por omissão (`center`)
      o recorte sai pelo meio e corta-lhe a cabeça; a 8% fica a parte
      de cima, que é onde está a cara. */
-  object-position: center 8%;
-  border-radius: 16px;
-  background: #1a1a1a;          /* enquanto a imagem não chega */
+  /* ── ESTE VALOR SÓ AFECTA UMA DAS DUAS FOTOGRAFIAS ────────────────
+     A do João é 700×933, que é 3:4 exacto: entra inteira na moldura e
+     não há nada para posicionar. A do Guilherme é 700×1589 — de corpo
+     inteiro — e a 3:4 sobram 656px de altura para deslizar. É só ela
+     que este número move, e por isso está afinado a olho para ela.
+
+     Histórico, porque isto foi ajustado três vezes e vale a pena não
+     repetir: 8% com a moldura rectangular; 15% quando entrou o arco,
+     porque a curva comia o topo da cabeça; e 4% agora, porque a 15% a
+     figura ficava encostada à nascença do arco, sem ar por cima —
+     apontado pelo Guilherme a ver o ecrã, não medido.
+
+     Se algum dia aparecerem fotografias novas, este valor tem de ser
+     reafinado a olho: não há nada aqui que o possa calcular. */
+  object-position: center 4%;
+
+  border-radius: 50% 50% 3px 3px / 31% 31% 2% 2%;   /* acompanha o arco */
+  background: #14110d;          /* enquanto a imagem não chega */
+
+  /* O TOM ÚNICO. Ver o comentário grande em cima: é isto que faz as
+     duas fotografias lerem-se como um par em vez de baterem uma com a
+     outra. Uma linha para voltar atrás, se aparecerem fotos novas. */
+  /* O `brightness` sobe acima de 1 de propósito. As duas fotografias
+     foram tiradas com pouca luz e a dessaturação escurece-as ainda
+     mais: com `brightness(0.9)` a cara do João deixava de se ler,
+     visto no ecrã aos dois tamanhos. A 1.12 as duas ficam legíveis e o
+     tom continua quente. */
+  filter: grayscale(1) sepia(0.40) saturate(1.35) contrast(1.06) brightness(1.12);
+  transition: filter 0.3s ease;
+
+  /* O fio interior segue o arco. Um `outline` não seguia a curva em
+     todos os browsers; um `box-shadow: inset` segue sempre. */
+  box-shadow: inset 0 0 0 1px rgba(201,131,47,0.34);
 }
 
 .creator-nome{
