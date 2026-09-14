@@ -349,20 +349,122 @@ section{
   font-size: 50px;
   text-align: center;
 }
-.creators-row{
-  display:flex;
-  flex-direction: row;
-  justify-content:space-around;
-  margin-top: 90px;
+/* ── OS NOSSOS CRIADORES — a moldura (14/09) ─────────────────────────
+   ── O QUE ESTAVA MAL ────────────────────────────────────────────────
+   Duas fotografias sem moldura, sem canto redondo e sem forma comum,
+   encostadas uma à outra num `space-around` que não tinha `gap` para
+   distribuir. E a medida de cada foto escrita em CINCO sítios que
+   discordavam: `width="300" height="400"` no HTML da primeira,
+   `width="250" height="400"` no da segunda, e a largura outra vez
+   dentro de três media queries (220px aos 768, 180px aos 375, 150px
+   aos 320 — e só a dos 768 punha `height: auto`).
 
+   As imagens originais são 700×1589 (Guilherme) e 700×933 (João) —
+   formas muito diferentes. Medido no site publicado a 1440px: a foto
+   do Guilherme aparecia **42% mais larga** do que a proporção real,
+   visivelmente esticada. Em telemóvel, onde o `height: auto` mandava,
+   as duas saíam com alturas diferentes: 293px contra 499px.
+
+   É o defeito de sempre deste projeto — a mesma informação em vários
+   sítios que podem divergir sem ninguém avisar — só que desta vez não
+   estava escondido num teste: estava na página de entrada.
+
+   ── O QUE FAZ AGORA ─────────────────────────────────────────────────
+   A medida vive num sítio só, a `.creator-moldura`, e a forma vem do
+   `aspect-ratio: 3 / 4` com `object-fit: cover`: corta o que sobra em
+   vez de esticar. As duas ficam iguais e nenhuma fica deformada.
+
+   O calor vai na MOLDURA, não nos dados (a regra da F-08): o gradiente
+   dos botões (`#ff4500 → #957806`) faz a espessura da moldura e a
+   brasa por baixo; o nome, que é um dado para ler, fica em dourado
+   sólido `#e8b34f` — 9,9:1 sobre o `#0f0f0f` da `.page`, contra os
+   3,0:1 a que o `--gradiente-fogo` chegaria no seu ponto mais escuro.
+   ------------------------------------------------------------------ */
+.creators-row{
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;              /* em vez de encolher as colunas até partirem */
+  justify-content: center;
+  align-items: flex-start;
+  gap: 64px;                    /* o `space-around` não tinha nada para distribuir */
+  margin-top: 70px;
 }
+
 .creator{
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex: 1 1 300px;
+  max-width: 420px;             /* linhas de ~65 caracteres, que é o que se lê */
+  margin: 0;                    /* <figure> traz margem própria do browser */
 }
+
+.creator-moldura{
+  width: 260px;
+  aspect-ratio: 3 / 4;          /* a MESMA forma para as duas */
+
+  /* ── ESTAS TRÊS LINHAS SÃO O QUE FAZ O `aspect-ratio` VALER ───────
+     Sem elas, a moldura é um flex-item de uma coluna com
+     `min-height: auto`, e um flex-item nunca encolhe abaixo do
+     conteúdo. A imagem do Guilherme tem 2048px de altura natural,
+     por isso a moldura ia a 575px em vez dos 347px do `aspect-ratio`
+     — e as duas voltavam a ficar com formas diferentes, que era
+     exactamente o defeito que isto vem corrigir.
+
+     Apanhado só no ecrã. A medição dizia 260×347 nas duas, porque as
+     imagens têm `loading="lazy"` e o teste media antes de elas
+     carregarem: sem imagem não há conteúdo para empurrar a caixa.
+     Mais um teste a passar por não estar a olhar para a coisa real.
+     O `criadores.js` passou a fazer scroll e a esperar pelo `onload`. */
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: hidden;
+
+  padding: 6px;                 /* a espessura da moldura */
+  border-radius: 22px;
+  background: linear-gradient(45deg, #ff4500, #957806);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.55), 0 0 18px rgba(255,69,0,0.30);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.creator-moldura:hover{
+  transform: translateY(-4px);
+  box-shadow: 0 16px 38px rgba(0,0,0,0.6), 0 0 26px rgba(255,69,0,0.45);
+}
+
+/* Quem tem o sistema com "reduzir movimento" ligado não leva o salto. */
+@media (prefers-reduced-motion: reduce) {
+  .creator-moldura, .creator-moldura:hover { transition: none; transform: none; }
+}
+
+.creator-moldura img{
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;            /* corta, não estica */
+
+  /* O `object-position` só mexe numa das duas: a foto do João já é
+     exactamente 3:4 (700×933), portanto entra inteira e não há nada
+     para posicionar. A do Guilherme é 700×1589 — de corpo inteiro —
+     e a 3:4 perde 44% da altura. Com o valor por omissão (`center`)
+     o recorte sai pelo meio e corta-lhe a cabeça; a 8% fica a parte
+     de cima, que é onde está a cara. */
+  object-position: center 8%;
+  border-radius: 16px;
+  background: #1a1a1a;          /* enquanto a imagem não chega */
+}
+
+.creator-nome{
+  margin-top: 18px;
+  font-family: "Metal Mania", system-ui, sans-serif;
+  font-size: 2rem;
+  line-height: 1.1;
+  color: #e8b34f;
+  filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.8));
+}
+
 .creator p{
-  margin-top: 30px;
+  margin-top: 14px;
   text-align: center;
   line-height: 1.6;
 }
@@ -622,15 +724,21 @@ section{
 
   .creators-row {
     flex-direction: row !important;
-    justify-content: space-around !important;
+    justify-content: center !important;
     align-items: flex-start !important;
-    gap: 30px !important;
+    gap: 36px !important;
     margin-top: 50px !important;
   }
 
-  .creator img {
+  /* A medida da foto é a da MOLDURA — a imagem enche-a sempre a 100%.
+     O `height: auto` que estava aqui era o que fazia as duas saírem com
+     alturas diferentes (293px contra 499px) em telemóvel. */
+  .creator-moldura {
     width: 220px !important;
-    height: auto !important;
+  }
+
+  .creator-nome {
+    font-size: 1.75rem !important;
   }
 
   .creator p {
@@ -746,8 +854,12 @@ section{
     margin-top: 35px !important;
   }
 
-  .creator img {
-    width: 180px !important;
+  .creator-moldura {
+    width: 190px !important;
+  }
+
+  .creator-nome {
+    font-size: 1.6rem !important;
   }
 
   .inline-nav {
@@ -800,8 +912,12 @@ section{
     font-size: 24px !important;
   }
 
-  .creator img {
-    width: 150px !important;
+  .creator-moldura {
+    width: 160px !important;
+  }
+
+  .creator-nome {
+    font-size: 1.5rem !important;   /* 24px — o limiar de "texto grande" da WCAG */
   }
 
   .inline-nav a {

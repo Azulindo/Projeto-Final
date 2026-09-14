@@ -95,15 +95,39 @@ Foi feito pra abater a fome sem dó, sem culpa e sem sobrar nada no prato. Abate
     
     <div class="gerentes" >
       <h1>Os nossos criadores</h1>
+      <!-- A MOLDURA E O RECORTE ESTÃO NO CSS, não aqui (14/09).
+           Estas duas fotografias tinham a medida escrita em quatro
+           sítios diferentes: `height="400" width="300"` numa, 250 na
+           outra, e `.creator img { width: … }` em três media queries.
+           Os quatro discordavam entre si, e o resultado era a foto do
+           Guilherme 42% mais larga do que devia (250×400 numa imagem
+           que é 700×1589). Agora a medida existe num sítio só — a
+           `.creator-moldura` — e o `object-fit: cover` corta em vez de
+           esticar, portanto as duas ficam com a mesma forma sem
+           nenhuma ficar deformada.
+
+           Os `<br>` também saíram: partiam a frase em sítios fixos,
+           escolhidos para uma largura só. O texto é o mesmo. -->
       <div class="creators-row">
-        <div class="creator">
-          <img src="../../assets/imagens/equipa/joao.jpg" class="juao" height="400" width="300">
-          <p>Olá eu sou o João, tenho 18 anos e sou a mente brilhante por detrás deste restaurante.<br>O Guilherme é só um sócio que deu o guito, decidimos abrir este espaço,<br> pois a zona da Amadora estava fraca em restaurante deste género, espero que gostem do espaço.</p>
-        </div>
-        <div class="creator">
-          <img src="../../assets/imagens/equipa/guilherme.jpg" class="guilierme"  height="400" width="250">
-          <p>Eu sou o Guilherme, criador desta página, o outro encontrei na rua <br>e pensa que foi ele que fez tudo sozinho.<br>Decidimos desenvolver esta página porque achamos que seria fixe e que dava para entreter.</p>
-        </div>
+
+        <figure class="creator">
+          <div class="creator-moldura">
+            <img src="../../assets/imagens/equipa/joao.jpg" class="juao"
+                 alt="O João, um dos criadores do Vem Pro Abate" loading="lazy">
+          </div>
+          <figcaption class="creator-nome">João</figcaption>
+          <p>Olá eu sou o João, tenho 18 anos e sou a mente brilhante por detrás deste restaurante. O Guilherme é só um sócio que deu o guito, decidimos abrir este espaço, pois a zona da Amadora estava fraca em restaurante deste género, espero que gostem do espaço.</p>
+        </figure>
+
+        <figure class="creator">
+          <div class="creator-moldura">
+            <img src="../../assets/imagens/equipa/guilherme.jpg" class="guilierme"
+                 alt="O Guilherme, um dos criadores do Vem Pro Abate" loading="lazy">
+          </div>
+          <figcaption class="creator-nome">Guilherme</figcaption>
+          <p>Eu sou o Guilherme, criador desta página, o outro encontrei na rua e pensa que foi ele que fez tudo sozinho. Decidimos desenvolver esta página porque achamos que seria fixe e que dava para entreter.</p>
+        </figure>
+
       </div>
     </div>
  
