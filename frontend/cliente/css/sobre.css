@@ -114,7 +114,7 @@
 
 /* TEXTO HERO SOBRE */
 .h1-sobre {
-  font-family: "Metal Mania", sans-serif;
+  font-family: var(--fonte-titulo);
   font-size: 3rem;
   text-align: center;
   background: var(--gradiente-fogo);
@@ -182,7 +182,7 @@
 }
 
 .sobre-content h2 {
-  font-family: "Metal Mania", sans-serif;
+  font-family: var(--fonte-titulo);
   font-size: 2.5rem;
   margin-bottom: 20px;
   color: #ff4500;

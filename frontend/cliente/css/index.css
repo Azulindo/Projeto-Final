@@ -164,8 +164,25 @@
 
  
 
+/* ── OS TÍTULOS DESTA PÁGINA (F-74) ──────────────────────────────────
+   Estes dois `<h2>` não tinham `font-family` nenhuma, por isso caíam no
+   Inter do corpo — enquanto os `<h2>` das outras cinco páginas estão
+   todos em Metal Mania. **A página de entrada era a única do site sem a
+   voz do site**, e é a primeira que alguém abre.
+
+   E estavam a **50px, maiores do que o próprio `<h1>` desta página**,
+   que é o hero a 41,6px. A hierarquia estava invertida: o título de
+   secção gritava mais alto do que o título da página. 40px é a medida
+   que os `<h2>` das outras cinco já usam. */
+.menu h2, .prego h2, .gerentes h2{
+  font-family: var(--fonte-titulo);
+  font-size: 40px;
+  font-weight: 400;             /* Metal Mania só tem um peso */
+  line-height: 1.15;
+  text-align: center;
+}
+
 .menu h2{
-  font-size: 50px;
   /*margin-right: 5%;
   margin-bottom : 150%;*/
 }
@@ -213,7 +230,6 @@ padding: 15px;
 }
 
 .prego h2{
-  font-size: 50px;
   /*margin-right: 5%;
   margin-bottom : 150%;*/
 }
@@ -272,7 +288,7 @@ section{
   scroll-margin-top: calc(var(--topbar) + 20px);
 }
 .h1 {
-  font-family: "Metal Mania", sans-serif;
+  font-family: var(--fonte-titulo);
   font-size: 2.6rem;
   text-align: center;
   position: fixed;
@@ -329,7 +345,7 @@ section{
      exactamente o que aconteceu ao `--texto-fraco` (corrigido em três
      ficheiros sem ninguém tocar na variável) e ao `--gradiente-fogo`
      (escrito nove vezes em seis ficheiros). */
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--fonte-rotulo);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -374,7 +390,7 @@ section{
      exactamente o que aconteceu ao `--texto-fraco` (corrigido em três
      ficheiros sem ninguém tocar na variável) e ao `--gradiente-fogo`
      (escrito nove vezes em seis ficheiros). */
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--fonte-rotulo);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -387,10 +403,11 @@ section{
   margin-top:5%;
 
 }
-.gerentes h1{
-  font-size: 50px;
-  text-align: center;
-}
+/* O `<h1>` desta secção passou a `<h2>` no HTML: a página já tem um
+   `<h1>`, que é o hero. Dois `<h1>` numa página é uma hierarquia
+   inventada, e um leitor de ecrã anuncia dois títulos de nível 1
+   como se fossem duas páginas. O tamanho e a fonte vêm da regra
+   comum aos três `<h2>` desta página, em cima. */
 /* ── OS NOSSOS CRIADORES — a moldura (14/09) ─────────────────────────
    ── O QUE ESTAVA MAL ────────────────────────────────────────────────
    Duas fotografias sem moldura, sem canto redondo e sem forma comum,
@@ -574,7 +591,7 @@ section{
 
 .creator-nome{
   margin-top: 18px;
-  font-family: "Metal Mania", system-ui, sans-serif;
+  font-family: var(--fonte-titulo);
   font-size: 2rem;
   line-height: 1.1;
   color: #e8b34f;
@@ -835,9 +852,8 @@ section{
   }
 
   /* Gerentes / Creators */
-  .gerentes h1 {
+  .menu h2, .prego h2, .gerentes h2 {
     font-size: 32px !important;
-    text-align: center !important;
   }
 
   .creators-row {
@@ -1026,7 +1042,7 @@ section{
     font-size: 20px !important;
   }
 
-  .gerentes h1 {
+  .menu h2, .prego h2, .gerentes h2 {
     font-size: 24px !important;
   }
 

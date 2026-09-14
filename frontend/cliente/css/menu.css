@@ -114,7 +114,7 @@
 
 /* TEXTO HERO MENU */
 .h1-menu {
-  font-family: "Metal Mania", sans-serif;
+  font-family: var(--fonte-titulo);
   font-size: 3rem;
   text-align: center;
   background: var(--gradiente-fogo);
@@ -195,7 +195,7 @@
 }
 
 .ementa-titulo {
-  font-family: "Metal Mania", sans-serif;
+  font-family: var(--fonte-titulo);
   font-size: 2rem;
   text-align: center;
   margin-bottom: 22px;
@@ -326,10 +326,16 @@
      botão mais importante da página. */
   min-height: 48px;
   padding: 14px 32px;
-  font-family: "Inter", system-ui, sans-serif;
+  /* O papel RÓTULO, igual aos outros três botões. Ficou desencontrado
+     durante uma hora a 14/09: a F-72 pôs os outros três em maiúsculas
+     com `0.06em` e deixou este a `0.01em` sem maiúsculas — e este está
+     LADO A LADO com o da galeria, na mesma página. Apanhado pelo
+     Guilherme a olhar para os dois. */
+  font-family: var(--fonte-rotulo);
   font-size: 1.15rem;
   font-weight: 800;
-  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   cursor: pointer;
   border-radius: 25px;
   box-shadow: 0 6px 22px rgba(255,120,0,0.55);
@@ -383,7 +389,7 @@
      exactamente o que aconteceu ao `--texto-fraco` (corrigido em três
      ficheiros sem ninguém tocar na variável) e ao `--gradiente-fogo`
      (escrito nove vezes em seis ficheiros). */
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--fonte-rotulo);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;

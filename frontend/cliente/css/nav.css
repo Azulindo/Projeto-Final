@@ -60,6 +60,41 @@
 
 :root {
   --gradiente-fogo: linear-gradient(180deg, #ffcc00 10%, #ff4500 50%, #b52d00 90%);
+
+  /* ── AS TRÊS VOZES DO SITE (F-74, 14/09) ──────────────────────────
+     ── O QUE ESTAVA MAL ────────────────────────────────────────────
+     `"Metal Mania", sans-serif` estava escrito **13 vezes em 6
+     ficheiros**, e as pilhas de recurso não coincidiam: umas diziam
+     `sans-serif`, outra `system-ui, sans-serif`. O Inter dos botões
+     tinha uma cadeia (`"Inter", system-ui, sans-serif`) diferente da
+     do corpo (`"Inter", system-ui, -apple-system, "Segoe UI",
+     sans-serif`) — duas Inter na mesma página, com recursos
+     diferentes se a Google não responder.
+
+     É a MESMA forma do `--gradiente-fogo`, que estava escrito nove
+     vezes em seis ficheiros, e do `--texto-fraco`, corrigido em três
+     ficheiros sem ninguém tocar na variável. Só que desta vez o que
+     divergiu deu para ver: medido nas seis páginas, o **H1 tinha duas
+     fontes e o H2 tinha duas fontes**, e a `index.html` era a excepção
+     nas duas — os títulos dela nunca tiveram `font-family` nenhuma,
+     por isso caíam no Inter do corpo. A página de entrada era a única
+     do site sem a voz do site.
+
+     ── AS TRÊS VOZES ───────────────────────────────────────────────
+     · TÍTULO  — Metal Mania. Títulos de página e de secção.
+     · CORPO   — Inter. Todo o texto que se lê em frases.
+     · RÓTULO  — Inter em maiúsculas. Botões e etiquetas: coisas
+                 curtas que se lêem de relance, não se lêem a ler.
+
+     Não há uma quarta. O Nosifer era a quarta e saiu: está escrito
+     neste projeto, no `.takeaway-btn`, que *"Nosifer é uma fonte de
+     títulos curtos"* — e estava em `<h3>` a dizer "Horário de
+     Funcionamento" e "Política de Reserva", que são frases. É a
+     terceira vez que esta decisão é aplicada (saiu do `.galeria-text`,
+     saiu dos quatro botões, sai agora dos subtítulos). */
+  --fonte-titulo: "Metal Mania", system-ui, sans-serif;
+  --fonte-corpo:  "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --fonte-rotulo: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 
@@ -95,7 +130,34 @@ html, body {
    corrido. A mesma família (Inter) da app de gestão, por coerência
    de marca — só a voz muda entre as duas apps, não a legibilidade. */
 body {
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--fonte-corpo);
+}
+
+/* ── OS BOTÕES NÃO HERDAM A FONTE, E NINGUÉM ESPERA ISSO ───────────
+   Um `<button>` não herda `font-family` do `body`: o browser dá-lhe a
+   fonte do sistema. As páginas que carregam o `tailwind.css` estavam
+   tapadas, porque o reset dele já põe `font-family: inherit` — mas a
+   `galeria.html` e a `reservas.html` não o carregam, e medido nas seis
+   páginas os botões delas estavam em **Arial**: o ✕ e as setas do
+   lightbox, e o botão de enviar do chat das reservas. Quatro botões em
+   Arial num site em Inter, e nenhum deles com `font-family` escrita em
+   sítio nenhum — não havia o que corrigir, faltava o que declarar.
+
+   Fica aqui e não em cada folha porque o `nav.css` é a ÚNICA que as
+   seis páginas carregam. */
+button, input, select, textarea, optgroup {
+  font-family: inherit;
+}
+
+/* ── O PAPEL "RÓTULO" ──────────────────────────────────────────────
+   Botões e etiquetas. Maiúsculas com espaçamento porque são coisas
+   curtas que se lêem de relance; um rótulo de botão é o que o cliente
+   tem de ler mais depressa da página inteira. */
+.vpa-rotulo {
+  font-family: var(--fonte-rotulo);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 /* ── Contraste do link do rodapé ──────────────────────────────────

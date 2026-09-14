@@ -110,7 +110,7 @@
 
 /* TEXTO HERO CONTACTOS */
 .h1-contactos {
-  font-family: "Metal Mania", sans-serif;
+  font-family: var(--fonte-titulo);
   font-size: 3rem;
   text-align: center;
   background: var(--gradiente-fogo);
@@ -171,7 +171,7 @@
 }
 
 .contactos-content h2 {
-  font-family: "Metal Mania", sans-serif;
+  font-family: var(--fonte-titulo);
   font-size: 2.5rem;
   margin-bottom: 20px;
   color: #ff4500;
@@ -200,7 +200,16 @@
 }
 
 .info-item h3 {
-  font-family: "Nosifer", cursive;
+  /* Nosifer saiu daqui (F-74). Está escrito neste projeto, no
+     `.takeaway-btn` do `menu.css`, que *"Nosifer é uma fonte de
+     títulos curtos"* — e isto são frases: "Horário de Funcionamento",
+     "Política de Reserva". Terceira vez que esta decisão é aplicada:
+     saiu do `.galeria-text`, saiu dos quatro botões, sai agora dos
+     subtítulos. Passam ao papel RÓTULO, definido no `nav.css`. */
+  font-family: var(--fonte-rotulo);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   font-size: 1.5rem;
   margin-bottom: 10px;
   color: #ffcc00;
