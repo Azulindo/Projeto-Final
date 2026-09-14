@@ -23,12 +23,30 @@
  * corrige-se, a outra fica, e o cliente vê preços com formatos
  * diferentes em duas páginas do mesmo site.
  *
- * ── ESTADO DA MIGRAÇÃO (10/09) ──────────────────────────────────────
- * A `takeaway.html` usa isto desde o primeiro dia. A `mesa.html` ainda
- * tem a sua própria cópia: é uma página de 850 linhas, testada ponta a
- * ponta, e mexer-lhe ao mesmo tempo que se constrói uma página nova era
- * arriscar as duas ao mesmo tempo. Fica a **F-70** para as juntar, com o
- * `estados-pedido.js` como rede.
+ * ── A MIGRAÇÃO ESTÁ FEITA (F-69, 14/09) ─────────────────────────────
+ * As duas páginas usam isto. A `takeaway.html` desde o primeiro dia; a
+ * `mesa.html` tinha a sua própria cópia desde 10/09, porque é uma página
+ * de 850 linhas testada ponta a ponta e mexer-lhe ao mesmo tempo que se
+ * construía uma página nova era arriscar as duas de uma vez.
+ *
+ * **Quatro dias bastaram para as duas cópias se desencontrarem**, e não
+ * nas funções — essas continuavam iguais, tirando nomes de variáveis.
+ * Foi no MARKUP do cartão, que é onde ninguém compara:
+ *
+ *   · os botões de quantidade da `mesa.html` ficaram a **28×28** (grupo
+ *     de 36px) contra os **36×36** daqui (grupo de 44px);
+ *   · os rótulos diziam "Aumentar quantidade" em vez de nomearem o
+ *     prato — com 25 cartões no ecrã, um leitor de ecrã anunciava 25
+ *     botões indistinguíveis;
+ *   · o número não tinha `aria-live`, portanto mudava em silêncio.
+ *
+ * Nenhuma das três se via a olho, e a `mesa.html` é a página para onde
+ * os QR Codes apontam — a que se usa de pé e com uma mão. A previsão
+ * escrita aqui em cima ("uma corrige-se, a outra fica") aconteceu
+ * exactamente, e em quatro dias.
+ *
+ * O que continua a ser só da `mesa.html` é a **nota por prato** (F-21):
+ * essa é construída lá e pendurada no cartão que esta função devolve.
  *
  * Não depende de nada. Usa-se antes do JS da página.
  * =====================================================================
@@ -146,8 +164,10 @@ function vpaDesenharFiltros(el, categorias, ativa, aoEscolher) {
 /**
  * vpaCartaoProduto — um cartão de produto com o seletor de quantidade.
  *
- * O seletor tem 44 px de altura no conjunto (F-54): é para ser tocado
- * com uma mão, de pé, e os botões estavam a 28 px antes de alguém medir.
+ * O seletor tem 44 px de altura no conjunto: é para ser tocado com uma
+ * mão, de pé. (Este comentário citava a F-54, que é a responsividade da
+ * app de GESTÃO e não tem nada a ver com esta página — corrigido a
+ * 14/09. O número está certo, a referência estava trocada.)
  *
  * @param {Object}   produto
  * @param {number}   quantidade  a que está no carrinho
