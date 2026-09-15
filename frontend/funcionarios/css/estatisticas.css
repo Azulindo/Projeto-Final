@@ -80,7 +80,15 @@
   line-height: 1.45;
 }
 
-.cartao-rodape a { color: var(--dourado); }
+/* `inline-block` com altura mínima: a ligação tinha **15px** de altura
+   (a do texto), e é um alvo de clique e não texto corrido — ver o
+   comentário grande no `produtos.css` (F-78). */
+.cartao-rodape a {
+  color: var(--dourado);
+  display: inline-block;
+  min-height: 28px;
+  line-height: 28px;
+}
 .cartao-rodape a:hover { text-decoration: underline; }
 
 /* ── As duas únicas cores com significado ─────────────────────────── */

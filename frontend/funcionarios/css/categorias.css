@@ -48,9 +48,12 @@
 /* 44 px de alvo, contando as duas juntas: cada seta tem 22 de altura
    por 44 de largura, e ficam encostadas. Uma seta de 44×44 cada faria
    a linha ter 88 px de altura só por causa dos botões. */
+/* 26px e não 22: duas setas empilhadas de 22px davam alvos de 22px, e
+   a WCAG 2.5.8 (nível AA) pede 24. A coluna passa de 44 para 52px de
+   altura — ver o comentário grande no `produtos.css` (F-78). */
 .btn-seta {
   width: 44px;
-  height: 22px;
+  height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

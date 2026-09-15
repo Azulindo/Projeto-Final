@@ -58,12 +58,33 @@ const path = require('path');
 const fs = require('fs');
 
 const DIR_CLIENTE = path.resolve(__dirname, '..', 'cliente');
+const DIR_GESTAO = path.resolve(__dirname, '..', 'funcionarios');
 const RAIZ = 'file://' + DIR_CLIENTE + '/';
+const RAIZ_GESTAO = 'file://' + DIR_GESTAO + '/';
 
+/* ── AS DUAS METADES DO PROJETO ──────────────────────────────────────
+   A primeira versão desta varredura tinha só as 8 páginas do cliente,
+   e eu disse ao Guilherme que tinha "varrido o site por todo". **A app
+   de gestão são mais dez ecrãs — metade do projeto — e nenhum deles
+   tinha sido varrido.** Não foi uma limitação: foi uma lista que eu
+   escrevi curta e uma afirmação que eu fiz larga.
+
+   Os ecrãs de gestão precisam de sessão. Entra-se pelo `login.html`
+   com `?simular=1`, como as outras suites fazem, e pela mesma razão: o
+   `auth/login` fala com o Render a sério desde 04/09, e um teste que
+   precisa da nuvem deixa de se poder correr antes de um commit. */
 const PAGINAS = ['index.html', 'menu.html', 'galeria.html', 'reservas.html',
                  'sobre.html', 'contactos.html', 'mesa.html', 'takeaway.html'];
 
+const ECRAS_GESTAO = ['dashboard.html', 'cozinha.html', 'balcao.html',
+                      'produtos.html', 'stock.html', 'estatisticas.html',
+                      'categorias.html', 'funcionarios.html', 'qrcodes.html'];
+
 const LARGURAS = [1440, 768, 390];
+/* A app de gestão usa-se num portátil ao balcão e numa cozinha, não
+   num telemóvel — mas a F-54 tornou-a responsiva, por isso mede-se
+   também a 768. */
+const LARGURAS_GESTAO = [1440, 768];
 
 /* ── DOIS LIMIARES, PORQUE A NORMA TEM DOIS ─────────────────────────
    A WCAG tem dois critérios para o tamanho de um alvo de toque:
@@ -294,9 +315,78 @@ const recomendacoes = [];
     }
   }
 
+  /* ── A app de gestão ──────────────────────────────────────────── */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+    const entrada = await ctx.newPage();
+    await entrada.goto(`${RAIZ_GESTAO}login.html?simular=1`);
+    await entrada.evaluate(() => { try { localStorage.clear(); } catch (e) {} });
+    await entrada.goto(`${RAIZ_GESTAO}login.html?simular=1`);
+    await entrada.fill('#email', 'admin@vemproabate.pt');
+    await entrada.fill('#password', 'abate2026');
+    await entrada.click('#btnEntrar');
+    await entrada.waitForTimeout(1500);
+    const entrou = await entrada.evaluate(() => {
+      try { return !!localStorage.getItem('vpa_token') || !location.pathname.endsWith('login.html'); }
+      catch (e) { return false; }
+    });
+    await entrada.close();
+
+    if (!entrou) {
+      nota('(gestão)', 'não foi possível entrar', 'o login simulado falhou — os 9 ecrãs de gestão NÃO foram varridos');
+    } else {
+      for (const ecra of ECRAS_GESTAO) {
+        for (const largura of LARGURAS_GESTAO) {
+          const p = await ctx.newPage();
+          await p.setViewportSize({ width: largura, height: 1000 });
+
+          const errosJs = [];
+          p.on('pageerror', e => errosJs.push(e.message.split('\n')[0].slice(0, 120)));
+          p.on('console', m => {
+            if (m.type() !== 'error') return;
+            const t = m.text();
+            if (/fonts\.googleapis|fonts\.gstatic|cdn\.tailwindcss|onrender\.com|ERR_/.test(t)) return;
+            errosJs.push('consola: ' + t.split('\n')[0].slice(0, 120));
+          });
+
+          await p.goto(`${RAIZ_GESTAO}${ecra}?simular=1`, { waitUntil: 'domcontentloaded' });
+          await p.waitForTimeout(1400);
+          await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+          await p.waitForTimeout(500);
+
+          const m = await p.evaluate(DETECTOR, { aa: ALVO_AA, bom: ALVO_BOM });
+          const etiqueta = 'gestão/' + ecra.replace('.html', '');
+
+          for (const href of m.ligacoes) {
+            const alvo = path.resolve(DIR_GESTAO, href.split('?')[0].split('#')[0]);
+            if (!fs.existsSync(alvo)) nota(etiqueta, 'ligação morta', href);
+          }
+          for (const { ficheiro, bruto } of m.imgPartidas) {
+            const alvo = path.resolve(DIR_GESTAO, bruto.split('?')[0]);
+            if (fs.existsSync(alvo)) nota(etiqueta, 'imagem partida', `${ficheiro} — existe e não carrega`);
+            else semEspelho.add(path.relative(path.resolve(DIR_GESTAO, '..', '..'), alvo));
+          }
+          if (errosJs.length) nota(etiqueta, 'erro de JS', [...new Set(errosJs)].join(' | '));
+          if (m.idsRepetidos.length) nota(etiqueta, 'id repetido', m.idsRepetidos.join(', '));
+          if (m.semNome.length) nota(etiqueta, 'sem nome acessível', m.semNome.slice(0, 5).join(', '));
+          if (m.semRotulo.length) nota(etiqueta, 'campo sem rótulo', m.semRotulo.slice(0, 5).join(', '));
+          if (m.transbordo > 0) nota(etiqueta, 'transbordo', `${m.transbordo}px a ${largura}px`);
+          if (largura === 1440 && m.imgSemAlt.length) nota(etiqueta, 'imagem sem alt', m.imgSemAlt.join(', '));
+          if (largura === 768 && m.falhaAA.length) {
+            nota(etiqueta, `❌ ALVO ABAIXO DE ${ALVO_AA}px — falha a WCAG AA`, m.falhaAA.slice(0, 5).join(' · '));
+          }
+
+          await p.close();
+        }
+      }
+    }
+    await ctx.close();
+  }
+
   await browser.close();
 
-  console.log(`VARRIDAS ${PAGINAS.length} páginas x ${LARGURAS.length} larguras`);
+  console.log(`VARRIDAS ${PAGINAS.length} páginas do cliente x ${LARGURAS.length} larguras`);
+  console.log(`         ${ECRAS_GESTAO.length} ecrãs de gestão x ${LARGURAS_GESTAO.length} larguras`);
   console.log('-'.repeat(66));
 
   if (semEspelho.size) {
