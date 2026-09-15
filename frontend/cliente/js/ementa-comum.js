@@ -147,7 +147,14 @@ function vpaDesenharFiltros(el, categorias, ativa, aoEscolher) {
     btn.setAttribute('aria-selected', sel ? 'true' : 'false');
     btn.dataset.categoria = categoria;
     btn.className = [
-      'flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors border',
+      /* `min-h-[44px]` e não mais `py-`: medido a 390px, os quatro
+         separadores tinham **38px de altura** — abaixo dos 44 que a
+         WCAG 2.5.5 pede para algo em que se toca com o dedo, e estes
+         são a navegação principal da página onde o cliente pede à
+         mesa. Subir o `padding` dava 42px; o `min-height` garante 44.
+         Corrige as DUAS páginas de uma vez, porque desde a F-69 a
+         `mesa.html` e a `takeaway.html` usam esta função. */
+      'flex-shrink-0 flex items-center justify-center gap-1.5 px-4 py-2 min-h-[44px] rounded-full text-sm font-semibold whitespace-nowrap transition-colors border',
       sel
         ? 'bg-gradient-to-r from-gold to-copper text-carvao border-transparent shadow-soft'
         : 'bg-carvao2 text-neutral-300 border-white/[0.06] hover:border-copper/40',

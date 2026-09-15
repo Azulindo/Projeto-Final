@@ -566,36 +566,72 @@ section{
   line-height: 1.6;
 }
 
-.andreila{
-  display:flex;
-  flex-direction: row;
-  border-radius: 50px;
-  align-items: center;
-  gap: 20px;
+/* ── O AVATAR DAS REVIEWS (F-77, 15/09) ──────────────────────────────
+   A `.ft` está em quatro `<img>` e **não tinha uma única regra de CSS
+   em todo o projeto.** O avatar redondo de 60px vinha de a classe
+   `.andreila` (e `.sara`, `.tatiana`, `.gabriel`) estar ao mesmo tempo
+   no `<img>` e no `<div>` que o envolve — e essas são regras de
+   CONTENTOR: `display: flex`, `gap: 20px`, `border-radius`. A imagem
+   herdava-as por acidente, e um `<img>` com `display: flex` e `gap`
+   não quer dizer nada.
+
+   O acidente está a sustentar o aspecto, por isso a classe duplicada
+   FICA: tirá-la deixava os avatares quadrados. O que muda é que a
+   intenção passa a estar escrita aqui, em vez de depender de uma
+   colisão de nomes que a próxima pessoa descobriria por acaso.
+   ------------------------------------------------------------------ */
+/* As estrelas passaram para DENTRO do `<span class="reviewer">` quando
+   o markup cruzado foi corrigido (F-77) — antes o `</div>` fechava
+   dentro do `<span>` e o browser empurrava-as para fora da linha do
+   avatar. Agora ficam ao lado do nome, como se queria, e só lhes falta
+   um espaço. */
+.estrelas {
+  display: inline-block;      /* permite a quebra ANTES das estrelas */
+  margin-left: 8px;
+  letter-spacing: 1px;
+  white-space: nowrap;        /* mas nunca no meio delas */
 }
 
-.sara{
-  display:flex;
-  flex-direction: row;
-  border-radius: 100px;
-  align-items: center;
-  gap: 20px;
+.ft {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;        /* as quatro fotos não têm a mesma forma */
+  flex-shrink: 0;
 }
 
-.tatiana{
-  display:flex;
+/* ── O CABEÇALHO DE UMA REVIEW: AVATAR + NOME + ESTRELAS ─────────────
+   Eram **quatro regras** — `.andreila`, `.sara`, `.tatiana`,
+   `.gabriel` — idênticas entre si tirando um `border-radius` que num
+   contentor flex não desenha nada (estava lá para arredondar a imagem
+   pela colisão de classes, que agora é trabalho da `.ft`). Quatro
+   cópias do mesmo cabeçalho, uma por pessoa, que divergiriam na
+   primeira vez que alguém mexesse numa.
+
+   ── E O `flex-wrap`, QUE É UMA REGRESSÃO MINHA ─────────────────────
+   Ao corrigir o markup cruzado destas reviews (F-77), as ⭐ passaram
+   para DENTRO do `<span>` do nome — que é onde o autor as queria, e o
+   `</div>` fora de ordem era o que as empurrava para fora da linha.
+   Só que fora da linha elas podiam quebrar livremente, e coladas ao
+   nome não podem: medido, a página passou a transbordar **9px a 375px
+   e 56px a 320px**, e dois testes apanharam-no (o `criadores.js` e o
+   `tipografia.js`).
+
+   Uma correcção de estrutura correcta com uma consequência de layout
+   que eu não previ. O `flex-wrap` e o `min-width: 0` são o que faltava
+   para o cabeçalho poder partir em duas linhas num telemóvel. */
+.andreila, .sara, .tatiana, .gabriel {
+  display: flex;
   flex-direction: row;
-  border-radius: 50px;
+  flex-wrap: wrap;            /* deixa o nome cair para baixo do avatar */
   align-items: center;
-  gap: 20px;
+  gap: 12px 20px;             /* menos espaço entre linhas do que entre colunas */
+  min-width: 0;               /* sem isto, um flex-item não encolhe */
 }
 
-.gabriel{
-  display:flex;
-  flex-direction: row;
-  border-radius: 50px;
-  align-items: center;
-  gap: 20px; 
+.reviewer {
+  min-width: 0;
+  overflow-wrap: break-word;  /* um nome comprido parte-se em vez de sair */
 }
 
 
