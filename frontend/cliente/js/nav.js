@@ -77,9 +77,89 @@
     });
   }
 
+  /* ── A BARRA MEDE-SE, EM VEZ DE DECLARAR UMA ALTURA (F-79, 16/09)
+     O `--topbar` do `nav.css` é um número ESCRITO À MÃO: 108px em
+     telemóvel, 112px abaixo dos 380. O comentário que o acompanha diz
+     *"a barra passa a ter duas linhas"* — o logótipo em cima, o menu
+     por baixo.
+
+     Medido num telemóvel a 390px: **os cinco links partem-se em 3 + 2**,
+     portanto a barra tem TRÊS linhas e precisa de ~146px. Com 108px
+     declarados, o conteúdo não cabe: o `align-content: center` reparte
+     a sobra para os dois lados e **o logótipo fica a -12px — doze
+     píxeis acima do topo, cortados.** Foi o Guilherme que o viu numa
+     captura do telemóvel dele.
+
+     É o defeito de sempre: um número declarado num sítio e uma
+     realidade desenhada noutro, que podem divergir sem avisar. A
+     justificação escrita para não haver menu hambúrguer — *"são cinco
+     ligações, cabem todas numa linha a 320px"* — também não bate com a
+     medição: não cabem.
+
+     O conserto é a barra deixar de declarar e passar a medir. O valor
+     do CSS continua lá como rede para quem tenha o JavaScript
+     desligado, mas quem manda é esta função. */
+  function medirBarra() {
+    const barra = document.querySelector('.inline-bar');
+    const conteudo = barra && barra.querySelector('.inline-content');
+    if (!conteudo) return;
+
+    const filhos = Array.prototype.filter.call(
+      conteudo.children, function (e) { return e.getBoundingClientRect().height > 0; });
+    if (!filhos.length) return;
+
+    /* A extensão real do conteúdo: do topo do filho mais alto ao fundo
+       do mais baixo. Não se usa o `scrollHeight` porque a
+       `.inline-content` tem `height: 100%` e vem recortada. */
+    let topo = Infinity, fundo = -Infinity;
+    filhos.forEach(function (e) {
+      const r = e.getBoundingClientRect();
+      topo = Math.min(topo, r.top);
+      fundo = Math.max(fundo, r.bottom);
+    });
+
+    const estilo = getComputedStyle(conteudo);
+    const enchimento = parseFloat(estilo.paddingTop) + parseFloat(estilo.paddingBottom);
+    const preciso = Math.ceil(fundo - topo + enchimento);
+
+    const atual = parseFloat(getComputedStyle(document.documentElement)
+      .getPropertyValue('--topbar')) || 0;
+
+    /* Escreve-se o valor EXACTO, para cima ou para baixo. A primeira
+       versão só crescia, e isso deixava a barra com 148px para 90px de
+       conteúdo entre os 480 e os 768px — 58px de ecrã gastos a nada,
+       porque a rede do CSS tem de ser generosa o suficiente para o pior
+       caso (três linhas) e o pior caso não acontece a todas as
+       larguras.
+
+       Não entra em ciclo: mudar a altura da barra muda onde o
+       `align-content: center` põe as filas, mas não muda a EXTENSÃO
+       delas, que é o que se mede aqui. A segunda medição dá o mesmo
+       valor e não há terceira escrita.
+
+       O 1px de tolerância é para o arredondamento de meio píxel não pôr
+       isto a escrever a cada `resize`. */
+    if (Math.abs(preciso - atual) > 1) {
+      document.documentElement.style.setProperty('--topbar', preciso + 'px');
+    }
+  }
+
   function arrancar() {
     marcarPaginaAtual();
     ligarBarraQueRecolhe();
+
+    medirBarra();
+    /* Outra vez depois de as imagens e as fontes chegarem: o logótipo é
+       uma imagem, e até ela carregar não tem altura. */
+    window.addEventListener('load', medirBarra);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(medirBarra);
+    }
+    let adiado;
+    window.addEventListener('resize', function () {
+      clearTimeout(adiado);
+      adiado = setTimeout(medirBarra, 150);
+    });
   }
 
   if (document.readyState === 'loading') {

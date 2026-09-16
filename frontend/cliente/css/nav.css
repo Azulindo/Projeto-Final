@@ -311,7 +311,15 @@ h3 {
   /* A barra passa a ter duas linhas. Como a altura vem desta variável
      e é ela que as páginas usam para se afastarem do topo, muda-se
      aqui e tudo o resto acompanha sozinho. */
-  :root { --topbar: 108px; }
+  /* 148px e não 108: abaixo dos 480px os cinco links partem-se em
+     3 + 2, portanto a barra tem TRÊS linhas (logótipo + duas de menu) e
+     precisa de ~146px. Com 108 o logótipo ficava 12px acima do topo,
+     cortado — medido a 390px, visto pelo Guilherme no telemóvel.
+
+     Este valor é só a REDE para quem tenha o JavaScript desligado:
+     quem manda é o `medirBarra()` do `nav.js`, que mede o conteúdo em
+     vez de o declarar (F-79). */
+  :root { --topbar: 148px; }
 
   .inline-bar {
     height: var(--topbar) !important;
@@ -490,7 +498,7 @@ h3 {
    encolher abaixo de 14px — se não couber, prefere-se que passe para a
    linha de baixo do que ficar ilegível. */
 @media (max-width: 380px) {
-  :root { --topbar: 112px; }
+  :root { --topbar: 152px; }
 
   .inline-nav a {
     font-size: 14px !important;
