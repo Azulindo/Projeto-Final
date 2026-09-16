@@ -41,9 +41,15 @@
   <!-- HERO FIXO (imagem + logo) -->
   <div class="hero-fixo">
     <img src="../../assets/imagens/layout/tema.jpg" class="hero-bg" alt="">
-    <img src="../../assets/logos/logotipo.jpg" class="hero-logo" alt="Vem Pro Abate" height="350" width="auto">
-    <h1 class="h1 fire-text"  data-text=""> Abate no nome <br>Excelência no prato</h1>
-    <a href="menu.html" class="btn vpa-rotulo">Ver Menu</a>
+    <!-- O logótipo, o título e o botão vivem num contentor em vez de
+         serem posicionados cada um à sua percentagem (F-81). Ver o
+         comentário grande no `index.css`: eram onze números mantidos à
+         mão que tinham de ficar sempre ordenados, e não ficavam. -->
+    <div class="hero-conteudo">
+      <img src="../../assets/logos/logotipo.jpg" class="hero-logo" alt="Vem Pro Abate" height="350" width="auto">
+      <h1 class="h1 fire-text" data-text=""> Abate no nome <br>Excelência no prato</h1>
+      <a href="menu.html" class="btn vpa-rotulo">Ver Menu</a>
+    </div>
   </div>
 
   <!-- CONTEÚDO QUE FAZ SCROLL -->

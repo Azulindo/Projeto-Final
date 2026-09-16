@@ -259,7 +259,11 @@ html { scroll-behavior: smooth; }
   }
 
   .hero-sobre {
-    height: 50vh !important;
+    /* 62vh e não 50: depois de reservar os ~148px da barra (F-81),
+       50vh num ecrã de 844px deixava 274px para o título e o
+       logótipo. O Guilherme disse que "a parte preta aparece muito em
+       cima" — era isto. */
+    height: 62vh !important;
   }
 
   .hero-overlay {

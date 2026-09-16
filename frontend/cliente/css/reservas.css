@@ -1472,7 +1472,8 @@ html { scroll-behavior: smooth; }
   .inline-nav a    { font-size: 10px !important; }
 
   /* Hero */
-  .hero-reservas       { height: 50vh !important; }
+  /* 62vh e não 50: ver o comentário igual no `sobre.css` (F-81). */
+  .hero-reservas       { height: 62vh !important; }
   .hero-logo-reservas  { height: 80px !important; }
 
   /* Conteúdo principal */

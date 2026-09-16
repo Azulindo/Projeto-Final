@@ -300,6 +300,27 @@ button, input, select, textarea, optgroup {
    e `.takeaway-btn`. Verificado ficheiro a ficheiro antes de escrever
    isto — se algum dia uma página carregar o `nav.css` primeiro, estas
    quatro propriedades deixam de se aplicar em silêncio. */
+/* ── O HERO DAS PÁGINAS INTERIORES RESERVA O ESPAÇO DA BARRA (F-81)
+   A barra é `position: fixed`, portanto não empurra nada: o hero de
+   cada página começa em **y=0, por baixo dela**. No computador isso
+   não se vê, porque o hero tem 100vh e a barra 65px — o título
+   centrado fica muito abaixo. Ao telemóvel o hero encolhe para 50vh e
+   a barra cresce para ~148px (três filas), e o título centrado cai
+   **debaixo da barra**: medido a 390×844, o "Sobre o Vem Pro Abate"
+   estava tapado 11px. Foi o Guilherme que o viu numa captura.
+
+   A `.hero-overlay` é a caixa que centra o conteúdo, e é a **mesma
+   regra copiada nas cinco folhas** (menu, galeria, reservas, sobre,
+   contactos). Por isso o conserto vive aqui: o `nav.css` é a única
+   folha que as seis páginas carregam, e é a última, portanto ganha.
+
+   Com o `--topbar` a ser medido pelo `nav.js` (F-79), isto fica certo
+   em qualquer altura de barra, sem ninguém ter de acertar um número. */
+.hero-overlay {
+  padding-top: var(--topbar);
+  box-sizing: border-box;
+}
+
 .vpa-rotulo {
   font-family: var(--fonte-rotulo);
   font-weight: 400;          /* o Nosifer só tem 400 — ver acima */

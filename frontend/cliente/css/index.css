@@ -14,6 +14,40 @@
 /* VARIÁVEIS */
 :root{
   --topbar: 60px;
+
+  /* ── A ALTURA ÚTIL DO HERO — UM NÚMERO, NÃO ONZE (F-81, 16/09) ────
+     ── O QUE ESTAVA MAL ───────────────────────────────────────────
+     O hero é `position: fixed; inset: 0` (ecrã inteiro) e a `.page`
+     desliza por cima dele a partir de um `margin-top`. Tudo o que
+     estivesse ABAIXO desse `margin-top` ficava tapado pelo bloco
+     preto.
+
+     O logótipo, o título e o botão estavam posicionados cada um à sua
+     percentagem do ecrã, e a `.page` à sua — **onze números mantidos à
+     mão, em breakpoints diferentes, que tinham de ficar sempre
+     ordenados:**
+
+       base    h1 60%   botão 69%   página 100vh
+       ≤768    h1 52%   botão 68%   página  80vh
+       ≤480                        página  70vh
+       ≤375                        página  65vh
+       ≤320    h1 55%   botão 70%   página  60vh
+
+     Olha-se para a última linha: **o botão a 70% e a página a 60vh.**
+     Abaixo dos 320px o botão "Ver Menu" estava INTEIRAMENTE escondido
+     atrás do bloco preto. E a 376×731 ficava tapado 7px, que foi o que
+     o Guilherme viu numa captura do telemóvel. Nenhum teste o apanhava:
+     o `auditoria-responsiva.js` mede transbordo horizontal, e isto é
+     um elemento tapado por outro dentro da página.
+
+     ── O QUE FAZ AGORA ────────────────────────────────────────────
+     Há um número por largura, o `--hero-util`, e é o MESMO que a
+     `.page` usa para começar e que o `.hero-conteudo` usa para a sua
+     altura. Os três elementos ficam empilhados e centrados dentro
+     dele, com `gap`. **Deixa de haver duas listas de percentagens para
+     manter ordenadas: há uma altura, e o conteúdo vive lá dentro.**
+     Uma colisão passa a ser impossível em qualquer altura de ecrã. */
+  --hero-util: 100vh;
 }
 
 /* BARRA FIXA NO TOPO */
@@ -123,15 +157,40 @@
   z-index: 0;
 }
 
-/* LOGO CENTRADO */
-.hero-logo{
+/* ── O CONTENTOR DO HERO ─────────────────────────────────────────────
+   `width: 60%` a partir da esquerda não é arbitrário: o centro desta
+   caixa cai aos **30%** do ecrã, que é exactamente onde o logótipo e o
+   título estavam com `left: 30%`. A composição do computador — o
+   conteúdo sobre a parede de tijolo, à esquerda, e a sala do
+   restaurante à direita — fica igual.
+
+   O `top: var(--topbar)` é o que faltava às outras páginas e que
+   deixava o título debaixo da barra: o hero começa em `y=0` porque a
+   barra é `fixed` e não empurra nada. */
+.hero-conteudo{
   position: absolute;
-  top: 38%;
-  left: 30%;
-  transform: translate(-50%, -50%);
+  top: var(--topbar);
+  left: 0;
+  width: 60%;
+  height: calc(var(--hero-util) - var(--topbar));
+  box-sizing: border-box;
+  padding: 0 16px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(14px, 3vh, 32px);
+
+  z-index: 3;
+}
+
+/* LOGO */
+.hero-logo{
   width: 420px;
-  max-width: 80%;
-  z-index: 2;
+  max-width: 100%;
+  height: auto;
+  flex-shrink: 0;
 }
 
 /* CONTEÚDO POR CIMA DO HERO */
@@ -141,7 +200,7 @@
 
   position: relative;
   z-index: 2;
-  margin-top: 100vh; /* começa depois do ecrã inteiro */
+  margin-top: var(--hero-util);   /* o MESMO número do hero (F-81) */
   background: #0f0f0f;
   color: white;
   padding: 30px 12px;
@@ -289,13 +348,11 @@ section{
 .h1 {
   font-family: var(--fonte-display);   /* título de PÁGINA: curto (F-80) */
   text-align: center;
-  position: fixed;
-  top: 60%;
-  left: 30%;
-  transform: translate(-50%, -50%);
-
-
-
+  margin: 0;
+  /* `relative` e não `fixed`: já não se posiciona, mas o `::before`
+     (o brilho por trás) usa `inset: 0` e precisa deste elemento como
+     referência. */
+  position: relative;
   /* CORES FIXAS - Estilo brasa quente */
   background: var(--gradiente-fogo);
   -webkit-background-clip: text;
@@ -310,10 +367,8 @@ section{
 
 .btn {
   padding: 15px 30px;
-  top:69%;
-  left: 24%;
   z-index: 90;
-  position: absolute;
+  flex-shrink: 0;
   background: linear-gradient(45deg, #ff4500, #957806);
   text-decoration: none;
   /* #7f0d0d dava 2,53:1 sobre o extremo dourado deste gradiente — o
@@ -678,6 +733,24 @@ section{
 }
 
 @media (max-width: 768px) {
+  /* ── AQUI JÁ NÃO SE POSICIONA NADA (F-81) ──────────────────────────
+     Este bloco tinha `position: absolute !important` + `left: 50%` +
+     `transform` no logótipo, no título E no botão, mais um `top: 30%`
+     no logótipo. Eram os restos do hero antigo, e foi por eles que a
+     primeira versão desta correcção não funcionou: eu tirei os `top` e
+     deixei os `position`, e os três continuaram empilhados uns sobre os
+     outros dentro do contentor novo — medido, os três com o mesmo
+     fundo a 307px.
+
+     *Enumerei as regras com um padrão que procurava `top`, `width` e
+     `height` e não `position`, e concluí que só havia cinco números a
+     mexer. Havia mais.* Os três são agora filhos de um `flex` e não
+     precisam de coordenadas. */
+  /* A altura útil do hero nesta largura. É o MESMO número que a
+     `.page` usa para começar (F-81) — não há um segundo sítio
+     para ficar desalinhado. */
+  :root { --hero-util: 80vh; }
+
   /* Header e navegação - keep nav on sides */
   .inline-bar {
     height: 50px !important;
@@ -732,10 +805,6 @@ section{
 
   /* Logo centered in hero - even bigger size */
   .hero-logo {
-    position: absolute !important;
-    top: 30% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
     width: 180px !important;
     max-width: 55% !important;
     height: auto !important;
@@ -744,10 +813,6 @@ section{
 
   /* Title centered */
   .h1 {
-    position: absolute !important;
-    top: 52% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
     width: 90% !important;
     text-align: center !important;
     white-space: normal !important;
@@ -756,21 +821,23 @@ section{
 
   /* Button centered */
   .btn {
-    position: absolute !important;
-    top: 68% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
     width: auto !important;
     text-align: center !important;
     font-size: 1.1rem !important;
     padding: 14px 28px !important;
   }
 
+  /* Ao telemóvel não há sala à direita para deixar livre: a imagem é
+     recortada e o conteúdo usa a largura toda (F-81). */
+  .hero-conteudo {
+    width: 100% !important;
+  }
+
   /* Page content - keep PC-like margins (increased to 80px) */
   .page {
     margin-left: 80px !important;
     margin-right: 80px !important;
-    margin-top: 80vh !important;
+    /* o hero e a página partilham este número (F-81) */
     width: auto !important;
     border-radius: 25px !important;
     padding: 25px 20px !important;
@@ -911,10 +978,15 @@ section{
 
 /* Extra small mobile - 480px */
 @media (max-width: 480px) {
+  /* A altura útil do hero nesta largura. É o MESMO número que a
+     `.page` usa para começar (F-81) — não há um segundo sítio
+     para ficar desalinhado. */
+  :root { --hero-util: 70vh; }
+
   .page {
     margin-left: 40px !important;
     margin-right: 40px !important;
-    margin-top: 70vh !important;
+    /* o hero e a página partilham este número (F-81) */
   }
 
 
@@ -944,10 +1016,15 @@ section{
 
 /* Extra small mobile - 375px */
 @media (max-width: 375px) {
+  /* A altura útil do hero nesta largura. É o MESMO número que a
+     `.page` usa para começar (F-81) — não há um segundo sítio
+     para ficar desalinhado. */
+  :root { --hero-util: 65vh; }
+
   .page {
     margin-left: 30px !important;
     margin-right: 30px !important;
-    margin-top: 65vh !important;
+    /* o hero e a página partilham este número (F-81) */
     padding: 20px 15px !important;
   }
 
@@ -957,7 +1034,6 @@ section{
 
   .btn {
     width: 85% !important;
-    margin-left: 7.5% !important;
     font-size: 0.95rem !important;
     padding: 11px 18px !important;
   }
@@ -1000,17 +1076,19 @@ section{
 
 /* Extra small mobile - 320px */
 @media (max-width: 320px) {
+  /* A altura útil do hero nesta largura. É o MESMO número que a
+     `.page` usa para começar (F-81) — não há um segundo sítio
+     para ficar desalinhado. */
+  :root { --hero-util: 60vh; }
+
   .page {
     margin-left: 25px !important;
     margin-right: 25px !important;
-    margin-top: 60vh !important;
+    /* o hero e a página partilham este número (F-81) */
     padding: 15px 12px !important;
     border-radius: 20px !important;
   }
 
-  .h1 {
-    top: 55% !important;
-  }
 
   .hero-logo {
     width: 150px !important;
@@ -1019,7 +1097,6 @@ section{
   .btn {
     font-size: 0.85rem !important;
     padding: 10px 15px !important;
-    top: 70% !important;
   }
 
 
