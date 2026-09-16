@@ -321,6 +321,25 @@ button, input, select, textarea, optgroup {
   box-sizing: border-box;
 }
 
+/* ── A BARRA DO COMPUTADOR, COM O HTML DA CORTINA (F-82) ───────────
+   O botão só serve ao telemóvel: aqui não existe. E a `.barra-menus`,
+   que no telemóvel é a cortina, aqui é só a fila que empurra os dois
+   blocos de links para os lados — o mesmo papel que o
+   `justify-content: space-between` da `.inline-content` fazia quando os
+   dois `<nav>` eram filhos directos dela. O aspecto do computador não
+   muda um píxel; o que muda é que passa a haver um sítio onde pegar
+   para o telemóvel. */
+.botao-cortina {
+  display: none;
+}
+
+.barra-menus {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .vpa-rotulo {
   font-family: var(--fonte-rotulo);
   font-weight: 400;          /* o Nosifer só tem 400 — ver acima */
@@ -367,48 +386,135 @@ h3 {
    Medido por frontend/testes/contraste.js.) */
 .footer-staff a { color: #8f8f8f; }
 
+/* ══ A BARRA DO TELEMÓVEL É UMA CORTINA (F-82, 16/09) ════════════════
+   ── O QUE ESTAVA MAL ───────────────────────────────────────────────
+   Até aqui a barra do telemóvel mostrava tudo ao mesmo tempo: o
+   logótipo numa fila e os cinco links a partirem-se em 3 + 2 na
+   seguinte. Medido a 390px, isso dava **148px de barra fixa** — e a
+   barra é `position: fixed`, portanto esses 148px estavam lá em
+   TODAS as páginas, do princípio ao fim do scroll. Num ecrã de 844px
+   de altura é 18% do telemóvel gasto em navegação permanente.
+
+   O Guilherme disse-o assim: *"ela fica muito grande e ocupa muito
+   espaço"*. Tinha razão, e a conta explica porquê.
+
+   ── O QUE FAZ AGORA ────────────────────────────────────────────────
+   A barra fechada é UMA fila: botão à esquerda, logótipo ao centro.
+   Dá ~56px, contra 148 — **92px devolvidos ao conteúdo**, em seis
+   páginas, ao longo de todo o scroll. Os cinco links continuam a
+   existir uma única vez no HTML: descem numa cortina por cima da
+   página quando se toca no botão.
+
+   ── AS TRÊS COISAS QUE ISTO TEM DE RESPEITAR ───────────────────────
+   1. A cortina é `position: absolute` a partir da `.inline-content`,
+      e não faz a barra crescer. Se fizesse, o `--topbar` mudava e o
+      conteúdo de todas as páginas saltava para baixo ao abrir o menu.
+      O `medirBarra()` do `nav.js` salta-a pelo `data-fora-da-medicao`.
+   2. Fechada, a cortina tem `visibility: hidden` e não só `opacity: 0`
+      — senão os cinco links continuavam a receber o foco do teclado
+      dentro de uma coisa invisível.
+   3. O `overflow: visible !important` na `.inline-bar` não é enfeite:
+      o `menu.css` e o `contactos.css` põem-lhe `overflow: hidden` no
+      telemóvel (para travar o scroll horizontal), e isso **cortava a
+      cortina inteira**. Como estas duas folhas carregam ANTES do
+      `nav.css`, é aqui que se desfaz.
+   ------------------------------------------------------------------ */
 @media (max-width: 768px) {
 
-  /* A barra passa a ter duas linhas. Como a altura vem desta variável
-     e é ela que as páginas usam para se afastarem do topo, muda-se
-     aqui e tudo o resto acompanha sozinho. */
-  /* 148px e não 108: abaixo dos 480px os cinco links partem-se em
-     3 + 2, portanto a barra tem TRÊS linhas (logótipo + duas de menu) e
-     precisa de ~146px. Com 108 o logótipo ficava 12px acima do topo,
-     cortado — medido a 390px, visto pelo Guilherme no telemóvel.
-
-     Este valor é só a REDE para quem tenha o JavaScript desligado:
-     quem manda é o `medirBarra()` do `nav.js`, que mede o conteúdo em
-     vez de o declarar (F-79). */
-  :root { --topbar: 148px; }
+  /* Uma fila só: o botão e o logótipo. Isto é a REDE para quem tenha
+     o JavaScript desligado — quem manda é o `medirBarra()` (F-79), que
+     mede em vez de declarar. */
+  :root { --topbar: 56px; }
 
   .inline-bar {
     height: var(--topbar) !important;
+    /* ver o ponto 3 do comentário acima */
+    overflow: visible !important;
   }
 
   .inline-content {
     height: 100% !important;
-    flex-wrap: wrap !important;
-    justify-content: center !important;
-    align-content: center !important;
-    padding: 6px 10px !important;
-    row-gap: 2px !important;
-    /* O mesmo valor do `gap` dos blocos (ver acima): é isso que faz as
-       duas filas terem o mesmo ritmo. */
-    column-gap: 6px !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    padding: 6px 12px !important;
+    gap: 8px !important;
   }
 
-  /* Logótipo sozinho na primeira linha */
+  /* ── O BOTÃO ─────────────────────────────────────────────────────
+     44×44: é o alvo mínimo da WCAG 2.5.5 para algo em que se toca com
+     o dedo, e é a navegação principal do site. */
+  .botao-cortina {
+    display: inline-flex !important;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Três riscos com um só elemento: o `<span>` é o do meio, e os
+     outros dois são o `::before` e o `::after` dele. Assim o "X" faz-se
+     rodando dois e apagando um, sem markup a mais. */
+  .botao-cortina .traco,
+  .botao-cortina .traco::before,
+  .botao-cortina .traco::after {
+    position: absolute;
+    width: 24px;
+    height: 2px;
+    border-radius: 2px;
+    background: #e8e8e8;
+    transition: transform 0.22s ease, opacity 0.18s ease, background 0.18s ease;
+  }
+
+  /* O `content` vai só nos pseudo-elementos: num elemento normal o
+     `content` é uma propriedade que SUBSTITUI o conteúdo (Chrome 105+),
+     e não é isso que se quer no `<span>`. */
+  .botao-cortina .traco { position: relative; }
+  .botao-cortina .traco::before { content: ''; transform: translateY(-7px); }
+  .botao-cortina .traco::after  { content: ''; transform: translateY(7px); }
+
+  /* Aberta: o risco do meio desaparece e os outros dois cruzam-se.
+     A cor passa ao dourado do site, o mesmo par de sempre. */
+  .inline-bar.cortina-aberta .botao-cortina .traco {
+    background: transparent;
+  }
+
+  .inline-bar.cortina-aberta .botao-cortina .traco::before {
+    transform: translateY(0) rotate(45deg);
+    background: #ffcc00;
+  }
+
+  .inline-bar.cortina-aberta .botao-cortina .traco::after {
+    transform: translateY(0) rotate(-45deg);
+    background: #ffcc00;
+  }
+
+  .botao-cortina:focus-visible {
+    outline: 2px solid #ffcc00;
+    outline-offset: 2px;
+  }
+
+  /* ── O LOGÓTIPO ──────────────────────────────────────────────────
+     Centrado em absoluto, como no computador. Se ficasse no fluxo, os
+     44px do botão empurravam-no 22px para a direita do centro real do
+     ecrã — e isso vê-se. As seis folhas de página põem-lhe
+     `position: relative !important` no telemóvel; é por isso que isto
+     também leva `!important`. */
   .logo-center {
-    order: 1 !important;
-    flex: 0 0 100% !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    position: static !important;   /* algumas folhas centravam-no em absoluto */
-    transform: none !important;
-    left: auto !important;
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    order: 0 !important;
     margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
   }
 
   .logo-center img {
@@ -418,44 +524,142 @@ h3 {
     object-fit: contain !important;
   }
 
-  /* Menu todo na segunda linha, os dois blocos lado a lado */
-  .inline-nav.left  { order: 2 !important; }
-  .inline-nav.right { order: 3 !important; }
+  /* ── A CORTINA ───────────────────────────────────────────────────
+     `top: 100%` a partir da `.inline-content`, que tem `height: 100%`
+     da barra: a cortina começa exactamente onde a barra acaba, sem
+     ninguém ter de somar alturas à mão. */
+  .barra-menus {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    display: block !important;
 
-  /* ── ESPAÇAMENTO (04/09) ──────────────────────────────────────
-     Os cinco links partem-se em 3 + 2 abaixo dos 480px — não há
-     largura para mais, e 3 + 2 é a divisão mais equilibrada (tentei
-     pô-los todos a fluir como uma lista só e saiu 4 + 1, com uma
-     ligação sozinha na segunda fila, pior).
-     O que fazia aquilo parecer um acidente era o espaçamento: 2px
-     entre links do mesmo bloco e 4px entre blocos, por isso a fila
-     de cima e a de baixo tinham ritmos diferentes. Agora é o mesmo
-     valor nos dois sítios, e as duas filas lêem-se como uma coisa
-     só, quebrada de propósito. */
-  .inline-nav {
-    flex: 0 0 auto !important;
-    gap: 6px !important;
-    opacity: 1 !important;
+    /* OPACA, e não 0,97 como a barra. Medido a 390px: com 3% de
+       transparência o título do hero — que é texto laranja vivo com
+       gradiente — **lia-se através da cortina**, por cima da palavra
+       "Contactos". Três por cento de nada é nada; três por cento de
+       um laranja a 100% de luz é um fantasma legível. Sem
+       transparência o `backdrop-filter` também deixa de ter o que
+       fazer, e sai (era desfoque de GPU a cada frame para nada). */
+    background: #0b0b0b;
+    border-top: 1px solid rgba(232, 179, 79, 0.28);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.5);
+
+    /* Fechada. A `visibility` é o que tira os links do alcance do
+       teclado — ver o ponto 2 do comentário acima. */
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transition: max-height 0.28s ease, opacity 0.2s ease,
+                visibility 0s linear 0.28s;
   }
 
-  /* O que interessa: letra legível e alvo de 44px */
-  .inline-nav a {
-    font-size: 15px !important;
-    line-height: 1 !important;
-    letter-spacing: 0.2px !important;
-    min-height: 44px !important;
-    display: inline-flex !important;
+  .inline-bar.cortina-aberta .barra-menus {
+    max-height: 70vh;
+    overflow-y: auto;
+    opacity: 1;
+    visibility: visible;
+    transition: max-height 0.28s ease, opacity 0.2s ease,
+                visibility 0s linear 0s;
+  }
+
+  /* ── O VÉU ───────────────────────────────────────────────────────
+     A página escurece por trás da cortina. Duas razões, nenhuma
+     decorativa: diz que aquilo é uma camada temporária e não uma
+     parte da página, e torna descobrível que se fecha tocando fora —
+     que de outra maneira ninguém adivinha.
+
+     É o `::after` da barra e não um `<div>` novo: não há estado para
+     guardar nem markup para duplicar nas seis páginas.
+
+     O `z-index: -1` põe-no atrás da cortina mas **à frente da
+     página**: um filho de z-index negativo pinta-se atrás do fundo do
+     pai, e o pai inteiro está a `z-index: 1000` por cima de tudo.
+
+     O `top: 100%` começa onde a barra acaba: escurece a página, não a
+     barra.
+
+     **E é `absolute` e não `fixed`, apesar de ser um véu de ecrã
+     inteiro.** A primeira versão era `position: fixed; inset:
+     var(--topbar) 0 0 0` e ficou com **altura zero** — invisível e sem
+     apanhar cliques. A razão: a `.inline-bar` tem `will-change:
+     transform` (de quando a barra passou a recolher ao descer), e
+     `will-change: transform` faz do elemento um bloco contentor para
+     os descendentes `fixed`. O `inset` passou a ser medido contra a
+     barra de 56px em vez do ecrã: 56 de cima, 0 de baixo, sobra nada.
+     Apanhado por uma verificação que pergunta o que está debaixo do
+     rato a meio da página — não pela aparência, porque um véu de
+     altura zero não se distingue de não haver véu. */
+  .inline-bar.cortina-aberta::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: -1;
+  }
+
+  /* Os dois blocos empilham-se e lêem-se como uma lista só. O `opacity`
+     que a barra do computador tem (0,65) sai: aqui isto é o menu, não
+     é um enfeite de canto. */
+  .barra-menus .inline-nav {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    opacity: 1 !important;
+    flex: 0 0 auto !important;
+  }
+
+  .barra-menus .inline-nav a {
+    display: flex !important;
     align-items: center !important;
-    padding: 0 9px !important;
+    min-height: 52px !important;
+    padding: 0 20px !important;
+    font-size: 17px !important;
+    line-height: 1 !important;
+    letter-spacing: 0.3px !important;
     color: #e8e8e8 !important;
     white-space: nowrap !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   }
 
-  .inline-nav a:active { color: #fff !important; }
+  /* O último de todos não leva risco em baixo — é o fim da cortina. */
+  .barra-menus .inline-nav.right a:last-child {
+    border-bottom: 0;
+  }
 
-  /* O risco fica mais afastado do texto porque aqui a ligação tem
-     44px de altura e o texto está centrado no meio dela. */
-  .inline-nav a::after { bottom: 7px !important; }
+  .barra-menus .inline-nav a:active {
+    background: rgba(255, 204, 0, 0.08);
+    color: #fff !important;
+  }
+
+  /* O risco de brasa passa a ser uma barra vertical à esquerda: numa
+     lista em coluna, um sublinhado a crescer do centro não se lê. */
+  .barra-menus .inline-nav a::after {
+    left: 0 !important;
+    right: auto !important;
+    top: 8px !important;
+    bottom: 8px !important;
+    width: 3px !important;
+    height: auto !important;
+    background: linear-gradient(180deg, #ffcc00, #ff4500) !important;
+    transform: scaleY(0) !important;
+    transform-origin: center !important;
+  }
+
+  .barra-menus .inline-nav a:hover::after,
+  .barra-menus .inline-nav a:focus-visible::after,
+  .barra-menus .inline-nav a[aria-current="page"]::after {
+    transform: scaleY(1) !important;
+  }
+
+  .barra-menus .inline-nav a[aria-current="page"] {
+    background: rgba(255, 204, 0, 0.06);
+  }
 }
 
 /* ── A barra deixa de estar parada (04/09) ────────────────────────
@@ -558,13 +762,16 @@ h3 {
 /* Telemóveis mesmo estreitos (iPhone SE e afins). A letra NÃO volta a
    encolher abaixo de 14px — se não couber, prefere-se que passe para a
    linha de baixo do que ficar ilegível. */
+/* Telemóveis mesmo estreitos (iPhone SE e afins). Com a cortina (F-82)
+   já não há cinco links a disputar uma fila, portanto o `--topbar` não
+   muda: a barra fechada é a mesma fila de botão + logótipo em qualquer
+   largura. O que fica é o logótipo um pouco menor, para não encostar ao
+   botão a 320px. */
 @media (max-width: 380px) {
-  :root { --topbar: 152px; }
+  .logo-center img { max-width: 120px !important; }
 
-  .inline-nav a {
-    font-size: 14px !important;
-    padding: 0 6px !important;
+  .barra-menus .inline-nav a {
+    font-size: 16px !important;
+    padding: 0 16px !important;
   }
-
-  .inline-content { column-gap: 0 !important; }
 }
