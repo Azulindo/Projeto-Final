@@ -114,7 +114,7 @@
 
 /* TEXTO HERO SOBRE */
 .h1-sobre {
-  font-family: var(--fonte-titulo);
+  font-family: var(--fonte-display);   /* título de PÁGINA: curto (F-80) */
   text-align: center;
   background: var(--gradiente-fogo);
   -webkit-background-clip: text;

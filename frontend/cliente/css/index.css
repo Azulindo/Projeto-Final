@@ -287,7 +287,7 @@ section{
   scroll-margin-top: calc(var(--topbar) + 20px);
 }
 .h1 {
-  font-family: var(--fonte-titulo);
+  font-family: var(--fonte-display);   /* título de PÁGINA: curto (F-80) */
   text-align: center;
   position: fixed;
   top: 60%;
@@ -553,7 +553,10 @@ section{
 
 .creator-nome{
   margin-top: 18px;
-  font-family: var(--fonte-titulo);
+  /* "João" e "Guilherme": uma palavra cada, portanto voz de display
+     (F-80). Medido no site publicado: 115px e 257px de largura a 32px,
+     uma linha cada. */
+  font-family: var(--fonte-display);
   font-size: 2rem;
   line-height: 1.1;
   color: #e8b34f;

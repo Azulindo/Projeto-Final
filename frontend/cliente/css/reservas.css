@@ -158,7 +158,7 @@
 
 /* Título com efeito de fogo */
 .h1-reservas {
-  font-family: var(--fonte-titulo);
+  font-family: var(--fonte-display);   /* título de PÁGINA: curto (F-80) */
   text-align: center;
   background: var(--gradiente-fogo);
   -webkit-background-clip: text;

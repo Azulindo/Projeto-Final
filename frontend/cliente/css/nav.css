@@ -134,15 +134,51 @@
      se a Google não responder, é pior do que qualquer alternativa —
      e "se a Google não responder" é literalmente o cenário da C-27.
      Passa a cair no Metal Mania, que é a outra letra da marca. */
-  --fonte-titulo: "Nosifer", "Metal Mania", system-ui, sans-serif;
-  --fonte-corpo:  "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* ── DUAS VOZES DE DISPLAY, DIVIDIDAS POR COMPRIMENTO (F-80, 16/09)
+     ── O QUE O TELEMÓVEL MOSTROU ───────────────────────────────────
+     A F-76 pôs o Nosifer em TODOS os títulos, a pedido do Guilherme.
+     Duas capturas do telemóvel dele desfizeram a decisão, e a medição
+     explicou porquê: **o Nosifer a 24px cabe cerca de DUAS PALAVRAS
+     por linha** numa coluna de 270px. Medido a 390px no site
+     publicado:
+
+       "Abate no nome / Excelência no prato"   → 3 linhas
+       "O nosso prato mais prestigiado"        → 3 linhas
+       "Os nossos criadores" (3 palavras)      → 2 linhas
+
+     E 24px é o mínimo que se pode usar: abaixo disso o título do hero
+     — que é texto com gradiente a 3,05:1 — deixa de contar como *texto
+     grande* e falha a WCAG AA. Não havia como encolher sem quebrar o
+     contraste da F-75.
+
+     ── A REGRA QUE O PROJETO JÁ TINHA ESCRITA ──────────────────────
+     Estava no `.takeaway-btn`, desde antes de eu lhe mexer: *"Nosifer
+     é uma fonte de títulos curtos"*. Eu apliquei-o a tudo e o
+     telemóvel cobrou a conta. A divisão agora é por **comprimento**,
+     que é a variável que importa:
+
+       · DISPLAY (Nosifer) — o que é curto: o título de cada página
+         ("Contactos", "Galeria", "O Nosso Menu"), os nomes dos
+         criadores, e os rótulos dos botões;
+       · TÍTULO (Metal Mania) — o que é uma frase: os títulos de
+         secção, os subtítulos, os nomes dos pratos. Metal Mania é
+         metade da largura do Nosifer ao mesmo tamanho.
+
+     Não é o site com duas caras: é uma regra por PAPEL, igual nas seis
+     páginas. O Metal Mania deixa também de ser uma fonte pedida e não
+     usada (era o X-28). */
+  --fonte-display: "Nosifer", "Metal Mania", system-ui, sans-serif;
+  --fonte-titulo:  "Metal Mania", system-ui, sans-serif;
+  --fonte-corpo:   "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
   /* Aponta para o título em vez de repetir a cadeia. Na revisão de
      hoje apanhei estas duas variáveis a guardar a MESMA cadeia escrita
      duas vezes — exactamente a divergência que elas existem para
      impedir. Assim não podem separar-se por acidente; para as separar
      de propósito basta escrever outra cadeia aqui. */
-  --fonte-rotulo: var(--fonte-titulo);
+  /* Os botões ficam em Nosifer: um rótulo de botão é curto por
+     natureza, e é essa a voz que o Guilherme escolheu para eles. */
+  --fonte-rotulo: var(--fonte-display);
 
   /* ── A ESCALA DOS TÍTULOS (F-75, 14/09) ───────────────────────────
      ── O QUE ESTAVA MAL, E É PIOR DO QUE AS FONTES ─────────────────
@@ -279,6 +315,10 @@ button, input, select, textarea, optgroup {
 /* O peso 400 é obrigatório e não é gosto: o Nosifer só tem esse peso,
    e o `bold` que o browser dá por omissão a um `<h1>` faz um negrito
    sintético que borra os pingos. */
+/* O `font-family` de cada título de página está na folha da sua
+   página (são seis classes diferentes porque cada hero está montado à
+   sua maneira por cima de uma imagem). O que vive aqui é o que é
+   comum: o tamanho e o peso. */
 h1, .h1, .h1-menu, .h1-sobre, .h1-contactos, .h1-reservas {
   font-size: var(--t-h1);
   font-weight: 400;
