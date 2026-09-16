@@ -56,7 +56,14 @@ const RAIZ = 'file://' + path.resolve(__dirname, '..', 'cliente') + '/';
 const PAGINAS = ['index.html', 'menu.html', 'galeria.html',
                  'reservas.html', 'sobre.html', 'contactos.html'];
 
-const TELEMOVEL = [768, 480, 390, 320];
+/* Os 375 e os 360 estão aqui por uma razão: a primeira versão deste
+   ficheiro media 768/480/390/320 e **saltava os 375**, que é a largura
+   do iPhone SE e do 12/13 mini, e a largura em que o `index.css` tem um
+   `@media (max-width: 375px)` próprio. Fui medir o site publicado a
+   375px e apanhei um susto — que acabou por ser artefacto da medição,
+   não do site —, mas o buraco no teste era verdadeiro: havia um
+   breakpoint do projeto que nenhuma verificação visitava. */
+const TELEMOVEL = [768, 480, 390, 375, 360, 320];
 const COMPUTADOR = [1440, 1024];
 
 const LINKS = ['Menu', 'Reservas', 'Galeria', 'Sobre', 'Contactos'];
