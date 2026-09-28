@@ -115,8 +115,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
        (Medido: só com o `requestAnimationFrame` o teste continuava a
        reprovar — 16ms de espera contra 125 de `visibility` presa. Foi
-       o teste que me obrigou a ir à causa em vez de ficar no sintoma.) */
-    requestAnimationFrame(function () { btnFechar.focus(); });
+       o teste que me obrigou a ir à causa em vez de ficar no sintoma.)
+
+       E é por isso que o foco se pede **já**, e não dentro do quadro de
+       espera: com a `visibility` a trocar de imediato, o `.focus()`
+       directo funciona — medido no site publicado. O
+       `requestAnimationFrame` ficou só como segunda tentativa, porque
+       **ele próprio não corre numa página que não está a ser
+       desenhada**: com o separador em segundo plano (`document.hidden`)
+       o Chrome não chama os callbacks de animação, e um foco que
+       dependesse dele nunca acontecia. Apanhei isso a medir o site
+       publicado num painel oculto — o mesmo alçapão que já me tinha
+       dado um susto falso com a cortina, desta vez a mostrar uma
+       fragilidade a sério no meu próprio conserto. */
+    btnFechar.focus();
+    if (document.activeElement !== btnFechar) {
+      requestAnimationFrame(function () { btnFechar.focus(); });
+    }
   }
 
   function fecharLightbox() {
