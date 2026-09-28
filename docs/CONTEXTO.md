@@ -3,7 +3,14 @@
 **Projeto Final de Curso** — Técnico Especialista de Tecnologias e Programação de Sistemas de Informação
 **Equipa:** João Ribeiro (back-end, base de dados, aplicação de gestão) · Guilherme Gonçalves (front-end, design, UX)
 **Repositório:** `Projeto-Final` (Git) · **Site:** ⚠️ **ainda não publicado** (ver F-67)
-**Versão do documento:** 3.2 · **Data:** setembro de 2026
+**Versão do documento:** 3.3 · **Data:** setembro de 2026
+
+> **Alterações da v3.3 (28/09).** Seis secções descreviam o desenho
+> ANTERIOR à decisão C-23 e foram corrigidas contra o código: a
+> estrutura do repositório (§8.1), a lista de endpoints (§8.2), os
+> limites de pedidos (§6.4 nº25 e nº27) e o buraco das reservas
+> (§4.3). A §5A já estava certa — era a §8.2 que a contradizia, e as
+> duas viviam neste mesmo ficheiro.
 
 **Alterações desde a v2.0 — redução deliberada de âmbito:**
 - ❌ Sai o **login e registo de clientes** (a autenticação de funcionários e administradores mantém-se)
@@ -116,6 +123,17 @@ Sem contas de cliente e sem acompanhamento, **estas funcionalidades deixam de se
 
 E há **um buraco funcional** que tem de ser dito com clareza, porque vai ser perguntado na apresentação:
 
+> ⚠️ **ISTO FOI RESOLVIDO — não dizer na apresentação (nota de 28/09).**
+> O parágrafo abaixo ficou aqui porque é a história da decisão, mas
+> descreve um buraco que já não existe: a lista de reservas no
+> dashboard **está feita** (`GET /gestao/reservas` no back-end, F-61
+> no front-end, com aviso de stock baixo nos pratos pré-selecionados),
+> e o texto dizia *"vai ser perguntado na apresentação"*. Quem lesse
+> isto para preparar a defesa ia contar uma limitação que entretanto
+> foi construída, e desvalorizar trabalho feito.
+>
+> *O que era:*
+>
 > **As reservas ficam gravadas na base de dados, mas ninguém do restaurante as vê.** Sem agenda no back-office, o único acesso é consultar a base de dados diretamente. Na prática, o módulo de reservas fica sem a ponta que o torna útil.
 >
 > **Versão mínima recomendada (≈3 h de trabalho):** uma **lista só de leitura** no dashboard — uma tabela com data, hora, nome, telemóvel, nº de pessoas, observações e ementa pré-selecionada, ordenada por data. Sem botões, sem estados, sem confirmar nem recusar. É a diferença entre "o restaurante vê as reservas" e "o restaurante não vê nada", e cabe folgadamente no plano. Está marcada como a primeira prioridade a recuperar em `PLANEAMENTO.md`.
@@ -130,9 +148,27 @@ Pagamentos online · programa de pontos e cupões · aplicação móvel nativa �
 
 O sistema tem **um fluxo guiado**: as **reservas**. Os pedidos usam uma grelha de produtos com carrinho (ver §5A).
 
-O motor **não é inteligência artificial**. É uma **máquina de estados determinística**: o servidor sabe em que passo a conversa está, devolve a pergunta seguinte e as opções possíveis, e valida sempre a resposta recebida. É previsível, demonstrável na apresentação, não depende de serviços externos e não tem custos.
+O motor **não é inteligência artificial**. É uma **máquina de estados determinística**: sabe-se sempre em que passo a conversa está, qual é a pergunta seguinte e que respostas são aceites. É previsível, demonstrável na apresentação, não depende de serviços externos e não tem custos.
 
-> **Decisão técnica:** o motor fica separado da definição do fluxo (`services/motorFluxos.js` + `services/fluxoReserva.js`). Mesmo servindo só as reservas, essa separação mantém a lógica de estados legível e permite acrescentar outro fluxo mais tarde sem reescrever nada.
+> **Decisão técnica — corrigida a 28/09.** Este parágrafo dizia que *"o
+> servidor sabe em que passo a conversa está"* e que o motor ficava
+> separado em `services/motorFluxos.js` + `services/fluxoReserva.js`.
+> **Nenhuma das duas coisas é verdade, e nunca chegou a ser:** os dois
+> ficheiros não existem, e não há no servidor nenhum endpoint de passo —
+> as rotas de reservas são três (`GET /reservas/horarios`,
+> `POST /reservas`, `GET /reservas/:codigo`).
+>
+> **A máquina de estados vive no browser**, no `frontend/cliente/js/reservas.js`
+> (`state.step` e um `switch` por passo). O servidor recebe a reserva já
+> feita e **volta a validar tudo** — a data, o dia da semana, a lotação,
+> o limite de 3 por telemóvel —, porque validação no browser não é
+> validação: é conveniência. Quem chamar o `POST /reservas` à mão passa
+> pelas mesmas regras.
+>
+> A vantagem prática desta divisão é a que se vê na demonstração: o
+> fluxo guiado **funciona sem servidor nenhum** (é o `MODO_SIMULACAO`),
+> e por isso o plano B da apresentação consegue mostrá-lo mesmo que a
+> API não arranque.
 
 ---
 
@@ -305,9 +341,35 @@ recebido → confirmado → em_preparacao → pronto → entregue
 22. Palavras-passe guardadas com **bcrypt** (nunca em texto). Mínimo 8 caracteres.
 23. Sessões com **JWT**; o token expira em 8 horas.
 24. Um email identifica um único utilizador (`UNIQUE`).
-25. Máximo de 5 tentativas de login falhadas por email em 15 minutos.
+25. Máximo de 5 tentativas de login falhadas **por conta** em 15
+    minutos, **e 20 a partir do mesmo endereço** — são dois limites e
+    não um (`middleware/limites.js`). *(Corrigido a 28/09: este ponto
+    documentava só o primeiro.)* Os dois são precisos: o de cima conta
+    por email, portanto quem estivesse a tentar entrar só tinha de
+    mudar de email para ter cinco tentativas novas, e um ciclo por uma
+    lista de emails nunca chegava a limite nenhum. O segundo fica
+    **largo de propósito** (20, não 5) porque os três postos do
+    restaurante — cozinha, balcão e escritório — saem todos pelo mesmo
+    endereço, e um limite apertado bloqueava os três por causa de um.
+    Nos dois, só as tentativas **falhadas** contam.
 26. Não há registo público de funcionários — as contas são criadas por um administrador.
-27. Os endpoints públicos (fluxos, criação de pedido e de reserva) têm limite de pedidos por IP, porque não há autenticação a proteger nada.
+27. Os endpoints públicos têm limite de pedidos, porque não há
+    autenticação a proteger nada — mas **não são todos contados por
+    IP**, e isso é uma decisão e não um detalhe *(corrigido a 28/09:
+    este ponto dizia "por IP" para todos)*:
+
+    | O quê | Contado por | Limite |
+    |---|---|---|
+    | Pedir à mesa (`/mesas/:token/pedir`) | **token da mesa** | 30 / 15 min |
+    | Criar reserva e take away | IP | 10 / hora |
+    | Consultar por código ou número | IP | 40 / 15 min |
+
+    Os pedidos à mesa contam-se pelo **token do QR Code** porque as
+    mesas estão todas atrás do router do restaurante: do lado de fora
+    têm todas o mesmo endereço, e um limite por IP seria um limite
+    para a sala inteira — enchia a casa numa sexta à noite e começava
+    a recusar pedidos a quem não fez nada. Por mesa, o número quer
+    dizer alguma coisa: 30 rondas em 15 minutos não é uma refeição.
 
 ### 6.5 Mesas e QR Code
 
@@ -467,8 +529,8 @@ Mais: **10 mesas** com token e QR, **12 slots horários** (5 almoço + 7 jantar,
                             ▼
             ┌────────────────────────────────┐
             │  API REST — Node.js + Express  │
-            │  JWT · bcrypt · Nodemailer     │
-            │  motorFluxos (pedidos+reservas)│
+            │  JWT · bcrypt · mysql2 · zod   │
+            │  34 rotas em 13 ficheiros      │
             │  → Render (plano gratuito)     │
             └───────────────┬────────────────┘
                             ▼
@@ -495,28 +557,47 @@ Mais: **10 mesas** com token e QR, **12 slots horários** (5 almoço + 7 jantar,
 
 ### 8.1 Estrutura do repositório
 
+> *Corrigido a 28/09.* A árvore que estava aqui era a do desenho
+> anterior ao C-23 e nunca existiu assim: prometia um `pedido.html` que
+> não chegou a ser feito, um `controllers/` que nunca foi criado, um
+> `services/` em inglês (a pasta chama-se `servicos/`) e três ficheiros
+> do motor de conversas — `motorFluxos.js`, `fluxoPedido.js` e
+> `fluxoReserva.js` — que morreram com o chatbot. Faltava-lhe também a
+> pasta de testes, que hoje é uma das maiores do repositório.
+
 ```
 Projeto-Final/
 ├── assets/
+│   ├── imagens/ · logos/
+│   └── fontes/                (as 4 fontes servidas daqui — F-68)
 ├── frontend/
-│   ├── cliente/               (site + pedido.html + reservas.html reconstruída)
-│   └── funcionarios/          (dashboard — a criar)
+│   ├── cliente/               (6 páginas do site + mesa.html + takeaway.html)
+│   ├── funcionarios/          (10 ecrãs de gestão)
+│   ├── js/api.js              (a única função que fala com a API)
+│   └── testes/                (as suites automáticas — Playwright)
 ├── backend/
 │   ├── src/
-│   │   ├── config/ · middleware/ · routes/ · controllers/   (driver: mysql2)
-│   │   ├── services/
-│   │   │   ├── motorFluxos.js       (o motor, escrito uma vez)
-│   │   │   ├── fluxoPedido.js       (definição do fluxo de pedidos)
-│   │   │   ├── fluxoReserva.js      (definição do fluxo de reservas)
-│   │   │   ├── stock.js · email.js · estatisticas.js
+│   │   ├── config/ · middleware/ · routes/     (driver: mysql2)
+│   │   ├── servicos/
+│   │   │   └── pedidos.js · stock.js
 │   │   └── app.js
+│   ├── scripts/               (qrcodes · diagrama · numeros · migrar
+│   │                           · hash · baixarFontes)
 │   ├── .env.example
 │   └── package.json
 ├── database/
-│   ├── schema.sql · seed.sql · diagrama-er.pdf
+│   ├── schema.sql · seed.sql
+│   └── diagrama-er.{svg,png,pdf} · diagrama-er{,-detalhe}.mmd
 └── docs/
-    ├── CONTEXTO.md · PLANEAMENTO.md · API.md
+    ├── CONTEXTO.md · PLANEAMENTO.md · TAREFAS.md · API.md
+    ├── TESTES.md · MANUAL.md · FOLHA-EMERGENCIA.md
+    └── RELATORIO.{md,docx}
 ```
+
+**Onde há duas cópias do mesmo, e qual manda:** o `diagrama-er.svg` é
+desenhado à mão e o `.mmd` é gerado do `schema.sql` — quando
+discordarem, manda o `.mmd` (é o X-22). Os números do relatório
+recalculam-se com `npm run numeros`, nunca se copiam.
 
 ### 8.2 Endpoints da API
 
@@ -526,23 +607,45 @@ Projeto-Final/
 |---|---|---|
 | `GET` | `/api/categorias?grupo=` | Categorias ativas, filtráveis por `grupo_ementa` |
 | `GET` | `/api/produtos?categoria=&grupo=` | Produtos disponíveis |
-| `POST` | `/api/fluxo/iniciar` | Começa uma conversa. Body: `{ tipo: "pedido" \| "reserva", mesaToken? }` |
-| `POST` | `/api/fluxo/responder` | Envia resposta → devolve próximo passo, opções e estado do carrinho |
-| `POST` | `/api/pedidos` | Confirmar pedido → devolve `numero_pedido` |
+| `GET` | `/api/produtos/:id` | Um produto |
+| `GET` | `/api/mesas/:token/sessao` | A sessão aberta da mesa (ou abre uma) |
+| `POST` | `/api/mesas/:token/pedir` | Uma ronda → limite de 30 / 15 min por mesa |
+| `GET` | `/api/mesas/:token/conta` | A conta da sessão |
+| `POST` | `/api/mesas/:token/pedir-conta` | Pedir a conta |
+| `POST` | `/api/pedidos/takeaway` | Encomenda → devolve `numero_pedido` |
+| `GET` | `/api/pedidos/takeaway/:numero` | Consultar pelo número |
 | `GET` | `/api/reservas/horarios?data=` | Slots ativos nesse dia |
 | `POST` | `/api/reservas` | Criar reserva → devolve `codigo_reserva` |
+| `GET` | `/api/reservas/:codigo` | Consultar pelo código |
 
 **Gestão (exigem login de funcionário)**
 
 | Método | Rota | Função |
 |---|---|---|
-| `POST` | `/api/auth/login` | Login de funcionário/administrador |
-| `GET` | `/api/gestao/pedidos?estado=&data=` | Lista para o dashboard |
-| `PATCH` | `/api/gestao/pedidos/:id/estado` | Mudar estado |
-| `CRUD` | `/api/gestao/produtos` · `/categorias` · `/stock` | Gestão |
-| `CRUD` | `/api/admin/funcionarios` | Só administrador |
+| `POST` | `/api/auth/login` | Login. Dois limites: 5 por conta, 20 por endereço |
+| `GET` | `/api/auth/eu` | Quem está autenticado, e com que nível |
+| `GET` | `/api/pedidos/ativos` | Lista para o dashboard |
+| `GET` | `/api/pedidos/cozinha` | A fila da cozinha |
+| `PATCH` | `/api/pedidos/:id/estado` | Mudar estado |
+| `POST` | `/api/pedidos/sessao/:id/fechar` | Fechar a sessão (congela o total) |
+| `GET` `POST` `PATCH` | `/api/gestao/produtos` | |
+| `GET` `POST` `PATCH` | `/api/gestao/categorias` | |
+| `PUT` | `/api/gestao/categorias/ordem` | Reordenar — exige a lista completa |
+| `GET` | `/api/gestao/stock` | administrador + cozinha *(ver X-21)* |
+| `POST` | `/api/gestao/stock/:produtoId/movimento` | Entrada, quebra ou acerto |
+| `PATCH` | `/api/gestao/stock/:produtoId/minimo` | O mínimo de aviso |
+| `GET` `POST` `PATCH` | `/api/gestao/funcionarios` | Só administrador |
+| `GET` | `/api/gestao/mesas/qrcodes` | Só administrador |
+| `GET` | `/api/gestao/reservas` | **Feita** (F-61) — lista só de leitura |
 | `GET` | `/api/admin/estatisticas` | Só administrador |
-| `GET` | `/api/gestao/reservas` | *(a recuperar — lista só de leitura, ver §4.3)* |
+
+> *Corrigido a 28/09.* Esta lista tinha `/api/fluxo/iniciar`,
+> `/api/fluxo/responder` e `POST /api/pedidos` — os três endpoints do
+> **motor de conversas que o C-23 substituiu**, e nenhum deles existe.
+> Em troca, faltava-lhe a família `/mesas/:token/*`, que é o coração
+> do desenho actual, e nove outras rotas. **34 rotas em 13 ficheiros**
+> — número recalculado com `npm run numeros`, não contado à mão. A
+> especificação completa, com corpos e respostas, está no `API.md`.
 
 **Atualização do dashboard:** *polling* a cada 10 segundos. Suficiente para um restaurante, trivial de implementar e não parte quando o alojamento gratuito adormece a ligação.
 
