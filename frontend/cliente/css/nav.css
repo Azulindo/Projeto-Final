@@ -340,6 +340,55 @@ button, input, select, textarea, optgroup {
   justify-content: space-between;
 }
 
+/* ══ O FOCO DE TECLADO (F-83, 16/09) ═══════════════════════════════
+   Auditoria de teclado às seis páginas — a única dimensão deste site
+   que nunca tinha sido medida. Duas coisas saíram de lá, além das três
+   do lightbox da galeria.
+
+   ── 1. O FOCO IA PARAR DEBAIXO DA BARRA ────────────────────────────
+   A barra é `position: fixed`, e o browser não sabe disso quando leva
+   um elemento focado até ao ecrã: alinha-o ao topo da JANELA, que é
+   onde a barra está. Medido na galeria, a andar para trás com
+   Shift+Tab: **três cartões ficaram com o topo a y=-2 numa barra de
+   69px** — focados, invisíveis, atrás da barra. Quem navega por
+   teclado perdia-se.
+
+   O `scroll-padding-top` diz ao browser para reservar esse espaço em
+   qualquer scroll que ele faça sozinho. Usa o `--topbar`, que é medido
+   (F-79), por isso acerta com a barra de uma linha do computador e com
+   a do telemóvel sem ninguém acertar números. **Serve também para as
+   ligações com `#`**, que caíam no mesmo buraco.
+
+   ── 2. O ANEL DE FOCO ERA O DO BROWSER ─────────────────────────────
+   Medido: `outline: 1px auto` em todo o site — o anel de omissão do
+   Chrome. Cumpre o mínimo, mas é 1px cinzento sobre um site quase
+   todo preto, e não é decisão de ninguém. Passa a ser o dourado do
+   site, 3px, com folga para respirar.
+
+   Os quatro botões de marca levam anel BRANCO e não dourado: o fundo
+   deles é o gradiente ouro→laranja, e dourado sobre laranja não se vê.
+   São os mesmos quatro que o `tipografia.js` já trata como um papel só.
+   ------------------------------------------------------------------ */
+html {
+  scroll-padding-top: calc(var(--topbar) + 12px);
+}
+
+:focus-visible {
+  outline: 3px solid #ffcc00;
+  outline-offset: 2px;
+}
+
+.btn:focus-visible,
+.reservas:focus-visible,
+.galeria-btn:focus-visible,
+.takeaway-btn:focus-visible {
+  outline-color: #fff;
+}
+
+/* (O botão da cortina fica no dourado: o fundo dele é a barra preta.
+   O anel dele está no bloco dos 768px, que é o único sítio onde ele
+   existe.) */
+
 .vpa-rotulo {
   font-family: var(--fonte-rotulo);
   font-weight: 400;          /* o Nosifer só tem 400 — ver acima */

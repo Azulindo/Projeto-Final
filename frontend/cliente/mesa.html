@@ -78,6 +78,29 @@
   /* Classes aplicadas por JS — declaradas aqui para o Tailwind CDN as
      gerar já no primeiro varrimento da página. */
   .warmup { }
+  /* ── O ANEL DE FOCO (F-83, 16/09) ────────────────────────────────
+     Estas duas páginas não carregam o `css/nav.css` — são Tailwind e
+     vivem à parte —, por isso o anel dourado que o resto do site
+     passou a ter não lhes chega. E são as únicas páginas do projeto
+     onde alguém escreveu `focus:outline-none`: seis campos (um na
+     mesa, cinco no takeaway) trocavam o anel do browser por uma
+     mudança de cor de bordo de 1px. Um bordo de 1px que muda de tom
+     não cumpre a WCAG 2.4.11, que pede um perímetro de 2px com 3:1 de
+     contraste.
+     Estas regras repõem um anel de 3px, e vencem o `focus:outline-none`
+     do Tailwind por serem mais específicas e virem depois. O `summary`
+     está na lista porque é focável sem `tabindex` e foi o único que
+     escapou à primeira tentativa — apanhado a medir, não a olhar. */
+  .focus\:outline-none:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  button:focus-visible,
+  a:focus-visible,
+  summary:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 3px solid #e8b34f !important;
+    outline-offset: 2px;
+  }
 </style>
 </head>
 

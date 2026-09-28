@@ -320,13 +320,31 @@
      tabulação por completo enquanto o lightbox está fechado. */
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.25s ease, visibility 0.25s ease;
+  /* ── `visibility 0s linear 0.25s` e não `visibility 0.25s` (F-83) ──
+     Uma propriedade discreta como a `visibility` não se interpola: com
+     `0.25s` o browser mantém o valor ANTIGO durante metade da duração
+     e só depois o troca. Ou seja, a seguir a pôr a classe `aberto` o
+     diálogo continuava `hidden` por ~125ms.
+
+     Consequência medida: o `btnFechar.focus()` do `galeria.js` — que
+     existe para o foco entrar no diálogo — **falhava em silêncio**,
+     porque um elemento invisível não aceita foco. Abrir a galeria com
+     o Enter deixava o foco no cartão, fora de um diálogo que declara
+     `aria-modal="true"`. Nem um `requestAnimationFrame` chegava: 16ms
+     contra 125.
+
+     Assim a troca é instantânea a abrir (atraso 0) e fica para o fim a
+     fechar (atraso 0.25s, o tempo de o `opacity` desaparecer), que é o
+     que se quer nos dois sentidos. */
+  transition: opacity 0.25s ease, visibility 0s linear 0.25s;
 }
 
 .lightbox-overlay.aberto {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
+  /* Sem atraso a abrir — ver o comentário acima. */
+  transition: opacity 0.25s ease, visibility 0s linear 0s;
 }
 
 .lightbox-caixa {
