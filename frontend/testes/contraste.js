@@ -42,6 +42,13 @@ function razao(a, b) {
   return (x + 0.05) / (y + 0.05);
 }
 
+/* `#abc` e `#aabbcc` dao o mesmo: a forma curta e cada digito repetido. */
+function hexParaRGB(hex) {
+  let h = hex.replace('#', '');
+  if (h.length === 3) h = h.split('').map(c => c + c).join('');
+  return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16));
+}
+
 /**
  * amostrar — as cores de cada texto visível de uma página.
  *
@@ -245,6 +252,61 @@ async function entrarNaGestao(ctx, base) {
     console.log('  O gradiente destes titulos vai de #ffcc00 (12,7:1) a #7a0000 (1,7:1).');
     console.log('  90% da letra le-se bem; falha a base. Nao e o mesmo que um botao');
     console.log('  ilegivel — mas subir a ultima paragem para #b52d00 poe tudo acima de 3:1.');
+  }
+
+  /* ── AS CORES ESCRITAS DENTRO DE STRINGS DE JAVASCRIPT ─────────────
+     Este teste mede o que esta na pagina quando ela abre. Uma frase que
+     so nasce quando o cliente chega ao passo 7 de um fluxo guiado nunca
+     e vista por ele.
+
+     Foi assim que a dica das observacoes das reservas — `color:#888`
+     escrito a mao dentro de uma string do `reservas.js` — esteve a
+     **4,15:1** sobre o fundo do balao (o minimo AA e 4,5) com esta suite
+     a dizer "nada a apontar". Encontrada a 28/09 a ler as frases do bot
+     para o C-06, nao por uma medicao.
+
+     Nao se abre um browser para isto: le-se o ficheiro. Toda a cor
+     escrita a mao num `style=` dentro de JavaScript e medida contra o
+     fundo do balao, que e onde estas frases aparecem. Hoje ha uma; a
+     segunda nao passa despercebida. */
+  const fsLocal = require('fs');
+  const cssReservas = fsLocal.readFileSync(
+    require('path').join(__dirname, '..', 'cliente', 'css', 'reservas.css'), 'utf8');
+  const fundoBalao = (cssReservas.match(/--bg-bubble-bot:\s*(#[0-9a-fA-F]{3,6})/) || [])[1];
+
+  const coresEmJS = [];
+  for (const rel of ['cliente/js/reservas.js', 'cliente/js/galeria.js',
+                     'cliente/js/menu.js', 'cliente/js/nav.js',
+                     'cliente/js/sobre.js', 'cliente/js/ementa-comum.js']) {
+    let texto;
+    try {
+      texto = fsLocal.readFileSync(require('path').join(__dirname, '..', rel), 'utf8');
+    } catch (e) { continue; }
+    /* So as que estao dentro de um `style=` — uma cor numa variavel ou
+       num comentario nao pinta texto nenhum. */
+    for (const m of texto.matchAll(/style=["'][^"']*?color:\s*(#[0-9a-fA-F]{3,6})/g)) {
+      const linha = texto.slice(0, m.index).split('\n').length;
+      coresEmJS.push({ ficheiro: rel, linha, cor: m[1] });
+    }
+  }
+
+  if (!fundoBalao) {
+    console.log('\n\u26A0\uFE0F  Nao encontrei o --bg-bubble-bot no reservas.css:');
+    console.log('   as cores escritas dentro de JavaScript ficaram por medir.');
+  } else if (coresEmJS.length) {
+    console.log('\n\u25B3 CORES ESCRITAS A MAO DENTRO DE JAVASCRIPT');
+    console.log('\u2500'.repeat(66));
+    let mausJS = 0;
+    for (const c of coresEmJS) {
+      const r = razao(hexParaRGB(c.cor), hexParaRGB(fundoBalao));
+      const passa = r >= 4.5;
+      if (!passa) mausJS++;
+      console.log(`  ${passa ? 'ok' : '\u274C'}  ${r.toFixed(2)}:1  ${c.cor} sobre ${fundoBalao}`
+        + `   ${c.ficheiro}:${c.linha}`);
+    }
+    console.log(mausJS
+      ? `  ${mausJS} abaixo de 4,5:1 — texto que so aparece a meio de um fluxo tambem e texto.`
+      : '  (todas acima de 4,5:1)');
   }
 
   /* O que o teste NAO consegue medir fica a dizer que nao consegue.

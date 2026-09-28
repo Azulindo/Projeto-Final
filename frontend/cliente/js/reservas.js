@@ -856,7 +856,16 @@ document.addEventListener('DOMContentLoaded', () => {
     state.step = 'observacoes';
 
     await botReply(
-      '✏️ Tens alguma observação especial para a cozinha?<br><em style="font-size:0.78rem;color:#888">Ex: "Sem arroz", "Ponto da carne: Média", "Alergia a amendoins"</em>',
+      /* O #aaa não é gosto: o #888 que estava aqui dá **4,15:1** sobre o
+         `--bg-bubble-bot` (#28282b) e a WCAG AA pede 4,5 para texto
+         normal — e isto é texto de 0,78rem, portanto normal sem
+         discussão. O #aaa dá 6,33:1 e continua a ler-se como secundário
+         ao lado do branco do balão.
+         Medido a 28/09 no C-06. O `contraste.js` nunca apanhou isto
+         porque esta frase vive dentro de uma string de JavaScript e só
+         existe depois de o cliente chegar ao passo das observações — a
+         suite mede o que está na página quando ela abre. */
+      '✏️ Tens alguma observação especial para a cozinha?<br><em style="font-size:0.78rem;color:#aaa">Ex: "Sem arroz", "Ponto da carne: Média", "Alergia a amendoins"</em>',
       750
     );
 
@@ -1331,8 +1340,12 @@ document.addEventListener('DOMContentLoaded', () => {
           + 'aparecem a cinzento.', 500);
       } else if (cheios && cheios === state.horarios.length) {
         await botReply(
+          /* "a gente vê" saiu no C-06: é a única frase de todo o bot que
+             não soa a português europeu, e destoa ainda mais por o resto
+             do texto falar do restaurante na primeira pessoa do plural
+             ("tratamos de tudo", "temos"). */
           '😕 Esse dia está com tudo cheio. Escolhe outro no calendário, '
-          + 'ou telefona-nos que a gente vê o que se pode fazer.', 700);
+          + 'ou telefona-nos e vemos o que se pode fazer.', 700);
         return stepCalendario();
       }
 
