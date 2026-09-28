@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contactos - Vem Pro Abate</title>
     <link rel="stylesheet" href="css/contactos.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Metal+Mania&family=Nosifer&display=swap" rel="stylesheet">
+    <!-- As fontes vêm do próprio repositório desde 28/09 (F-68): o plano B
+         da apresentação é servir o site do portátil sem internet, e medido
+         sem rede as 18 páginas carregavam ZERO fontes. Ver
+         `assets/fontes/fontes.css` e `backend/scripts/baixarFontes.js`. -->
+    <link rel="stylesheet" href="../../assets/fontes/fontes.css">
   <link rel="stylesheet" href="css/nav.css">
   <script src="js/nav.js" defer></script>
 </head>
@@ -93,8 +95,17 @@
             <h2>Localização</h2>
             <p>Encontre-nos na Avenida Marquês de Pombal nº27 2700-571 na Amadora, onde oferecemos uma experiência culinária única.</p>
 
+            <!-- O `title` é obrigatório num `<iframe>`: sem ele um leitor de
+                 ecrã anuncia só "frame", e o `<iframe>` recebe foco de
+                 teclado, portanto alguém chega ali e não sabe onde está
+                 (F-83).
+                 Sem internet este mapa fica uma caixa vazia — é a única
+                 coisa do site do cliente que precisa de rede depois da
+                 F-68. Não se perde informação: a morada está escrita em
+                 texto no parágrafo acima, de propósito. -->
             <div class="map-container">
-                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3111.0173984634725!2d-9.237059824382774!3d38.76330495460556!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd1ecda0a95e6b45%3A0x324576c33d22dc84!2sAv.%20Marqu%C3%AAs%20de%20Pombal%2027%2C%202700-571%20Amadora!5e0!3m2!1spt-PT!2spt!4v1770888355947!5m2!1spt-PT!2spt" style="border:0; width: 100%; height: 300px;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                <iframe title="Mapa da localização do restaurante, na Avenida Marquês de Pombal nº 27, na Amadora"
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3111.0173984634725!2d-9.237059824382774!3d38.76330495460556!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd1ecda0a95e6b45%3A0x324576c33d22dc84!2sAv.%20Marqu%C3%AAs%20de%20Pombal%2027%2C%202700-571%20Amadora!5e0!3m2!1spt-PT!2spt!4v1770888355947!5m2!1spt-PT!2spt" style="border:0; width: 100%; height: 300px;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
             </div>
         </section>
     </main>
