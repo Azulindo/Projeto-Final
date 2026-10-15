@@ -193,7 +193,18 @@ Cada **ronda continua a ser um `PEDIDO`** com o seu próprio estado (recebido �
 
 ### 5A.2 Fluxo do cliente à mesa
 
-1. Lê o QR Code → abre `/mesa?t=<token>`
+1. Lê o QR Code → abre `frontend/cliente/mesa.html?mesa=<qr_code>`
+
+> *Corrigido a 15/10, com a cadeia verificada de ponta a ponta.* Esta
+> linha dizia `/mesa?t=<token>`, e **o parâmetro chama-se `mesa`, não
+> `t`**. Não é bikeshedding: é a confusão que custou três tentativas ao
+> telemóvel (X-24 e X-25) — o Guilherme abriu um endereço com `?t=` e, em
+> vez de lhe dizerem que faltava o parâmetro, disseram-lhe que o QR Code
+> era inválido. O ecrã de erro da `mesa.html` já traz essa pista escrita.
+>
+> O `t` é o nome na API (`/api/mesas/:token/...`); o `mesa` é o nome no
+> endereço da página. O que vai lá dentro é sempre o `qr_code`, um valor
+> aleatório, nunca o número da mesa.
 2. O sistema identifica a mesa e **abre uma sessão** (ou entra na que já está aberta, se outra pessoa da mesa já leu o código)
 3. **Indicador fixo no topo: `📍 Mesa 04`**
 4. Navega pelas categorias em separadores e vê os produtos em grelha
