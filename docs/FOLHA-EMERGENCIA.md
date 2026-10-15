@@ -77,6 +77,21 @@ sala a olhar.
 **Três comandos, por esta ordem.** Todos no PowerShell, na pasta `Projeto-Final`,
 **na máquina onde o plano B está montado** (ver a caixa acima).
 
+> ### ⚠️ Antes dos três, confere estas três coisas
+>
+> A 15 de outubro o ensaio (C-27) encontrou **as três em falta ao mesmo tempo**, cinco
+> semanas depois de terem sido dadas por feitas. Nenhuma se vê a olhar para o
+> repositório, e nenhuma demora mais de um minuto a confirmar:
+>
+> | O quê | Como confirmar | Se faltar |
+> |---|---|---|
+> | O `backend/.env.local` existe | `Test-Path backend\.env.local` | Está no `.gitignore`, portanto **não vem do Git**. Sem ele a API liga-se à nuvem, ou não liga a nada |
+> | A base `vem_pro_abate` existe | `mysql -u root -e "SHOW DATABASES"` | Corre os dois comandos do passo 1. **Uma actualização grande do MySQL apaga a pasta de dados** — foi o que aconteceu aqui: a máquina passou do 8 para o 9.7 |
+> | A porta 3000 está livre | `netstat -ano \| findstr :3000` | Ver o §5. Nesta máquina quem a ocupa é outro projeto, não a API |
+>
+> E, se quiseres a certeza em vez do palpite: `cd backend && node scripts/ensaioCiclo.js`
+> percorre o ciclo todo contra a base e faz 36 verificações. Demora segundos.
+
 **1.** Refazer a base *(só se estiver estragada; se estiver boa, salta)*
 
 ```
@@ -104,7 +119,7 @@ O endereço tem de ser **`127.0.0.1:5500`**. Se for outro, vai ao §5.
 
 | O que aparece | Porquê | O que fazer |
 |---|---|---|
-| `EADDRINUSE ... port 3000` | Já há uma API a correr | `Stop-Process -Name node -Force` e arranca outra vez |
+| `EADDRINUSE ... port 3000` | **Não é a API: é outro projeto.** Confirmado a 15/10 — o servidor de desenvolvimento do *Cleveroption* ocupa a 3000 nesta máquina | Vê **quem** é antes de matar: `netstat -ano \| findstr :3000`, e depois `taskkill /PID <o número da última coluna> /F`. **Não corras `Stop-Process -Name node -Force`** — isso mata todos os node da máquina, incluindo os de outros trabalhos |
 | Diz `NUVEM` em vez de `LOCAL` | O `backend/.env.local` não está a ser lido, ou tem o `DB_HOST` do Aiven | Confirma que existe e que diz `DB_HOST=localhost`. Sem `DB_SSL_CA` lá dentro. |
 | `self-signed certificate in certificate chain` | O `DB_SSL_CA` ficou no `.env.local` | Apaga essa linha e arranca outra vez |
 | A página abre mas não carrega nada | O Five Server abriu noutra porta que não a 5500 | Muda o `ORIGEM_PERMITIDA` no `.env.local` para o endereço que aparece na barra, e reinicia a API |
