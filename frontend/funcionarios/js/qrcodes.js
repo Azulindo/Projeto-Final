@@ -60,6 +60,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let mesas = [];
 
+  /* Fica com o endereço guardado quando ele vem de outro sítio que não
+     este — é o que o aviso de origem precisa de mostrar. */
+  let urlGuardadaDeOutraOrigem = null;
+
   iniciar();
 
   async function iniciar() {
@@ -81,27 +85,62 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
+   * palpiteDaOrigem — o endereço base deduzido de onde esta página
+   * está a ser servida. Sobe dois níveis a partir de
+   * /frontend/funcionarios/qrcodes.html. Vazio quando é `file:`.
+   */
+  function palpiteDaOrigem() {
+    if (!location.protocol.startsWith('http')) return '';
+    return new URL('../../', location.href).href.replace(/\/$/, '');
+  }
+
+  function origemDe(url) {
+    try { return new URL(url).origin; } catch (e) { return null; }
+  }
+
+  /**
    * urlBaseGuardada — Última URL usada, ou um palpite a partir do
    * endereço atual (útil quando a app já está publicada).
+   *
+   * ── PORQUE É QUE O GUARDADO NÃO GANHA SEMPRE (15/10) ────────────────
+   * Ganhava, e isso era uma armadilha com data marcada. Depois de gerar
+   * cartões uma vez com o site publicado, fica
+   * `https://vemproabate.vercel.app` no localStorage — e no dia 16, com
+   * o plano B a correr do portátil sem internet, esta página abria com
+   * esse endereço **já escrito no campo**. Um campo pré-preenchido
+   * lê-se como um campo certo, e os cartões saíam a apontar para um
+   * site que o telemóvel da sala não conseguia abrir.
+   *
+   * É o X-23 outra vez — um valor que só serve num contexto a sair em
+   * papel para outro — por isso a regra passa a ser: o guardado só
+   * vale se vier do MESMO endereço onde a página está agora. Vindo de
+   * outro, manda o sítio onde estamos, e diz-se porquê.
    */
   function urlBaseGuardada() {
+    const palpite = palpiteDaOrigem();
+    let guardada = null;
     try {
-      const guardada = localStorage.getItem(CHAVE_URL_BASE);
-      if (guardada) return guardada;
+      guardada = localStorage.getItem(CHAVE_URL_BASE);
     } catch (e) { /* localStorage desativado */ }
 
-    // Palpite: sobe dois níveis a partir de /frontend/funcionarios/qrcodes.html
-    if (location.protocol.startsWith('http')) {
-      const url = new URL('../../', location.href);
-      return url.href.replace(/\/$/, '');
-    }
-    return '';
+    if (!guardada) return palpite;
+    if (!palpite) return guardada;   // `file:` — não há nada melhor
+
+    if (origemDe(guardada) === origemDe(palpite)) return guardada;
+
+    urlGuardadaDeOutraOrigem = guardada;
+    return palpite;
   }
 
   function mostrarAvisoOrigem() {
     if (location.protocol === 'file:') {
       avisoOrigem.innerHTML = 'Estás a abrir esta página a partir de um ficheiro local, por isso o endereço ' +
         'não pode ser adivinhado — escreve-o à mão em cima.';
+      avisoOrigem.classList.remove('hidden');
+    } else if (urlGuardadaDeOutraOrigem) {
+      avisoOrigem.textContent = 'A última vez que geraste cartões foi a partir de ' +
+        `${urlGuardadaDeOutraOrigem} — como agora estás noutro endereço, o campo ` +
+        'em cima traz este. Confirma-o antes de imprimir: é ele que vai dentro dos QR Codes.';
       avisoOrigem.classList.remove('hidden');
     } else {
       avisoOrigem.classList.add('hidden');
