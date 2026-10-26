@@ -217,8 +217,15 @@ document.addEventListener('DOMContentLoaded', () => {
     'dez':   10,
   };
 
-  /* Número de telefone do restaurante (substituir pelo real) */
-  const TEL_RESTAURANTE = '912 345 678';
+  /* Número de telefone do restaurante.
+     Até 26/10 isto era '912 345 678', um número de exemplo — e o botão
+     "liga-nos" do passo final faz `tel:` com ele, portanto quem lhe
+     tocasse ligava a um número que não é o restaurante. É o defeito de
+     sempre deste projeto (a mesma informação em dois sítios) no sítio
+     mais caro: o cliente. O número verdadeiro está na `contactos.html`.
+     GUILHERME: a contactos.html tem dois números; pus aqui o primeiro.
+     Se a linha principal for a outra, troca. */
+  const TEL_RESTAURANTE = '973 588 962';
 
   /* Estado do mini-calendário (mês/ano atualmente visível) */
   let calState = { year: 0, month: 0 };
@@ -865,7 +872,7 @@ document.addEventListener('DOMContentLoaded', () => {
          porque esta frase vive dentro de uma string de JavaScript e só
          existe depois de o cliente chegar ao passo das observações — a
          suite mede o que está na página quando ela abre. */
-      '✏️ Tens alguma observação especial para a cozinha?<br><em style="font-size:0.78rem;color:#aaa">Ex: "Sem arroz", "Ponto da carne: Média", "Alergia a amendoins"</em>',
+      '✏️ Tens alguma observação especial para a cozinha?<br><em style="font-size:0.78rem;color:#aaa">Ex: "Sem arroz", "Ponto da carne: média", "Alergia a amendoins"</em>',
       750
     );
 
