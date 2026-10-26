@@ -72,7 +72,15 @@
          mão que tinham de ficar sempre ordenados, e não ficavam. -->
     <div class="hero-conteudo">
       <img src="../../assets/logos/logotipo.jpg" class="hero-logo" alt="Vem Pro Abate" height="350" width="auto">
-      <h1 class="h1 fire-text" data-text=""> Abate no nome <br>Excelência no prato</h1>
+      <!-- O `data-text` estava VAZIO e é dele que sai a camada de chama
+           (`.h1::before { content: attr(data-text) }`): a página de
+           entrada era a única das seis sem o efeito, e é a primeira que
+           alguém abre. Estava vazio por causa do `<br>` — uma quebra de
+           linha não cabe dentro de um atributo. Tirado o `<br>`, o
+           `text-wrap: balance` do nav.css parte o título por igual em
+           qualquer largura, e a vírgula faz o trabalho que a quebra
+           fazia (é assim que o próprio site cita o lema na sobre.html). -->
+      <h1 class="h1 fire-text" data-text="Abate no nome, Excelência no prato">Abate no nome, Excelência no prato</h1>
       <a href="menu.html" class="btn vpa-rotulo">Ver Menu</a>
     </div>
   </div>
@@ -80,7 +88,7 @@
   <!-- CONTEÚDO QUE FAZ SCROLL -->
   <main class="page">
     <section class="menu">
-      <div> <h2> O nosso prato <br> mais prestigiado </h2>
+      <div> <h2>O nosso prato mais prestigiado</h2>
       <p>Não vieste aqui para brincar. O 'Abate Misto' traz o melhor do nosso gancho direto para a tua mesa: Picanha premium fatiada, chouriço artesanal e frango dourado na brasa. Acompanhado com o nosso arroz de assinatura e batatas rústicas. É o combustível bruto para quem sabe o que quer.</p>
       <div class="reviews">
       <div class="review1"> <div class="andreila">
@@ -110,7 +118,7 @@ Foi feito pra abater a fome sem dó, sem culpa e sem sobrar nada no prato. Abate
     </section>
 
     <section class="prego">
-      <div> <h2> O favorito <br> dos sócios </h2>
+      <div> <h2>O favorito dos sócios</h2>
       <p>Sócio que é sócio, vem ao abate e não deixa de lado o "prega-me isto", esta saborosa refeição, pode deixar-te de fome abatida com o graciosíssimo bife de vaca premium, vindo dos Açores, com batatas fritas feitas na hora deliciosas e suculentas com um molhinho saboroso à parte e de não deixar o arroz de excelência de lado.</p>
             <div class="reviews">
 
