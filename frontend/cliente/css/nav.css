@@ -230,6 +230,12 @@
   --t-h1: clamp(1.75rem,  5.5vw, 3rem);      /* 28 → 48px */
   --t-h2: clamp(1.5rem,   4vw,   2.5rem);    /* 24 → 40px  (24 = limiar WCAG) */
   --t-h3: clamp(1.125rem, 2.2vw, 1.5rem);    /* 18 → 24px */
+
+  /* A entrelinha do texto corrido, num sítio só (F-85, 26/10).
+     Medido antes disto: todos os parágrafos do site estavam a 1,6
+     MENOS dois — os dois dos pratos da página de entrada, que não
+     declaravam nada e caíam no `normal` do browser. */
+  --entrelinha: 1.6;
 }
 
 
@@ -421,6 +427,62 @@ h2, .section-title {
 h3 {
   font-size: var(--t-h3);
   font-weight: 400;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   COMO O TEXTO QUEBRA  (F-85, 26/10)
+   ═══════════════════════════════════════════════════════════════════
+   Pedido do Guilherme: *"que regras é que podemos meter no site, tipo
+   letras e assim, que possam mudar o visual para ainda melhor"*.
+
+   Estas são regras e não afinações: entram uma vez aqui — a única
+   folha que as seis páginas carregam, e a última a ser lida — e valem
+   em todas as páginas e em todas as larguras, incluindo nas que ainda
+   não existem.
+
+   ── 1. TÍTULOS EQUILIBRADOS ────────────────────────────────────────
+   Medido a 1440px antes disto: o `<h1>` da entrada ("Abate no nome /
+   Excelência no prato") saía em **três linhas**, e "O nosso prato mais
+   prestigiado" e "O favorito dos sócios" saíam os dois em três também.
+   O browser enche cada linha até ao fim e deixa cair o resto — dá
+   longo-longo-curto, que é a pior maneira de partir um título. O
+   `balance` reparte as linhas por igual. Não é gosto: é a mesma
+   quantidade de texto, arrumada.
+
+   ── 2. PARÁGRAFOS SEM PALAVRA SOLTA ────────────────────────────────
+   O `pretty` trata da última linha de um parágrafo quando ela fica com
+   uma palavra só. Onde o browser ainda não o conhece, quebra como
+   sempre quebrou: não há nada a perder.
+
+   ── 3. UMA ENTRELINHA, NUM SÍTIO SÓ ────────────────────────────────
+   Os dois parágrafos dos pratos da entrada caíam no `normal` do
+   browser (~1,2) enquanto o resto do site está a 1,6 — e são
+   justamente os dois blocos de texto mais longos que há: 9 e 11 linhas
+   a 390px, e eram os mais apertados. Outra vez a mesma informação em
+   vários sítios, com o sítio errado a ganhar onde mais se nota.
+
+   ── 4. A SELEÇÃO ───────────────────────────────────────────────────
+   Arrastar o rato sobre o texto dava o azul do sistema — a única cor
+   que aparecia no site e não era do site. Passa a ser o dourado da
+   marca com texto escuro por cima (12,56:1 — medido, não copiado: tinha
+   escrito aqui 11,4:1, que é o número da tarja do X-23 e usa outro
+   amarelo).
+   ═══════════════════════════════════════════════════════════════════ */
+h1, .h1, .h1-menu, .h1-sobre, .h1-contactos, .h1-reservas,
+h2, .section-title,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+  line-height: var(--entrelinha);
+}
+
+::selection {
+  background: #ffcc00;
+  color: #101013;
 }
 
 
