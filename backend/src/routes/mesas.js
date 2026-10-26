@@ -22,6 +22,7 @@ const { pool } = require('../config/bd');
 const { validar } = require('../middleware/validar');
 const { limitePedidoMesa } = require('../middleware/limites');
 const { gerarCodigo, validarItens, criarPedido, lerItens } = require('../servicos/pedidos');
+const { avisarPedidoNovo } = require('../servicos/notificacoes');
 
 const router = express.Router();
 
@@ -281,6 +282,18 @@ router.post('/mesas/:token/pedir', limitePedidoMesa, validar(esquemaPedir), asyn
     const itensGravados = await lerItens(con, idPedido);
 
     con.release();
+
+    /*
+     *  O aviso ao restaurante (B-72). DEPOIS do commit, de proposito:
+     *  dentro da transacao, uma falha a gravar a notificacao desfazia
+     *  o pedido inteiro — e um pedido que a cozinha ja podia ter visto
+     *  desaparecer porque um email correu mal e o pior dos dois males.
+     *
+     *  Espera-se o registo (rapido, e deixa a linha na `notificacao`
+     *  mesmo sem internet) e nao se espera o envio, que segue sozinho.
+     *  A funcao nao lanca.
+     */
+    await avisarPedidoNovo(idPedido);
 
     const n = req.body.itens.reduce((s, i) => s + i.quantidade, 0);
 
