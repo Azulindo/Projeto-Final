@@ -14,6 +14,40 @@
 /* VARIÁVEIS */
 :root{
   --topbar: 60px;
+
+  /* ── A ALTURA ÚTIL DO HERO — UM NÚMERO, NÃO ONZE (F-81, 16/09) ────
+     ── O QUE ESTAVA MAL ───────────────────────────────────────────
+     O hero é `position: fixed; inset: 0` (ecrã inteiro) e a `.page`
+     desliza por cima dele a partir de um `margin-top`. Tudo o que
+     estivesse ABAIXO desse `margin-top` ficava tapado pelo bloco
+     preto.
+
+     O logótipo, o título e o botão estavam posicionados cada um à sua
+     percentagem do ecrã, e a `.page` à sua — **onze números mantidos à
+     mão, em breakpoints diferentes, que tinham de ficar sempre
+     ordenados:**
+
+       base    h1 60%   botão 69%   página 100vh
+       ≤768    h1 52%   botão 68%   página  80vh
+       ≤480                        página  70vh
+       ≤375                        página  65vh
+       ≤320    h1 55%   botão 70%   página  60vh
+
+     Olha-se para a última linha: **o botão a 70% e a página a 60vh.**
+     Abaixo dos 320px o botão "Ver Menu" estava INTEIRAMENTE escondido
+     atrás do bloco preto. E a 376×731 ficava tapado 7px, que foi o que
+     o Guilherme viu numa captura do telemóvel. Nenhum teste o apanhava:
+     o `auditoria-responsiva.js` mede transbordo horizontal, e isto é
+     um elemento tapado por outro dentro da página.
+
+     ── O QUE FAZ AGORA ────────────────────────────────────────────
+     Há um número por largura, o `--hero-util`, e é o MESMO que a
+     `.page` usa para começar e que o `.hero-conteudo` usa para a sua
+     altura. Os três elementos ficam empilhados e centrados dentro
+     dele, com `gap`. **Deixa de haver duas listas de percentagens para
+     manter ordenadas: há uma altura, e o conteúdo vive lá dentro.**
+     Uma colisão passa a ser impossível em qualquer altura de ecrã. */
+  --hero-util: 100vh;
 }
 
 /* BARRA FIXA NO TOPO */
@@ -123,15 +157,40 @@
   z-index: 0;
 }
 
-/* LOGO CENTRADO */
-.hero-logo{
+/* ── O CONTENTOR DO HERO ─────────────────────────────────────────────
+   `width: 60%` a partir da esquerda não é arbitrário: o centro desta
+   caixa cai aos **30%** do ecrã, que é exactamente onde o logótipo e o
+   título estavam com `left: 30%`. A composição do computador — o
+   conteúdo sobre a parede de tijolo, à esquerda, e a sala do
+   restaurante à direita — fica igual.
+
+   O `top: var(--topbar)` é o que faltava às outras páginas e que
+   deixava o título debaixo da barra: o hero começa em `y=0` porque a
+   barra é `fixed` e não empurra nada. */
+.hero-conteudo{
   position: absolute;
-  top: 38%;
-  left: 30%;
-  transform: translate(-50%, -50%);
+  top: var(--topbar);
+  left: 0;
+  width: 60%;
+  height: calc(var(--hero-util) - var(--topbar));
+  box-sizing: border-box;
+  padding: 0 16px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(14px, 3vh, 32px);
+
+  z-index: 3;
+}
+
+/* LOGO */
+.hero-logo{
   width: 420px;
-  max-width: 80%;
-  z-index: 2;
+  max-width: 100%;
+  height: auto;
+  flex-shrink: 0;
 }
 
 /* CONTEÚDO POR CIMA DO HERO */
@@ -141,7 +200,7 @@
 
   position: relative;
   z-index: 2;
-  margin-top: 100vh; /* começa depois do ecrã inteiro */
+  margin-top: var(--hero-util);   /* o MESMO número do hero (F-81) */
   background: #0f0f0f;
   color: white;
   padding: 30px 12px;
@@ -164,8 +223,24 @@
 
  
 
+/* ── OS TÍTULOS DESTA PÁGINA (F-74) ──────────────────────────────────
+   Estes dois `<h2>` não tinham `font-family` nenhuma, por isso caíam no
+   Inter do corpo — enquanto os `<h2>` das outras cinco páginas estão
+   todos em Metal Mania. **A página de entrada era a única do site sem a
+   voz do site**, e é a primeira que alguém abre.
+
+   E estavam a **50px, maiores do que o próprio `<h1>` desta página**,
+   que é o hero a 41,6px. A hierarquia estava invertida: o título de
+   secção gritava mais alto do que o título da página. 40px é a medida
+   que os `<h2>` das outras cinco já usam. */
+.menu h2, .prego h2, .gerentes h2{
+  font-family: var(--fonte-titulo);
+  font-weight: 400;             /* Metal Mania só tem um peso */
+  line-height: 1.15;
+  text-align: center;
+}
+
 .menu h2{
-  font-size: 50px;
   /*margin-right: 5%;
   margin-bottom : 150%;*/
 }
@@ -213,7 +288,6 @@ padding: 15px;
 }
 
 .prego h2{
-  font-size: 50px;
   /*margin-right: 5%;
   margin-bottom : 150%;*/
 }
@@ -272,18 +346,15 @@ section{
   scroll-margin-top: calc(var(--topbar) + 20px);
 }
 .h1 {
-  font-family: "Metal Mania", sans-serif;
-  font-size: 2.6rem;
+  font-family: var(--fonte-display);   /* título de PÁGINA: curto (F-80) */
   text-align: center;
-  position: fixed;
-  top: 60%;
-  left: 30%;
-  transform: translate(-50%, -50%);
-
-
-
+  margin: 0;
+  /* `relative` e não `fixed`: já não se posiciona, mas o `::before`
+     (o brilho por trás) usa `inset: 0` e precisa deste elemento como
+     referência. */
+  position: relative;
   /* CORES FIXAS - Estilo brasa quente */
-  background: linear-gradient(180deg, #ffcc00 10%, #ff4500 50%, #7a0000 90%);
+  background: var(--gradiente-fogo);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -296,10 +367,8 @@ section{
 
 .btn {
   padding: 15px 30px;
-  top:69%;
-  left: 24%;
   z-index: 90;
-  position: absolute;
+  flex-shrink: 0;
   background: linear-gradient(45deg, #ff4500, #957806);
   text-decoration: none;
   /* #7f0d0d dava 2,53:1 sobre o extremo dourado deste gradiente — o
@@ -310,9 +379,12 @@ section{
   color: #0d0b07;
   border-radius: 25px;
   box-shadow: 0 4px 15px rgba(255,69,0,0.6);
-  font-family: "Nosifer", cursive;
-  font-size: 1.2rem;
-  font-weight: bold;
+  /* A família, o peso, a caixa e o espaçamento vêm da `.vpa-rotulo`
+     no `nav.css` (F-76). Estavam escritos aqui e em mais três sítios —
+     quatro cópias do mesmo papel, ao lado da classe criada para as
+     substituir e que ninguém tinha aplicado. Só o TAMANHO fica,
+     porque esse é deste botão. */
+  font-size: 1.15rem;
   
 
 }
@@ -334,9 +406,12 @@ section{
   color: #0d0b07;
   border-radius: 25px;
   box-shadow: 0 4px 15px rgba(255,69,0,0.6);
-  font-family: "Nosifer", cursive;
-  font-size: 1.2rem;
-  font-weight: bold;
+  /* A família, o peso, a caixa e o espaçamento vêm da `.vpa-rotulo`
+     no `nav.css` (F-76). Estavam escritos aqui e em mais três sítios —
+     quatro cópias do mesmo papel, ao lado da classe criada para as
+     substituir e que ninguém tinha aplicado. Só o TAMANHO fica,
+     porque esse é deste botão. */
+  font-size: 1.15rem;
   text-align: center;
 }
 
@@ -345,58 +420,276 @@ section{
   margin-top:5%;
 
 }
-.gerentes h1{
-  font-size: 50px;
-  text-align: center;
-}
-.creators-row{
-  display:flex;
-  flex-direction: row;
-  justify-content:space-around;
-  margin-top: 90px;
+/* O `<h1>` desta secção passou a `<h2>` no HTML: a página já tem um
+   `<h1>`, que é o hero. Dois `<h1>` numa página é uma hierarquia
+   inventada, e um leitor de ecrã anuncia dois títulos de nível 1
+   como se fossem duas páginas. O tamanho e a fonte vêm da regra
+   comum aos três `<h2>` desta página, em cima. */
+/* ── OS NOSSOS CRIADORES — a moldura (14/09) ─────────────────────────
+   ── O QUE ESTAVA MAL ────────────────────────────────────────────────
+   Duas fotografias sem moldura, sem canto redondo e sem forma comum,
+   encostadas uma à outra num `space-around` que não tinha `gap` para
+   distribuir. E a medida de cada foto escrita em CINCO sítios que
+   discordavam: `width="300" height="400"` no HTML da primeira,
+   `width="250" height="400"` no da segunda, e a largura outra vez
+   dentro de três media queries (220px aos 768, 180px aos 375, 150px
+   aos 320 — e só a dos 768 punha `height: auto`).
 
+   As imagens originais são 700×1589 (Guilherme) e 700×933 (João) —
+   formas muito diferentes. Medido no site publicado a 1440px: a foto
+   do Guilherme aparecia **42% mais larga** do que a proporção real,
+   visivelmente esticada. Em telemóvel, onde o `height: auto` mandava,
+   as duas saíam com alturas diferentes: 293px contra 499px.
+
+   É o defeito de sempre deste projeto — a mesma informação em vários
+   sítios que podem divergir sem ninguém avisar — só que desta vez não
+   estava escondido num teste: estava na página de entrada.
+
+   ── O QUE FAZ AGORA ─────────────────────────────────────────────────
+   A medida vive num sítio só, a `.creator-moldura`, e a forma vem do
+   `aspect-ratio: 3 / 4` com `object-fit: cover`: corta o que sobra em
+   vez de esticar. As duas ficam iguais e nenhuma fica deformada.
+
+   ── PORQUE É QUE ESTA MOLDURA É UM ARCO, E NÃO UMA BRASA ────────────
+   A primeira versão desta moldura levava o gradiente dos botões
+   (`#ff4500 → #957806`) com 6px de espessura e um brilho por fora.
+   Era coerente com o site e era gorda: **o peso ficava na moldura e
+   não na cara das pessoas.** O Guilherme viu e disse que queria "algo
+   mais requintado" — e tinha razão.
+
+   O que está aqui agora é o arco: um **fio de cobre de 1px**, uma
+   margem escura entre o fio e a fotografia (o passe-partout com que se
+   emolduram gravuras) e o topo redondo de um **nicho de parede**. A
+   forma vem da arquitectura de taberna, que é o mundo desta casa, e
+   não de um `border-radius` de conveniência. O requinte vem do vazio,
+   não da espessura.
+
+   ── E O TOM ÚNICO NAS FOTOGRAFIAS ───────────────────────────────────
+   As duas fotos foram tiradas em sítios diferentes: uma tem fundo de
+   praia e camisola vermelha, a outra um equipamento verde num
+   snack-bar. **Uma moldura fina só assenta em fotografias calmas** —
+   com estas, por mais fina que fosse a moldura, o par continuava a
+   bater. O `filter` põe as duas num tom quente único e elas passam a
+   ler-se como um par. É o que resolve mais com menos, e é reversível
+   numa linha se algum dia houver duas fotografias tiradas contra a
+   mesma parede.
+
+   O calor continua na MOLDURA e não nos dados (a regra da F-08), só
+   que agora sussurrado em vez de gritado: o cobre no fio, o âmbar no
+   tom das fotos, e o nome em dourado sólido `#e8b34f` — 9,9:1 sobre o
+   `#0f0f0f` da `.page`, contra os 3,0:1 a que o `--gradiente-fogo`
+   chegaria no seu ponto mais escuro.
+   ------------------------------------------------------------------ */
+.creators-row{
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;              /* em vez de encolher as colunas até partirem */
+  justify-content: center;
+  align-items: flex-start;
+  gap: 64px;                    /* o `space-around` não tinha nada para distribuir */
+  margin-top: 70px;
 }
+
 .creator{
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex: 1 1 300px;
+  max-width: 420px;             /* linhas de ~65 caracteres, que é o que se lê */
+  margin: 0;                    /* <figure> traz margem própria do browser */
 }
+
+.creator-moldura{
+  width: 260px;
+  aspect-ratio: 3 / 4;          /* a MESMA forma para as duas */
+
+  /* ── ESTAS TRÊS LINHAS SÃO O QUE FAZ O `aspect-ratio` VALER ───────
+     Sem elas, a moldura é um flex-item de uma coluna com
+     `min-height: auto`, e um flex-item nunca encolhe abaixo do
+     conteúdo. A imagem do Guilherme tem 2048px de altura natural,
+     por isso a moldura ia a 575px em vez dos 347px do `aspect-ratio`
+     — e as duas voltavam a ficar com formas diferentes, que era
+     exactamente o defeito que isto vem corrigir.
+
+     Apanhado só no ecrã. A medição dizia 260×347 nas duas, porque as
+     imagens têm `loading="lazy"` e o teste media antes de elas
+     carregarem: sem imagem não há conteúdo para empurrar a caixa.
+     Mais um teste a passar por não estar a olhar para a coisa real.
+     O `criadores.js` passou a fazer scroll e a esperar pelo `onload`. */
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: hidden;
+
+  /* O passe-partout em PERCENTAGEM e não em píxeis. A moldura muda de
+     largura em quatro degraus (260 → 220 → 190 → 160), e uma margem
+     fixa de 6px que fica elegante a 260 fica grossa a 160. Em
+     percentagem a margem acompanha sozinha — e, mais importante, **não
+     há um valor para repetir em cada media query**, que é exactamente
+     como a medida desta foto acabou escrita em cinco sítios. */
+  padding: 2.6%;
+
+  /* O arco: o topo redondo de um nicho. As duas primeiras medidas são
+     relativas de propósito (50% na horizontal, 31% na vertical), por
+     isso a curva mantém a mesma forma em qualquer largura. */
+  border-radius: 50% 50% 5px 5px / 31% 31% 2% 2%;
+
+  border: 1px solid rgba(201,131,47,0.62);   /* o fio de cobre */
+  background: #0a0907;                       /* o mate por trás da foto */
+  box-shadow: 0 20px 44px rgba(0,0,0,0.60);
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Ao passar o rato, o fio acende de cobre para dourado e a fotografia
+   recupera cor — o tom calmo é o estado de repouso, a cor é a
+   recompensa de olhar. Num telemóvel não há `:hover`, portanto o que se
+   vê lá é sempre o estado calmo, que é o que se escolheu. */
+.creator-moldura:hover{
+  transform: translateY(-3px);
+  border-color: rgba(232,179,79,0.85);
+  box-shadow: 0 24px 52px rgba(0,0,0,0.66), 0 0 22px rgba(201,131,47,0.22);
+}
+
+.creator-moldura:hover img{
+  filter: grayscale(0.25) sepia(0.12) saturate(1.15) contrast(1.02) brightness(0.98);
+}
+
+/* Quem tem o sistema com "reduzir movimento" ligado não leva o salto.
+   O fio e a cor continuam a acender — isso não é movimento. */
+@media (prefers-reduced-motion: reduce) {
+  .creator-moldura, .creator-moldura:hover { transition: none; transform: none; }
+}
+
+.creator-moldura img{
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;            /* corta, não estica */
+
+  /* O `object-position` só mexe numa das duas: a foto do João já é
+     exactamente 3:4 (700×933), portanto entra inteira e não há nada
+     para posicionar. A do Guilherme é 700×1589 — de corpo inteiro —
+     e a 3:4 perde 44% da altura. Com o valor por omissão (`center`)
+     o recorte sai pelo meio e corta-lhe a cabeça; a 8% fica a parte
+     de cima, que é onde está a cara. */
+  /* ── ESTE VALOR SÓ AFECTA UMA DAS DUAS FOTOGRAFIAS ────────────────
+     A do João é 700×933, que é 3:4 exacto: entra inteira na moldura e
+     não há nada para posicionar. A do Guilherme é 700×1589 — de corpo
+     inteiro — e a 3:4 sobram 656px de altura para deslizar. É só ela
+     que este número move, e por isso está afinado a olho para ela.
+
+     Histórico, porque isto foi ajustado três vezes e vale a pena não
+     repetir: 8% com a moldura rectangular; 15% quando entrou o arco,
+     porque a curva comia o topo da cabeça; e 4% agora, porque a 15% a
+     figura ficava encostada à nascença do arco, sem ar por cima —
+     apontado pelo Guilherme a ver o ecrã, não medido.
+
+     Se algum dia aparecerem fotografias novas, este valor tem de ser
+     reafinado a olho: não há nada aqui que o possa calcular. */
+  object-position: center 4%;
+
+  border-radius: 50% 50% 3px 3px / 31% 31% 2% 2%;   /* acompanha o arco */
+  background: #14110d;          /* enquanto a imagem não chega */
+
+  /* O TOM ÚNICO. Ver o comentário grande em cima: é isto que faz as
+     duas fotografias lerem-se como um par em vez de baterem uma com a
+     outra. Uma linha para voltar atrás, se aparecerem fotos novas. */
+  /* O `brightness` sobe acima de 1 de propósito. As duas fotografias
+     foram tiradas com pouca luz e a dessaturação escurece-as ainda
+     mais: com `brightness(0.9)` a cara do João deixava de se ler,
+     visto no ecrã aos dois tamanhos. A 1.12 as duas ficam legíveis e o
+     tom continua quente. */
+  filter: grayscale(1) sepia(0.40) saturate(1.35) contrast(1.06) brightness(1.12);
+  transition: filter 0.3s ease;
+
+  /* O fio interior segue o arco. Um `outline` não seguia a curva em
+     todos os browsers; um `box-shadow: inset` segue sempre. */
+  box-shadow: inset 0 0 0 1px rgba(201,131,47,0.34);
+}
+
+.creator-nome{
+  margin-top: 18px;
+  /* "João" e "Guilherme": uma palavra cada, portanto voz de display
+     (F-80). Medido no site publicado: 115px e 257px de largura a 32px,
+     uma linha cada. */
+  font-family: var(--fonte-display);
+  font-size: 2rem;
+  line-height: 1.1;
+  color: #e8b34f;
+  filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.8));
+}
+
 .creator p{
-  margin-top: 30px;
+  margin-top: 14px;
   text-align: center;
   line-height: 1.6;
 }
 
-.andreila{
-  display:flex;
-  flex-direction: row;
-  border-radius: 50px;
-  align-items: center;
-  gap: 20px;
+/* ── O AVATAR DAS REVIEWS (F-77, 15/09) ──────────────────────────────
+   A `.ft` está em quatro `<img>` e **não tinha uma única regra de CSS
+   em todo o projeto.** O avatar redondo de 60px vinha de a classe
+   `.andreila` (e `.sara`, `.tatiana`, `.gabriel`) estar ao mesmo tempo
+   no `<img>` e no `<div>` que o envolve — e essas são regras de
+   CONTENTOR: `display: flex`, `gap: 20px`, `border-radius`. A imagem
+   herdava-as por acidente, e um `<img>` com `display: flex` e `gap`
+   não quer dizer nada.
+
+   O acidente está a sustentar o aspecto, por isso a classe duplicada
+   FICA: tirá-la deixava os avatares quadrados. O que muda é que a
+   intenção passa a estar escrita aqui, em vez de depender de uma
+   colisão de nomes que a próxima pessoa descobriria por acaso.
+   ------------------------------------------------------------------ */
+/* As estrelas passaram para DENTRO do `<span class="reviewer">` quando
+   o markup cruzado foi corrigido (F-77) — antes o `</div>` fechava
+   dentro do `<span>` e o browser empurrava-as para fora da linha do
+   avatar. Agora ficam ao lado do nome, como se queria, e só lhes falta
+   um espaço. */
+.estrelas {
+  display: inline-block;      /* permite a quebra ANTES das estrelas */
+  margin-left: 8px;
+  letter-spacing: 1px;
+  white-space: nowrap;        /* mas nunca no meio delas */
 }
 
-.sara{
-  display:flex;
-  flex-direction: row;
-  border-radius: 100px;
-  align-items: center;
-  gap: 20px;
+.ft {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;        /* as quatro fotos não têm a mesma forma */
+  flex-shrink: 0;
 }
 
-.tatiana{
-  display:flex;
+/* ── O CABEÇALHO DE UMA REVIEW: AVATAR + NOME + ESTRELAS ─────────────
+   Eram **quatro regras** — `.andreila`, `.sara`, `.tatiana`,
+   `.gabriel` — idênticas entre si tirando um `border-radius` que num
+   contentor flex não desenha nada (estava lá para arredondar a imagem
+   pela colisão de classes, que agora é trabalho da `.ft`). Quatro
+   cópias do mesmo cabeçalho, uma por pessoa, que divergiriam na
+   primeira vez que alguém mexesse numa.
+
+   ── E O `flex-wrap`, QUE É UMA REGRESSÃO MINHA ─────────────────────
+   Ao corrigir o markup cruzado destas reviews (F-77), as ⭐ passaram
+   para DENTRO do `<span>` do nome — que é onde o autor as queria, e o
+   `</div>` fora de ordem era o que as empurrava para fora da linha.
+   Só que fora da linha elas podiam quebrar livremente, e coladas ao
+   nome não podem: medido, a página passou a transbordar **9px a 375px
+   e 56px a 320px**, e dois testes apanharam-no (o `criadores.js` e o
+   `tipografia.js`).
+
+   Uma correcção de estrutura correcta com uma consequência de layout
+   que eu não previ. O `flex-wrap` e o `min-width: 0` são o que faltava
+   para o cabeçalho poder partir em duas linhas num telemóvel. */
+.andreila, .sara, .tatiana, .gabriel {
+  display: flex;
   flex-direction: row;
-  border-radius: 50px;
+  flex-wrap: wrap;            /* deixa o nome cair para baixo do avatar */
   align-items: center;
-  gap: 20px;
+  gap: 12px 20px;             /* menos espaço entre linhas do que entre colunas */
+  min-width: 0;               /* sem isto, um flex-item não encolhe */
 }
 
-.gabriel{
-  display:flex;
-  flex-direction: row;
-  border-radius: 50px;
-  align-items: center;
-  gap: 20px; 
+.reviewer {
+  min-width: 0;
+  overflow-wrap: break-word;  /* um nome comprido parte-se em vez de sair */
 }
 
 
@@ -440,6 +733,24 @@ section{
 }
 
 @media (max-width: 768px) {
+  /* ── AQUI JÁ NÃO SE POSICIONA NADA (F-81) ──────────────────────────
+     Este bloco tinha `position: absolute !important` + `left: 50%` +
+     `transform` no logótipo, no título E no botão, mais um `top: 30%`
+     no logótipo. Eram os restos do hero antigo, e foi por eles que a
+     primeira versão desta correcção não funcionou: eu tirei os `top` e
+     deixei os `position`, e os três continuaram empilhados uns sobre os
+     outros dentro do contentor novo — medido, os três com o mesmo
+     fundo a 307px.
+
+     *Enumerei as regras com um padrão que procurava `top`, `width` e
+     `height` e não `position`, e concluí que só havia cinco números a
+     mexer. Havia mais.* Os três são agora filhos de um `flex` e não
+     precisam de coordenadas. */
+  /* A altura útil do hero nesta largura. É o MESMO número que a
+     `.page` usa para começar (F-81) — não há um segundo sítio
+     para ficar desalinhado. */
+  :root { --hero-util: 80vh; }
+
   /* Header e navegação - keep nav on sides */
   .inline-bar {
     height: 50px !important;
@@ -494,10 +805,6 @@ section{
 
   /* Logo centered in hero - even bigger size */
   .hero-logo {
-    position: absolute !important;
-    top: 30% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
     width: 180px !important;
     max-width: 55% !important;
     height: auto !important;
@@ -506,12 +813,7 @@ section{
 
   /* Title centered */
   .h1 {
-    position: absolute !important;
-    top: 52% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
     width: 90% !important;
-    font-size: 2rem !important;
     text-align: center !important;
     white-space: normal !important;
     line-height: 1.3;
@@ -519,21 +821,23 @@ section{
 
   /* Button centered */
   .btn {
-    position: absolute !important;
-    top: 68% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
     width: auto !important;
     text-align: center !important;
     font-size: 1.1rem !important;
     padding: 14px 28px !important;
   }
 
+  /* Ao telemóvel não há sala à direita para deixar livre: a imagem é
+     recortada e o conteúdo usa a largura toda (F-81). */
+  .hero-conteudo {
+    width: 100% !important;
+  }
+
   /* Page content - keep PC-like margins (increased to 80px) */
   .page {
     margin-left: 80px !important;
     margin-right: 80px !important;
-    margin-top: 80vh !important;
+    /* o hero e a página partilham este número (F-81) */
     width: auto !important;
     border-radius: 25px !important;
     padding: 25px 20px !important;
@@ -553,7 +857,6 @@ section{
   }
 
   .menu h2 {
-    font-size: 32px !important;
     text-align: left !important;
   }
 
@@ -591,7 +894,6 @@ section{
   }
 
   .prego h2 {
-    font-size: 32px !important;
     text-align: left !important;
   }
 
@@ -615,22 +917,24 @@ section{
   }
 
   /* Gerentes / Creators */
-  .gerentes h1 {
-    font-size: 32px !important;
-    text-align: center !important;
-  }
 
   .creators-row {
     flex-direction: row !important;
-    justify-content: space-around !important;
+    justify-content: center !important;
     align-items: flex-start !important;
-    gap: 30px !important;
+    gap: 36px !important;
     margin-top: 50px !important;
   }
 
-  .creator img {
+  /* A medida da foto é a da MOLDURA — a imagem enche-a sempre a 100%.
+     O `height: auto` que estava aqui era o que fazia as duas saírem com
+     alturas diferentes (293px contra 499px) em telemóvel. */
+  .creator-moldura {
     width: 220px !important;
-    height: auto !important;
+  }
+
+  .creator-nome {
+    font-size: 1.75rem !important;
   }
 
   .creator p {
@@ -674,15 +978,17 @@ section{
 
 /* Extra small mobile - 480px */
 @media (max-width: 480px) {
+  /* A altura útil do hero nesta largura. É o MESMO número que a
+     `.page` usa para começar (F-81) — não há um segundo sítio
+     para ficar desalinhado. */
+  :root { --hero-util: 70vh; }
+
   .page {
     margin-left: 40px !important;
     margin-right: 40px !important;
-    margin-top: 70vh !important;
+    /* o hero e a página partilham este número (F-81) */
   }
 
-  .h1 {
-    font-size: 1.5rem !important;
-  }
 
   .hero-logo {
     width: 200px !important;
@@ -693,9 +999,6 @@ section{
     padding: 12px 20px !important;
   }
 
-  .menu h2, .prego h2 {
-    font-size: 26px !important;
-  }
 
   .prato-favorito, .prego-tatiana {
     width: 100% !important;
@@ -713,21 +1016,24 @@ section{
 
 /* Extra small mobile - 375px */
 @media (max-width: 375px) {
+  /* A altura útil do hero nesta largura. É o MESMO número que a
+     `.page` usa para começar (F-81) — não há um segundo sítio
+     para ficar desalinhado. */
+  :root { --hero-util: 65vh; }
+
   .page {
     margin-left: 30px !important;
     margin-right: 30px !important;
-    margin-top: 65vh !important;
+    /* o hero e a página partilham este número (F-81) */
     padding: 20px 15px !important;
   }
 
   .h1 {
-    font-size: 1.3rem !important;
     padding: 0 10px;
   }
 
   .btn {
     width: 85% !important;
-    margin-left: 7.5% !important;
     font-size: 0.95rem !important;
     padding: 11px 18px !important;
   }
@@ -738,16 +1044,17 @@ section{
     font-size: 0.95rem !important;
   }
 
-  .menu h2, .prego h2 {
-    font-size: 22px !important;
-  }
 
   .creators-row {
     margin-top: 35px !important;
   }
 
-  .creator img {
-    width: 180px !important;
+  .creator-moldura {
+    width: 190px !important;
+  }
+
+  .creator-nome {
+    font-size: 1.6rem !important;
   }
 
   .inline-nav {
@@ -769,18 +1076,19 @@ section{
 
 /* Extra small mobile - 320px */
 @media (max-width: 320px) {
+  /* A altura útil do hero nesta largura. É o MESMO número que a
+     `.page` usa para começar (F-81) — não há um segundo sítio
+     para ficar desalinhado. */
+  :root { --hero-util: 60vh; }
+
   .page {
     margin-left: 25px !important;
     margin-right: 25px !important;
-    margin-top: 60vh !important;
+    /* o hero e a página partilham este número (F-81) */
     padding: 15px 12px !important;
     border-radius: 20px !important;
   }
 
-  .h1 {
-    font-size: 1.1rem !important;
-    top: 55% !important;
-  }
 
   .hero-logo {
     width: 150px !important;
@@ -789,19 +1097,16 @@ section{
   .btn {
     font-size: 0.85rem !important;
     padding: 10px 15px !important;
-    top: 70% !important;
   }
 
-  .menu h2, .prego h2 {
-    font-size: 20px !important;
+
+
+  .creator-moldura {
+    width: 160px !important;
   }
 
-  .gerentes h1 {
-    font-size: 24px !important;
-  }
-
-  .creator img {
-    width: 150px !important;
+  .creator-nome {
+    font-size: 1.5rem !important;   /* 24px — o limiar de "texto grande" da WCAG */
   }
 
   .inline-nav a {

@@ -443,7 +443,10 @@ valor fica gravado — congela, para a conta de hoje não mudar se amanhã se al
 > **Bom:** a exclusão das rondas anuladas está mesmo lá — o `seed.sql` faz
 > `SUM(p.valor_total) ... WHERE p.estado <> 'cancelado'`. Confirmado, não presumido.
 >
-> **Por fechar:** a **vista `vw_total_sessao` ainda não existe no `schema.sql`**. O que existe
+> **~~Por fechar~~ → RESOLVIDO.** A nota dizia que a **vista `vw_total_sessao` não existia
+> no `schema.sql`**. Existe, no `schema.sql:550` (`CREATE OR REPLACE VIEW`), e o
+> `/api/saude` conta-a — é a "1 vista" que ele devolve ao lado das 18 tabelas. Verificado
+> a 14/09. O resto do parágrafo fica como registo do que era verdade a 03/09. O que existia
 > é `sessao_mesa.valor_total`, uma coluna **gravada** (`DECIMAL(10,2) DEFAULT 0.00`),
 > preenchida uma vez por aquele `UPDATE` do seed.
 >
@@ -492,11 +495,22 @@ que alguém escrever `Aberta` numa migração, o ecrã não parte por causa de u
 
 ---
 
-## 4. Endpoints em falta ⛔ (o front-end já conta com eles)
+## 4. Contrato dos endpoints ✅
 
-Estes ainda **não existem**. O front-end já os chama através do `frontend/js/api.js`, que
-por agora responde com dados simulados. Assim que existirem no servidor, basta pôr
-`MODO_SIMULACAO = false` nesse ficheiro — não é preciso mexer em mais nada.
+> **Esta secção chamava-se *"Endpoints em falta ⛔ (o front-end já conta com eles)"* e a
+> intro dizia que nenhum existia. Renomeada a 14/09: existem os 34, e cada subsecção já
+> diz a sua data. Um título a anunciar que nada está feito, em cima da referência**
+> **completa do que está todo feito, é a pior espécie de texto velho — é o primeiro que se lê**
+> **e o último que alguém se lembra de corrigir.**
+
+Aqui vive o contrato de cada caminho: o que aceita, o que devolve e com que erros. É a
+referência a consultar antes de ligar um ecrã.
+
+> ⚠️ **A intro antiga dizia também que "basta pôr `MODO_SIMULACAO = false` — não é preciso** 
+> **mexer em mais nada", e isso contradizia a §5 deste mesmo documento**, que existe
+> precisamente para explicar que *não é um interruptor, é uma lista*. Duas secções do
+> mesmo ficheiro a dizer o contrário uma da outra: é o defeito da casa, aplicado a
+> documentação em vez de a código. Vale a §5.
 
 ### 4.1 `POST /api/auth/login` — **prioridade máxima**
 
@@ -1249,9 +1263,16 @@ existem mesmo. Vão ao servidor com a simulação ligada; **todo o resto continu
 medida que cada endpoint fica pronto, acrescenta-se uma linha. No dia em que a lista cobrir
 tudo, põe-se `MODO_SIMULACAO = false` e apaga-se a lista e a simulação inteira.
 
-**A 09/09 são 15 caminhos**, e cobrem quatro coisas: o catálogo (`saude`, `categorias`,
-`produtos`), a autenticação (`auth/login`, `auth/eu`), as sessões de mesa (`mesas/:token/…`,
-que não levam login — o token do QR é a credencial) e a fila de trabalho (`pedidos/…`).
+**A 11/09 a lista cobre os 34 caminhos do servidor** — todos. Eram 15 a 09/09, e a frase
+ficou aqui a dizer 15 durante dois dias em que passaram a 34. Cobrem o catálogo, a
+autenticação, as sessões de mesa e o take away (sem login: o token do QR e o número da
+encomenda são a credencial), a fila de trabalho, o stock, os produtos, as categorias, os
+funcionários, as estatísticas, os QR Codes das mesas e as reservas — de fora e de dentro.
+
+> **A lista cobrir tudo não quer dizer que se deva desligar a simulação.** O
+> `?simular=1` é o plano B da apresentação e é o que os testes usam; deixa de ser a
+> muleta de quem espera por um endpoint e passa a ser uma ferramenta. Verificado a
+> 11/09, caminho a caminho contra os padrões, e não por os dois números baterem.
 
 > **A lista exata vive no `api.js` e não aqui, de propósito.** Este documento chegou a ter
 > uma cópia dela com 4 entradas quando o ficheiro já tinha 15 — copiada uma vez e nunca mais
@@ -1296,6 +1317,12 @@ estava depois. Verificado em `frontend/testes/api-base.js`.
 > sem stock, sem autenticação e sem reservas**, e recomendava manter o âmbito reduzido. Isso
 > era verdade em 01/09. O João reescreveu tudo entretanto e avisou: *"quem ler pensa que o
 > projeto é um quarto do que é"*. Tinha razão. Fica corrigida.
+>
+> **E voltou a acontecer (14/09).** A linha do número de tabelas dizia 17 desde 03/09; são
+> 18 desde 09/09. A secção que traz um aviso a dizer que já esteve desactualizada estava
+> desactualizada outra vez, no mesmo formato e sobre o mesmo tipo de facto. **Um aviso
+> não é uma correcção**: enquanto o número for escrito à mão, volta a fugir. O que não
+> foge é o `/api/saude`, que conta a base em vez de a descrever, e o `npm run numeros`.
 
 ### O que existe mesmo
 
@@ -1303,7 +1330,7 @@ estava depois. Verificado em `frontend/testes/api-base.js`.
 |---|---|---|
 | Base de dados | PostgreSQL + SQL à mão | **MySQL**, com `schema.sql` e `seed.sql` versionados |
 | Camada de acesso | Prisma ORM | **`mysql2` com pool de ligações** — o Prisma saiu do projeto a 02/09 |
-| Nº de tabelas | 16 | **17**, confirmado no `schema.sql` |
+| Nº de tabelas | 16 | **18**, confirmado no `schema.sql` — eram 17 até a `movimento_stock` entrar a 09/09 |
 | Stock | não existia | **existe**, e desce em `confirmado` / volta em `cancelado` (regra 24) |
 | Utilizadores e níveis | não existia | **existe** — é de lá que sai o `nivel` do login |
 | Reservas | não existia | **existe** |

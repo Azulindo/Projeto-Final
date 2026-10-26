@@ -136,14 +136,34 @@
 }
 
 .stock-ok { font-variant-numeric: tabular-nums; color: var(--texto-suave); }
-.stock-nao-controla { color: var(--texto-fraco); cursor: help; }
+.stock-nao-controla { color: var(--texto-suave); cursor: help; }
 
 /* ── Cabeçalhos ordenáveis ────────────────────────────────────────── */
 
+/* ── ALVOS DE TOQUE: 28px DE ALTURA MÍNIMA (F-78, 15/09) ─────────────
+   A WCAG 2.5.8 «Target Size (Minimum)», que é **nível AA** — o nível
+   para que este projeto trabalha —, exige **24px** em qualquer coisa em
+   que se clique ou toque. Estes cabeçalhos ordenáveis tinham
+   `padding: 0` e ficavam com a altura do texto: **18px**.
+
+   Nada tinha apanhado isto porque a varredura do site (F-77) passava
+   só pelas 8 páginas do cliente, e a app de gestão — dez ecrãs, metade
+   do projeto — não estava na lista. Eu escrevi a lista curta e disse
+   ao Guilherme que tinha "varrido o site por todo"; ele perguntou se
+   estava tudo corrigido, e a resposta honesta obrigou-me a estender a
+   varredura. Apareceram **cinco falhas AA** de uma vez, nesta e em
+   quatro outras regras.
+
+   28px e não 24: 24 é o limiar exacto, e um limiar exacto falha com
+   meio píxel de arredondamento. */
 .ordenar {
   background: none;
   border: none;
   padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
   font: inherit;
   color: inherit;
   text-transform: inherit;
@@ -232,7 +252,7 @@
 .nota-rodape {
   margin-top: 18px;
   font-size: 12.5px;
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
   line-height: 1.6;
 }
 
@@ -424,7 +444,7 @@
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.interruptor:hover { border-color: var(--texto-fraco); }
+.interruptor:hover { border-color: var(--texto-suave); }
 .interruptor:focus-within { outline: 2px solid var(--cobre); outline-offset: 2px; }
 
 .interruptor input[type="checkbox"] {

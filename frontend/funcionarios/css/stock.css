@@ -230,7 +230,7 @@
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.tipo:hover { border-color: var(--texto-fraco); }
+.tipo:hover { border-color: var(--texto-suave); }
 
 .tipo input[type="radio"] {
   margin-top: 2px;

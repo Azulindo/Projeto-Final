@@ -239,7 +239,7 @@ async function esperarAcao(p, limite = 14000) {
   check('A reserva fica REGISTADA, não "confirmada" — quem confirma é o restaurante',
         /registada/i.test(corpoChat) && !/confirmada com sucesso/i.test(corpoChat));
 
-  const codigo = (corpoChat.match(/RES-[A-Z0-9]{5}/) || [])[0];
+  const codigo = (corpoChat.match(/RSV-[A-Z0-9]{5}/) || [])[0];
   check('O código vem do servidor, no formato dele', !!codigo, codigo || 'nenhum');
 
   const lida = await p.evaluate(async c => {
@@ -310,7 +310,7 @@ async function esperarAcao(p, limite = 14000) {
 
   /* ── 6. Um código que não existe ───────────────────────────────── */
   const inexistente = await p.evaluate(async () => {
-    try { await chamarAPI('reservas/RES-ZZZZZ'); return 'passou'; }
+    try { await chamarAPI('reservas/RSV-ZZZZZ'); return 'passou'; }
     catch (e) { return String(e.status); }
   });
   check('Um código que não existe dá 404', inexistente === '404', inexistente);

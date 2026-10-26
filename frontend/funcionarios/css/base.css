@@ -72,7 +72,33 @@ dialog:modal {
 
   /* Texto */
   --texto:        #eef0f3;
-  --texto-suave:  #98a0ac;
+  --texto-suave:  #98a0ac;   /* o mais fraco que ainda se pode LER: 5,45:1 no pior fundo */
+
+  /* ⚠️ O --texto-fraco NÃO É UMA COR DE TEXTO (corrigido 11/09, F-60).
+     Medido nos quatro fundos da app: 2,95:1 no --bg, 2,72:1 no
+     --bg-elevada, 2,54:1 no --bg-card e 2,35:1 no --bg-hover. O mínimo
+     da WCAG para texto normal é 4,5:1 — falha nos quatro, e falha pior
+     justamente na linha sob o rato.
+
+     O que interessa nisto não é o número, é a HISTÓRIA: quando o
+     contraste passou a ser medido nos ecrãs de gestão, apareceram três
+     ficheiros — o dashboard.css, o estatisticas.css e o produtos.css —
+     cada um com o seu comentário a dizer "o --texto-fraco dava 2,72:1
+     aqui" e a sua correção local. **Três pessoas-momentos encontraram o
+     mesmo defeito, corrigiram-no três vezes em três sítios, e ninguém
+     tocou na variável.** Por isso o quarto, o quinto e o sexto sítio
+     continuavam lá — as frases de "nada ao lume" da cozinha e o "—" do
+     ecrã de produtos, a 2,72:1.
+
+     Tentou-se subi-la (o #8a94a2 passa, com 4,68:1), e a ideia foi
+     abandonada: a 4,5:1 de mínimo já não há espaço entre ela e o
+     --texto-suave — ficavam dois cinzentos que ninguém distingue e a
+     variável perdia a razão de existir. Portanto muda de emprego em vez
+     de mudar de cor.
+
+     PODE: molduras, anéis de :hover, separadores, o ponto de ligação.
+     NÃO PODE: `color:` de nada. Se precisas de texto discreto, o mais
+     fraco que se lê é o --texto-suave. */
   --texto-fraco:  #5b6270;
 
   /* Estados semânticos — usados em badges de estado de pedido, stock, etc. */
@@ -80,6 +106,24 @@ dialog:modal {
   --aviso:        #f5a524;
   --perigo:       #ef4444;
   --info:         #4f9dde;
+
+  /* ── O vermelho tem três empregos e não dá um só tom ───────────────
+     (11/09, F-60.) O --perigo #ef4444 foi escolhido para MOLDURAS —
+     bordas, o ponto de "desligado", a barra à esquerda de um cartão —
+     e para isso está bem. Mas estava a ser usado também como cor de
+     texto e como fundo de etiqueta, e nessas duas falha:
+
+       · como TEXTO sobre os fundos escuros: 4,44:1 no --bg-elevada,
+         4,14:1 no --bg-card, 3,82:1 no --bg-hover. Mínimo 4,5:1.
+       · como FUNDO com branco por cima: 3,76:1 — e é o que a etiqueta
+         do stock baixo na barra lateral faz, a 10px, em TODOS os nove
+         ecrãs. Uma etiqueta de 10px nunca conta como "texto grande",
+         por isso não há como escapar pelo limite dos 3:1.
+
+     Daí três variáveis em vez de uma. O nome diz o emprego, para a
+     próxima pessoa não ter de adivinhar qual serve: */
+  --perigo-texto: #f87171;   /* vermelho a LER sobre fundo escuro — 5,20:1 no pior fundo */
+  --perigo-fundo: #d92b2b;   /* vermelho POR TRÁS de branco — 4,85:1 com branco por cima */
 
   /* Escala e forma */
   --radius-sm:  8px;
@@ -251,7 +295,9 @@ tr:hover td { background: var(--bg-hover); }
 
 .campo .erro-msg {
   font-size: 12.5px;
-  color: var(--perigo);
+  /* A mensagem de erro de um campo é a frase que MAIS precisa de ser
+     lida em toda a app, e estava a 12,5px no vermelho de moldura. */
+  color: var(--perigo-texto);
   display: none;
 }
 

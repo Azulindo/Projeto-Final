@@ -114,10 +114,9 @@
 
 /* TEXTO HERO MENU */
 .h1-menu {
-  font-family: "Metal Mania", sans-serif;
-  font-size: 3rem;
+  font-family: var(--fonte-display);   /* título de PÁGINA: curto (F-80) */
   text-align: center;
-  background: linear-gradient(180deg, #ffcc00 10%, #ff4500 50%, #7a0000 90%);
+  background: var(--gradiente-fogo);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -177,11 +176,10 @@
 }
 
 .section-title {
-  font-family: "Metal Mania", sans-serif;
-  font-size: 2rem;
+  font-family: var(--fonte-titulo);
   text-align: center;
   margin-bottom: 25px;
-  background: linear-gradient(180deg, #ffcc00 10%, #ff4500 50%, #7a0000 90%);
+  background: var(--gradiente-fogo);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -256,7 +254,7 @@
 .dish-name {
   position: relative;
   z-index: 2;
-  font-family: "Metal Mania", sans-serif;
+  font-family: var(--fonte-titulo);
   font-size: 1.1rem;
   text-align: center;
   color: #fff;
@@ -322,13 +320,31 @@
      tabulação por completo enquanto o lightbox está fechado. */
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.25s ease, visibility 0.25s ease;
+  /* ── `visibility 0s linear 0.25s` e não `visibility 0.25s` (F-83) ──
+     Uma propriedade discreta como a `visibility` não se interpola: com
+     `0.25s` o browser mantém o valor ANTIGO durante metade da duração
+     e só depois o troca. Ou seja, a seguir a pôr a classe `aberto` o
+     diálogo continuava `hidden` por ~125ms.
+
+     Consequência medida: o `btnFechar.focus()` do `galeria.js` — que
+     existe para o foco entrar no diálogo — **falhava em silêncio**,
+     porque um elemento invisível não aceita foco. Abrir a galeria com
+     o Enter deixava o foco no cartão, fora de um diálogo que declara
+     `aria-modal="true"`. Nem um `requestAnimationFrame` chegava: 16ms
+     contra 125.
+
+     Assim a troca é instantânea a abrir (atraso 0) e fica para o fim a
+     fechar (atraso 0.25s, o tempo de o `opacity` desaparecer), que é o
+     que se quer nos dois sentidos. */
+  transition: opacity 0.25s ease, visibility 0s linear 0.25s;
 }
 
 .lightbox-overlay.aberto {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
+  /* Sem atraso a abrir — ver o comentário acima. */
+  transition: opacity 0.25s ease, visibility 0s linear 0s;
 }
 
 .lightbox-caixa {
@@ -366,10 +382,10 @@
 
 .lightbox-nome {
   margin-top: 18px;
-  font-family: "Metal Mania", sans-serif;
+  font-family: var(--fonte-titulo);
   font-size: 1.6rem;
   text-align: center;
-  background: linear-gradient(180deg, #ffcc00 10%, #ff4500 50%, #7a0000 90%);
+  background: var(--gradiente-fogo);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -491,9 +507,6 @@
     padding: 30px 20px;
   }
 
-  .h1-menu {
-    font-size: 2rem;
-  }
   
   .galeria-container {
     flex-direction: column;
@@ -561,9 +574,6 @@
     padding: 20px 10px;
   }
 
-  .h1-menu {
-    font-size: 1.5rem !important;
-  }
 
   .hero-logo-menu {
     height: 180px !important;
@@ -592,9 +602,6 @@
     padding: 15px 10px;
   }
 
-  .h1-menu {
-    font-size: 1.3rem !important;
-  }
 
   .hero-logo-menu {
     height: 150px !important;
@@ -627,9 +634,6 @@
     padding: 12px 8px;
   }
 
-  .h1-menu {
-    font-size: 1.1rem !important;
-  }
 
   .hero-logo-menu {
     height: 120px !important;

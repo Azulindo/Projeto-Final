@@ -3,14 +3,19 @@
    A barra lateral e o topo vêm de layout.css / layout.js.
    ===================================================================== */
 
+/* Era `flex` centrado, quando a página tinha só o cartão de
+   boas-vindas. Com a tabela da F-61 em cima, centrar verticalmente
+   empurrava a tabela para o meio do ecrã e cortava-a em baixo. Passa a
+   coluna normal; o cartão centra-se sozinho com a margem automática. */
 body[data-pagina="dashboard"] #conteudoPagina {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: 28px;
 }
 
 .placeholder-card {
   max-width: 440px;
+  margin: 0 auto;
   text-align: center;
   background: var(--bg-elevada);
   border: 1px dashed var(--border);
@@ -60,4 +65,200 @@ body[data-pagina="dashboard"] #conteudoPagina {
   /* Era --texto-fraco: 2,72:1 sobre este fundo, quando o mínimo da WCAG
      para texto normal é 4,5:1. É uma nota discreta, não invisível. */
   color: var(--texto-suave);
+}
+
+
+/* =====================================================================
+   F-61 — Tabela de reservas
+   =====================================================================
+   Segue a regra da F-08 — "calor na moldura, nunca nos dados". O que
+   distingue uma reserva de hoje é um fio dourado na BORDA da linha, não
+   um nome escrito a amarelo. As etiquetas de estado são a excepção
+   combinada: uma etiqueta é um rótulo e não um dado, e o padrão já
+   existia no balcao.css (fundo tingido + a cor no texto).
+
+   Os contrastes abaixo foram calculados sobre o --bg-card (#20242b),
+   que é o fundo das linhas. Dois foram trocados por causa disso, e está
+   escrito onde. */
+
+.secao-reservas {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.secao-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.secao-cabecalho h1 {
+  font-size: 19px;
+}
+
+.btn-recarregar {
+  /* 44px de alto: este botão é premido num tablet no balcão, e é o
+     mínimo da WCAG 2.5.5 para um alvo de toque. */
+  min-height: 44px;
+  padding: 0 18px;
+}
+
+/* ── A linha de hoje ────────────────────────────────────────────────
+   Fio dourado à esquerda. Nada de fundo colorido: a linha continua a
+   ler-se como as outras, só salta ao olho de quem procura o dia. */
+.tabela-reservas .res-hoje td:first-child {
+  box-shadow: inset 3px 0 0 var(--dourado);
+}
+
+/* ── Reservas que já não contam ─────────────────────────────────────
+   Canceladas e recusadas. Continuam na tabela de propósito — saber que
+   uma mesa ficou livre é informação —, mas não competem pela atenção.
+   Sem `opacity`: baixar a opacidade de uma linha inteira arrasta o
+   contraste do texto para baixo do mínimo sem dar por isso. Em vez
+   disso, a cor suave que já está medida (5,92:1) e um risco no nome. */
+.tabela-reservas .res-morta td {
+  color: var(--texto-suave);
+}
+
+.tabela-reservas .res-morta td:nth-child(2) strong {
+  text-decoration: line-through;
+  color: var(--texto-suave);
+}
+
+/* O `.res-tel` põe a cor dele próprio, por isso a regra de cima não o
+   apanhava: numa linha cancelada a coisa MAIS brilhante era o telefone
+   — o contrário do que a linha esfumada está a tentar dizer. Visto na
+   captura da linha do Filipe Abreu. Continua a ser um link (dá-se o
+   caso de se querer ligar a confirmar o cancelamento), só deixa de
+   chamar por atenção. */
+.tabela-reservas .res-morta .res-tel {
+  color: var(--texto-suave);
+}
+
+/* ── Coluna "Quando" ──────────────────────────────────────────────── */
+.tabela-reservas td:first-child { white-space: nowrap; }
+
+.res-hora {
+  display: block;
+  font-size: 13px;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Coluna "Quem" ────────────────────────────────────────────────── */
+.res-tel,
+.res-obs {
+  display: block;
+  font-size: 12.5px;
+}
+
+.res-tel {
+  /* --info (#4f9dde): 5,39:1 sobre o --bg-card. Sublinhado, porque
+     distinguir um link só pela cor falha o critério 1.4.1 da WCAG para
+     quem não separa azul de cinzento. */
+  color: var(--info);
+  text-decoration: underline;
+  font-variant-numeric: tabular-nums;
+  /* 24px é o mínimo AA (2.5.8) para um alvo de toque, e é o que cabe
+     dentro de uma linha de tabela sem a duplicar de altura. Os 44px do
+     2.5.5 (AAA) ficariam por cumprir aqui e não vale a pena dizer o
+     contrário: fica assumido e escrito. */
+  min-height: 24px;
+  padding: 2px 0;
+}
+
+.res-obs {
+  color: var(--texto-suave);
+  font-style: italic;
+}
+
+.res-codigo {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px 7px;
+  white-space: nowrap;
+}
+
+/* ── Coluna "Ementa" ──────────────────────────────────────────────── */
+.tabela-reservas td:nth-child(5) { max-width: 300px; }
+
+.res-itens {
+  display: block;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.res-valor {
+  display: block;
+  margin-top: 3px;
+  font-size: 12.5px;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+.res-sem-ementa {
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+/* ── O aviso de stock baixo ─────────────────────────────────────────
+   --aviso (#f5a524) sobre o fundo tingido: 7,76:1. É um aviso para
+   DECIDIR e não um alarme — por isso amarelo e não o --perigo, que
+   nesta app está reservado a coisas que já correram mal. */
+.res-aviso-stock {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--aviso);
+  background: rgba(245, 165, 36, 0.12);
+  border: 1px solid rgba(245, 165, 36, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  line-height: 1.35;
+}
+
+/* ── Etiquetas de estado ────────────────────────────────────────────
+   Mesmo padrão do balcao.css. O `.etiqueta` base vem do produtos.css. */
+.tabela-reservas .etiqueta { font-size: 11px; }
+
+.res-pendente   { background: rgba(245, 165, 36, 0.14);  color: var(--aviso); }
+.res-confirmada { background: rgba(62, 207, 142, 0.14);  color: var(--sucesso); }
+.res-concluida  { background: rgba(79, 157, 222, 0.14);  color: var(--info); }
+.res-cancelada,
+.res-faltou     { background: rgba(255, 255, 255, 0.06); color: var(--texto-suave); }
+
+/* O --perigo (#ef4444) dá 4,14:1 sobre o --bg-card e o mínimo para
+   texto normal é 4,5:1 — passava por pouco e passava mal, num tamanho
+   de 11px que é onde menos se pode arriscar.
+
+   Escrevi aqui o #f87171 à mão de manhã, ao construir a F-61, e à tarde
+   a F-60 encontrou o mesmo problema em mais nove sítios — o que quer
+   dizer que o meu remendo local era o quarto de uma série e eu não sabia.
+   Passa a ser o `--perigo-texto` do base.css: uma cor escrita à mão num
+   ficheiro é outra fonte de verdade a envelhecer sozinha, e este projeto
+   já tem coleção. */
+.res-recusada   { background: rgba(239, 68, 68, 0.14);   color: var(--perigo-texto); }
+
+/* ── A nota de quando o stock não pode ser lido ─────────────────── */
+.nota-sem-stock {
+  border-left: 3px solid var(--aviso);
+  padding-left: 12px;
+}
+
+/* ── Ecrãs estreitos ────────────────────────────────────────────────
+   A tabela tem seis colunas e não cabe num telemóvel. O
+   `.tabela-envolve` do produtos.css já rola na horizontal; o que se faz
+   aqui é impedir que a coluna da ementa force uma largura absurda e
+   deixar a tabela com um mínimo legível em vez de comprimida. */
+@media (max-width: 700px) {
+  .tabela-reservas { min-width: 640px; }
+  .tabela-reservas td:nth-child(5) { max-width: 200px; }
+  .secao-cabecalho h1 { font-size: 17px; }
 }

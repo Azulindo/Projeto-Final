@@ -114,10 +114,9 @@
 
 /* TEXTO HERO SOBRE */
 .h1-sobre {
-  font-family: "Metal Mania", sans-serif;
-  font-size: 3rem;
+  font-family: var(--fonte-display);   /* título de PÁGINA: curto (F-80) */
   text-align: center;
-  background: linear-gradient(180deg, #ffcc00 10%, #ff4500 50%, #7a0000 90%);
+  background: var(--gradiente-fogo);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -182,8 +181,7 @@
 }
 
 .sobre-content h2 {
-  font-family: "Metal Mania", sans-serif;
-  font-size: 2.5rem;
+  font-family: var(--fonte-titulo);
   margin-bottom: 20px;
   color: #ff4500;
 }
@@ -261,7 +259,11 @@ html { scroll-behavior: smooth; }
   }
 
   .hero-sobre {
-    height: 50vh !important;
+    /* 62vh e não 50: depois de reservar os ~148px da barra (F-81),
+       50vh num ecrã de 844px deixava 274px para o título e o
+       logótipo. O Guilherme disse que "a parte preta aparece muito em
+       cima" — era isto. */
+    height: 62vh !important;
   }
 
   .hero-overlay {
@@ -269,9 +271,6 @@ html { scroll-behavior: smooth; }
     gap: 15px !important;
   }
 
-  .h1-sobre {
-    font-size: 2rem !important;
-  }
 
   .hero-logo-sobre {
     height: 120px !important;
@@ -287,9 +286,6 @@ html { scroll-behavior: smooth; }
     text-align: center !important;
   }
 
-  .sobre-content h2 {
-    font-size: 1.8rem !important;
-  }
 
   .sobre-content p {
     font-size: 1rem !important;
@@ -304,17 +300,11 @@ html { scroll-behavior: smooth; }
 
 /* Pequenos ajustes para mobile muito pequeno */
 @media (max-width: 480px) {
-  .h1-sobre {
-    font-size: 1.5rem !important;
-  }
 
   .hero-logo-sobre {
     height: 100px !important;
   }
 
-  .sobre-content h2 {
-    font-size: 1.5rem !important;
-  }
 
   .sobre-content p {
     font-size: 0.9rem !important;
@@ -334,7 +324,6 @@ html { scroll-behavior: smooth; }
   }
 
   .h1-sobre {
-    font-size: 1.3rem !important;
     padding: 0 10px;
   }
 
@@ -342,9 +331,6 @@ html { scroll-behavior: smooth; }
     height: 80px !important;
   }
 
-  .sobre-content h2 {
-    font-size: 1.3rem !important;
-  }
 
   .sobre-content p {
     font-size: 0.85rem !important;
@@ -369,17 +355,11 @@ html { scroll-behavior: smooth; }
     padding: 0 3px;
   }
 
-  .h1-sobre {
-    font-size: 1.1rem !important;
-  }
 
   .hero-logo-sobre {
     height: 70px !important;
   }
 
-  .sobre-content h2 {
-    font-size: 1.2rem !important;
-  }
 
   .sobre-content p {
     font-size: 0.8rem !important;

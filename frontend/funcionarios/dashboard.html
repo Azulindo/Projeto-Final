@@ -6,12 +6,19 @@
 <title>Início — Vem Pro Abate</title>
 <meta name="description" content="Aplicação de gestão do Vem Pro Abate.">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- As fontes vêm do próprio repositório desde 28/09 (F-68): o plano B
+     da apresentação é servir o site do portátil sem internet, e medido
+     sem rede as 18 páginas carregavam ZERO fontes. Ver
+     `assets/fontes/fontes.css` e `backend/scripts/baixarFontes.js`. -->
+<link rel="stylesheet" href="../../assets/fontes/fontes.css">
 
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/layout.css">
+<!-- produtos.css traz o sistema de tabelas (.tabela-envolve,
+     .tabela-produtos, .estado-msg, .etiqueta) que a F-61 usa. É o mesmo
+     par que a stock.html faz: produtos.css para a tabela, o css da
+     página para o que é próprio dela. -->
+<link rel="stylesheet" href="css/produtos.css">
 <link rel="stylesheet" href="css/dashboard.css">
 
 <script src="../js/api.js"></script>
@@ -27,6 +34,71 @@
       <header class="content-topbar" id="contentTopbar"></header>
 
       <main class="content-main" id="conteudoPagina">
+
+        <!-- ── Reservas (F-61) ───────────────────────────────────────────
+             `hidden` por omissão e aberta pelo dashboard.js: para uma
+             sessão de COZINHA esta secção é removida da página, porque o
+             `gestao/reservas` só aceita administrador e balcão (4.14) e
+             pedi-lo dava um 403 a quem não tem nada a ver com isto.
+             Começar visível e esconder depois fazia a tabela piscar. -->
+        <section class="secao-reservas" id="secaoReservas" hidden>
+
+          <header class="secao-cabecalho">
+            <h1>Reservas</h1>
+            <button type="button" class="btn btn-secundario btn-recarregar"
+                    id="btnRecarregarReservas">Atualizar</button>
+          </header>
+
+          <p class="resumo-stock" id="resumoReservas" aria-live="polite" hidden>
+            <span class="resumo-icone" aria-hidden="true">📅</span>
+            <span id="resumoReservasTexto"></span>
+          </p>
+
+          <p class="estado-msg" id="estadoReservas" role="status">
+            <span class="estado-spinner" aria-hidden="true"></span>
+            <span id="estadoReservasTexto">A carregar as reservas…</span>
+          </p>
+
+          <div class="tabela-envolve hidden" id="envolveReservas">
+            <table class="tabela-produtos tabela-reservas">
+              <thead>
+                <tr>
+                  <th scope="col">Quando</th>
+                  <th scope="col">Quem</th>
+                  <th scope="col" class="col-num">Pessoas</th>
+                  <th scope="col">Código</th>
+                  <th scope="col">Ementa</th>
+                  <th scope="col">Estado</th>
+                </tr>
+              </thead>
+              <tbody id="corpoReservas"></tbody>
+            </table>
+          </div>
+
+          <!-- Aparece só quando o `gestao/stock` não pode ser lido —
+               isto é, numa sessão de BALCÃO. Escrito em vez de calado:
+               uma tabela sem avisos lê-se como uma tabela sem problemas,
+               e é a falha que este projeto mais vezes encontrou. -->
+          <p class="nota-rodape nota-sem-stock" id="notaStockReservas" hidden>
+            <strong>O aviso de stock baixo não aparece nesta sessão.</strong>
+            A lista de existências só está aberta à administração e à cozinha,
+            por isso o balcão vê as reservas mas não consegue cruzá-las com o
+            stock. Para saber se um prato pré-selecionado está a acabar, pergunta
+            à cozinha ou entra como administração.
+          </p>
+
+          <p class="nota-rodape">
+            De hoje até sete dias, a começar pelas mais próximas. O passado não
+            aparece aqui — quem abre este ecrã quer saber quem vem aí.
+            <br>
+            Uma ementa pré-selecionada é uma <strong>estimativa</strong>: não
+            desconta stock nem garante nada, porque o cliente pode mudar de
+            ideias à mesa. <strong>Confirmar ou recusar uma reserva ainda não se
+            faz aqui</strong> — para já muda-se pelo telefone.
+          </p>
+
+        </section>
+
         <!-- Este texto estava desatualizado: dizia que os ecrãs de
              Produtos e Stock "chegam a seguir", e eles chegaram.
              Um ecrã de boas-vindas que descreve mal o que a app faz é
@@ -47,12 +119,21 @@
                João apanhou-o a 10/09. Não era avaria, era texto velho, e
                é a pior espécie: um ecrã a dizer com confiança uma coisa
                que deixou de ser verdade.
-               Passa a dizer o que falta HOJE, e a nota explica que é
-               daqui que se percebe o que ainda não existe. -->
+
+               11/09: e voltou a acontecer no mesmo parágrafo. Dizia
+               "ainda por construir: as reservas no painel (F-61)" — com
+               a tabela das reservas construída e a aparecer dez
+               centímetros acima. Duas vezes no mesmo sítio em dois dias
+               é sinal de que o problema não é o texto, é ter uma LISTA
+               DE TAREFAS escrita à mão dentro de um ecrã: mais uma
+               segunda fonte de verdade, como todas as outras que fomos
+               apanhando. A lista vive na docs/TAREFAS.md.
+               Por isso esta frase deixa de enumerar tarefas e passa a
+               dizer onde se vê o que falta. Não há nada para manter
+               atualizado numa frase que não afirma nada. -->
           <p class="placeholder-falta">
-            Ainda por construir: as <strong>reservas no painel</strong> (F-61).
-            O que estiver por fazer aparece na barra lateral com a etiqueta da
-            tarefa, em vez de escondido.
+            O que ainda estiver por fazer aparece na barra lateral com a
+            etiqueta da tarefa, em vez de escondido.
           </p>
           <p id="expiraEm" class="expira-nota"></p>
         </div>

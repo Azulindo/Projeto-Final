@@ -31,7 +31,12 @@ const path = require('path');
 const zlib = require('zlib');
 const { execSync } = require('child_process');
 
-const RAIZ = path.resolve(__dirname, '..', '..');
+const REPOSITORIO = path.resolve(__dirname, '..', '..');
+
+/* A pasta que se esta a medir. Começa por ser o repositorio como esta
+ * no disco e passa a ser a arvore de uma data quando o relatorio diz
+ * uma (ver 5b). O `ler` e o `existe` seguem-na. */
+let RAIZ = REPOSITORIO;
 const ler = (p) => fs.readFileSync(path.join(RAIZ, p), 'utf8');
 const existe = (p) => fs.existsSync(path.join(RAIZ, p));
 
@@ -153,11 +158,87 @@ function contarCodigo() {
 /* -------------------------------------------------------------------
  *  5. REGISTOS DE ALTERACAO
  * ----------------------------------------------------------------- */
-function contarCommits() {
+function contarCommits(ate) {
   try {
-    return Number(execSync('git rev-list --count HEAD', { cwd: RAIZ }).toString().trim());
+    const limite = ate ? ` --before="${ate} 23:59:59"` : '';
+    return Number(execSync(`git rev-list --count HEAD${limite}`,
+      { cwd: REPOSITORIO }).toString().trim());
   } catch {
     return null;   // sem git disponivel; nao e motivo para falhar tudo
+  }
+}
+
+/* -------------------------------------------------------------------
+ *  5b. A DATA ATE A QUAL O RELATORIO DIZ TER CONTADO  (26/10)
+ *
+ *  Este numero era o unico da lista impossivel de acertar: o relatorio
+ *  diz quantos registos havia, e o proprio commit que escreve esse
+ *  numero cria um registo a mais. Ficava eternamente a um de distancia
+ *  — e um verificador que acusa sempre deixa de ser lido, que e pior
+ *  do que nao existir.
+ *
+ *  E o mesmo com as LINHAS: editar um ficheiro do repositorio muda a
+ *  contagem, por isso o commit que corrige o total de linhas torna o
+ *  total de linhas errado. Apanhei-o a 26/10 a acrescentar estas linhas
+ *  — escrevi 45 912 e passaram a ser 45 951 por causa do que estava a
+ *  escrever. Nao e um erro de contas: e medir uma coisa de dentro dela.
+ *
+ *  A saida e a mesma para os dois. A frase do relatorio ja traz a data
+ *  ("entre 13 de julho e 15 de outubro de 2026 e produziu N registos"),
+ *  por isso TUDO passa a ser medido **na arvore dessa data** — o ultimo
+ *  commit ate la, exportado para uma pasta temporaria. Os numeros deixam
+ *  de ser uma fotografia que envelhece e passam a ser uma afirmacao
+ *  datada, que da o mesmo resultado hoje e em marco.
+ *
+ *  Antes de entregar: por a frase com a data do ultimo dia de trabalho
+ *  (nao a de hoje), correr isto, corrigir, e commitar. O commit que
+ *  corrige ja nao mexe nos numeros que corrigiu.
+ * ----------------------------------------------------------------- */
+const MESES = {
+  janeiro: 1, fevereiro: 2, março: 3, marco: 3, abril: 4, maio: 5, junho: 6,
+  julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12,
+};
+
+/* A data vem da frase DOS REGISTOS e nao da primeira que apareca: na
+ * primeira versao disto o padrao era solto, apanhou outro intervalo de
+ * datas do corpo do relatorio e mediu a arvore de 10/09 — 131 registos
+ * contra os 175 reais. Um verificador a ler o sitio errado com toda a
+ * confianca e pior do que verificador nenhum. */
+function dataFimDoRelatorio(texto) {
+  const m = texto.match(
+    /entre\s+\d+\s+de\s+[a-zç]+\s+e\s+(\d+)\s+de\s+([a-zç]+)\s+de\s+(\d{4})\s+e\s+produziu\s+\d[\d\s]*registos/i);
+  if (!m) return null;
+  const mes = MESES[m[2].toLowerCase()];
+  if (!mes) return null;
+  return `${m[3]}-${String(mes).padStart(2, '0')}-${String(Number(m[1])).padStart(2, '0')}`;
+}
+
+/** O ultimo commit ate uma data, ou null. */
+function revAte(data) {
+  try {
+    const r = execSync(`git rev-list -1 --before="${data} 23:59:59" HEAD`,
+      { cwd: REPOSITORIO }).toString().trim();
+    return r || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Exporta a arvore de um commit para uma pasta temporaria. */
+function exportarArvore(rev) {
+  const destino = path.join(require('os').tmpdir(), `vpa-numeros-${rev.slice(0, 8)}`);
+  const tar = path.join(require('os').tmpdir(), `vpa-numeros-${rev.slice(0, 8)}.tar`);
+  try {
+    fs.rmSync(destino, { recursive: true, force: true });
+    fs.mkdirSync(destino, { recursive: true });
+    // Sem canos: o `tar` do Windows nao os aceita de forma fiavel.
+    execSync(`git archive --format=tar -o "${tar}" ${rev}`, { cwd: REPOSITORIO });
+    execSync(`tar -xf "${tar}" -C "${destino}"`, { cwd: REPOSITORIO });
+    fs.rmSync(tar, { force: true });
+    return destino;
+  } catch (e) {
+    fs.rmSync(tar, { force: true });
+    return null;
   }
 }
 
@@ -239,13 +320,50 @@ function confrontar(texto, nome, valor, padrao) {
  *  RELATORIO NO ECRA
  * ----------------------------------------------------------------- */
 function main() {
+  const ALVO = 'docs/RELATORIO.docx';
+
+  /* ── O RELATORIO LE-SE PRIMEIRO, porque e ele que diz a data ──────
+   * Lido do disco (o relatorio que existe agora), e nao da arvore
+   * antiga: o que se quer conferir e o ficheiro que vai ser entregue. */
+  let texto = null;
+  if (existe(ALVO)) {
+    try {
+      texto = textoDoDocx(ALVO);
+    } catch (e) {
+      console.log(`\n  Nao consegui ler o ${ALVO}: ${e.message}\n`);
+    }
+  }
+
+  const ate = texto ? dataFimDoRelatorio(texto) : null;
+  const commits = contarCommits();
+  const commitsAte = ate ? contarCommits(ate) : commits;
+
+  /* ── E TUDO O RESTO MEDE-SE NA ARVORE DESSA DATA (5b) ───────────── */
+  let rev = null, arvore = null;
+  if (ate) {
+    rev = revAte(ate);
+    if (rev) arvore = exportarArvore(rev);
+    if (arvore) RAIZ = arvore;
+  }
+
   const esquema = contarEsquema();
   const tarefas = contarTarefas();
   const caminhos = contarCaminhos();
   const codigo = contarCodigo();
-  const commits = contarCommits();
   const defeitos = tarefas.familias.X ? tarefas.familias.X.total : 0;
 
+  console.log('');
+  if (arvore) {
+    console.log(`  Medido na arvore de ${ate} (commit ${rev.slice(0, 7)}), que e a data`);
+    console.log('  que o relatorio diz. O que se fizer ao repositorio depois dessa');
+    console.log('  data nao mexe nestes numeros.');
+  } else if (ate) {
+    console.log(`  AVISO: o relatorio diz ${ate} e nao consegui exportar essa arvore.`);
+    console.log('  Os numeros abaixo sao do disco como esta agora, e podem nao bater.');
+  } else if (texto) {
+    console.log('  AVISO: nao encontrei no relatorio a frase com a data do periodo');
+    console.log('  contado, por isso meco o disco como esta agora.');
+  }
   console.log('');
   console.log('  NUMEROS VERDADEIROS, recalculados do repositorio');
   console.log('  ' + '-'.repeat(62));
@@ -263,7 +381,10 @@ function main() {
                 (avisos ? `   <<< ${avisos}` : ''));
   }
   console.log(`  Defeitos (X-)        ${defeitos}`);
-  if (commits !== null) console.log(`  Registos no Git      ${commits}`);
+  if (commits !== null) {
+    console.log(`  Registos no Git      ${commitsAte}` +
+                (commitsAte !== commits ? `   (hoje ja vao ${commits})` : ''));
+  }
   console.log('');
   console.log('  Ficheiros e linhas, por componente');
   for (const c of codigo.linhas) {
@@ -272,17 +393,9 @@ function main() {
   console.log(`     ${'TOTAL'.padEnd(24)} ${String(codigo.ficheiros).padStart(4)}  ${String(codigo.total).padStart(7)}`);
 
   /* ---- confronto com o relatorio ---- */
-  const ALVO = 'docs/RELATORIO.docx';
-  if (!existe(ALVO)) {
-    console.log(`\n  (${ALVO} nao encontrado — fica so a contagem.)\n`);
-    return;
-  }
-
-  let texto;
-  try {
-    texto = textoDoDocx(ALVO);
-  } catch (e) {
-    console.log(`\n  Nao consegui ler o ${ALVO}: ${e.message}\n`);
+  if (!texto) {
+    console.log(`\n  (${ALVO} nao lido — fica so a contagem.)\n`);
+    limpar(arvore);
     return;
   }
 
@@ -297,8 +410,8 @@ function main() {
     ...confrontar(texto, 'caminhos',     caminhos.rotas,  /(\d+)\s+caminhos/g),
     ...confrontar(texto, 'linhas totais', codigo.total,   /(\d[\d ]{4,})\s+linhas/g),
     ...confrontar(texto, 'ficheiros',    codigo.ficheiros,/(\d+)\s+ficheiros(?!\s+de\s+rotas)/g),
-    ...(commits === null ? [] :
-      confrontar(texto, 'registos Git',  commits,         /(\d+)\s+registos\s+de\s+alteração/g)),
+    ...(commitsAte === null ? [] :
+      confrontar(texto, 'registos Git',  commitsAte,      /(\d+)\s+registos\s+de\s+alteração/g)),
   ];
 
   console.log('');
@@ -327,9 +440,18 @@ function main() {
   }
   console.log('');
 
+  limpar(arvore);
+
   // Codigo de saida 1 quando ha numeros errados, para dar para usar
   // dentro de outro programa mais tarde sem ter de ler o ecra.
   process.exitCode = maus > 0 ? 1 : 0;
+}
+
+/** Apaga a arvore temporaria, se foi criada. */
+function limpar(arvore) {
+  if (arvore) {
+    try { fs.rmSync(arvore, { recursive: true, force: true }); } catch { /* fica */ }
+  }
 }
 
 main();

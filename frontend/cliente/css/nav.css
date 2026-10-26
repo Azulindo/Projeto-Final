@@ -9,6 +9,33 @@
    Carregada DEPOIS da folha de cada página, porque é isso que lhe
    permite corrigir as regras antigas (que usam !important).
 
+   ── O GRADIENTE DOS TÍTULOS, NUM SÍTIO SÓ (11/09, F-60) ─────────────
+   Estava escrito **nove vezes**, palavra por palavra, em seis
+   ficheiros: index, menu (×2), galeria (×3), sobre, contactos e
+   reservas. Nove cópias do mesmo valor é a coleção deste projeto — como
+   a ordem da ementa escrita à mão, o stock lido de dois sítios, os 25
+   preços da `reservas.js` e o `--texto-fraco` corrigido três vezes em
+   três ficheiros sem ninguém tocar na variável. A diferença é que esta
+   se apanhou ao ir mudar o valor: nove sítios a mudar à mão é
+   precisamente o momento em que um fica atrás.
+
+   **A última paragem mudou de `#7a0000` para `#b52d00`**, que é o que a
+   F-60 pedia. Estes títulos usam `background-clip: text` — o gradiente
+   É a letra —, e o `contraste.js` mede as paragens contra o fundo da
+   página: a última dava **1,67:1 na galeria e 1,72:1 nas outras cinco**,
+   quando o mínimo para texto grande é 3:1. Não era um título ilegível,
+   que 90% da letra está muito acima do mínimo — falhava a base das
+   letras. O `#b52d00` põe as nove acima de 3:1 e continua a ler-se como
+   brasa: mais laranja queimado, menos vermelho-sangue.
+
+   Fica aqui e não num `comum.css` novo pela razão que este ficheiro já
+   dá em cima, e por uma prática: um ficheiro novo obrigava a mexer em
+   seis `<head>`, que são seis oportunidades de esquecer um. A ordem de
+   carregamento não atrapalha — uma propriedade personalizada resolve-se
+   no momento em que é USADA e não no momento em que é lida, por isso
+   este `:root` serve as folhas que vêm antes dele.
+   ---------------------------------------------------------------------
+
    ── O PROBLEMA QUE ISTO RESOLVE ─────────────────────────────────────
    A barra tentava manter o menu aos lados do logótipo, como no
    computador, encolhendo a letra até caber: 12px → 11px → 9px → 8px,
@@ -30,6 +57,181 @@
    coisas atrás de um botão que é preciso descobrir e tocar seria dar
    mais trabalho ao cliente, não menos.
    ===================================================================== */
+
+:root {
+  --gradiente-fogo: linear-gradient(180deg, #ffcc00 10%, #ff4500 50%, #b52d00 90%);
+
+  /* ── AS TRÊS VOZES DO SITE (F-74, 14/09) ──────────────────────────
+     ── O QUE ESTAVA MAL ────────────────────────────────────────────
+     `"Metal Mania", sans-serif` estava escrito **13 vezes em 6
+     ficheiros**, e as pilhas de recurso não coincidiam: umas diziam
+     `sans-serif`, outra `system-ui, sans-serif`. O Inter dos botões
+     tinha uma cadeia (`"Inter", system-ui, sans-serif`) diferente da
+     do corpo (`"Inter", system-ui, -apple-system, "Segoe UI",
+     sans-serif`) — duas Inter na mesma página, com recursos
+     diferentes se a Google não responder.
+
+     É a MESMA forma do `--gradiente-fogo`, que estava escrito nove
+     vezes em seis ficheiros, e do `--texto-fraco`, corrigido em três
+     ficheiros sem ninguém tocar na variável. Só que desta vez o que
+     divergiu deu para ver: medido nas seis páginas, o **H1 tinha duas
+     fontes e o H2 tinha duas fontes**, e a `index.html` era a excepção
+     nas duas — os títulos dela nunca tiveram `font-family` nenhuma,
+     por isso caíam no Inter do corpo. A página de entrada era a única
+     do site sem a voz do site.
+
+     ── AS TRÊS VOZES ───────────────────────────────────────────────
+     · TÍTULO  — Metal Mania. Títulos de página e de secção.
+     · CORPO   — Inter. Todo o texto que se lê em frases.
+     · RÓTULO  — Inter em maiúsculas. Botões e etiquetas: coisas
+                 curtas que se lêem de relance, não se lêem a ler.
+
+     Não há uma quarta. O Nosifer era a quarta e saiu: está escrito
+     neste projeto, no `.takeaway-btn`, que *"Nosifer é uma fonte de
+     títulos curtos"* — e estava em `<h3>` a dizer "Horário de
+     Funcionamento" e "Política de Reserva", que são frases. É a
+     terceira vez que esta decisão é aplicada (saiu do `.galeria-text`,
+     saiu dos quatro botões, sai agora dos subtítulos). */
+  /* ── O NOSIFER PASSA A SER A VOZ DOS TÍTULOS (F-76, 14/09) ────────
+     Pedido do Guilherme, depois de eu lho ter tirado: *"eu queria o
+     tipo de letra destes subtítulos nos títulos e botões de todo o
+     site"* — *"dava mais vida ao site"*. É a casa dele e é a decisão
+     dele, e esta troca são DUAS LINHAS porque a F-74 juntou as vozes
+     aqui. Ontem eram 14 edições em seis ficheiros, e foi assim que o
+     Nosifer ficou meio aplicado da última vez.
+
+     ── O QUE MEDI ANTES DE TROCAR ──────────────────────────────────
+     O contentor onde eu trabalho não alcança o Google Fonts, por isso
+     medi no browser do Guilherme, no site publicado, com a fonte a
+     sério. Larguras de texto:
+
+       · nos TÍTULOS o Nosifer é ~2× mais largo do que o Metal Mania
+         ao mesmo tamanho ("O nosso prato mais prestigiado" a 40px:
+         470px → 951px). Cabe numa linha no computador; ao telemóvel
+         parte em mais linhas — parte, não transborda;
+       · nos BOTÕES é só ~1,2× mais largo do que o Inter 800, bem
+         menos do que eu supunha.
+
+     ── O QUE MUDOU POR CAUSA DA MEDIÇÃO ────────────────────────────
+     As maiúsculas e o peso 800 que eu tinha posto nos botões saem:
+     o Nosifer só existe em peso 400, portanto o 800 pedia ao browser
+     um negrito SINTÉTICO — engrossa os traços por cálculo e borra uma
+     letra que já tem pingas. E as maiúsculas custavam mais 7% de
+     largura (399px contra 371px) para nada, porque o Nosifer já é uma
+     letra de display.
+
+     ── A RESERVA QUE FICA ESCRITA ──────────────────────────────────
+     O rótulo de um botão é a coisa que o cliente tem de ler mais
+     depressa da página inteira, e o Nosifer é uma letra de terror com
+     pingas a escorrer. A medição diz que CABE; não diz que se lê
+     depressa. Se no dia 16 alguém hesitar em frente a um botão, a
+     troca é uma linha: `--fonte-rotulo: var(--fonte-corpo)` põe os
+     botões de volta em Inter e deixa os títulos como estão.
+
+     ── E O FIM DO `cursive` ────────────────────────────────────────
+     O recurso do Nosifer era `cursive`, que em vários sistemas é Comic
+     Sans. Um restaurante de grelhados com os títulos em Comic Sans,
+     se a Google não responder, é pior do que qualquer alternativa —
+     e "se a Google não responder" é literalmente o cenário da C-27.
+     Passa a cair no Metal Mania, que é a outra letra da marca. */
+  /* ── DUAS VOZES DE DISPLAY, DIVIDIDAS POR COMPRIMENTO (F-80, 16/09)
+     ── O QUE O TELEMÓVEL MOSTROU ───────────────────────────────────
+     A F-76 pôs o Nosifer em TODOS os títulos, a pedido do Guilherme.
+     Duas capturas do telemóvel dele desfizeram a decisão, e a medição
+     explicou porquê: **o Nosifer a 24px cabe cerca de DUAS PALAVRAS
+     por linha** numa coluna de 270px. Medido a 390px no site
+     publicado:
+
+       "Abate no nome / Excelência no prato"   → 3 linhas
+       "O nosso prato mais prestigiado"        → 3 linhas
+       "Os nossos criadores" (3 palavras)      → 2 linhas
+
+     E 24px é o mínimo que se pode usar: abaixo disso o título do hero
+     — que é texto com gradiente a 3,05:1 — deixa de contar como *texto
+     grande* e falha a WCAG AA. Não havia como encolher sem quebrar o
+     contraste da F-75.
+
+     ── A REGRA QUE O PROJETO JÁ TINHA ESCRITA ──────────────────────
+     Estava no `.takeaway-btn`, desde antes de eu lhe mexer: *"Nosifer
+     é uma fonte de títulos curtos"*. Eu apliquei-o a tudo e o
+     telemóvel cobrou a conta. A divisão agora é por **comprimento**,
+     que é a variável que importa:
+
+       · DISPLAY (Nosifer) — o que é curto: o título de cada página
+         ("Contactos", "Galeria", "O Nosso Menu"), os nomes dos
+         criadores, e os rótulos dos botões;
+       · TÍTULO (Metal Mania) — o que é uma frase: os títulos de
+         secção, os subtítulos, os nomes dos pratos. Metal Mania é
+         metade da largura do Nosifer ao mesmo tamanho.
+
+     Não é o site com duas caras: é uma regra por PAPEL, igual nas seis
+     páginas. O Metal Mania deixa também de ser uma fonte pedida e não
+     usada (era o X-28). */
+  --fonte-display: "Nosifer", "Metal Mania", system-ui, sans-serif;
+  --fonte-titulo:  "Metal Mania", system-ui, sans-serif;
+  --fonte-corpo:   "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Aponta para o título em vez de repetir a cadeia. Na revisão de
+     hoje apanhei estas duas variáveis a guardar a MESMA cadeia escrita
+     duas vezes — exactamente a divergência que elas existem para
+     impedir. Assim não podem separar-se por acidente; para as separar
+     de propósito basta escrever outra cadeia aqui. */
+  /* Os botões ficam em Nosifer: um rótulo de botão é curto por
+     natureza, e é essa a voz que o Guilherme escolheu para eles. */
+  --fonte-rotulo: var(--fonte-display);
+
+  /* ── A ESCALA DOS TÍTULOS (F-75, 14/09) ───────────────────────────
+     ── O QUE ESTAVA MAL, E É PIOR DO QUE AS FONTES ─────────────────
+     Havia **48 declarações de `font-size` em títulos**, espalhadas por
+     6 ficheiros e 5 degraus de media query, nenhuma coordenada com as
+     outras: só o `index.css` tinha 13. Cada página foi afinada à mão
+     ao seu telemóvel, em dias diferentes, e o resultado medido foi
+     este — **em telemóvel o `<h2>` era MAIOR do que o `<h1>`** em
+     quatro das cinco páginas:
+
+       index.html    320px:  h1 17,6px  ·  h2 24px
+       galeria.html  375px:  h1 20,8px  ·  h2 32px
+       reservas.html 480px:  h1 22,4px  ·  h2 24px
+       sobre.html    320px:  h1 17,6px  ·  h2 19,2px
+
+     O `<h1>` levou escala de telemóvel em todas as páginas; o `<h2>`
+     não levou em nenhuma. Ao computador a ordem estava certa, e por
+     isso ninguém viu: **é ao telemóvel que o título da secção grita
+     mais alto do que o título da página**, e é o telemóvel que o
+     cliente tem na mão.
+
+     ── PORQUE É QUE SÃO `clamp()` E NÃO MEDIA QUERIES ──────────────
+     Porque com três `clamp()` cujas curvas não se cruzam, a ordem
+     fica garantida em **qualquer** largura — não só nas cinco que
+     alguém se lembrou de testar. Um degrau novo não pode inverter uma
+     hierarquia que não tem degraus.
+
+     O mínimo do `<h1>` (28px) foi medido: a 320px o título do hero da
+     entrada cabe sem transbordo, o que os 17,6px de antes nem
+     precisavam de verificar. */
+  /* Os mínimos NÃO são gosto — são o limiar de "texto grande" da WCAG.
+     Acima de 24px um texto só precisa de 3:1 de contraste; abaixo,
+     precisa de 4,5:1. Os títulos de secção da galeria são texto com
+     gradiente e chegam a **3,05:1** no extremo escuro do
+     `--gradiente-fogo`.
+
+     A primeira versão desta escala tinha o mínimo do `--t-h2` em
+     **22px**, e isso rebentou-os: até aqui tinham 32px fixos, passavam
+     como texto grande, e a 22px passaram a ser texto normal a 3,05:1 —
+     **falha de acessibilidade que eu introduzi**, apanhada a rever o
+     meu próprio trabalho e não por um teste, porque o `contraste.js`
+     põe o texto com gradiente num balde de avisos em vez de falhar.
+     Confirmei a atribuição a correr o teste contra a versão anterior:
+     antes da minha alteração a secção dos gradientes não tinha uma
+     única entrada.
+
+     Com o mínimo a 24px o `<h2>` é sempre texto grande e 3,05:1 basta.
+     A ordem também se mantém com folga: 28 > 24 > 18. */
+  --t-h1: clamp(1.75rem,  5.5vw, 3rem);      /* 28 → 48px */
+  --t-h2: clamp(1.5rem,   4vw,   2.5rem);    /* 24 → 40px  (24 = limiar WCAG) */
+  --t-h3: clamp(1.125rem, 2.2vw, 1.5rem);    /* 18 → 24px */
+}
+
 
 /* ── Fundo da página, em todas as larguras ────────────────────────
    O `html` e o `body` destas seis páginas não tinham cor de fundo: o
@@ -63,8 +265,164 @@ html, body {
    corrido. A mesma família (Inter) da app de gestão, por coerência
    de marca — só a voz muda entre as duas apps, não a legibilidade. */
 body {
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--fonte-corpo);
 }
+
+/* ── OS BOTÕES NÃO HERDAM A FONTE, E NINGUÉM ESPERA ISSO ───────────
+   Um `<button>` não herda `font-family` do `body`: o browser dá-lhe a
+   fonte do sistema. As páginas que carregam o `tailwind.css` estavam
+   tapadas, porque o reset dele já põe `font-family: inherit` — mas a
+   `galeria.html` e a `reservas.html` não o carregam, e medido nas seis
+   páginas os botões delas estavam em **Arial**: o ✕ e as setas do
+   lightbox, e o botão de enviar do chat das reservas. Quatro botões em
+   Arial num site em Inter, e nenhum deles com `font-family` escrita em
+   sítio nenhum — não havia o que corrigir, faltava o que declarar.
+
+   Fica aqui e não em cada folha porque o `nav.css` é a ÚNICA que as
+   seis páginas carregam. */
+button, input, select, textarea, optgroup {
+  font-family: inherit;
+}
+
+/* ── O PAPEL "RÓTULO" ──────────────────────────────────────────────
+   Botões e etiquetas. Maiúsculas com espaçamento porque são coisas
+   curtas que se lêem de relance; um rótulo de botão é o que o cliente
+   tem de ler mais depressa da página inteira. */
+/* ── O PAPEL "RÓTULO", AGORA LIGADO AOS BOTÕES ─────────────────────
+   Esta classe existia desde a F-74 e **não estava aplicada a nenhum
+   elemento** — CSS morto que eu próprio encontrei ao revisitar o meu
+   trabalho, e do pior género: construí a solução para a duplicação e
+   deixei as quatro cópias no lugar. Agora os quatro botões levam-na no
+   HTML e as quatro cópias saíram do `index.css` e do `menu.css`.
+
+   O `nav.css` é a última folha das seis páginas, portanto ganha os
+   empates de especificidade contra `.btn`, `.reservas`, `.galeria-btn`
+   e `.takeaway-btn`. Verificado ficheiro a ficheiro antes de escrever
+   isto — se algum dia uma página carregar o `nav.css` primeiro, estas
+   quatro propriedades deixam de se aplicar em silêncio. */
+/* ── O HERO DAS PÁGINAS INTERIORES RESERVA O ESPAÇO DA BARRA (F-81)
+   A barra é `position: fixed`, portanto não empurra nada: o hero de
+   cada página começa em **y=0, por baixo dela**. No computador isso
+   não se vê, porque o hero tem 100vh e a barra 65px — o título
+   centrado fica muito abaixo. Ao telemóvel o hero encolhe para 50vh e
+   a barra cresce para ~148px (três filas), e o título centrado cai
+   **debaixo da barra**: medido a 390×844, o "Sobre o Vem Pro Abate"
+   estava tapado 11px. Foi o Guilherme que o viu numa captura.
+
+   A `.hero-overlay` é a caixa que centra o conteúdo, e é a **mesma
+   regra copiada nas cinco folhas** (menu, galeria, reservas, sobre,
+   contactos). Por isso o conserto vive aqui: o `nav.css` é a única
+   folha que as seis páginas carregam, e é a última, portanto ganha.
+
+   Com o `--topbar` a ser medido pelo `nav.js` (F-79), isto fica certo
+   em qualquer altura de barra, sem ninguém ter de acertar um número. */
+.hero-overlay {
+  padding-top: var(--topbar);
+  box-sizing: border-box;
+}
+
+/* ── A BARRA DO COMPUTADOR, COM O HTML DA CORTINA (F-82) ───────────
+   O botão só serve ao telemóvel: aqui não existe. E a `.barra-menus`,
+   que no telemóvel é a cortina, aqui é só a fila que empurra os dois
+   blocos de links para os lados — o mesmo papel que o
+   `justify-content: space-between` da `.inline-content` fazia quando os
+   dois `<nav>` eram filhos directos dela. O aspecto do computador não
+   muda um píxel; o que muda é que passa a haver um sítio onde pegar
+   para o telemóvel. */
+.botao-cortina {
+  display: none;
+}
+
+.barra-menus {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ══ O FOCO DE TECLADO (F-83, 16/09) ═══════════════════════════════
+   Auditoria de teclado às seis páginas — a única dimensão deste site
+   que nunca tinha sido medida. Duas coisas saíram de lá, além das três
+   do lightbox da galeria.
+
+   ── 1. O FOCO IA PARAR DEBAIXO DA BARRA ────────────────────────────
+   A barra é `position: fixed`, e o browser não sabe disso quando leva
+   um elemento focado até ao ecrã: alinha-o ao topo da JANELA, que é
+   onde a barra está. Medido na galeria, a andar para trás com
+   Shift+Tab: **três cartões ficaram com o topo a y=-2 numa barra de
+   69px** — focados, invisíveis, atrás da barra. Quem navega por
+   teclado perdia-se.
+
+   O `scroll-padding-top` diz ao browser para reservar esse espaço em
+   qualquer scroll que ele faça sozinho. Usa o `--topbar`, que é medido
+   (F-79), por isso acerta com a barra de uma linha do computador e com
+   a do telemóvel sem ninguém acertar números. **Serve também para as
+   ligações com `#`**, que caíam no mesmo buraco.
+
+   ── 2. O ANEL DE FOCO ERA O DO BROWSER ─────────────────────────────
+   Medido: `outline: 1px auto` em todo o site — o anel de omissão do
+   Chrome. Cumpre o mínimo, mas é 1px cinzento sobre um site quase
+   todo preto, e não é decisão de ninguém. Passa a ser o dourado do
+   site, 3px, com folga para respirar.
+
+   Os quatro botões de marca levam anel BRANCO e não dourado: o fundo
+   deles é o gradiente ouro→laranja, e dourado sobre laranja não se vê.
+   São os mesmos quatro que o `tipografia.js` já trata como um papel só.
+   ------------------------------------------------------------------ */
+html {
+  scroll-padding-top: calc(var(--topbar) + 12px);
+}
+
+:focus-visible {
+  outline: 3px solid #ffcc00;
+  outline-offset: 2px;
+}
+
+.btn:focus-visible,
+.reservas:focus-visible,
+.galeria-btn:focus-visible,
+.takeaway-btn:focus-visible {
+  outline-color: #fff;
+}
+
+/* (O botão da cortina fica no dourado: o fundo dele é a barra preta.
+   O anel dele está no bloco dos 768px, que é o único sítio onde ele
+   existe.) */
+
+.vpa-rotulo {
+  font-family: var(--fonte-rotulo);
+  font-weight: 400;          /* o Nosifer só tem 400 — ver acima */
+  text-transform: none;      /* custava 7% de largura por nada */
+  letter-spacing: 0.02em;    /* o Nosifer já vem folgado */
+}
+
+/* ── A ESCALA APLICADA ─────────────────────────────────────────────
+   Os títulos do hero de cada página têm classe própria (`.h1`,
+   `.h1-menu`, `.h1-sobre`, `.h1-contactos`, `.h1-reservas`) porque
+   estão posicionados por cima de uma imagem, cada um à sua maneira.
+   O TAMANHO, porém, é o mesmo papel nas seis, e por isso vive aqui. */
+/* O peso 400 é obrigatório e não é gosto: o Nosifer só tem esse peso,
+   e o `bold` que o browser dá por omissão a um `<h1>` faz um negrito
+   sintético que borra os pingos. */
+/* O `font-family` de cada título de página está na folha da sua
+   página (são seis classes diferentes porque cada hero está montado à
+   sua maneira por cima de uma imagem). O que vive aqui é o que é
+   comum: o tamanho e o peso. */
+h1, .h1, .h1-menu, .h1-sobre, .h1-contactos, .h1-reservas {
+  font-size: var(--t-h1);
+  font-weight: 400;
+}
+
+h2, .section-title {
+  font-size: var(--t-h2);
+  font-weight: 400;
+}
+
+h3 {
+  font-size: var(--t-h3);
+  font-weight: 400;
+}
+
 
 /* ── Contraste do link do rodapé ──────────────────────────────────
    O "Área de funcionários" estava em #6a6a6a sobre fundo escuro: 3,54:1,
@@ -77,40 +435,135 @@ body {
    Medido por frontend/testes/contraste.js.) */
 .footer-staff a { color: #8f8f8f; }
 
+/* ══ A BARRA DO TELEMÓVEL É UMA CORTINA (F-82, 16/09) ════════════════
+   ── O QUE ESTAVA MAL ───────────────────────────────────────────────
+   Até aqui a barra do telemóvel mostrava tudo ao mesmo tempo: o
+   logótipo numa fila e os cinco links a partirem-se em 3 + 2 na
+   seguinte. Medido a 390px, isso dava **148px de barra fixa** — e a
+   barra é `position: fixed`, portanto esses 148px estavam lá em
+   TODAS as páginas, do princípio ao fim do scroll. Num ecrã de 844px
+   de altura é 18% do telemóvel gasto em navegação permanente.
+
+   O Guilherme disse-o assim: *"ela fica muito grande e ocupa muito
+   espaço"*. Tinha razão, e a conta explica porquê.
+
+   ── O QUE FAZ AGORA ────────────────────────────────────────────────
+   A barra fechada é UMA fila: botão à esquerda, logótipo ao centro.
+   Dá ~56px, contra 148 — **92px devolvidos ao conteúdo**, em seis
+   páginas, ao longo de todo o scroll. Os cinco links continuam a
+   existir uma única vez no HTML: descem numa cortina por cima da
+   página quando se toca no botão.
+
+   ── AS TRÊS COISAS QUE ISTO TEM DE RESPEITAR ───────────────────────
+   1. A cortina é `position: absolute` a partir da `.inline-content`,
+      e não faz a barra crescer. Se fizesse, o `--topbar` mudava e o
+      conteúdo de todas as páginas saltava para baixo ao abrir o menu.
+      O `medirBarra()` do `nav.js` salta-a pelo `data-fora-da-medicao`.
+   2. Fechada, a cortina tem `visibility: hidden` e não só `opacity: 0`
+      — senão os cinco links continuavam a receber o foco do teclado
+      dentro de uma coisa invisível.
+   3. O `overflow: visible !important` na `.inline-bar` não é enfeite:
+      o `menu.css` e o `contactos.css` põem-lhe `overflow: hidden` no
+      telemóvel (para travar o scroll horizontal), e isso **cortava a
+      cortina inteira**. Como estas duas folhas carregam ANTES do
+      `nav.css`, é aqui que se desfaz.
+   ------------------------------------------------------------------ */
 @media (max-width: 768px) {
 
-  /* A barra passa a ter duas linhas. Como a altura vem desta variável
-     e é ela que as páginas usam para se afastarem do topo, muda-se
-     aqui e tudo o resto acompanha sozinho. */
-  :root { --topbar: 108px; }
+  /* Uma fila só: o botão e o logótipo. Isto é a REDE para quem tenha
+     o JavaScript desligado — quem manda é o `medirBarra()` (F-79), que
+     mede em vez de declarar. */
+  :root { --topbar: 56px; }
 
   .inline-bar {
     height: var(--topbar) !important;
+    /* ver o ponto 3 do comentário acima */
+    overflow: visible !important;
   }
 
   .inline-content {
     height: 100% !important;
-    flex-wrap: wrap !important;
-    justify-content: center !important;
-    align-content: center !important;
-    padding: 6px 10px !important;
-    row-gap: 2px !important;
-    /* O mesmo valor do `gap` dos blocos (ver acima): é isso que faz as
-       duas filas terem o mesmo ritmo. */
-    column-gap: 6px !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    padding: 6px 12px !important;
+    gap: 8px !important;
   }
 
-  /* Logótipo sozinho na primeira linha */
+  /* ── O BOTÃO ─────────────────────────────────────────────────────
+     44×44: é o alvo mínimo da WCAG 2.5.5 para algo em que se toca com
+     o dedo, e é a navegação principal do site. */
+  .botao-cortina {
+    display: inline-flex !important;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Três riscos com um só elemento: o `<span>` é o do meio, e os
+     outros dois são o `::before` e o `::after` dele. Assim o "X" faz-se
+     rodando dois e apagando um, sem markup a mais. */
+  .botao-cortina .traco,
+  .botao-cortina .traco::before,
+  .botao-cortina .traco::after {
+    position: absolute;
+    width: 24px;
+    height: 2px;
+    border-radius: 2px;
+    background: #e8e8e8;
+    transition: transform 0.22s ease, opacity 0.18s ease, background 0.18s ease;
+  }
+
+  /* O `content` vai só nos pseudo-elementos: num elemento normal o
+     `content` é uma propriedade que SUBSTITUI o conteúdo (Chrome 105+),
+     e não é isso que se quer no `<span>`. */
+  .botao-cortina .traco { position: relative; }
+  .botao-cortina .traco::before { content: ''; transform: translateY(-7px); }
+  .botao-cortina .traco::after  { content: ''; transform: translateY(7px); }
+
+  /* Aberta: o risco do meio desaparece e os outros dois cruzam-se.
+     A cor passa ao dourado do site, o mesmo par de sempre. */
+  .inline-bar.cortina-aberta .botao-cortina .traco {
+    background: transparent;
+  }
+
+  .inline-bar.cortina-aberta .botao-cortina .traco::before {
+    transform: translateY(0) rotate(45deg);
+    background: #ffcc00;
+  }
+
+  .inline-bar.cortina-aberta .botao-cortina .traco::after {
+    transform: translateY(0) rotate(-45deg);
+    background: #ffcc00;
+  }
+
+  .botao-cortina:focus-visible {
+    outline: 2px solid #ffcc00;
+    outline-offset: 2px;
+  }
+
+  /* ── O LOGÓTIPO ──────────────────────────────────────────────────
+     Centrado em absoluto, como no computador. Se ficasse no fluxo, os
+     44px do botão empurravam-no 22px para a direita do centro real do
+     ecrã — e isso vê-se. As seis folhas de página põem-lhe
+     `position: relative !important` no telemóvel; é por isso que isto
+     também leva `!important`. */
   .logo-center {
-    order: 1 !important;
-    flex: 0 0 100% !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    position: static !important;   /* algumas folhas centravam-no em absoluto */
-    transform: none !important;
-    left: auto !important;
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    order: 0 !important;
     margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
   }
 
   .logo-center img {
@@ -120,44 +573,142 @@ body {
     object-fit: contain !important;
   }
 
-  /* Menu todo na segunda linha, os dois blocos lado a lado */
-  .inline-nav.left  { order: 2 !important; }
-  .inline-nav.right { order: 3 !important; }
+  /* ── A CORTINA ───────────────────────────────────────────────────
+     `top: 100%` a partir da `.inline-content`, que tem `height: 100%`
+     da barra: a cortina começa exactamente onde a barra acaba, sem
+     ninguém ter de somar alturas à mão. */
+  .barra-menus {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    display: block !important;
 
-  /* ── ESPAÇAMENTO (04/09) ──────────────────────────────────────
-     Os cinco links partem-se em 3 + 2 abaixo dos 480px — não há
-     largura para mais, e 3 + 2 é a divisão mais equilibrada (tentei
-     pô-los todos a fluir como uma lista só e saiu 4 + 1, com uma
-     ligação sozinha na segunda fila, pior).
-     O que fazia aquilo parecer um acidente era o espaçamento: 2px
-     entre links do mesmo bloco e 4px entre blocos, por isso a fila
-     de cima e a de baixo tinham ritmos diferentes. Agora é o mesmo
-     valor nos dois sítios, e as duas filas lêem-se como uma coisa
-     só, quebrada de propósito. */
-  .inline-nav {
-    flex: 0 0 auto !important;
-    gap: 6px !important;
-    opacity: 1 !important;
+    /* OPACA, e não 0,97 como a barra. Medido a 390px: com 3% de
+       transparência o título do hero — que é texto laranja vivo com
+       gradiente — **lia-se através da cortina**, por cima da palavra
+       "Contactos". Três por cento de nada é nada; três por cento de
+       um laranja a 100% de luz é um fantasma legível. Sem
+       transparência o `backdrop-filter` também deixa de ter o que
+       fazer, e sai (era desfoque de GPU a cada frame para nada). */
+    background: #0b0b0b;
+    border-top: 1px solid rgba(232, 179, 79, 0.28);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.5);
+
+    /* Fechada. A `visibility` é o que tira os links do alcance do
+       teclado — ver o ponto 2 do comentário acima. */
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transition: max-height 0.28s ease, opacity 0.2s ease,
+                visibility 0s linear 0.28s;
   }
 
-  /* O que interessa: letra legível e alvo de 44px */
-  .inline-nav a {
-    font-size: 15px !important;
-    line-height: 1 !important;
-    letter-spacing: 0.2px !important;
-    min-height: 44px !important;
-    display: inline-flex !important;
+  .inline-bar.cortina-aberta .barra-menus {
+    max-height: 70vh;
+    overflow-y: auto;
+    opacity: 1;
+    visibility: visible;
+    transition: max-height 0.28s ease, opacity 0.2s ease,
+                visibility 0s linear 0s;
+  }
+
+  /* ── O VÉU ───────────────────────────────────────────────────────
+     A página escurece por trás da cortina. Duas razões, nenhuma
+     decorativa: diz que aquilo é uma camada temporária e não uma
+     parte da página, e torna descobrível que se fecha tocando fora —
+     que de outra maneira ninguém adivinha.
+
+     É o `::after` da barra e não um `<div>` novo: não há estado para
+     guardar nem markup para duplicar nas seis páginas.
+
+     O `z-index: -1` põe-no atrás da cortina mas **à frente da
+     página**: um filho de z-index negativo pinta-se atrás do fundo do
+     pai, e o pai inteiro está a `z-index: 1000` por cima de tudo.
+
+     O `top: 100%` começa onde a barra acaba: escurece a página, não a
+     barra.
+
+     **E é `absolute` e não `fixed`, apesar de ser um véu de ecrã
+     inteiro.** A primeira versão era `position: fixed; inset:
+     var(--topbar) 0 0 0` e ficou com **altura zero** — invisível e sem
+     apanhar cliques. A razão: a `.inline-bar` tem `will-change:
+     transform` (de quando a barra passou a recolher ao descer), e
+     `will-change: transform` faz do elemento um bloco contentor para
+     os descendentes `fixed`. O `inset` passou a ser medido contra a
+     barra de 56px em vez do ecrã: 56 de cima, 0 de baixo, sobra nada.
+     Apanhado por uma verificação que pergunta o que está debaixo do
+     rato a meio da página — não pela aparência, porque um véu de
+     altura zero não se distingue de não haver véu. */
+  .inline-bar.cortina-aberta::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: -1;
+  }
+
+  /* Os dois blocos empilham-se e lêem-se como uma lista só. O `opacity`
+     que a barra do computador tem (0,65) sai: aqui isto é o menu, não
+     é um enfeite de canto. */
+  .barra-menus .inline-nav {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    opacity: 1 !important;
+    flex: 0 0 auto !important;
+  }
+
+  .barra-menus .inline-nav a {
+    display: flex !important;
     align-items: center !important;
-    padding: 0 9px !important;
+    min-height: 52px !important;
+    padding: 0 20px !important;
+    font-size: 17px !important;
+    line-height: 1 !important;
+    letter-spacing: 0.3px !important;
     color: #e8e8e8 !important;
     white-space: nowrap !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   }
 
-  .inline-nav a:active { color: #fff !important; }
+  /* O último de todos não leva risco em baixo — é o fim da cortina. */
+  .barra-menus .inline-nav.right a:last-child {
+    border-bottom: 0;
+  }
 
-  /* O risco fica mais afastado do texto porque aqui a ligação tem
-     44px de altura e o texto está centrado no meio dela. */
-  .inline-nav a::after { bottom: 7px !important; }
+  .barra-menus .inline-nav a:active {
+    background: rgba(255, 204, 0, 0.08);
+    color: #fff !important;
+  }
+
+  /* O risco de brasa passa a ser uma barra vertical à esquerda: numa
+     lista em coluna, um sublinhado a crescer do centro não se lê. */
+  .barra-menus .inline-nav a::after {
+    left: 0 !important;
+    right: auto !important;
+    top: 8px !important;
+    bottom: 8px !important;
+    width: 3px !important;
+    height: auto !important;
+    background: linear-gradient(180deg, #ffcc00, #ff4500) !important;
+    transform: scaleY(0) !important;
+    transform-origin: center !important;
+  }
+
+  .barra-menus .inline-nav a:hover::after,
+  .barra-menus .inline-nav a:focus-visible::after,
+  .barra-menus .inline-nav a[aria-current="page"]::after {
+    transform: scaleY(1) !important;
+  }
+
+  .barra-menus .inline-nav a[aria-current="page"] {
+    background: rgba(255, 204, 0, 0.06);
+  }
 }
 
 /* ── A barra deixa de estar parada (04/09) ────────────────────────
@@ -260,13 +811,16 @@ body {
 /* Telemóveis mesmo estreitos (iPhone SE e afins). A letra NÃO volta a
    encolher abaixo de 14px — se não couber, prefere-se que passe para a
    linha de baixo do que ficar ilegível. */
+/* Telemóveis mesmo estreitos (iPhone SE e afins). Com a cortina (F-82)
+   já não há cinco links a disputar uma fila, portanto o `--topbar` não
+   muda: a barra fechada é a mesma fila de botão + logótipo em qualquer
+   largura. O que fica é o logótipo um pouco menor, para não encostar ao
+   botão a 320px. */
 @media (max-width: 380px) {
-  :root { --topbar: 112px; }
+  .logo-center img { max-width: 120px !important; }
 
-  .inline-nav a {
-    font-size: 14px !important;
-    padding: 0 6px !important;
+  .barra-menus .inline-nav a {
+    font-size: 16px !important;
+    padding: 0 16px !important;
   }
-
-  .inline-content { column-gap: 0 !important; }
 }

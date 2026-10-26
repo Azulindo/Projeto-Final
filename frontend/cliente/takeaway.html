@@ -6,9 +6,11 @@
 <title>Take Away — Vem Pro Abate</title>
 <meta name="description" content="Encomende para levar no Vem Pro Abate: escolha na ementa, deixe o nome e o telemóvel, e nós chamamos.">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<!-- As fontes vêm do próprio repositório desde 28/09 (F-68): o plano B
+     da apresentação é servir o site do portátil sem internet, e medido
+     sem rede as 18 páginas carregavam ZERO fontes. Ver
+     `assets/fontes/fontes.css` e `backend/scripts/baixarFontes.js`. -->
+<link rel="stylesheet" href="../../assets/fontes/fontes.css">
 
 <!-- ── O TAILWIND ESTÁ GUARDADO NO REPOSITÓRIO (F-70, 11/09) ──────────
      Aqui estava `<script src="https://cdn.tailwindcss.com">` com a
@@ -64,6 +66,29 @@
     background: radial-gradient(ellipse at top, #1a1611 0%, #121212 55%);
   }
   .placeholder-icon { background: radial-gradient(circle at 30% 30%, #2a2015, #161616); }
+  /* ── O ANEL DE FOCO (F-83, 16/09) ────────────────────────────────
+     Estas duas páginas não carregam o `css/nav.css` — são Tailwind e
+     vivem à parte —, por isso o anel dourado que o resto do site
+     passou a ter não lhes chega. E são as únicas páginas do projeto
+     onde alguém escreveu `focus:outline-none`: seis campos (um na
+     mesa, cinco no takeaway) trocavam o anel do browser por uma
+     mudança de cor de bordo de 1px. Um bordo de 1px que muda de tom
+     não cumpre a WCAG 2.4.11, que pede um perímetro de 2px com 3:1 de
+     contraste.
+     Estas regras repõem um anel de 3px, e vencem o `focus:outline-none`
+     do Tailwind por serem mais específicas e virem depois. O `summary`
+     está na lista porque é focável sem `tabindex` e foi o único que
+     escapou à primeira tentativa — apanhado a medir, não a olhar. */
+  .focus\:outline-none:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  button:focus-visible,
+  a:focus-visible,
+  summary:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 3px solid #e8b34f !important;
+    outline-offset: 2px;
+  }
 </style>
 </head>
 

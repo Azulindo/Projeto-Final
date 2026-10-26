@@ -270,6 +270,19 @@ const ENDPOINTS_REAIS = [
      cartões. O critério é a necessidade, não a ausência de perigo — e a
      página já declarava `data-niveis="balcao administrador"`. */
   /^gestao\/mesas\/qrcodes$/,      // GET /api/gestao/mesas/qrcodes
+
+  /* Reservas vistas de dentro — B-73 (11/09), contrato na docs/API.md
+     4.14. Desbloqueia a F-61 e fecha o único sítio do sistema em que a
+     informação entrava e não saía: até hoje um cliente reservava e
+     ninguém no restaurante conseguia ver a reserva.
+     Só leitura — confirmar, recusar ou cancelar não está aqui e é de
+     propósito (ver o fim da 4.14: mudar o estado obriga a decidir o que
+     acontece à lotação do horário, e isso é uma conversa).
+     Duas entradas porque o ecrã chama sempre com `?dias=` ou `?data=`,
+     mas o caminho nu tem de continuar a bater — o mesmo par do
+     `produtos`. */
+  /^gestao\/reservas$/,            // GET /api/gestao/reservas
+  /^gestao\/reservas\?/,           // GET /api/gestao/reservas?data= | ?dias= | ?estado=
 ];
 
 /**
@@ -1037,6 +1050,160 @@ function lerReservasDemo() {
 function gravarReservasDemo(todas) {
   try { localStorage.setItem(CHAVE_RESERVAS_DEMO, JSON.stringify(todas)); }
   catch (e) { /* segue sem persistir */ }
+}
+
+/* Os estados da reserva, pela ordem do ENUM no `database/schema.sql`.
+   Aqui porque o `gestao/reservas` recusa um `estado=` que não exista,
+   com 400, como o servidor. */
+const ESTADOS_RESERVA = [
+  'pendente', 'confirmada', 'recusada', 'cancelada', 'concluida', 'nao_compareceu',
+];
+
+/**
+ * hojeEmLisboa / somarDiasISO — o dia de hoje, em Lisboa.
+ *
+ * O mesmo truque do `sv-SE` que o João usa no
+ * `backend/src/routes/gestaoReservas.js`, de propósito: as duas pontas
+ * têm de concordar sobre que dia é "hoje", senão a janela de sete dias
+ * do ecrã e a do servidor diferem por um dia durante uma hora por
+ * noite. O `sv-SE` já formata como 2026-09-11 e poupa a montagem à mão.
+ *
+ * E NÃO se usa `toISOString()` para a data: esse converte para UTC, e
+ * uma data escolhida à noite em Portugal no verão sai o dia anterior.
+ * Já nos apanhou uma vez na `cliente/js/reservas.js`.
+ */
+function hojeEmLisboa() {
+  try {
+    return new Intl.DateTimeFormat('sv-SE', {
+      timeZone: 'Europe/Lisbon', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(new Date());
+  } catch (e) {
+    /* Sem base de fusos no motor: cai no dia local, que em Portugal é o
+       mesmo. Melhor do que atirar dentro de um helper de datas. */
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+}
+
+function somarDiasISO(dataISO, n) {
+  /* Meio-dia UTC: longe das duas mudanças de hora do ano, nas quais um
+     salto de 24 horas a partir da meia-noite cai no dia errado. */
+  const d = new Date(`${dataISO}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * reservasDemoTodas — as reservas de demonstração, num sítio só.
+ *
+ * Junta as que foram criadas no browser (o `localStorage`) a um punhado
+ * fixo, calculado a partir de hoje. As fixas existem por uma razão
+ * concreta: sem elas a tabela da F-61 abre vazia numa demonstração, e
+ * um ecrã de reservas vazio não mostra nada do que foi construído — era
+ * "um aviso em destaque alimentado por nada", que é exactamente a
+ * crítica que o João fez à cozinha e que estava certa.
+ *
+ * Não são gravadas no `localStorage`, de propósito: assim não se
+ * multiplicam a cada recarregamento, não ressuscitam depois de alguém
+ * limpar o armazém, e não contam para a lotação dos horários — uma
+ * reserva de mentira não deve poder encher um sábado a sério.
+ *
+ * Esta função é lida em DOIS sítios — o `GET /reservas/:codigo` do
+ * cliente e o `GET /gestao/reservas` do painel. É de propósito que seja
+ * a mesma: um código copiado da tabela do gerente tem de poder ser
+ * consultado na página do cliente, senão a demonstração contradiz-se a
+ * meio.
+ */
+function reservasDemoTodas() {
+  const hoje = hojeEmLisboa();
+  const d = n => somarDiasISO(hoje, n);
+
+  /* Duas com ementa pré-selecionada, e é aí que está o ponto: a da
+     Ana leva a Tábua Rústica (id 10), que está em baixo no
+     `gestao/stock` (2 <= 4), e a do Bruno leva a Picanha (id 9), que
+     não está (12 > 6). O aviso da F-61 tem de aparecer numa linha e
+     NÃO aparecer na outra — um aviso que só se vê a disparar não
+     ensina quando é que está calado. */
+  const item = (id, q) => {
+    const p = catalogoDemo().find(x => x.id === id);
+    return {
+      produtoId: p.id, nome: p.nome, quantidade: q,
+      precoUnit: Number(p.preco),
+      subtotal: Number((Number(p.preco) * q).toFixed(2)),
+    };
+  };
+  const soma = itens => Number(itens.reduce((t, i) => t + i.subtotal, 0).toFixed(2));
+
+  const itensAna = [item(10, 2), item(1, 2), item(24, 2)];
+  const itensBruno = [item(9, 4), item(19, 4)];
+
+  /* Os códigos seguem o ALFABETO a sério do gerador — o
+     `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`, que não tem O, 0, 1 nem I, de
+     propósito: são os que se confundem lidos ao telefone ou escritos à
+     mão. Estavam `RSV-DEMO1` … `RSV-DEMO6` e foram trocados a 11/09,
+     porque numa captura de ecrã li o meu próprio `DEMO1` como `DEM01` —
+     a prova do problema em duas linhas. Um código de demonstração com
+     uma forma que o sistema a sério nunca produz ensina a forma errada
+     a quem estiver a olhar. */
+  const fixas = [
+    {
+      codigo: 'RSV-DEMA2', nome: 'Ana Loureiro', telemovel: '912345678',
+      pessoas: 4, data: d(0), hora: '20:00', periodo: 'jantar',
+      estado: 'confirmada', modo_ementa: 'pre_selecionada',
+      observacoes: 'Aniversário — mesa mais afastada, se der',
+      valorEstimado: soma(itensAna), itens: itensAna,
+      criadoEm: new Date(Date.now() - 26 * 3600 * 1000).toISOString(),
+    },
+    {
+      codigo: 'RSV-DEMB3', nome: 'Bruno Esteves', telemovel: '936111222',
+      pessoas: 6, data: d(0), hora: '21:00', periodo: 'jantar',
+      estado: 'pendente', modo_ementa: 'pre_selecionada',
+      observacoes: null,
+      valorEstimado: soma(itensBruno), itens: itensBruno,
+      criadoEm: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+    },
+    {
+      codigo: 'RSV-DEMC4', nome: 'Catarina Pinho', telemovel: '967333444',
+      pessoas: 2, data: d(0), hora: '13:00', periodo: 'almoco',
+      estado: 'concluida', modo_ementa: 'no_restaurante',
+      observacoes: null, valorEstimado: null, itens: [],
+      criadoEm: new Date(Date.now() - 50 * 3600 * 1000).toISOString(),
+    },
+    {
+      codigo: 'RSV-DEMD5', nome: 'Diogo Matias', telemovel: '918777555',
+      pessoas: 3, data: d(2), hora: '19:30', periodo: 'jantar',
+      estado: 'pendente', modo_ementa: 'no_restaurante',
+      observacoes: 'Cadeira de bebé', valorEstimado: null, itens: [],
+      criadoEm: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
+    },
+    {
+      codigo: 'RSV-DEME6', nome: 'Eduarda Nunes', telemovel: '925444111',
+      pessoas: 10, data: d(4), hora: '20:30', periodo: 'jantar',
+      estado: 'confirmada', modo_ementa: 'no_restaurante',
+      observacoes: 'Grupo da empresa — fatura com NIF',
+      valorEstimado: null, itens: [],
+      criadoEm: new Date(Date.now() - 70 * 3600 * 1000).toISOString(),
+    },
+    {
+      codigo: 'RSV-DEMF7', nome: 'Filipe Abreu', telemovel: '911222333',
+      pessoas: 2, data: d(1), hora: '20:00', periodo: 'jantar',
+      estado: 'cancelada', modo_ementa: 'no_restaurante',
+      observacoes: null, valorEstimado: null, itens: [],
+      criadoEm: new Date(Date.now() - 11 * 3600 * 1000).toISOString(),
+    },
+  ];
+
+  const todas = {};
+  /* O `id` entra aqui e não em cada linha acima: o `GET /reservas/:codigo`
+     devolve-o, e sem ele uma reserva fixa consultada na página do
+     cliente saía com `id: undefined`. Numa gama alta para não colidir
+     com as criadas no browser, que derivam do relógio. */
+  fixas.forEach((r, i) => { todas[r.codigo] = Object.assign({ id: 90001 + i }, r); });
+  /* As do browser entram DEPOIS, para que uma reserva feita à frente de
+     alguém ganhe a uma fixa com o mesmo código — que é improvável, mas a
+     ordem tem de ser deliberada e não por acidente do `Object.assign`. */
+  Object.assign(todas, lerReservasDemo());
+  return todas;
 }
 
 /* ── Encomendas de take away simuladas (B-35 / F-24) ───────────────
@@ -2169,7 +2336,16 @@ async function simularEndpoint(endpoint, opcoes) {
     });
     valorEstimado = Number(valorEstimado.toFixed(2));
 
-    const codigo = 'RES-' + Array.from({ length: 5 },
+    /* `RSV-`, não `RES-` (corrigido 11/09). O servidor faz
+       `gerarCodigo('RSV')` no `routes/reservas.js:294`, e a API.md, a
+       CONTEXTO.md, a TAREFAS.md e o comentário da própria
+       `cliente/js/reservas.js` diziam todas `RSV-`. O único sítio que
+       dizia `RES-` era este — e a `docs/MANUAL.md`, que copiou daqui.
+       Ninguém dava por isso porque o padrão do `ENDPOINTS_REAIS` aceita
+       os dois: uma demonstração mostrava `RES-` e o sistema a sério
+       `RSV-`, e a diferença só aparecia a quem comparasse os dois no
+       mesmo dia. */
+    const codigo = 'RSV-' + Array.from({ length: 5 },
       () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
 
     const todas = lerReservasDemo();
@@ -2178,6 +2354,14 @@ async function simularEndpoint(endpoint, opcoes) {
       codigo, estado: 'pendente',
       nome, telemovel, email: d.email || null,
       pessoas, data: d.data, hora: d.hora,
+      /* Guardado no momento da criação, tirado do slot que já
+         verificámos acima — e não recalculado depois a partir da hora.
+         O `gestao/reservas` do servidor traz o `periodo` da
+         `slot_horario` por junção; se aqui eu o adivinhasse com um
+         `hora < '16:00'`, passava a haver duas regras a dizer a que
+         período pertence uma hora, e mudar os horários de almoço num
+         sítio deixava o outro a responder o antigo. */
+      periodo: slot.periodo,
       modo_ementa: d.modo_ementa || 'no_restaurante',
       observacoes: d.observacoes || null,
       valorEstimado,
@@ -2207,7 +2391,7 @@ async function simularEndpoint(endpoint, opcoes) {
   const resMatch = caminho.match(/^reservas\/([^/?]+)$/);
   if (resMatch && metodo === 'GET') {
     const codigo = decodeURIComponent(resMatch[1]).trim().toUpperCase();
-    const r = lerReservasDemo()[codigo];
+    const r = reservasDemoTodas()[codigo];
     if (!r) throw erroSimulado('Não há nenhuma reserva com esse código.', 404);
     /* Como no take away: quem sabe o código vê a reserva, não os
        contactos de ninguém. */
@@ -2219,6 +2403,89 @@ async function simularEndpoint(endpoint, opcoes) {
         valorEstimado: r.valorEstimado,
       },
       itens: r.itens,
+    };
+  }
+
+  /* ── reservas vistas de dentro (docs/API.md 4.14 / B-73) ─────────
+     Com login, níveis `administrador` e `balcao`. A cozinha leva 403 —
+     é o critério da 4.6 outra vez: a necessidade, e não a ausência de
+     perigo.
+
+     NÃO devolve campo nenhum de stock baixo, e isso é de propósito. O
+     aviso da F-61 sai do cruzamento com o `gestao/stock`, que é a única
+     lista que sabe QUAIS os produtos em baixo. Um `stockBaixo: true`
+     aqui punha dois sítios a responder à mesma pergunta — foi
+     exactamente o que se corrigiu no cartão do painel esta semana. */
+  if (caminho === 'gestao/reservas' && metodo === 'GET') {
+    /* Não há verificação de nível aqui, e não é esquecimento: a
+       simulação NUNCA verificou níveis em endpoint nenhum — quem trata
+       disso é o `data-niveis` da página com o `auth-guard.js`, e do lado
+       a sério é o servidor com o 403. Escrevi-a e apaguei-a: uma única
+       verificação de nível dentro da simulação, quando as outras
+       dezenove não a têm, não protege nada e cria a dúvida de saber
+       quais é que protegem. Se um dia se decidir verificar aqui,
+       verifica-se em todas de uma vez. */
+    const data = query.get('data');
+    const dias = query.get('dias');
+    const estado = query.get('estado');
+
+    if (data !== null && !/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+      throw erroSimulado('Data no formato AAAA-MM-DD.', 400);
+    }
+    let numDias = 7;
+    if (dias !== null) {
+      numDias = Number(dias);
+      if (!Number.isInteger(numDias) || numDias < 1 || numDias > 90) {
+        throw erroSimulado('O numero de dias tem de estar entre 1 e 90.', 400);
+      }
+    }
+    if (estado !== null && !ESTADOS_RESERVA.includes(estado)) {
+      throw erroSimulado(`Estado desconhecido: ${estado}.`, 400);
+    }
+
+    const hoje = hojeEmLisboa();
+    const de = data || hoje;
+    const ate = data || somarDiasISO(hoje, numDias);
+
+    let lista = Object.values(reservasDemoTodas())
+      .filter(r => r.data >= de && r.data <= ate)
+      .filter(r => !estado || r.estado === estado);
+
+    /* A mesma ordem do servidor, incluindo o código como desempate.
+       O João apanhou isto na lista dos mais vendidos: duas linhas
+       empatadas saíam por ordem diferente entre dois F5, porque o MySQL
+       não promete nenhuma. Aqui o `sort` do JavaScript é estável, mas a
+       ordem de entrada num objeto do `localStorage` não é uma ordem que
+       se possa defender — por isso desempata-se explicitamente, e o
+       ecrã vê a mesma sequência nos dois modos. */
+    lista.sort((a, b) =>
+      a.data.localeCompare(b.data)
+      || a.hora.localeCompare(b.hora)
+      || a.codigo.localeCompare(b.codigo));
+
+    const truncado = lista.length > 200;
+    if (truncado) lista = lista.slice(0, 200);
+
+    return {
+      reservas: lista.map(r => ({
+        codigo: r.codigo,
+        nome: r.nome,
+        telemovel: r.telemovel,
+        pessoas: r.pessoas,
+        data: r.data,
+        hora: r.hora,
+        periodo: r.periodo || null,
+        estado: r.estado,
+        modo_ementa: r.modo_ementa,
+        observacoes: r.observacoes,
+        valorEstimado: r.valorEstimado == null ? null : Number(r.valorEstimado),
+        /* O armazém interno guarda `criadoEm`; a resposta diz `criadaEm`,
+           que é o que a 4.14 combinou. A tradução é aqui e não no ecrã:
+           o nome interno é assunto deste ficheiro. */
+        criadaEm: r.criadoEm || null,
+        itens: Array.isArray(r.itens) ? r.itens : [],
+      })),
+      truncado,
     };
   }
 

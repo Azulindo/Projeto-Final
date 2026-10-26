@@ -6,9 +6,11 @@
 <title>Mesa — Vem Pro Abate</title>
 <meta name="description" content="Faça o seu pedido diretamente da mesa no Vem Pro Abate.">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<!-- As fontes vêm do próprio repositório desde 28/09 (F-68): o plano B
+     da apresentação é servir o site do portátil sem internet, e medido
+     sem rede as 18 páginas carregavam ZERO fontes. Ver
+     `assets/fontes/fontes.css` e `backend/scripts/baixarFontes.js`. -->
+<link rel="stylesheet" href="../../assets/fontes/fontes.css">
 
 <!-- ── O TAILWIND ESTÁ GUARDADO NO REPOSITÓRIO (F-70, 11/09) ──────────
      Aqui estava `<script src="https://cdn.tailwindcss.com">` com a
@@ -78,6 +80,29 @@
   /* Classes aplicadas por JS — declaradas aqui para o Tailwind CDN as
      gerar já no primeiro varrimento da página. */
   .warmup { }
+  /* ── O ANEL DE FOCO (F-83, 16/09) ────────────────────────────────
+     Estas duas páginas não carregam o `css/nav.css` — são Tailwind e
+     vivem à parte —, por isso o anel dourado que o resto do site
+     passou a ter não lhes chega. E são as únicas páginas do projeto
+     onde alguém escreveu `focus:outline-none`: seis campos (um na
+     mesa, cinco no takeaway) trocavam o anel do browser por uma
+     mudança de cor de bordo de 1px. Um bordo de 1px que muda de tom
+     não cumpre a WCAG 2.4.11, que pede um perímetro de 2px com 3:1 de
+     contraste.
+     Estas regras repõem um anel de 3px, e vencem o `focus:outline-none`
+     do Tailwind por serem mais específicas e virem depois. O `summary`
+     está na lista porque é focável sem `tabindex` e foi o único que
+     escapou à primeira tentativa — apanhado a medir, não a olhar. */
+  .focus\:outline-none:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  button:focus-visible,
+  a:focus-visible,
+  summary:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 3px solid #e8b34f !important;
+    outline-offset: 2px;
+  }
 </style>
 </head>
 
@@ -101,6 +126,36 @@
     <button id="btnTentarNovamente" class="mt-2 bg-gradient-to-r from-gold to-copper text-carvao font-bold rounded-2xl px-6 py-3 text-sm">
       Tentar novamente
     </button>
+
+    <!-- ── O QUE FALHOU, EM LETRA PEQUENA (X-24, 14/09) ──────────────
+         Este ecrã dizia só "QR Code invalido" e mais nada. Custou-nos
+         meia hora e três tentativas ao telemóvel: eu a adivinhar causas
+         à distância e o Guilherme a escrever endereços à mão. Eram DOIS
+         problemas diferentes com a mesma frase no ecrã — um cartão de
+         demonstração com um token que não existe no servidor, e eu a
+         dar-lhe `?t=` quando a página lê `?mesa=`.
+
+         Se este bloco existisse, a primeira fotografia do ecrã tinha
+         resolvido o caso.
+
+         Não é informação sensível: o token já está na barra do endereço,
+         à vista de quem tem o telefone na mão. E fica em letra pequena e
+         discreta, porque é para quem está a resolver o problema — não
+         para o cliente com fome, que só precisa do botão de cima. -->
+    <details id="erroDetalhes" class="mt-4 text-left max-w-xs w-full hidden">
+      <summary class="text-[11px] text-neutral-500 cursor-pointer select-none">
+        Detalhes técnicos
+      </summary>
+      <dl class="mt-2 text-[11px] leading-relaxed">
+        <dt class="text-neutral-500">Código da mesa lido do endereço</dt>
+        <dd id="erroToken" class="text-neutral-300 font-mono break-all mb-1.5">—</dd>
+        <dt class="text-neutral-500">Servidor a que a página falou</dt>
+        <dd id="erroServidor" class="text-neutral-300 font-mono break-all mb-1.5">—</dd>
+        <dt class="text-neutral-500">Modo</dt>
+        <dd id="erroModo" class="text-neutral-300 mb-1.5">—</dd>
+      </dl>
+      <p id="erroPista" class="text-[11px] text-copper mt-1"></p>
+    </details>
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════
@@ -222,64 +277,26 @@
   </footer>
 
   <script src="../js/api.js"></script>
+  <!-- F-69 (14/09): o cartão de produto, os separadores e as funções de
+       preço vivem aqui, partilhados com a takeaway.html. Esta página tinha
+       a sua própria cópia desde 10/09, e nesses quatro dias os botões de
+       quantidade já tinham ficado 8px mais pequenos do que os da outra. -->
+  <script src="js/ementa-comum.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* ═══════════════════════════════════════════════════════════
-     Este ecrã fala com o backend através do api.js:
-       GET  mesas/:token/sessao          → abre/lê a sessão da mesa
-       GET  produtos                     → catálogo (ainda simulado)
-       POST mesas/:token/pedir           → envia itens para a cozinha
-       POST mesas/:token/pedir-conta     → pede a conta
-       POST mesas/:token/chamar-empregado
-     Formatos em docs/API.md. Nada aqui tem dados de menu escritos à
-     mão — tudo vem da API, incluindo os produtoId.
-  ═══════════════════════════════════════════════════════════ */
-
-  const CAMINHO_IMAGENS = '../../assets/imagens/pratos/';
-
-  /* O `imagem` que a API devolve é relativo à raiz do site
-     ("assets/imagens/..."), e esta página está dois níveis abaixo. */
-  const RAIZ_SITE = '../../';
-
-  /* Imagens por nome de produto.
-     Solução temporária: a tabela `Produto` ainda não tem coluna de
-     imagem no que o front-end recebe. Desde 03/09 o `GET /produtos`
-     traz o campo `imagem` preenchido, por isso esta tabela é só rede. */
-  const IMAGENS_POR_NOME = {
-    'Abatata Frita':            'abatata_frita.jpg',
-    'Vem Pro Abacate':          'vem_pro_abacate.jpg',
-    "Vem p'ro Alho":            'vem_pro_alho.jpg',
-    'Abate-Boca':               'abate_boca.jpg',
-    'Borrego Abatido':          'borrego_abatido.jpg',
-    'Francesinha em K.O.':      'francesinha_em_ko.jpg',
-    'Abate Misto':              'prato_favorito.jpg',
-    'Prega-me Isto':            'prego.jpg',
-    'Picanha na Brasa Negra':   'picanha_na_brasa_negra.jpg',
-    'Tábua Rústica do Abate':   'tabua_rustica_do_abate.jpg',
-    'Abategatoue':              'abategatoue.jpg',
-    'Baba do Pastor':           'baba_do_pastor.jpg',
-    'Cheesecake da Casa':       'cheesecake_da_casa.jpg',
-    'Taça Gelada da Casa':      'taca_gelada_da_casa.jpg',
-  };
-
-  /* Emojis para os produtos sem fotografia (bebidas) */
-  const EMOJIS_POR_PALAVRA = [
-    [/cerveja/i, '🍺'], [/panach/i, '🍻'], [/sangria/i, '🍷'], [/cola/i, '🥤'],
-    [/ice tea/i, '🧊'], [/sumo/i, '🧃'], [/água|agua/i, '💧'], [/pingado|caf/i, '☕'],
-  ];
-
-  /* Ordem e ícone dos separadores. Categorias que apareçam na API e não
-     estejam aqui são mostradas no fim, com ícone genérico — assim, se o
-     João acrescentar uma categoria nova, ela aparece na mesma. */
-  const ORDEM_CATEGORIAS = ['Pratos Principais', 'Entradas', 'Bebidas', 'Sobremesas'];
-  const ICONES_CATEGORIA = {
-    'Pratos Principais': '🥩', 'Entradas': '🥗', 'Bebidas': '🍹', 'Sobremesas': '🍰',
-  };
+  /* As imagens, os emojis, os ícones das categorias e a ordem de reserva
+     estavam todos escritos aqui. Passaram para o `js/ementa-comum.js`
+     na F-69 — é o mesmo conjunto que a `takeaway.html` usa. */
 
   /* ── REFERÊNCIAS AO DOM ─────────────────────────────────────── */
   const ecraCarregamento = document.getElementById('ecraCarregamento');
   const ecraErro         = document.getElementById('ecraErro');
+  const erroDetalhes     = document.getElementById('erroDetalhes');
+  const erroTokenEl      = document.getElementById('erroToken');
+  const erroServidorEl   = document.getElementById('erroServidor');
+  const erroModoEl       = document.getElementById('erroModo');
+  const erroPistaEl      = document.getElementById('erroPista');
   const erroMensagem     = document.getElementById('erroMensagem');
   const btnTentarNovamente = document.getElementById('btnTentarNovamente');
 
@@ -345,13 +362,31 @@ document.addEventListener('DOMContentLoaded', () => {
   ═══════════════════════════════════════════════════════════ */
   async function init() {
     const params = new URLSearchParams(location.search);
-    const emSimulacao = typeof MODO_SIMULACAO !== 'undefined' && MODO_SIMULACAO;
-    // O QR Code de cada mesa aponta para ...mesa.html?mesa=<qrToken>.
-    // Sem parâmetro, em modo de demonstração abrimos uma mesa de exemplo.
-    state.token = params.get('mesa') || (emSimulacao ? 'demo-mesa-3' : null);
+
+    /* ── O QR Code aponta para ...mesa.html?mesa=<qrToken> ────────────
+       A mesa de exemplo só entra quando a simulação está MESMO a ser
+       usada — ou seja, com `?simular=1` — e não sempre que o
+       `MODO_SIMULACAO` é true.
+
+       X-25 (14/09): isto dizia `MODO_SIMULACAO`, que é o interruptor
+       mestre e vale **sempre** true; a `ENDPOINTS_REAIS` é que decide,
+       caminho a caminho, o que vai ao servidor. Resultado: abrir esta
+       página sem `?mesa=` não dava "falta o código da mesa" — punha
+       `demo-mesa-3` em silêncio, e como o `mesas/:token/sessao` já é
+       real, o servidor respondia 404 "QR Code invalido".
+
+       Custou-nos três tentativas ao telemóvel: o Guilherme abriu um
+       endereço meu com `?t=` em vez de `?mesa=`, e em vez de lhe dizerem
+       que faltava o parâmetro, disseram-lhe que o QR Code era inválido —
+       sobre um token que ele nunca escreveu. **A mensagem certa existia
+       e era inalcançável.** Uma substituição silenciosa troca um
+       problema claro por um confuso, e é a mesma família do
+       `Math.max(0, …)` do X-17: engolir o sinal em vez de o mostrar. */
+    const emDemonstracao = typeof simulacaoForcada === 'function' && simulacaoForcada();
+    state.token = params.get('mesa') || (emDemonstracao ? 'demo-mesa-3' : null);
 
     if (!state.token) {
-      mostrarErro('Falta o código da mesa. Lê outra vez o QR Code da tua mesa.');
+      mostrarErro('Falta o código da mesa no endereço. Lê outra vez o QR Code da tua mesa.');
       return;
     }
 
@@ -383,7 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Só as que têm alguma coisa para mostrar: uma categoria vazia
         // é um separador em que o cliente toca e não acontece nada.
         ? categorias.filter(c => comProdutos.has(c.nome)).map(c => c.nome)
-        : ordenarCategorias([...comProdutos]);
+        : vpaOrdenarCategorias([...comProdutos]);
       state.categoriaAtiva = state.categorias[0] || '';
 
       mesaNumeroEl.textContent = `Mesa ${String(state.mesa.numero).padStart(2, '0')}`;
@@ -398,11 +433,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function ordenarCategorias(categorias) {
-    const conhecidas = ORDEM_CATEGORIAS.filter(c => categorias.includes(c));
-    const novas = categorias.filter(c => !ORDEM_CATEGORIAS.includes(c)).sort();
-    return [...conhecidas, ...novas];
-  }
 
   function mostrarCarregamento(ativo) {
     ecraCarregamento.classList.toggle('hidden', !ativo);
@@ -412,8 +442,47 @@ document.addEventListener('DOMContentLoaded', () => {
   function mostrarErro(mensagem) {
     mostrarCarregamento(false);
     erroMensagem.textContent = mensagem;
+    preencherDetalhesDoErro();
     ecraErro.classList.remove('hidden');
     ecraErro.classList.add('flex');
+  }
+
+  /**
+   * preencherDetalhesDoErro — o que é preciso para diagnosticar (X-24).
+   *
+   * Três factos e uma pista. Os factos são o que a página fez; a pista é
+   * a leitura mais provável, e só aparece quando há uma que valha a pena
+   * — um palpite escrito com confiança é pior do que palpite nenhum.
+   */
+  function preencherDetalhesDoErro() {
+    if (!erroDetalhes) return;
+
+    const params = new URLSearchParams(location.search);
+    const bruto = params.get('mesa');
+    const simulado = typeof simulacaoForcada === 'function' ? simulacaoForcada() : false;
+
+    erroTokenEl.textContent = bruto
+      ? bruto
+      : (params.toString() ? `(sem ?mesa= — o endereço tem: ?${params.toString()})` : '(o endereço não traz parâmetro nenhum)');
+
+    erroServidorEl.textContent = simulado
+      ? '(nenhum — dados de demonstração)'
+      : (typeof API_BASE === 'string' ? API_BASE : '(desconhecido)');
+
+    erroModoEl.textContent = simulado ? 'demonstração (?simular=1)' : 'servidor a sério';
+
+    /* As duas pistas que já nos custaram tempo a nós. */
+    let pista = '';
+    if (!bruto && params.toString()) {
+      pista = 'O parâmetro da página é ?mesa= — não ?t=, que é o da API.';
+    } else if (bruto && /^demo-mesa-/.test(bruto) && !simulado) {
+      pista = 'Este é um código de DEMONSTRAÇÃO e não existe no servidor. '
+            + 'O cartão foi impresso com o ecrã de QR Codes em modo de demonstração.';
+    }
+    erroPistaEl.textContent = pista;
+    erroPistaEl.classList.toggle('hidden', !pista);
+
+    erroDetalhes.classList.remove('hidden');
   }
 
   btnTentarNovamente.addEventListener('click', () => {
@@ -426,28 +495,13 @@ document.addEventListener('DOMContentLoaded', () => {
      FILTROS DE CATEGORIA
   ═══════════════════════════════════════════════════════════ */
   function renderFiltros() {
-    filtrosEl.innerHTML = '';
-    state.categorias.forEach(categoria => {
-      const ativo = categoria === state.categoriaAtiva;
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.role = 'tab';
-      btn.setAttribute('aria-selected', ativo ? 'true' : 'false');
-      btn.dataset.categoria = categoria;
-      btn.className = [
-        'flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors border',
-        ativo
-          ? 'bg-gradient-to-r from-gold to-copper text-carvao border-transparent shadow-soft'
-          : 'bg-carvao2 text-neutral-300 border-white/[0.06] hover:border-copper/40',
-      ].join(' ');
-      btn.innerHTML = `<span aria-hidden="true">${ICONES_CATEGORIA[categoria] || '🍽️'}</span><span>${escapeHtml(categoria)}</span>`;
-      btn.addEventListener('click', () => {
-        if (state.categoriaAtiva === categoria) return;
-        state.categoriaAtiva = categoria;
-        renderFiltros();
-        renderGrid();
-      });
-      filtrosEl.appendChild(btn);
+    /* O desenho dos separadores é o do `ementa-comum.js`. O que é desta
+       página é só o que acontece ao escolher um: guardar a categoria e
+       redesenhar a grelha. */
+    vpaDesenharFiltros(filtrosEl, state.categorias, state.categoriaAtiva, function (categoria) {
+      state.categoriaAtiva = categoria;
+      renderFiltros();
+      renderGrid();
     });
   }
 
@@ -465,60 +519,19 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  function ficheiroImagem(produto) {
-    // No JSON o campo chama-se `imagem` (na base de dados é `imagem_url`,
-    // mas o servidor converte antes de responder — lido do
-    // formatarProduto() em backend/src/routes/catalogo.js, 03/09).
-    // A tabela em baixo já só serve de rede se algum produto vier sem
-    // imagem preenchida.
-    if (produto.imagem) return RAIZ_SITE + produto.imagem;
-    const ficheiro = IMAGENS_POR_NOME[produto.nome];
-    return ficheiro ? CAMINHO_IMAGENS + ficheiro : null;
-  }
 
-  function emojiProduto(produto) {
-    for (const [padrao, emoji] of EMOJIS_POR_PALAVRA) {
-      if (padrao.test(produto.nome)) return emoji;
-    }
-    return '🍽️';
-  }
 
   function criarCard(produto) {
-    const qty = state.carrinho[produto.id] || 0;
-    const caminho = ficheiroImagem(produto);
+    /* O CARTÃO vem do `ementa-comum.js`, igual ao da `takeaway.html`.
+       Esta página tinha a sua própria cópia até 14/09 (F-69), e em quatro
+       dias já tinha ficado atrás em três coisas: os botões de quantidade
+       a 28×28 em vez de 36×36, os rótulos a dizer "Aumentar quantidade"
+       em vez de nomearem o prato, e o número sem `aria-live`. Nenhuma
+       delas se ia notar a olho — e esta é a página para onde os QR Codes
+       apontam, a que se usa de pé e com uma mão.
 
-    const card = document.createElement('article');
-    card.className = 'card-enter flex gap-3 bg-carvao2 border border-white/[0.06] rounded-2xl p-3 shadow-soft';
-    card.dataset.id = produto.id;
-
-    const mediaHtml = caminho
-      ? `<img src="${escapeAttr(caminho)}" alt="${escapeAttr(produto.nome)}" loading="lazy"
-             class="w-24 h-24 sm:w-28 sm:h-28 rounded-xl object-cover flex-shrink-0 bg-carvao3"
-             onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'w-24 h-24 sm:w-28 sm:h-28 rounded-xl flex-shrink-0 placeholder-icon flex items-center justify-center text-3xl',textContent:'🍽️'}))">`
-      : `<div class="w-24 h-24 sm:w-28 sm:h-28 rounded-xl flex-shrink-0 placeholder-icon flex items-center justify-center text-3xl" aria-hidden="true">${emojiProduto(produto)}</div>`;
-
-    card.innerHTML = `
-      ${mediaHtml}
-      <div class="flex-1 min-w-0 flex flex-col justify-between">
-        <div>
-          <h3 class="font-semibold text-white text-[15px] leading-snug">${escapeHtml(produto.nome)}</h3>
-          <p class="text-xs text-neutral-400 mt-0.5 line-clamp-2">${escapeHtml(produto.descricao || '')}</p>
-        </div>
-        <div class="flex items-center justify-between mt-2.5">
-          <span class="text-gold font-bold text-[15px]">${formatarPreco(Number(produto.preco))}</span>
-          <div class="flex items-center gap-0.5 bg-carvao3 rounded-full p-1">
-            <button type="button" data-action="menos" aria-label="Diminuir quantidade"
-                    class="w-7 h-7 rounded-full flex items-center justify-center text-neutral-300 hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition-colors" ${qty === 0 ? 'disabled' : ''}>−</button>
-            <span class="qty-value w-6 text-center text-sm font-bold text-white">${qty}</span>
-            <button type="button" data-action="mais" aria-label="Aumentar quantidade"
-                    class="w-7 h-7 rounded-full flex items-center justify-center bg-copper text-white hover:bg-gold hover:text-carvao transition-colors">+</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    card.querySelector('[data-action="menos"]').addEventListener('click', () => alterarQuantidade(produto.id, -1));
-    card.querySelector('[data-action="mais"]').addEventListener('click', () => alterarQuantidade(produto.id, 1));
+       O que é MESMO só desta página é a nota por prato, logo a seguir. */
+    const card = vpaCartaoProduto(produto, state.carrinho[produto.id] || 0, alterarQuantidade);
 
     /* ── A NOTA (F-21) ────────────────────────────────────────────
        Só aparece depois de o item estar no carrinho: uma caixa de
@@ -537,20 +550,20 @@ document.addEventListener('DOMContentLoaded', () => {
        e o ecrã da cozinha a mostrá-la, e nenhuma forma de a escrever. */
     const nota = document.createElement('div');
     nota.className = 'nota-item mt-2';
-    nota.hidden = qty === 0;
+    nota.hidden = (state.carrinho[produto.id] || 0) === 0;
     nota.innerHTML = `
       <button type="button" data-action="abrir-nota"
               class="text-[11px] text-neutral-400 hover:text-copper underline decoration-dotted min-h-[24px]">
         ${state.observacoes[produto.id] ? '✏️ Alterar nota' : '＋ Adicionar nota'}
       </button>
       <div data-nota-campo hidden class="mt-1.5">
-        <label class="sr-only" for="obs-${produto.id}">Nota para ${escapeAttr(produto.nome)}</label>
+        <label class="sr-only" for="obs-${produto.id}">Nota para ${vpaEscapeAttr(produto.nome)}</label>
         <textarea id="obs-${produto.id}" rows="2" maxlength="300"
                   class="w-full bg-carvao3 border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-[13px] text-white placeholder-neutral-500 focus:outline-none focus:border-copper resize-none"
-                  placeholder="Sem cebola, bem passado, com vela…">${escapeHtml(state.observacoes[produto.id] || '')}</textarea>
+                  placeholder="Sem cebola, bem passado, com vela…">${vpaEscapeHtml(state.observacoes[produto.id] || '')}</textarea>
       </div>
       <p data-nota-lida class="text-[11px] text-copper mt-1 ${state.observacoes[produto.id] ? '' : 'hidden'}">
-        “${escapeHtml(state.observacoes[produto.id] || '')}”
+        “${vpaEscapeHtml(state.observacoes[produto.id] || '')}”
       </p>
     `;
 
@@ -599,12 +612,13 @@ document.addEventListener('DOMContentLoaded', () => {
        pessoa já tinha desistido de pedir — e ia para a cozinha assim. */
     if (nova === 0) delete state.observacoes[produtoId];
 
-    // Atualiza só o cartão afetado (não perde o scroll da lista)
+    /* Atualiza só o cartão afetado, para não perder o scroll da lista.
+       A parte comum (o número e o botão de menos) está no
+       `ementa-comum.js`; o que fica aqui é a nota, que é desta página. */
+    vpaAtualizarCartao(gridEl, produtoId, nova);
+
     const card = gridEl.querySelector(`[data-id="${produtoId}"]`);
     if (card) {
-      card.querySelector('.qty-value').textContent = nova;
-      card.querySelector('[data-action="menos"]').disabled = nova === 0;
-
       const nota = card.querySelector('.nota-item');
       if (nota) {
         nota.hidden = nova === 0;
@@ -693,7 +707,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalItens = itensPendentes + itensEnviados;
 
     // Rodapé — só o que está por enviar
-    footerTotal.textContent = formatarPreco(precoPendentes);
+    footerTotal.textContent = vpaFormatarPreco(precoPendentes);
     if (itensPendentes > 0) {
       footerCount.textContent = itensPendentes;
       footerCount.classList.remove('hidden');
@@ -704,7 +718,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Resumo — a conta toda
-    resumoSubtotal.textContent = formatarPreco(precoPendentes + precoEnviados);
+    resumoSubtotal.textContent = vpaFormatarPreco(precoPendentes + precoEnviados);
     if (totalItens > 0) {
       resumoCount.textContent = totalItens;
       resumoCount.classList.remove('hidden');
@@ -787,12 +801,12 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="flex items-center justify-between gap-2">
         <span class="text-neutral-300 truncate flex items-center gap-1.5">
           <span class="text-copper font-semibold flex-shrink-0">${qty}×</span>
-          <span class="truncate">${escapeHtml(nome)}</span>
+          <span class="truncate">${vpaEscapeHtml(nome)}</span>
           <span class="text-[10px] ${cor} font-semibold whitespace-nowrap">${marca}${etiqueta}</span>
         </span>
-        <span class="text-neutral-400 flex-shrink-0">${formatarPreco(precoUnit * qty)}</span>
+        <span class="text-neutral-400 flex-shrink-0">${vpaFormatarPreco(precoUnit * qty)}</span>
       </div>
-      ${obs ? `<p class="linha-obs text-[11px] text-copper pl-5 mt-0.5">“${escapeHtml(obs)}”</p>` : ''}
+      ${obs ? `<p class="linha-obs text-[11px] text-copper pl-5 mt-0.5">“${vpaEscapeHtml(obs)}”</p>` : ''}
     `;
     return linha;
   }
@@ -811,7 +825,7 @@ document.addEventListener('DOMContentLoaded', () => {
     linha.innerHTML = `
       <span class="text-neutral-500 truncate flex items-center gap-1.5 line-through">
         <span class="font-semibold flex-shrink-0">${item.quantidade}×</span>
-        <span class="truncate">${escapeHtml(item.nome)}</span>
+        <span class="truncate">${vpaEscapeHtml(item.nome)}</span>
       </span>
       <span class="text-[10px] text-red-400/90 font-semibold whitespace-nowrap flex-shrink-0">anulado · não cobrado</span>
     `;
@@ -926,22 +940,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 2600);
   }
 
-  /* ═══════════════════════════════════════════════════════════
-     UTILITÁRIOS
-  ═══════════════════════════════════════════════════════════ */
-  function formatarPreco(valor) {
-    return Number(valor).toFixed(2).replace('.', ',') + ' €';
-  }
+  
 
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str ?? '';
-    return div.innerHTML;
-  }
-
-  function escapeAttr(str) {
-    return String(str ?? '').replace(/"/g, '&quot;');
-  }
 
   /* ═══════════════════════════════════════════════════════════
      EVENTOS

@@ -54,11 +54,16 @@ A reserva faz-se por conversa, uma pergunta de cada vez:
    não se podem escolher. As que têm poucos lugares mostram o número ao
    lado — se forem seis pessoas e sobrarem dois lugares, dá para ver
    antes de escrever o nome.
-5. **Nome e telemóvel.** O telemóvel são nove dígitos começados em 9;
-   pode escrever-se com espaços.
+5. **Nome e telemóvel.** O telemóvel são nove dígitos começados em 9.
+   Pode escrever-se com espaços (`912 345 678`) e aceita o indicativo
+   do país à frente (`+351912345678`).
 6. **Confirmar** no resumo, que mostra tudo antes de gravar.
 
-No fim aparece um **código de reserva** (por exemplo `RES-K4M2P`) em
+![O passo das horas, com as cheias a cinzento e riscadas](imagens/reservas-horas.png)
+*O passo das horas. As cheias aparecem a cinzento e riscadas, e as que têm
+poucos lugares mostram quantos sobram.*
+
+No fim aparece um **código de reserva** (por exemplo `RSV-K4M2P`) em
 destaque, com um botão para copiar.
 
 > **Guarde o código.** É por ele que a reserva se identifica ao telefone
@@ -123,6 +128,10 @@ telemóvel abre a ementa dessa mesa.
   da refeição — cada envio é uma ronda, e a conta vai somando.
 - **Chamar empregado** e **Pedir a conta** estão no mesmo painel.
 
+![A ementa da mesa, com uma nota escrita num prato](imagens/mesa.png)
+*A ementa da mesa. A nota — aqui uma alergia — vai colada àquele prato e
+aparece destacada no ecrã da cozinha.*
+
 A mesa é identificada pelo QR Code, por isso não é preciso dizer o
 número da mesa nem dar o nome.
 
@@ -155,13 +164,58 @@ Escrever à mão o endereço de um ecrã que não é do seu nível devolve-o ao
 ecrã dele. Não é desconfiança: é evitar que alguém mude uma coisa por
 engano num ecrã onde não devia estar.
 
-## 2.2 Cozinha
+## 2.2 Início — as reservas
+
+O primeiro ecrã depois de entrar. Mostra **as reservas de hoje até sete
+dias**, pelas mais próximas primeiro. O passado não aparece: quem abre
+este ecrã quer saber quem vem aí. Para ver um dia que já passou é
+preciso pedir essa data.
+
+Cada linha traz o dia e a hora, o nome, o telemóvel (que é um link —
+tocar nele liga), quantas pessoas, o código, a ementa e o estado. As
+reservas **de hoje** têm um fio dourado à esquerda. As **canceladas e
+recusadas** ficam na lista, em cinzento e com o nome riscado — saber que
+uma mesa ficou livre também é informação.
+
+Se o cliente pré-escolheu pratos, a linha mostra-os e o **valor
+estimado** com um `≈` à frente. É uma estimativa e não uma conta: o
+cliente pode mudar de ideias à mesa.
+
+E se algum desses pratos estiver **com stock baixo**, aparece um aviso
+amarelo nessa linha, com o nome do prato. O aviso é para **decidir** —
+encomendar, ou telefonar ao cliente. Não desconta nem reserva
+existências nenhumas, porque uma pré-escolha não é um pedido.
+
+> **O aviso de stock só aparece à Administração.** A lista de existências
+> está aberta à administração e à cozinha; a lista de reservas está
+> aberta à administração e ao balcão. Quem está no balcão vê as reservas
+> mas não consegue cruzá-las com o stock — e nesse caso o ecrã
+> **escreve** que o aviso não está disponível, em vez de ficar calado.
+> Uma tabela sem avisos leria-se como uma tabela sem problemas.
+
+**Confirmar ou recusar uma reserva ainda não se faz aqui.** Para já
+muda-se pelo telefone. Falta decidir o que acontece à lotação da hora
+quando uma reserva é recusada, e isso é uma conversa e não um botão.
+
+![A tabela de reservas, com um aviso de stock baixo](imagens/reservas-painel.png)
+*Sessão de Administração. A reserva da Ana pré-escolheu a Tábua Rústica, que
+está com stock baixo — daí o aviso. A do Bruno pré-escolheu Picanha, que não
+está, e por isso não leva aviso nenhum.*
+
+Numa sessão de **Cozinha** esta secção não aparece: quem cozinha não
+precisa da lista de reservas nem dos contactos de ninguém.
+
+## 2.3 Cozinha
 
 O ecrã onde se trabalha durante o serviço. Recarrega sozinho a cada 10
 segundos.
 
-Quatro colunas, pela ordem do trabalho: **Recebido → Confirmado → Em
+Quatro colunas, pela ordem do trabalho: **Recebido → Aceite → Em
 preparação → Pronto**.
+
+> A segunda coluna diz **Aceite** no ecrã. Na API o estado chama-se
+> `confirmado` — é o mesmo, com dois nomes: um para quem programa, outro
+> para quem trabalha. Este manual usa sempre o que está no ecrã.
 
 Cada cartão mostra de onde vem, há quanto tempo chegou, o número, e os
 itens. As **notas do cliente aparecem em destaque** — é aí que está a
@@ -176,11 +230,16 @@ Os pedidos para levar aparecem na mesma fila, marcados **🥡 TAKE AWAY**
 e com o nome de quem vem buscar em vez de um número de mesa. Para quem
 está na grelha não há diferença: o prato é o mesmo.
 
+![O ecrã da cozinha, com duas rondas em espera](imagens/cozinha.png)
+*Sessão de Cozinha — daí a barra lateral ter só três itens. A ronda de 28
+minutos tem a moldura vermelha, a de 4 minutos verde. "Bem tostada" é a nota
+do cliente. Em cima, o stock de hoje, com dois produtos em alerta.*
+
 **Aceitar** faz a ronda avançar. Confirmar uma ronda é o que **desconta
 o stock** — não é quando o cliente pede, porque a cozinha ainda pode
 recusar.
 
-## 2.3 Balcão
+## 2.4 Balcão
 
 As sessões abertas, com o total de cada uma. Serve para cobrar e fechar.
 
@@ -195,7 +254,7 @@ Ao fechar, **o total fica gravado** em vez de continuar a ser calculado.
 Se amanhã subirem o preço da picanha, a conta de hoje continua a dizer o
 que a pessoa pagou.
 
-## 2.4 QR Codes
+## 2.5 QR Codes
 
 Página imprimível, um cartão por mesa, com o número da mesa bem visível.
 
@@ -206,7 +265,7 @@ Página imprimível, um cartão por mesa, com o número da mesa bem visível.
 Acesso: administração e balcão. A cozinha não entra — não há altura em
 que quem cozinha precise de imprimir cartões.
 
-## 2.5 Produtos (administração)
+## 2.6 Produtos (administração)
 
 Criar, editar e desativar produtos.
 
@@ -217,7 +276,7 @@ Criar, editar e desativar produtos.
   ecrã de Stock. São coisas diferentes: aqui altera-se o que o produto
   *é*; lá regista-se o que *aconteceu* a ele.
 
-## 2.6 Categorias (administração)
+## 2.7 Categorias (administração)
 
 A lista das gavetas da ementa, pela ordem em que aparecem no site.
 
@@ -229,7 +288,7 @@ produtos** é recusado à primeira, com o número: esconder as Sobremesas
 tira quatro pratos da ementa sem tocar em nenhum deles. Se for mesmo o
 que quer, o botão passa a **"Esconder mesmo assim"**.
 
-## 2.7 Stock
+## 2.8 Stock
 
 A existência de cada produto que a controla, com o mínimo definido.
 Produtos abaixo do mínimo aparecem em alerta, e o número aparece também
@@ -249,7 +308,11 @@ isso é uma decisão de quem responde pelo inventário.
 
 **Definir mínimo** muda a partir de quando o produto entra em alerta.
 
-## 2.8 Funcionários (administração)
+![O ecrã de stock](imagens/stock.png)
+*Os produtos abaixo do mínimo vêm em cima e destacados. O contador na barra
+lateral mostra quantos são, em qualquer ecrã da aplicação.*
+
+## 2.9 Funcionários (administração)
 
 Criar contas, editar, e desativar quem sai.
 
@@ -267,19 +330,24 @@ Quando alguém é desativado, o acesso é cortado no pedido seguinte: o
 servidor confirma na base de dados a cada pedido, em vez de acreditar no
 que está guardado no browser.
 
-## 2.9 Estatísticas (administração)
+## 2.10 Estatísticas (administração)
 
 Números do dia, do serviço em curso e do mês. Cada valor comparável
 mostra a diferença em relação a ontem.
 
-Gráficos: faturação dos últimos dias, produtos mais vendidos, tempo
-médio de preparação. **Cada gráfico traz a tabela com os mesmos números
+São **três gráficos**: *Faturação por dia*, *Faturação por mês* e
+*Produtos mais vendidos*. **Cada um traz a tabela com os mesmos números
 por baixo**, para quem não distingue as cores ou usa leitor de ecrã ver
 o mesmo que os outros.
 
-O tempo médio de preparação aparece vazio — não zero — quando ainda nada
-ficou pronto no dia. Zero minutos diria "sai instantaneamente", que é
-uma coisa diferente de "ainda não há dados".
+![Os cartões e os gráficos das estatísticas](imagens/estatisticas.png)
+*Cada valor comparável traz a diferença em relação a ontem. Os gráficos são
+SVG desenhado à mão e cada um tem a tabela dos números por baixo.*
+
+O **tempo médio de preparação** não é um gráfico — é um dos cartões do
+topo. Aparece **vazio, e não zero**, quando ainda nada ficou pronto no
+dia: zero minutos diria "sai instantaneamente", que é uma coisa
+diferente de "ainda não há dados".
 
 ---
 

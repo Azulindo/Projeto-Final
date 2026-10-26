@@ -1,0 +1,57 @@
+/* AS FONTES DO SITE, SERVIDAS DO PRÓPRIO REPOSITÓRIO (F-68)
+
+   NÃO EDITAR À MÃO. Este ficheiro é escrito pelo
+   `backend/scripts/baixarFontes.js`; para o mudar, muda-se o script e
+   corre-se outra vez.
+
+   Gerado a 2026-09-28.
+   4 ficheiros, 174 KB no total, subconjunto `latin`.
+
+   Porquê: o plano B da apresentação é servir o site do portátil sem
+   internet, e medido sem rede as 18 páginas carregavam ZERO fontes —
+   nada rebentava, mas o site ficava com a letra do sistema. Com isto,
+   o que se vê offline é o que se vê online.
+
+   Os `<link>` para o fonts.googleapis.com saíram das 18 páginas: com
+   as fontes aqui, aquele pedido era uma ida à internet para não trazer
+   nada de novo — e, sem rede, uma espera para nada. */
+
+/* Fonte variável: um ficheiro cobre os pesos 400 a 800.
+   Os 5 URLs de peso do Google devolvem estes mesmos bytes. */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('Inter-variavel.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Metal Mania';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('MetalMania-400.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Nosifer';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('Nosifer-400.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Fonte variável: um ficheiro cobre os pesos 700 a 800.
+   Os 2 URLs de peso do Google devolvem estes mesmos bytes. */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 700 800;
+  font-display: swap;
+  src: url('PlayfairDisplay-variavel.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}

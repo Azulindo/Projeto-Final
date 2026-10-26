@@ -158,10 +158,9 @@
 
 /* Título com efeito de fogo */
 .h1-reservas {
-  font-family: "Metal Mania", sans-serif;
-  font-size: 3rem;
+  font-family: var(--fonte-display);   /* título de PÁGINA: curto (F-80) */
   text-align: center;
-  background: linear-gradient(180deg, #ffcc00 10%, #ff4500 50%, #7a0000 90%);
+  background: var(--gradiente-fogo);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -221,8 +220,7 @@
 }
 
 .reservas-content h2 {
-  font-family: "Metal Mania", sans-serif;
-  font-size: 2.5rem;
+  font-family: var(--fonte-titulo);
   margin-bottom: 20px;
   color: #ff4500;
 }
@@ -1403,8 +1401,17 @@
 }
 
 .info-item h3 {
-  font-family: "Nosifer", cursive;
-  font-size: 1.3rem;
+  /* ── ESTES SUBTÍTULOS VOLTAM AO NOSIFER (F-76) ──────────────────
+     Foi daqui que o Guilherme tirou a referência: *"o tipo de letra
+     destes subtítulos"*. Eu tinha-os passado ao papel RÓTULO na F-74,
+     a aplicar a regra escrita no `.takeaway-btn` — *"Nosifer é uma
+     fonte de títulos curtos"* —, e ele pediu o contrário: quer esta
+     letra em todos os títulos e botões do site.
+
+     Voltam ao papel TÍTULO, que agora É o Nosifer. O peso, a caixa e
+     o espaçamento saem: era assim que estavam quando ele os viu e
+     gostou, e o peso vem do `nav.css` (o Nosifer só tem 400). */
+  font-family: var(--fonte-titulo);
   margin-bottom: 10px;
   color: #ffcc00;
 }
@@ -1465,14 +1472,13 @@ html { scroll-behavior: smooth; }
   .inline-nav a    { font-size: 10px !important; }
 
   /* Hero */
-  .hero-reservas       { height: 50vh !important; }
-  .h1-reservas         { font-size: 1.8rem !important; }
+  /* 62vh e não 50: ver o comentário igual no `sobre.css` (F-81). */
+  .hero-reservas       { height: 62vh !important; }
   .hero-logo-reservas  { height: 80px !important; }
 
   /* Conteúdo principal */
   .page-reservas       { padding: 30px 15px !important; }
   .reservas-content    { max-width: 100% !important; }
-  .reservas-content h2 { font-size: 1.8rem !important; }
   .reservas-content > p{ font-size: 1rem !important; }
 
   /* Chatbot: altura reduzida para caber no ecrã */
@@ -1539,10 +1545,7 @@ html { scroll-behavior: smooth; }
 @media (max-width: 480px) {
 
   /* Hero: título ainda mais compacto */
-  .h1-reservas         { font-size: 1.4rem !important; }
   .hero-logo-reservas  { height: 60px !important; }
-  .reservas-content h2 { font-size: 1.5rem !important; }
-  .info-item h3        { font-size: 1.1rem !important; }
 
   /* Chatbot: altura compacta para smartphones */
   .chatbot-wrapper { height: 460px; }

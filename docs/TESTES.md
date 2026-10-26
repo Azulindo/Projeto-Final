@@ -131,5 +131,15 @@ real e é onde estão os erros de concorrência que já apanhámos.
 **Segurança a sério.** Não somos auditores. Testam-se as coisas que sabemos ter feito de
 propósito (as permissões, o HTML no nome, a injeção pelos `?`), não as que não sabemos.
 
-**O que só o Guilherme pode julgar.** O aspecto. Está fora daqui porque não se marca com
-✅ ou ❌.
+**O que só o Guilherme pode julgar.** O *gosto* — se uma coisa fica bonita ou não. Mas a
+frase que estava aqui era mais larga do que isso: dizia que **o aspecto** não se marca com
+✅ ou ❌, e a F-71 mostrou que parte dele marca-se. As duas fotografias dos criadores
+estavam com formas diferentes e uma delas **42% mais larga** do que a proporção real da
+imagem, na página de entrada, e ninguém deu por isso durante semanas — porque estava
+arrumado do lado das coisas que "só se vêem a olho", e a olho ninguém viu.
+
+Marcam-se com ✅/❌, e o `criadores.js` marca-os: duas molduras com a mesma medida, a
+proporção que se escolheu, a imagem a cortar em vez de esticar, o texto dentro da coluna,
+o tamanho mínimo de um nome. Nada disto é gosto — é a diferença entre o que se desenhou e
+o que o browser fez. **O que fica para o Guilherme é escolher a moldura; o que não fica é
+confiar que ela saiu igual nas duas fotos.**
