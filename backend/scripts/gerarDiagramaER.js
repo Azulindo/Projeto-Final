@@ -5,9 +5,20 @@
  *
  *  Usar:  npm run diagrama
  *
- *  Escreve dois ficheiros em database/:
- *    diagrama-er.mmd          18 tabelas e as ligacoes, sem colunas
- *    diagrama-er-detalhe.mmd  o mesmo, com as 139 colunas
+ *  Escreve tres ficheiros em database/:
+ *    diagrama-er.mmd          as tabelas e as ligacoes, sem colunas
+ *    diagrama-er-detalhe.mmd  o mesmo, com todas as colunas
+ *    diagrama-er.svg          o DESENHO da vista geral (X-22)
+ *
+ *  O .svg foi acrescentado a 26/10. Ate ai o gerador so escrevia os
+ *  .mmd, e a figura que ia no relatorio era desenhada por fora — ou
+ *  seja, era uma copia, e dizia 17 tabelas quando ja eram 18. Era
+ *  exatamente o defeito que este ficheiro existe para evitar, a
+ *  acontecer dentro do proprio ficheiro.
+ *
+ *  Nao se usa o mermaid-cli: foi experimentado e da 5136x2050 com as
+ *  ligacoes cruzadas. A disposicao e calculada no scripts/desenhoER.js,
+ *  que explica como.
  *
  *  PORQUE E GERADO E NAO DESENHADO
  *
@@ -29,6 +40,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { desenharER } = require('./desenhoER');
 
 const TIPOS = new Set([
   'INT', 'BIGINT', 'SMALLINT', 'TINYINT', 'VARCHAR', 'CHAR', 'TEXT', 'LONGTEXT',
@@ -106,17 +118,42 @@ detalhe.push(...ligacoesEmMermaid());
 
 const destinoGeral   = path.join(RAIZ, 'database', 'diagrama-er.mmd');
 const destinoDetalhe = path.join(RAIZ, 'database', 'diagrama-er-detalhe.mmd');
+const destinoSvg     = path.join(RAIZ, 'database', 'diagrama-er.svg');
 
 fs.writeFileSync(destinoGeral, geral.join('\n') + '\n', 'utf8');
 fs.writeFileSync(destinoDetalhe, detalhe.join('\n') + '\n', 'utf8');
 
 const nColunas = tabelas.reduce((s, t) => s + t.colunas.length, 0);
+
+/*
+ *  O rodape do desenho leva as contagens. Nao e enfeite: e o que
+ *  permite a quem olha para a figura no relatorio confirmar que ela
+ *  concorda com o texto, sem ter de ir ao repositorio.
+ */
+const svg = desenharER(tabelas, ligacoes, {
+  rodape: `${tabelas.length} tabelas · ${nColunas} colunas · ${ligacoes.length} chaves estrangeiras`,
+});
+fs.writeFileSync(destinoSvg, svg, 'utf8');
+
+/*
+ *  O desenho tem de conter TODAS as tabelas. Sem esta verificacao, uma
+ *  tabela que a disposicao deixasse cair desaparecia em silencio — e
+ *  seria o mesmo defeito do diagrama a dizer 17, agora automatizado.
+ */
+const emFalta = tabelas.filter((t) => !svg.includes(`>${t.nome}<`)).map((t) => t.nome);
+if (emFalta.length) {
+  console.error('');
+  console.error('ERRO: estas tabelas nao aparecem no desenho:');
+  for (const n of emFalta) console.error(`  ${n}`);
+  process.exit(1);
+}
 console.log(`Tabelas:            ${tabelas.length}`);
 console.log(`Colunas:            ${nColunas}`);
 console.log(`Chaves estrangeiras:${String(ligacoes.length).padStart(4)}`);
 console.log('');
 console.log(`Escrito: ${path.relative(RAIZ, destinoGeral)}`);
 console.log(`Escrito: ${path.relative(RAIZ, destinoDetalhe)}`);
+console.log(`Escrito: ${path.relative(RAIZ, destinoSvg)}`);
 console.log('');
 console.log('Se o numero de tabelas mudou, ha tres sitios a acertar:');
 console.log('  README.md, docs/API.md e o /api/saude (que conta sozinho).');
