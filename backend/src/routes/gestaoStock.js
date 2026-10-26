@@ -7,7 +7,20 @@
  *  PATCH /api/gestao/stock/:produtoId/minimo
  *
  *  Contrato acordado no docs/API.md, seccao 4.8.
- *  Niveis: administrador e cozinha. O balcao nao entra.
+ *
+ *  Niveis: LER — administrador, cozinha e balcao.
+ *          ESCREVER (movimentos e minimo) — administrador e cozinha.
+ *
+ *  Este cabecalho dizia "administrador e cozinha. O balcao nao entra"
+ *  e ficou assim DEPOIS de a linha 52 deste mesmo ficheiro passar a
+ *  deixar o balcao ler (X-21). Durante umas horas o ficheiro afirmou
+ *  as duas coisas, e quem o lesse de cima acreditava na errada.
+ *
+ *  E a mesma forma de tudo o que este projeto tem apanhado: duas
+ *  copias da mesma regra, uma corrigida e a outra nao. Aqui foi dentro
+ *  do mesmo ficheiro, a 42 linhas de distancia. Encontrado pelo
+ *  Guilherme a 26/10, a confirmar o X-21 — e nenhum teste podia
+ *  apanha-lo, porque um comentario errado nao da erro nenhum.
  * =====================================================================
  */
 
