@@ -702,7 +702,9 @@ endpoints de **escrita**, propostos ao construir o ecrã de stock (F-52) e já s
 `api.js` com este formato exato. Se concordares, é implementar; se preferires outra coisa,
 diz antes de escreveres o B-63 — mudar agora custa uma linha, mudar depois custa um ecrã.
 
-Níveis: `administrador` e **`cozinha`**. O balcão não entra.
+Níveis: **ler** — `administrador`, `cozinha` e `balcão`. **Escrever** (movimentos e mínimo) — só `administrador` e `cozinha`.
+
+> **O balcão entrou na leitura a 11/09 (X-21).** Estava fora das duas, e isso fazia com que o aviso de stock baixo na tabela de reservas só funcionasse para o administrador: as reservas aceitam `administrador` + `balcão`, o stock aceitava `administrador` + `cozinha`, e a interseção é uma pessoa só. Entra pelo critério de sempre — a necessidade: **o balcão é quem atende o telefone e quem liga ao cliente a dizer que um prato está a acabar.** E não entra na escrita: quem conta o que há em armazém é quem está no armazém, e quem regista uma quebra é quem a viu partir-se. Só se viu ao cruzar dois endpoints desenhados em dias diferentes, cada um com a sua lista escrita com bom critério.
 
 #### `GET /api/gestao/stock`
 

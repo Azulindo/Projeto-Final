@@ -26,7 +26,31 @@ const {
 const router = express.Router();
 
 // Quem chega a estes ecras. Escrito uma vez, usado nas tres rotas.
-const NIVEIS = ['administrador', 'cozinha'];
+/*
+ *  LER e ESCREVER deixaram de ter a mesma lista (X-21, 11/09).
+ *
+ *  Era uma so, ['administrador', 'cozinha'], e isso deixava o aviso de
+ *  stock baixo nas reservas a funcionar apenas para o administrador:
+ *  o GET /gestao/reservas aceita administrador e balcao, o stock
+ *  aceitava administrador e cozinha, e a interseccao das duas listas e
+ *  uma pessoa so. Um balcao via a tabela de reservas e levava 403 ao ir
+ *  buscar as existencias para saber que pratos avisar.
+ *
+ *  O balcao entra na LEITURA pelo criterio de sempre — a necessidade:
+ *  e quem atende o telefone e quem liga ao cliente a dizer que um
+ *  prato esta a acabar. Recusar-lhe a leitura era recusar-lhe a razao
+ *  de ser do aviso.
+ *
+ *  E NAO entra na escrita. Quem conta o que ha em armazem e quem esta
+ *  no armazem; quem regista uma quebra e quem a viu partir-se. O
+ *  balcao nao esta nem viu.
+ *
+ *  Encontrado pelo Guilherme ao construir a F-61 — e so se ve quando
+ *  se cruzam dois endpoints que foram desenhados em dias diferentes,
+ *  cada um com a sua lista escrita com bom criterio.
+ */
+const NIVEIS_LEITURA = ['administrador', 'cozinha', 'balcao'];
+const NIVEIS_ESCRITA = ['administrador', 'cozinha'];
 
 
 /* -------------------------------------------------------------------
@@ -64,7 +88,7 @@ const esquemaMinimo = z.object({
 //  tem linha na tabela stock, por isso o JOIN ja os deixa de fora.
 // ─────────────────────────────────────────────────────────────────────
 router.get('/gestao/stock',
-  autenticar, exigirNivel(...NIVEIS),
+  autenticar, exigirNivel(...NIVEIS_LEITURA),
   async (_req, res, next) => {
     try {
       const [linhas] = await pool.query(
@@ -91,7 +115,7 @@ router.get('/gestao/stock',
 //  POST /api/gestao/stock/:produtoId/movimento
 // ─────────────────────────────────────────────────────────────────────
 router.post('/gestao/stock/:produtoId/movimento',
-  autenticar, exigirNivel(...NIVEIS), validar(esquemaMovimento),
+  autenticar, exigirNivel(...NIVEIS_ESCRITA), validar(esquemaMovimento),
   async (req, res, next) => {
     const idProduto = Number(req.params.produtoId);
     if (!Number.isInteger(idProduto) || idProduto < 1) {
@@ -187,7 +211,7 @@ router.post('/gestao/stock/:produtoId/movimento',
 //  do historico de existencias.
 // ─────────────────────────────────────────────────────────────────────
 router.patch('/gestao/stock/:produtoId/minimo',
-  autenticar, exigirNivel(...NIVEIS), validar(esquemaMinimo),
+  autenticar, exigirNivel(...NIVEIS_ESCRITA), validar(esquemaMinimo),
   async (req, res, next) => {
     try {
       const idProduto = Number(req.params.produtoId);
