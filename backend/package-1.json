@@ -1,0 +1,35 @@
+{
+  "name": "vemproabate-backend",
+  "version": "1.0.0",
+  "description": "Backend do restaurante Vem Pro Abate",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "qrcodes": "node scripts/gerarQRCodes.js",
+    "diagrama": "node scripts/gerarDiagramaER.js",
+    "numeros": "node scripts/verificarNumeros.js",
+    "migrar": "node scripts/migrar.js",
+    "provar-x21": "node scripts/provarX21.js",
+    "plano-b": "node scripts/planoB.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.2",
+    "express-rate-limit": "^8.7.0",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.24.3",
+    "nodemailer": "^10.2.1",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14",
+    "qrcode": "^1.5.3"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
