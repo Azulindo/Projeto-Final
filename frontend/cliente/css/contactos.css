@@ -133,10 +133,7 @@
   animation: heatGlow 3s ease-in-out infinite alternate;
 }
 
-@keyframes heatGlow {
-  from { opacity: 0.5; filter: blur(4px); }
-  to { opacity: 0.8; filter: blur(7px); }
-}
+/* @keyframes heatGlow vive agora no nav.css, uma vez so (F-88) */
 
 /* LOGO HERO CONTACTOS */
 .hero-logo-contactos {
@@ -338,7 +335,24 @@ html { scroll-behavior: smooth; }
   .contactos-content p {
     font-size: 0.9rem;
     text-align: center;
-    max-width: 100%;
+    /* O `max-width: 68ch` do `nav.css` encolhe a CAIXA do parágrafo, e o
+       `text-align: center` centra o texto dentro dela — mas a caixa fica
+       colada à esquerda se não levar margens automáticas. Media a 768px:
+       35px de folga de um lado e 135px do outro, num cartão que antes
+       tinha 30 e 30. O Guilherme viu isto a olho antes de eu o medir.
+       Só se põe aqui, e não no `p` do `nav.css`, porque centrar a caixa
+       só faz sentido onde o texto também está centrado: nas páginas de
+       texto corrido alinhado à esquerda, uma margem automática
+       desalinhava o parágrafo do título que está por cima dele. */
+    margin-inline: auto;
+    /* O `max-width: 100%` que estava aqui saiu (F-89, 27/10). Era
+       redundante — um parágrafo já enche o contentor — e, por ser mais
+       específico do que o `p` do `nav.css`, anulava o limite de medida
+       partilhado: **a ordem das folhas só desempata regras com a mesma
+       especificidade**, e `.contactos-content p` (0,1,1) ganha sempre a
+       `p` (0,0,1), venha de que folha vier. Era por isso que a linha
+       desta página tinha 80 caracteres a 768px, a mais comprida do
+       site, enquanto o limite estava escrito e não pegava. */
   }
 
   .contact-info {

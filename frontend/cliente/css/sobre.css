@@ -137,10 +137,7 @@
   animation: heatGlow 3s ease-in-out infinite alternate;
 }
 
-@keyframes heatGlow {
-  from { opacity: 0.5; filter: blur(4px); }
-  to { opacity: 0.8; filter: blur(7px); }
-}
+/* @keyframes heatGlow vive agora no nav.css, uma vez so (F-88) */
 
 /* LOGO HERO SOBRE */
 .hero-logo-sobre {
