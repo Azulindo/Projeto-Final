@@ -52,17 +52,38 @@ require('dotenv').config({ path: ficheiroEnv });
  *  A pergunta certa nao e "que ficheiro li", e "com quem estou a
  *  falar".
  */
-const anfitriao = (process.env.DB_HOST || '').toLowerCase();
-const eLocal = ['localhost', '127.0.0.1', '::1'].includes(anfitriao);
+/*
+ *  Sem DB_HOST nao se inventa um rotulo.
+ *
+ *  Isto era `(process.env.DB_HOST || '').toLowerCase()`, e o `|| ''`
+ *  parecia inofensivo porque aqui nao se liga a nada — so se calcula um
+ *  nome. Mas se o DB_HOST faltasse, o anfitriao ficava vazio, o eLocal
+ *  dava falso, e a caixa de arranque anunciava NUVEM.
+ *
+ *  Ou seja: **o ficheiro escrito para impedir que o indicador mentisse
+ *  tinha, ele proprio, um caminho em que o indicador mentia** — e logo
+ *  no caso em que ha menos informacao, que e quando mais se acredita no
+ *  que esta escrito.
+ *
+ *  Apanhado a 27/10 pelo `npm run config`, na primeira vez que correu
+ *  contra o projeto a serio. A regra que ele aplica e a mesma: um valor
+ *  por omissao que esconde a falta em vez de a dizer.
+ */
+const semAnfitriao = !process.env.DB_HOST;
+const anfitriao = semAnfitriao ? '' : process.env.DB_HOST.toLowerCase();
+const eLocal = !semAnfitriao && ['localhost', '127.0.0.1', '::1'].includes(anfitriao);
 
-const NOME_AMBIENTE = eLocal ? 'LOCAL' : 'NUVEM';
+const NOME_AMBIENTE = semAnfitriao ? 'SEM DB_HOST' : (eLocal ? 'LOCAL' : 'NUVEM');
 
 // Ficheiro e destino a discordar: quase de certeza engano a preencher.
-const avisoTrocado =
-  (ficheiroEnv.endsWith('.env.local') && !eLocal)
-    ? '  ATENCAO: leu o .env.local mas esta a ligar-se a NUVEM.\n' +
-      '           Confirma o DB_HOST dentro do .env.local.'
-    : null;
+const avisoTrocado = semAnfitriao
+  ? `  ATENCAO: nao ha DB_HOST em ${path.basename(ficheiroEnv)}.\n` +
+    '           Nao da para dizer a que base isto se vai ligar.\n' +
+    '           Corre:  npm run plano-b'
+  : ((ficheiroEnv.endsWith('.env.local') && !eLocal)
+      ? '  ATENCAO: leu o .env.local mas esta a ligar-se a NUVEM.\n' +
+        '           Confirma o DB_HOST dentro do .env.local.'
+      : null);
 
 module.exports = {
   ficheiroEnv,

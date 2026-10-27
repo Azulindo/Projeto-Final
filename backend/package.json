@@ -13,13 +13,16 @@
     "provar-x21": "node scripts/provarX21.js",
     "ensaio": "node scripts/ensaioCiclo.js",
     "plano-b": "node scripts/planoB.js",
+    "config": "node scripts/verificarConfig.js",
 
     "postdiagrama": "node scripts/avisarPorEmpurrar.js",
-    "postnumeros": "node scripts/avisarPorEmpurrar.js",
+    "postnumeros": "node scripts/verificarConfig.js && node scripts/avisarPorEmpurrar.js",
     "postmigrar": "node scripts/avisarPorEmpurrar.js",
     "postprovar-x21": "node scripts/avisarPorEmpurrar.js",
     "postensaio": "node scripts/avisarPorEmpurrar.js",
-    "postplano-b": "node scripts/avisarPorEmpurrar.js"
+    "postplano-b": "node scripts/avisarPorEmpurrar.js",
+    "postconfig": "node scripts/avisarPorEmpurrar.js",
+    "postqrcodes": "node scripts/avisarPorEmpurrar.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
