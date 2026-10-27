@@ -265,6 +265,36 @@
 }
 
 
+/* ═══════════════════════════════════════════════════════════════════
+   A CHAMA DOS TÍTULOS, DEFINIDA UMA VEZ  (F-88, 27/10)
+   ═══════════════════════════════════════════════════════════════════
+   O `heatGlow` era **usado por seis folhas e definido por cinco**: a
+   `index.css` pedia-o e não o declarava, e a `index.html` só carrega a
+   `index.css`, a `fontes.css` e esta. Resultado medido: na página de
+   entrada o `.h1::before` tinha `animation-name: heatGlow` e
+   `animation-play-state: running`, mas **opacity 0,6 e filter `none`**,
+   com `getAnimations()` a devolver uma lista vazia — uma animação com
+   um nome que não existe não dá erro nenhum, simplesmente não acontece.
+
+   **A chama do título da entrada nunca respirou.** As outras cinco
+   páginas pulsam desde que foram escritas. É a mesma forma de sempre —
+   a mesma coisa declarada em cinco sítios — com o detalhe cruel de o
+   sítio que falta ser a primeira página que alguém abre, e de ser a
+   segunda coisa que faltava no mesmo elemento: ontem era o `data-text`
+   vazio que lhe tirava a camada, hoje é o `@keyframes` que lhe tirava
+   o movimento.
+
+   Fica aqui, uma vez, na folha que as seis carregam. As cinco cópias
+   saíram das folhas das páginas. O bloco de `prefers-reduced-motion`
+   lá em baixo redefine-o para parado, e está DEPOIS desta definição —
+   que é a ordem de que precisa para ganhar.
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes heatGlow {
+  from { opacity: 0.5; filter: blur(4px); }
+  to   { opacity: 0.8; filter: blur(7px); }
+}
+
+
 /* ── Fundo da página, em todas as larguras ────────────────────────
    O `html` e o `body` destas seis páginas não tinham cor de fundo: o
    que se via por baixo do conteúdo era o branco do browser. Enquanto o
@@ -863,6 +893,50 @@ p {
 @media (prefers-reduced-motion: reduce) {
   .inline-nav a::after,
   .inline-bar { transition: none; }
+
+  /* ── AS ANIMAÇÕES QUE CORRIAM SEMPRE (F-88, 27/10) ────────────────
+     O site **declarava** que respeita o "reduzir movimento" em três
+     sítios — este, a moldura dos criadores (`index.css`) e o spinner da
+     ementa (`menu.css`) — e cada um cobria uma coisa só. Entretanto
+     havia **onze animações `infinite`** espalhadas por sete folhas, e
+     nenhuma delas era apanhada. Quem tem "reduzir movimento" ligado no
+     sistema — e quem o liga costuma ter uma razão: enxaquecas,
+     perturbações vestibulares, sensibilidade ao movimento — via o
+     brilho a respirar por trás do título **nas seis páginas** e o fundo
+     do hero a aproximar-se eternamente em duas delas.
+
+     Três declarações parciais são piores do que nenhuma: fazem a coisa
+     parecer tratada. É o mesmo da F-83, em que o `aria-modal="true"`
+     prometia uma coisa que o JavaScript não cumpria.
+
+     ── PORQUE SE REDEFINEM OS `@keyframes` E NÃO OS SELETORES ────────
+     Parar isto por seletor obrigava a listar `.h1::before`, as cinco
+     variantes `.h1-*::before`, os dois `.hero-bg-*` e o `.status-dot`,
+     e a sétima que alguém acrescentasse amanhã ficava de fora. Um
+     `@keyframes` com o mesmo nome, declarado depois, **substitui** o
+     anterior — e como o `nav.css` é a última folha a ser lida, basta
+     redefini-los aqui para o movimento parar onde quer que a animação
+     seja usada, hoje e depois.
+
+     Os valores não são inventados: são o estado de repouso de cada uma.
+     O brilho fica no meio do seu percurso (0,65 / 5px), o hero fica no
+     `scale(1)` de origem — que o `object-fit: cover` garante que cobre
+     o ecrã — e o ponto de estado fica aceso.
+
+     O `typingDot` NÃO entra: "o bot está a escrever" é informação, não
+     decoração, e tirá-la deixava o cliente sem saber que há resposta a
+     caminho. Movimento que responde a uma acção pode ficar. */
+  @keyframes heatGlow {
+    from, to { opacity: 0.65; filter: blur(5px); }
+  }
+
+  @keyframes zoomIn {
+    from, to { transform: scale(1); }
+  }
+
+  @keyframes pulseGreen {
+    from, to { opacity: 1; box-shadow: 0 0 6px #2ecc71; }
+  }
 }
 
 /* ── Outros alvos de toque ────────────────────────────────────────
