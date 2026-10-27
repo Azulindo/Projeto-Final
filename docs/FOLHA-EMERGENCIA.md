@@ -24,6 +24,11 @@
       o ecrã de QR Codes em `?simular=1`. Gera outra vez, sem essa bandeira.
 - [ ] Telemóvel com dados móveis e bateria
 - [ ] Vídeo de 3 minutos (C-22) no portátil, **fora da internet**
+- [ ] **Se a apresentação for pelo plano A:** as três variáveis de email
+      postas no Render (*Environment*) — `EMAIL_GMAIL_UTILIZADOR`,
+      `EMAIL_GMAIL_APP_PASSWORD` e `EMAIL_RESTAURANTE`. Sem elas os
+      emails **não saem** na nuvem. Isto faz-se em casa, com calma, e
+      **nunca no dia** — é um painel de internet e uma palavra-passe.
 
 ---
 
@@ -49,6 +54,10 @@ Abre no browser: **`https://vem-pro-abate-api.onrender.com/api/saude`**
 
 Nada para arrancar. Se a meio falhar, passa ao plano B — os passos abaixo funcionam com a
 sala a olhar.
+
+**Emails:** só saem se as três variáveis estiverem no Render (ver §1). Se não estiverem, o
+aviso é **gravado na tabela `notificacao` à mesma** e só a entrega é que não acontece — e é
+isso que se mostra, se perguntarem.
 
 ---
 
@@ -174,6 +183,7 @@ directamente. Não é preciso QR nenhum para isso.
 | a conta a fechar | Gestão → **Balcão** → fechar a sessão |
 | uma reserva | *(a página ainda grava no browser até o C-09 estar feito)* |
 | take away | Página de take away → encomendar → aparece na cozinha |
+| o email ao cliente | **No plano B não há internet, portanto não sai nenhum email — e isso não é uma falha.** O aviso é gravado antes de se tentar enviar: mostrar a tabela `notificacao`, com o assunto e o texto que teriam sido enviados, e o estado a `pendente`. Dizer porquê: *gravar é local, enviar depende da rede; por isso a parte que se pode garantir faz-se sempre* |
 
 ---
 
