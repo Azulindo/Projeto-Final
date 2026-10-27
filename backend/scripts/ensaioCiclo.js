@@ -57,6 +57,24 @@
  */
 'use strict';
 
+/*
+ *  Tem de vir ANTES de qualquer leitura de process.env: e ele que
+ *  decide qual o .env que manda (.env.local na maquina, .env com
+ *  --nuvem) e que o carrega.
+ *
+ *  Sem esta linha, este programa lia o ambiente do sistema — que nao
+ *  tem nada disto — e caia nos valores por omissao mais abaixo,
+ *  incluindo `password: ''`. Num MySQL sem palavra-passe isso funciona
+ *  e ninguem da por nada; num MySQL com palavra-passe da
+ *  "Access denied ... (using password: NO)", que parece um problema de
+ *  credenciais e e um problema de configuracao nao carregada.
+ *
+ *  Acrescentado a 27/10, quando o ensaio rebentou na maquina do Joao
+ *  depois de ter corrido na do Guilherme. E a mesma forma de sempre:
+ *  funcionava por um acidente local da maquina de quem o escreveu.
+ */
+require('../src/config/ambiente');
+
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
