@@ -534,6 +534,24 @@ h3 {
 p {
   text-wrap: pretty;
   line-height: var(--entrelinha);
+
+  /* ── A MEDIDA DA LINHA (F-89, 27/10) ──────────────────────────────
+     Medido nas seis páginas em cinco larguras: a linha mais comprida do
+     site inteiro não está no computador, está no **tablet**. Na página
+     de contactos a 768px dá **80 caracteres**, contra 72 a 1440px.
+
+     A causa são duas regras a puxar em sentidos contrários na mesma
+     media query: aos 768 a `.contactos-content` larga o `max-width:
+     800px` e passa a `100%`, e ao mesmo tempo a letra encolhe de 17,6
+     para 14,4px. Contentor relativamente mais largo **mais** letra mais
+     pequena dá mais caracteres por linha — e 768px é uma largura para
+     que ninguém olha, por isso ninguém viu.
+
+     O limite está em `ch` e não em `px` de propósito: um `ch` é a
+     largura de um carácter da própria letra, portanto este valor
+     corrige-se sozinho quando a letra muda de tamanho. Um `max-width`
+     em píxeis era mais um número para manter alinhado com outro. */
+  max-width: 68ch;
 }
 
 ::selection {

@@ -335,7 +335,14 @@ html { scroll-behavior: smooth; }
   .contactos-content p {
     font-size: 0.9rem;
     text-align: center;
-    max-width: 100%;
+    /* O `max-width: 100%` que estava aqui saiu (F-89, 27/10). Era
+       redundante — um parágrafo já enche o contentor — e, por ser mais
+       específico do que o `p` do `nav.css`, anulava o limite de medida
+       partilhado: **a ordem das folhas só desempata regras com a mesma
+       especificidade**, e `.contactos-content p` (0,1,1) ganha sempre a
+       `p` (0,0,1), venha de que folha vier. Era por isso que a linha
+       desta página tinha 80 caracteres a 768px, a mais comprida do
+       site, enquanto o limite estava escrito e não pegava. */
   }
 
   .contact-info {
