@@ -335,6 +335,16 @@ html { scroll-behavior: smooth; }
   .contactos-content p {
     font-size: 0.9rem;
     text-align: center;
+    /* O `max-width: 68ch` do `nav.css` encolhe a CAIXA do parágrafo, e o
+       `text-align: center` centra o texto dentro dela — mas a caixa fica
+       colada à esquerda se não levar margens automáticas. Media a 768px:
+       35px de folga de um lado e 135px do outro, num cartão que antes
+       tinha 30 e 30. O Guilherme viu isto a olho antes de eu o medir.
+       Só se põe aqui, e não no `p` do `nav.css`, porque centrar a caixa
+       só faz sentido onde o texto também está centrado: nas páginas de
+       texto corrido alinhado à esquerda, uma margem automática
+       desalinhava o parágrafo do título que está por cima dele. */
+    margin-inline: auto;
     /* O `max-width: 100%` que estava aqui saiu (F-89, 27/10). Era
        redundante — um parágrafo já enche o contentor — e, por ser mais
        específico do que o `p` do `nav.css`, anulava o limite de medida
