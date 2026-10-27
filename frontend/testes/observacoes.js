@@ -30,8 +30,11 @@ const GESTAO  = RAIZ + '/funcionarios';
 const TOKEN    = 'demo-mesa-4';
 
 const falhas = [];
+
+let feitas = 0;
 const check = (n, c, e = '') => {
   console.log(`${c ? '✅' : '❌'} ${n}${e ? ' — ' + e : ''}`);
+  feitas++;
   if (!c) falhas.push(n);
 };
 
@@ -221,3 +224,9 @@ const cartao = (p, nome) => p.locator('#produtosGrid article', { hasText: nome }
   if (!falhas.length) console.log('F-21 VERIFICADA ✅');
   else { console.log('FALHAS:', falhas.length); falhas.forEach(f => console.log(' •', f)); process.exitCode = 1; }
 })();
+
+/* X-27: a linha que torna o total desta suite recalculável. Impressa na
+   saída do processo, porque cada suite acaba à sua maneira. */
+process.on('exit', () => {
+  console.log(`\n::VERIFICACOES:: ${require('path').basename(__filename)} ${feitas} ${Array.isArray(falhas) ? falhas.length : falhas}`);
+});

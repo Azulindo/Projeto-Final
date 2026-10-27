@@ -19,10 +19,6 @@ jspm_packages/
 .env.*
 !.env.example
 *.pem
-.env
-.env.*
-!.env.example
-*.pem
 *.key
 credenciais.json
 
@@ -30,9 +26,15 @@ credenciais.json
 # que o servidor do outro lado e mesmo o Aiven. Tem de ir para o
 # repositorio porque o Render precisa dele. A regra *.pem acima
 # apanhava-o, por isso abre-se aqui uma excecao so para este.
+#
+# ESTA LINHA TEM DE FICAR DEPOIS DO *.pem. No .gitignore ganha o
+# ULTIMO padrao que casa, nao o mais especifico: se alguem arrumar o
+# ficheiro e puser o *.pem abaixo desta linha, o ca.pem volta a ser
+# ignorado, o Render deixa de ter o certificado e a ligacao a base de
+# dados deixa de funcionar em producao -- sem erro nenhum neste
+# ficheiro. (As oito linhas acima estavam escritas DUAS vezes; a
+# limpeza foi feita a 27/10 mantendo esta ordem de proposito.)
 !backend/certs/ca.pem
-*.key
-credenciais.json
 
 
 # ─────────────────────────────────────────────
@@ -113,8 +115,15 @@ rascunhos/
 notas-pessoais.md
 *.bak
 
-# Capturas de ecr� geradas pelos testes
+# Capturas de ecr� geradas pelos testes
 frontend/testes/_capturas/
+
+# Medicao parcial do contar.js: e o estado de um arranque a meio,
+# vale so para a maquina onde correu.
+frontend/testes/.contagem-parcial.jsonl
+
+# Pasta de apoio (tar para levar a arvore para outra maquina)
+_tmp/
 
 # Pasta criada por ferramentas de apoio, nao faz parte do projeto
 Claude outputs/

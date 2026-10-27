@@ -31,8 +31,11 @@ const path = require('path');
 const GESTAO = 'file://' + path.resolve(__dirname, '..', 'funcionarios');
 
 const falhas = [];
+
+let feitas = 0;
 const check = (n, c, e = '') => {
   console.log(`${c ? '\u2705' : '\u274c'} ${n}${e ? ' \u2014 ' + e : ''}`);
+  feitas++;
   if (!c) falhas.push(n);
 };
 
@@ -259,3 +262,9 @@ async function entrar(ctx, email) {
     : '\n\u2705 tudo passou');
   process.exit(falhas.length ? 1 : 0);
 })();
+
+/* X-27: a linha que torna o total desta suite recalculável. Impressa na
+   saída do processo, porque cada suite acaba à sua maneira. */
+process.on('exit', () => {
+  console.log(`\n::VERIFICACOES:: ${require('path').basename(__filename)} ${feitas} ${Array.isArray(falhas) ? falhas.length : falhas}`);
+});

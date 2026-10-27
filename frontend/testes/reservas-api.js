@@ -32,8 +32,11 @@ const path = require('path');
 const RESERVAS = 'file://' + path.resolve(__dirname, '../cliente/reservas.html') + '?simular=1';
 
 const falhas = [];
+
+let feitas = 0;
 const check = (n, c, e = '') => {
   console.log(`${c ? '✅' : '❌'} ${n}${e ? ' — ' + e : ''}`);
+  feitas++;
   if (!c) falhas.push(n);
 };
 
@@ -333,3 +336,9 @@ async function esperarAcao(p, limite = 14000) {
   if (!falhas.length) console.log('C-09 VERIFICADO ✅');
   else { console.log('FALHAS:', falhas.length); falhas.forEach(f => console.log(' •', f)); process.exitCode = 1; }
 })();
+
+/* X-27: a linha que torna o total desta suite recalculável. Impressa na
+   saída do processo, porque cada suite acaba à sua maneira. */
+process.on('exit', () => {
+  console.log(`\n::VERIFICACOES:: ${require('path').basename(__filename)} ${feitas} ${Array.isArray(falhas) ? falhas.length : falhas}`);
+});

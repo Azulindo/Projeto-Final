@@ -59,6 +59,16 @@ const SONDA = 'Ana<b id="sonda-xss">X</b>';
   console.log(`texto mostrado tal e qual  : ${textoNaPagina ? 'sim ✅ (escapado)' : 'não'}`);
   const bolhas = await p.$$eval('#chatBody', e => e[0].innerHTML.match(/Ana[^<]*<[^>]*>/g) || []);
   console.log('ocorrências de "Ana…" no HTML:', JSON.stringify(bolhas.slice(0,3)));
+
+  /* X-27: esta suite faz DUAS afirmações verificáveis — o elemento não
+     entrou no DOM, e o texto aparece escapado. A terceira linha mostra
+     as ocorrências e não afirma nada, por isso não conta. Era uma das
+     duas que o X-27 nomeava como "não imprime uma linha por verificação
+     e conta zero". Passa a contar duas, que é o que faz. */
+  const feitas = 2;
+  const falhas = (injectado > 0 ? 1 : 0) + (textoNaPagina ? 0 : 1);
+  console.log(`\n::VERIFICACOES:: ${require('path').basename(__filename)} ${feitas} ${falhas}`);
+
   await b.close();
   process.exitCode = injectado > 0 ? 1 : 0;
 })();

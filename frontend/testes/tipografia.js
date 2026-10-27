@@ -76,8 +76,11 @@ const LARGURAS_BOTOES = [1440, 768, 480, 375, 320];
 const LARGURAS_ESCALA = [1440, 1024, 768, 600, 480, 375, 320];
 
 const falhas = [];
+
+let feitas = 0;
 const check = (n, c, e = '') => {
   console.log(`${c ? '✅' : '❌'} ${n}${e ? ' — ' + e : ''}`);
+  feitas++;
   if (!c) falhas.push(n);
 };
 
@@ -255,3 +258,9 @@ const primeiro = f => f.split(',')[0].replace(/["']/g, '').trim();
     : `\n✅ tudo passou — ${PAGINAS.length} páginas, ${BOTOES.length} botões, ${medidos} medições de botão`);
   process.exit(falhas.length ? 1 : 0);
 })();
+
+/* X-27: a linha que torna o total desta suite recalculável. Impressa na
+   saída do processo, porque cada suite acaba à sua maneira. */
+process.on('exit', () => {
+  console.log(`\n::VERIFICACOES:: ${require('path').basename(__filename)} ${feitas} ${Array.isArray(falhas) ? falhas.length : falhas}`);
+});

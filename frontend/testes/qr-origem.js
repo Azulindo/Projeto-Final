@@ -161,3 +161,9 @@ async function medir(contexto, urlGuardada) {
   if (!caso2) console.log('O caso 2 falhou: a correcao nao esta a funcionar.');
   process.exit(falhas === 0 ? 0 : 1);
 })().catch(e => { console.error('ERRO:', e); process.exit(2); });
+
+/* X-27: a linha que torna o total desta suite recalculável. Impressa na
+   saída do processo, porque cada suite acaba à sua maneira. */
+process.on('exit', () => {
+  console.log(`\n::VERIFICACOES:: ${require('path').basename(__filename)} ${total} ${falhas}`);
+});

@@ -139,6 +139,19 @@ function avaliar(nome, amostras, cestos) {
         continue;
       }
 
+      /* X-27: a unidade de verificação desta suite é **um elemento de
+         texto medido contra o seu mínimo** — 4,5:1, ou 3:1 se for texto
+         grande.
+
+         Conta-se AQUI, depois de a imagem de fundo ter sido posta de
+         lado. Na primeira versão disto eu pus o contador acima desse
+         `continue`, e nesse sítio um texto sobre fotografia era contado
+         como medido quando vai justamente para os NÃO medidos — o
+         contador contradizia o comentário que lhe estava ao lado. Um
+         número que conta o que não mediu é o defeito que o X-27 existe
+         para apagar. */
+      global.__feitas = (global.__feitas || 0) + 1;
+
       // Fundos possíveis: um gradiente tem várias cores e o texto
       // atravessa-as todas — se falha num ponto, há uma parte onde não
       // se lê. Mede-se contra todas e fica a pior.
@@ -196,6 +209,15 @@ async function entrarNaGestao(ctx, base) {
 (async () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   const cestos = { maus: [], letras: [], naoMedidos: [] };
+
+  /* X-27: a linha que torna o total desta suite recalculável. Num
+     `exit` e não no fim do ficheiro, como nas outras, porque esta
+     suite tem mais do que uma saída. O `__feitas` é incrementado por
+     cada elemento de texto efectivamente medido (ver `avaliar`). */
+  process.on('exit', () => {
+    console.log(`\n::VERIFICACOES:: ${require('path').basename(__filename)} ` +
+                `${global.__feitas || 0} ${cestos.maus.length}`);
+  });
   const { maus, letras, naoMedidos } = cestos;
 
   /* ── 1. O site do cliente, ao telemóvel ──────────────────────────── */

@@ -13,7 +13,10 @@ const path = require('path');
 const URL = 'file://' + path.resolve(__dirname, '../cliente/reservas.html');
 
 const falhas = [];
-const check = (n, c, e = '') => { console.log(`${c ? '✅' : '❌'} ${n}${e ? ' — ' + e : ''}`); if (!c) falhas.push(n); };
+
+
+let feitas = 0;
+const check = (n, c, e = '') => { feitas++; console.log(`${c ? '✅' : '❌'} ${n}${e ? ' — ' + e : ''}`); if (!c) falhas.push(n); };
 
 async function tentar(browser, quantos) {
   const ctx = await browser.newContext({ viewport: { width: 420, height: 900 }, isMobile: true, hasTouch: true });
@@ -58,3 +61,9 @@ async function tentar(browser, quantos) {
   if (!falhas.length) console.log('X-05 VERIFICADO ✅');
   else { console.log('FALHAS:', falhas.length); falhas.forEach(f => console.log(' •', f)); process.exitCode = 1; }
 })();
+
+/* X-27: a linha que torna o total desta suite recalculável. Impressa na
+   saída do processo, porque cada suite acaba à sua maneira. */
+process.on('exit', () => {
+  console.log(`\n::VERIFICACOES:: ${require('path').basename(__filename)} ${feitas} ${Array.isArray(falhas) ? falhas.length : falhas}`);
+});

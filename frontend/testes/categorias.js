@@ -24,7 +24,9 @@ const GESTAO  = RAIZ + '/funcionarios';
 const CLIENTE = RAIZ + '/cliente';
 
 const falhas = [];
-const check = (n, c, e = '') => { console.log(`${c ? '✅' : '❌'} ${n}${e ? ' — ' + e : ''}`); if (!c) falhas.push(n); };
+
+let feitas = 0;
+const check = (n, c, e = '') => { feitas++; console.log(`${c ? '✅' : '❌'} ${n}${e ? ' — ' + e : ''}`); if (!c) falhas.push(n); };
 
 async function login(ctx, email) {
   const p = await ctx.newPage();
@@ -221,3 +223,9 @@ const nomes = p => p.$$eval('.cat-item .cat-nome', els => els.map(e => e.textCon
   if (!falhas.length) console.log('F-51 VERIFICADA ✅');
   else { console.log('FALHAS:', falhas.length); falhas.forEach(f => console.log(' •', f)); process.exitCode = 1; }
 })();
+
+/* X-27: a linha que torna o total desta suite recalculável. Impressa na
+   saída do processo, porque cada suite acaba à sua maneira. */
+process.on('exit', () => {
+  console.log(`\n::VERIFICACOES:: ${require('path').basename(__filename)} ${feitas} ${Array.isArray(falhas) ? falhas.length : falhas}`);
+});

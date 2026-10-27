@@ -220,3 +220,9 @@ function check(nome, ok, detalhe) {
   if (notas.length) console.log('\n' + notas.join('\n'));
   process.exit(falhas.length ? 1 : 0);
 })();
+
+/* X-27: a linha que torna o total desta suite recalculável. Impressa na
+   saída do processo, porque cada suite acaba à sua maneira. */
+process.on('exit', () => {
+  console.log(`\n::VERIFICACOES:: ${require('path').basename(__filename)} ${feitas} ${Array.isArray(falhas) ? falhas.length : falhas}`);
+});

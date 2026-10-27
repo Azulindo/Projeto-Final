@@ -156,12 +156,22 @@ function medir() {
 (async () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   const problemas = [];
+
+  /* X-27: como a `varredura.js`, esta suite não faz afirmações
+     pass/fail uma a uma — mede cada página em cada largura e junta o
+     que estiver mal. A unidade é o **varrimento**, e reporta-se nessa
+     unidade em vez de se inventar um número de "verificações". */
+  process.on('exit', () => {
+    console.log(`\n::VARRIMENTOS:: ${require('path').basename(__filename)} ` +
+                `${global.__varrimentos || 0} ${problemas.length}`);
+  });
   const naoMedidas = new Set();
   const pesoPorPagina = {};
 
   async function auditar(paginas, ctxOpts = {}, rotulo = '') {
     for (const pag of paginas) {
       for (const ecra of ECRAS) {
+        global.__varrimentos = (global.__varrimentos || 0) + 1;   // X-27
         const ctx = await browser.newContext({
           viewport: { width: ecra.largura, height: ecra.altura },
           deviceScaleFactor: 1,

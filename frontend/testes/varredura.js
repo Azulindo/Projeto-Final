@@ -205,6 +205,22 @@ const PAGINA_DEFEITUOSA = `
 `;
 
 const achados = [];
+
+/* ── X-27: ESTA SUITE NÃO CONTA "VERIFICAÇÕES" ─────────────────────
+   E dizê-lo é metade do conserto. A varredura não faz afirmações
+   pass/fail uma a uma: passa por cada página em cada largura e procura
+   oito tipos de problema de uma vez. A unidade dela é o **varrimento**
+   — uma página numa largura —, não a verificação.
+
+   Forçar um número único sobre coisas que se contam de maneiras
+   diferentes foi exactamente como nasceu o "360 verificações" que
+   ninguém consegue recalcular. Por isso esta reporta na sua própria
+   unidade, e o `contar.js` soma-as à parte. */
+process.on('exit', () => {
+  const varrimentos = (global.__varrimentos || 0);
+  console.log(`\n::VARRIMENTOS:: ${require('path').basename(__filename)} ` +
+              `${varrimentos} ${achados.length}`);
+});
 const nota = (pag, tipo, detalhe) => achados.push({ pag, tipo, detalhe });
 const semEspelho = new Set();
 
@@ -274,6 +290,7 @@ const recomendacoes = [];
       ]));
       await p.waitForTimeout(400);
 
+      global.__varrimentos = (global.__varrimentos || 0) + 1;   // X-27
       const m = await p.evaluate(DETECTOR, { aa: ALVO_AA, bom: ALVO_BOM });
 
       for (const href of m.ligacoes) {
@@ -354,7 +371,8 @@ const recomendacoes = [];
           await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
           await p.waitForTimeout(500);
 
-          const m = await p.evaluate(DETECTOR, { aa: ALVO_AA, bom: ALVO_BOM });
+          global.__varrimentos = (global.__varrimentos || 0) + 1;   // X-27
+      const m = await p.evaluate(DETECTOR, { aa: ALVO_AA, bom: ALVO_BOM });
           const etiqueta = 'gestão/' + ecra.replace('.html', '');
 
           for (const href of m.ligacoes) {

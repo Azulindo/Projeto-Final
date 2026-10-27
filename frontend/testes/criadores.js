@@ -60,8 +60,11 @@ const RAZAO = 3 / 4;        /* a forma que as duas têm de ter */
 const NOME_MIN = 24;        /* px — limiar de "texto grande" da WCAG */
 
 const falhas = [];
+
+let feitas = 0;
 const check = (n, c, e = '') => {
   console.log(`${c ? '✅' : '❌'} ${n}${e ? ' — ' + e : ''}`);
+  feitas++;
   if (!c) falhas.push(n);
 };
 
@@ -203,3 +206,9 @@ const check = (n, c, e = '') => {
     : `\n✅ tudo passou — ${LARGURAS.length} larguras`);
   process.exit(falhas.length ? 1 : 0);
 })();
+
+/* X-27: a linha que torna o total desta suite recalculável. Impressa na
+   saída do processo, porque cada suite acaba à sua maneira. */
+process.on('exit', () => {
+  console.log(`\n::VERIFICACOES:: ${require('path').basename(__filename)} ${feitas} ${Array.isArray(falhas) ? falhas.length : falhas}`);
+});
