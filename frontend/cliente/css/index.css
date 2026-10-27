@@ -204,8 +204,10 @@
   background: #0f0f0f;
   color: white;
   padding: 30px 12px;
-  margin-left: 100px;
-  margin-right: 100px;
+  /* Uma margem só, declarada no `nav.css` (F-87). Eram sete, numa
+     escada de seis media queries — ver o comentário grande lá. */
+  margin-left: var(--margem-pagina);
+  margin-right: var(--margem-pagina);
   border-radius: 30px;
   opacity: 95%;
 
@@ -725,8 +727,6 @@ section{
 @media (max-width: 1024px) {
   /* Keep larger margins like PC instead of centering */
   .page {
-    margin-left: 8% !important;
-    margin-right: 8% !important;
     width: 84% !important;
     padding: 25px 20px !important;
   }
@@ -835,8 +835,6 @@ section{
 
   /* Page content - keep PC-like margins (increased to 80px) */
   .page {
-    margin-left: 80px !important;
-    margin-right: 80px !important;
     /* o hero e a página partilham este número (F-81) */
     width: auto !important;
     border-radius: 25px !important;
@@ -953,8 +951,6 @@ section{
 /* Pequenos ajustes para tablet menor */
 @media (max-width: 600px) {
   .page {
-    margin-left: 60px !important;
-    margin-right: 60px !important;
   }
 
   .menu, .prego {
@@ -984,8 +980,6 @@ section{
   :root { --hero-util: 70vh; }
 
   .page {
-    margin-left: 40px !important;
-    margin-right: 40px !important;
     /* o hero e a página partilham este número (F-81) */
   }
 
@@ -1022,8 +1016,6 @@ section{
   :root { --hero-util: 65vh; }
 
   .page {
-    margin-left: 30px !important;
-    margin-right: 30px !important;
     /* o hero e a página partilham este número (F-81) */
     padding: 20px 15px !important;
   }
@@ -1082,8 +1074,6 @@ section{
   :root { --hero-util: 60vh; }
 
   .page {
-    margin-left: 25px !important;
-    margin-right: 25px !important;
     /* o hero e a página partilham este número (F-81) */
     padding: 15px 12px !important;
     border-radius: 20px !important;

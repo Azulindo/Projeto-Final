@@ -236,6 +236,32 @@
      MENOS dois — os dois dos pratos da página de entrada, que não
      declaravam nada e caíam no `normal` do browser. */
   --entrelinha: 1.6;
+
+  /* ── A MARGEM LATERAL DA PÁGINA DE ENTRADA (F-87, 27/10) ──────────
+     Estava escrita em SETE sítios na `index.css`: 100px, 8%, 80px,
+     60px, 40px, 30px e 25px, numa escada de seis media queries, todas
+     com `!important`. Medido a 390px, a largura de telemóvel mais
+     comum: ganhava o degrau dos 40px e o parágrafo dos pratos ficava
+     com 270px de coluna — 27 caracteres por linha, quando as outras
+     páginas do site usam 350 a 360px.
+
+     Um `clamp()` em vez da escada. **O computador fica igual** (7vw a
+     1440px dá 100,8px, que eram os 100px de antes) e o telemóvel ganha
+     25px de coluna: a 390px são 27px de margem em vez de 40px, e o
+     título "O nosso prato mais prestigiado" passa de duas linhas para
+     uma. Medido nas duas versões lado a lado, em cinco larguras, com
+     zero transbordo em todas.
+
+     É a mesma forma da F-75 (48 `font-size` em 6 ficheiros) e da F-81
+     (onze percentagens do hero): um número com muitas cópias, e na
+     largura que mais interessa ganhava a pior delas.
+
+     A `.page` só existe na `index.css` — as outras cinco páginas têm
+     classes próprias —, por isso isto mexe numa página só. E o
+     comentário da `index.css` que dizia "o hero e a página partilham
+     este número" fala do número VERTICAL da F-81: o hero não tem
+     margens horizontais nenhumas. */
+  --margem-pagina: clamp(18px, 7vw, 100px);
 }
 
 
