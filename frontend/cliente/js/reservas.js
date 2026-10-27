@@ -218,14 +218,28 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   /* Número de telefone do restaurante.
+
      Até 26/10 isto era '912 345 678', um número de exemplo — e o botão
      "liga-nos" do passo final faz `tel:` com ele, portanto quem lhe
      tocasse ligava a um número que não é o restaurante. É o defeito de
      sempre deste projeto (a mesma informação em dois sítios) no sítio
-     mais caro: o cliente. O número verdadeiro está na `contactos.html`.
-     GUILHERME: a contactos.html tem dois números; pus aqui o primeiro.
-     Se a linha principal for a outra, troca. */
-  const TEL_RESTAURANTE = '973 588 962';
+     mais caro: o cliente.
+
+     A 26/10 pus aqui o primeiro dos dois números da `contactos.html`
+     (973 588 962) e deixei escrito que podia ser o outro. **Era pior do
+     que isso: eram os dois errados.** A 27/10 o João deu os verdadeiros
+     — principal 923 179 008, segundo 928 033 292 — e nenhum deles era
+     nenhum dos que o site mostrava. Ou seja, a página de contactos
+     esteve a publicar dois números que ninguém atende, e eu tinha
+     copiado um deles para cá a pensar que estava a tirar a dúvida.
+     *Copiar de uma fonte não a torna verdadeira; só espalha o erro.*
+     Corrigido nos dois sítios no mesmo commit, de propósito.
+
+     Continua a haver o mesmo número em dois ficheiros, e isso é o
+     defeito que não ficou fechado — só ficou com os valores certos. A
+     saída é o número vir da API (há `restaurante` na base), e não é
+     para hoje. */
+  const TEL_RESTAURANTE = '923 179 008';
 
   /* Estado do mini-calendário (mês/ano atualmente visível) */
   let calState = { year: 0, month: 0 };
