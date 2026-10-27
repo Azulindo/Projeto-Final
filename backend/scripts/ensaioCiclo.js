@@ -73,9 +73,34 @@
  *  depois de ter corrido na do Guilherme. E a mesma forma de sempre:
  *  funcionava por um acidente local da maquina de quem o escreveu.
  */
-require('../src/config/ambiente');
+const ambiente = require('../src/config/ambiente');
 
-const mysql = require('mysql2/promise');
+/*
+ *  A LIGACAO E A DA API, E NAO UMA SEGUNDA PORTA
+ *  ---------------------------------------------
+ *  Isto construia a sua propria ligacao, com um objecto BD cheio de
+ *  valores por omissao: `host: ... || 'localhost'`, `user: ... || 'root'`,
+ *  `password: ... || ''`. O Joao apanhou-os a 27/10 com o `npm run
+ *  config`, e tem razao nas duas metades:
+ *
+ *  1. Um valor por omissao ali nao e defensivo, e um disfarce. Troca
+ *     "nao ha configuracao" por "a configuracao esta errada", e manda
+ *     quem procura para o sitio errado. Foi assim que o ensaio correu
+ *     verde nesta maquina e deu "Access denied (using password: NO)" na
+ *     dele — a mesma familia do `Math.max(0, ...)` do X-17.
+ *
+ *  2. Pior do que os disfarces, construir a propria ligacao fazia este
+ *     programa **saltar todas as fechaduras do `config/bd.js`**: o fuso
+ *     em UTC por ligacao (X-15), o `decimalNumbers` (sem ele,
+ *     `"16.20" + "1.00"` da `"16.201.00"`), o `utf8mb4` e o SSL da
+ *     nuvem. Um ensaio de ponta a ponta que fala com a base por uma
+ *     porta que a API nao usa pode dar verde sobre uma avaria que a API
+ *     tem — e era exactamente este o programa que devia ter apanhado o
+ *     fuso trocado.
+ *
+ *  Passa a usar o pool da API. Os `con.query(...)` daqui para baixo nao
+ *  mudam: o pool tem a mesma interface.
+ */
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
@@ -83,13 +108,46 @@ const argPorta = process.argv.indexOf('--porta');
 const PORTA = argPorta > -1 ? Number(process.argv[argPorta + 1]) : (process.env.PORT || 3000);
 const BASE = `http://127.0.0.1:${PORTA}/api`;
 
-const BD = {
-  host: process.env.DB_HOST || 'localhost',
-  port: Number(process.env.DB_PORT || 3306),
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'vem_pro_abate',
-};
+/*
+ *  A PERGUNTA CERTA E "ESTA DEFINIDA?", NAO "TEM VALOR?"
+ *  -----------------------------------------------------
+ *  Tirar o `|| ''` do DB_PASSWORD nao bastava, e vale a pena dizer
+ *  porque: **uma palavra-passe vazia e uma configuracao legitima.** Num
+ *  MySQL recem-instalado o root nao tem password, e `DB_PASSWORD=` e a
+ *  resposta certa para essa maquina. O defeito nunca foi o valor vazio
+ *  — foi nao se distinguir "esta vazia de propósito" de "nao existe".
+ *
+ *  Por isso isto pergunta pela PRESENCA da variavel e nao pelo valor
+ *  dela. O DB_PORT fica de fora porque 3306 e um valor por omissao
+ *  honesto (e o `bd.js` tambem o tem), pela mesma razao que o Joao
+ *  deixou o PORT de fora do verificador.
+ */
+const PRECISA = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
+const semDefinicao = PRECISA.filter((v) => !(v in process.env));
+if (semDefinicao.length) {
+  console.error('\n  O ensaio nao pode correr: falta configuracao, nao faltam credenciais.\n');
+  console.error(`  Nao esta definido:  ${semDefinicao.join(', ')}`);
+  /*
+   *  "Ficheiro escolhido" e nao "ficheiro lido", e com a nota de se
+   *  existe. O `ambiente.js` calcula o caminho e entrega-o ao dotenv,
+   *  que **nao se queixa quando o ficheiro nao existe** — por isso o
+   *  `nomeFicheiro` e o nome que ele queria ler, nao a prova de que leu.
+   *  Escrever "lido: .env" sobre um .env que nao existe era, nesta
+   *  mensagem de diagnostico, cometer o defeito que ela esta a relatar.
+   */
+  const alvo = require('path').resolve(ambiente.ficheiroEnv);
+  const existe = require('fs').existsSync(alvo);
+  console.error(`  Ficheiro escolhido: ${ambiente.nomeFicheiro}` +
+                (existe ? '  (existe)' : '  <-- NAO EXISTE nesta maquina'));
+  console.error('\n  Resolve-se com:     npm run plano-b   (cria o .env.local desta maquina)\n');
+  process.exit(1);
+}
+
+/*
+ *  O pool entra DEPOIS da guarda, de propósito: sem configuracao, a
+ *  mensagem que se quer ver e a de cima e nao a do driver de MySQL.
+ */
+const { pool: con } = require('../src/config/bd');
 
 const passos = [];
 let falhas = 0;
@@ -115,9 +173,9 @@ async function chamar(caminho, opcoes = {}) {
 }
 
 (async () => {
-  const con = await mysql.createConnection(BD);
   let hashOriginal = null;
   let emailAdmin = null;
+  let rebentou = null;
 
   try {
     // ══ 1 · A API está de pé e ligada à base LOCAL ══════════════════
@@ -314,8 +372,17 @@ async function chamar(caminho, opcoes = {}) {
       `${precoOriginal} → ${precoAgora.preco}`);
 
   } catch (e) {
+    /*
+     *  Um rebentamento NAO e uma verificacao reprovada, e contava como
+     *  se fosse: o `falhas++` somava sem ninguem ter posto um passo na
+     *  lista, e o resumo saia "1 de 0 verificacoes falharam" — um
+     *  numero que nao pode ser verdade. Apanhado a 27/10 ao provar a
+     *  guarda de configuracao, com o ensaio a morrer antes da primeira
+     *  verificacao. Fica a distincao: reprovar e ter medido e dado
+     *  errado; rebentar e nao ter chegado a medir.
+     */
     console.log('\n  !!  ' + e.message);
-    falhas++;
+    rebentou = e.message;
   } finally {
     if (hashOriginal) {
       await con.query('UPDATE utilizador SET password_hash = ? WHERE email = ?',
@@ -326,11 +393,18 @@ async function chamar(caminho, opcoes = {}) {
   }
 
   console.log('\n' + '─'.repeat(62));
-  console.log(falhas
-    ? `  ${falhas} de ${passos.length} verificações falharam.`
-    : `  CICLO COMPLETO VERIFICADO — ${passos.length} verificações, contra a base a sério.`);
+  if (rebentou) {
+    console.log(`  O ENSAIO PAROU A MEIO e não chegou ao fim do ciclo.`);
+    console.log(`  Motivo: ${rebentou}`);
+    console.log(`  Chegou a fazer ${passos.length} verificação(ões)` +
+                (falhas ? `, ${falhas} reprovada(s).` : ', todas passaram.'));
+  } else if (falhas) {
+    console.log(`  ${falhas} de ${passos.length} verificações falharam.`);
+  } else {
+    console.log(`  CICLO COMPLETO VERIFICADO — ${passos.length} verificações, contra a base a sério.`);
+  }
   console.log('─'.repeat(62));
   console.log('  O que isto NÃO cobre e fica para a sessão à mão: telemóvel real,');
   console.log('  os quatro browsers, e duas pessoas a mexer ao mesmo tempo.');
-  process.exit(falhas ? 1 : 0);
+  process.exit((falhas || rebentou) ? 1 : 0);
 })();
