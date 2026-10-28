@@ -617,11 +617,31 @@ async function chamarAPI(endpoint, opcoes = {}) {
  * e o tablet do balcão ficam ligados o turno inteiro, ninguém faz
  * logout entre pratos. O que o login decide é QUE ECRÃS aquele
  * dispositivo pode abrir — ver docs/API.md 4.1.
+ *
+ * ── NÃO HÁ PASSWORD AQUI, E É DE PROPÓSITO (X-32, 28/10) ───────────
+ *
+ * Até hoje cada linha destas tinha `password: '<a verdadeira>'`, e a
+ * simulação comparava-a. **Este ficheiro é servido ao público** — o
+ * `vemproabate.vercel.app/frontend/js/api.js` responde 200 a quem o
+ * pedir — portanto a password da aplicação de gestão estava publicada
+ * na internet, em texto simples, e qualquer pessoa que abrisse aquele
+ * endereço entrava no dashboard como administrador.
+ *
+ * A comparação não protegia nada que valesse a pena proteger: isto é o
+ * modo de demonstração, só se chega aqui com `?simular=1`, e nada do
+ * que se faz nele chega à base de dados. **O que a comparação fazia era
+ * obrigar a escrever a password verdadeira num ficheiro público** —
+ * pedia uma credencial a sério para guardar um cofre vazio.
+ *
+ * Em simulação, portanto, o email identifica o posto e a password não é
+ * verificada. Quem quiser provar que uma password errada é recusada tem
+ * de o provar contra o servidor, que é o único sítio onde essa pergunta
+ * tem significado. Nenhuma suite verificava isso aqui.
  */
 const CONTAS_DEMO = [
-  { email: 'cozinha@vemproabate.pt', password: 'abate2026', nome: 'Cozinha',      nivel: 'cozinha' },
-  { email: 'balcao@vemproabate.pt',  password: 'abate2026', nome: 'Balcão',       nivel: 'balcao' },
-  { email: 'admin@vemproabate.pt',   password: 'abate2026', nome: 'Administração', nivel: 'administrador' },
+  { email: 'cozinha@vemproabate.pt', nome: 'Cozinha',       nivel: 'cozinha' },
+  { email: 'balcao@vemproabate.pt',  nome: 'Balcão',        nivel: 'balcao' },
+  { email: 'admin@vemproabate.pt',   nome: 'Administração', nivel: 'administrador' },
 ];
 
 /**
@@ -1495,9 +1515,16 @@ async function simularEndpoint(endpoint, opcoes) {
 
   /* ── auth (docs/API.md 4.1 / 4.3) ──────────────────────────────── */
   if (caminho === 'auth/login' && metodo === 'POST') {
-    const { email, password } = opcoes.body || {};
+    const { email } = opcoes.body || {};
     const conta = CONTAS_DEMO.find(c => c.email.toLowerCase() === String(email).toLowerCase());
-    if (!conta || conta.password !== password) {
+
+    /*
+     *  A password NÃO é comparada aqui — ver o comentário do
+     *  CONTAS_DEMO (X-32). O email de um posto que não existe continua
+     *  a dar 401, para o ecrã de login poder mostrar o erro dele; o
+     *  que deixou de haver é um segredo guardado num ficheiro público.
+     */
+    if (!conta) {
       throw erroSimulado('Email ou palavra-passe incorretos.', 401);
     }
     /* O `idUtilizador` entrou a 10/09 com o X-11: o servidor passou a

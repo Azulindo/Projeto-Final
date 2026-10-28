@@ -1,0 +1,59 @@
+# =====================================================================
+#  .vercelignore — o que NÃO vai para o site publicado
+# =====================================================================
+#
+#  PORQUE É QUE ISTO EXISTE
+#
+#  Até 28/10 não existia, e o Vercel publica a pasta toda. Quer dizer
+#  que o site estava a servir, a quem os pedisse e com HTTP 200:
+#
+#    · frontend/testes/  — as 28 suites, com `abate2026` escrito lá
+#      dentro em 17 ficheiros. Medido, não suposto:
+#      vemproabate.vercel.app/frontend/testes/api-base.js respondia 200.
+#    · docs/             — o RELATORIO.docx e o apresentacao.pptx.
+#    · database/         — o schema.sql e o seed.sql, com os hashes.
+#    · backend/          — o código do servidor.
+#
+#  Encontrado a varrer o repositório à procura de contactos escritos à
+#  mão (X-32, X-33). **Ninguém pôs nada disto no site: ninguém disse
+#  onde é que o site acabava.** Um ficheiro que não é pedido por nenhuma
+#  página continua a ser servido — é a mesma forma do `CONTAS_DEMO`, que
+#  eu li como código morto porque nada o chamava: um ficheiro estático
+#  não sabe que ninguém o chama.
+#
+#  A REGRA
+#
+#  O site são as páginas do cliente, os ecrãs de gestão, o `js/api.js` e
+#  os `assets/` — e nada mais. Tudo o que está aqui é o resto.
+#
+#  Se alguma página deixar de carregar depois disto, a causa está aqui:
+#  confirma-se abrindo a página e vendo que ficheiro deu 404 na consola,
+#  e tira-se a linha correspondente. As páginas pedem coisas fora do
+#  `frontend/` num sítio só — os `assets/` — e esses ficam.
+# =====================================================================
+
+# O servidor, a base e os documentos: nada disto é uma página.
+/backend
+/database
+/docs
+/.github
+
+# Os testes. São o sítio onde as passwords estão escritas, e descrevem
+# o sistema ecrã por ecrã. Não têm nada que fazer num servidor público.
+/frontend/testes
+
+# O servidor estático de desenvolvimento do Guilherme: serve as páginas
+# na máquina dele, e no Vercel é o Vercel que faz esse trabalho.
+/frontend/servir.js
+
+# Versões antigas que já não são pedidas por nenhuma página.
+/frontend/cliente/_obsoleto
+
+# Pastas que ficaram pelo caminho.
+/Claude outputs
+/Projeto Restaurante
+
+# O README. O `vercel.json` NÃO entra nesta lista: é ele que faz o
+# redireccionamento de `/` para a página de entrada, e sem ele quem
+# abrir o endereço vê uma lista de pastas.
+/README.md
