@@ -105,11 +105,22 @@ async function pedir(caminho) {
   const corpo = r.status === 200 ? Buffer.from(await r.arrayBuffer()) : null;
   return {
     estado: r.status,
+    corpo,
     bytes: corpo ? corpo.length : 0,
     /* latin1 para nao estragar bytes de ficheiros binarios ao procurar
      * texto; a agulha e toda ASCII, portanto aparece igual. */
     temAgulha: corpo ? corpo.toString('latin1').includes(AGULHA) : false,
   };
+}
+
+/** Os bytes exactos que o Git tem para um caminho, ou null. */
+function blobDoGit(rev, caminho) {
+  try {
+    return execSync(`git cat-file blob ${rev}:${caminho}`,
+      { cwd: REPO, maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch {
+    return null;
+  }
 }
 
 /** Que commit e que esta no ar, pelo tamanho de um ficheiro servido. */
@@ -173,6 +184,25 @@ function commitPublicado(caminho, bytes) {
     if (r.estado === 200) {
       const q = commitPublicado(REFERENCIA, r.bytes);
       console.log('\n  QUE VERSAO ESTA NO AR');
+
+      /* Primeiro a comparacao byte a byte com o que o Git tem no HEAD.
+       * Veio do `npm run site` do Joao, e e melhor do que a comparacao
+       * por tamanho porque nao depende de datas nem de palpites: ou os
+       * bytes sao os mesmos ou nao sao.
+       *
+       * Compara-se com o BLOB do Git e nao com o ficheiro no disco: o
+       * disco desta maquina tem CRLF e o Vercel clona o repositorio,
+       * portanto serve LF. Comparar com o disco dava "diferente" em
+       * todas as linhas e sempre. */
+      const noGit = blobDoGit('HEAD', REFERENCIA.replace(/^\//, ''));
+      if (noGit && r.corpo) {
+        const igual = noGit.equals(r.corpo);
+        console.log(`    ${igual ? verde('identico') : vermelho('DIFERENTE')}` +
+                    `  ${REFERENCIA} servido contra o do HEAD` +
+                    cinza(`  (${r.bytes} B no ar, ${noGit.length} B no Git)`));
+        if (!igual) problemas.push(`o ${REFERENCIA} servido nao e o do HEAD`);
+      }
+
       if (!q) {
         console.log(cinza('    sem Git aqui: nao da para comparar'));
       } else if (q.iguais.length === 0) {
@@ -198,6 +228,60 @@ function commitPublicado(caminho, bytes) {
       }
     }
   } catch { /* ja foi reportado acima */ }
+
+  /* ── A API PUBLICADA, E AS TABELAS QUE ELA TEM ────────────────────
+   * Veio do `npm run site` do Joao: e o X-20 a ficar automatico. Ali o
+   * `schema.sql` dizia 18 tabelas e a base publicada tinha 17, os dois
+   * indicadores estavam certos, e ninguem os tinha comparado ate o
+   * numero ir parar ao relatorio.
+   *
+   * ⚠️ LE-SE O `baseDados.origem` E NUNCA O `ambiente`. O `ambiente` e
+   * o NODE_ENV e diz sempre "production"; nao responde a *com que base
+   * e que a API esta a falar*, que e a unica pergunta que aqui
+   * interessa. O Joao leu o campo errado ao escrever a versao dele e
+   * pos "a falar com: production" no ecra — exactamente a confusao
+   * contra a qual este projeto ja tinha decidido quando se escreveu o
+   * `config/ambiente.js`. Fica escrito aqui para nao se repetir. */
+  const API = process.env.API_PUBLICADA || 'https://vem-pro-abate-api.onrender.com';
+  console.log('\n  A API PUBLICADA');
+  try {
+    const r = await fetch(API + '/api/saude');
+    const j = await r.json();
+    const bd = j.baseDados || {};
+    console.log(`    ${bd.ligada ? verde('ligada') : vermelho('EM BAIXO')}` +
+                `  ${API}   base: ${bd.origem || '?'}  (${bd.nome || '?'})`);
+
+    const esquema = blobDoGit('HEAD', 'database/schema.sql');
+    if (!esquema) {
+      console.log(cinza('    sem o schema.sql no Git: nao da para comparar as tabelas'));
+    } else {
+      const s = esquema.toString('utf8');
+      const tabelas = new Set([...s.matchAll(
+        /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?(\w+)`?/gi)].map((m) => m[1]));
+      const vistas = new Set([...s.matchAll(
+        /CREATE\s+(?:OR\s+REPLACE\s+)?(?:ALGORITHM[^;]*?)?VIEW\s+`?(\w+)`?/gi)].map((m) => m[1]));
+
+      const okT = Number(bd.tabelas) === tabelas.size;
+      const okV = Number(bd.vistas) === vistas.size;
+      console.log(`    ${okT ? verde('     ok') : vermelho('DISCORDAM')}` +
+                  `  tabelas: ${bd.tabelas} na base publicada, ${tabelas.size} no schema.sql`);
+      console.log(`    ${okV ? verde('     ok') : vermelho('DISCORDAM')}` +
+                  `  vistas:  ${bd.vistas} na base publicada, ${vistas.size} no schema.sql`);
+      if (!okT) {
+        problemas.push(`a base publicada tem ${bd.tabelas} tabelas e o schema.sql cria ${tabelas.size}`);
+        console.log(cinza('    É o X-20 outra vez: o schema.sql corre uma vez, e o que se lhe'));
+        console.log(cinza('    acrescenta depois só entra na máquina de quem o escreveu.'));
+        console.log(cinza('    Resolve-se com uma migração, não a correr o schema outra vez.'));
+      }
+      if (!okV) problemas.push(`a base publicada tem ${bd.vistas} vistas e o schema.sql cria ${vistas.size}`);
+    }
+  } catch (e) {
+    /* A API do Render adormece: um timeout aqui pode ser so isso, e
+     * dizer "em baixo" quando ela esta a acordar era mentir com
+     * confianca. Fica cinzento e nao conta como problema. */
+    console.log(cinza(`    nao respondeu (${e.message}) — o Render adormece,`));
+    console.log(cinza('    espera um minuto e corre outra vez antes de concluir nada'));
+  }
 
   console.log('\n  ' + '-'.repeat(58));
   if (problemas.length === 0) {
