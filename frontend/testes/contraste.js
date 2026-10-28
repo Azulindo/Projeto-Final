@@ -10,6 +10,7 @@
  */
 const { chromium } = require('playwright');
 const path = require('path');
+const { PASSWORD_SIMULACAO } = require('./_credenciais');
 
 const PAGS = ['index','menu','galeria','sobre','contactos','reservas'];
 
@@ -200,7 +201,7 @@ async function entrarNaGestao(ctx, base) {
   await p.evaluate(() => { try { localStorage.clear(); } catch (e) {} });
   await p.goto(`${base}/login.html?simular=1`);
   await p.fill('#email', 'admin@vemproabate.pt');
-  await p.fill('#password', 'abate2026');
+  await p.fill('#password', PASSWORD_SIMULACAO);
   await p.click('#btnEntrar');
   await p.waitForTimeout(1600);
   return p;

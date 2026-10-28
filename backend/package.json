@@ -16,6 +16,7 @@
     "config": "node scripts/verificarConfig.js",
     "tarefas": "node scripts/contarTarefas.js",
     "site": "node scripts/verificarSite.js",
+    "mudar-passwords": "node scripts/mudarPasswords.js",
 
     "postdiagrama": "node scripts/avisarPorEmpurrar.js",
     "postnumeros": "node scripts/verificarConfig.js && node scripts/avisarPorEmpurrar.js",
@@ -26,7 +27,8 @@
     "postconfig": "node scripts/avisarPorEmpurrar.js",
     "postqrcodes": "node scripts/avisarPorEmpurrar.js",
     "posttarefas": "node scripts/avisarPorEmpurrar.js",
-    "postsite": "node scripts/avisarPorEmpurrar.js"
+    "postsite": "node scripts/avisarPorEmpurrar.js",
+    "postmudar-passwords": "node scripts/avisarPorEmpurrar.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

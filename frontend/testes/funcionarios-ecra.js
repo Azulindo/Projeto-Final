@@ -23,6 +23,7 @@
  */
 const { chromium } = require('playwright');
 const path = require('path');
+const { PASSWORD_SIMULACAO } = require('./_credenciais');
 
 const RAIZ   = 'file://' + path.resolve(__dirname, '..');
 const GESTAO = RAIZ + '/funcionarios';
@@ -36,7 +37,7 @@ const check = (n, c, e = '') => {
   if (!c) falhas.push(n);
 };
 
-async function login(ctx, email, password = 'abate2026') {
+async function login(ctx, email, password = PASSWORD_SIMULACAO) {
   const p = await ctx.newPage();
   p.on('pageerror', e => {
     if (!/tailwind/i.test(e.message)) {
@@ -95,7 +96,7 @@ const nomes = p => p.$$eval('#corpoTabela .func-nome',
   await admin.fill('#fEmail', 'homonimo@vemproabate.pt');
   await admin.fill('#fTelefone', '912 777 666');
   await admin.selectOption('#fCargo', 'empregado_mesa');
-  await admin.fill('#fPassword', 'abate2026zz');
+  await admin.fill('#fPassword', 'password-do-homonimo-de-teste');
   await admin.click('#btnGravarFunc');
   await admin.waitForTimeout(800);
 
@@ -227,7 +228,7 @@ const nomes = p => p.$$eval('#corpoTabela .func-nome',
   await admin2.fill('#fNome', 'Outra Cozinha');
   await admin2.fill('#fEmail', 'COZINHA@vemproabate.pt');    // maiúsculas de propósito
   await admin2.fill('#fTelefone', '912 111 222');
-  await admin2.fill('#fPassword', 'abate2026xy');
+  await admin2.fill('#fPassword', 'password-da-conta-repetida');
   await admin2.click('#btnGravarFunc');
   await admin2.waitForTimeout(700);
   check('Um email repetido é recusado, mesmo com maiúsculas diferentes',

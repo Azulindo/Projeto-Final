@@ -187,7 +187,38 @@ directamente. Não é preciso QR nenhum para isso.
 
 ---
 
-## 9 · Duas coisas para não fazer
+## 9 · Quem tem o quê
+
+*Acrescentado a 28/10, e a razão é esta: nesse dia um `git push` aceite não mudou o site, e
+levou duas horas a perceber porquê. A explicação era simples e não estava escrita em lado
+nenhum — **o site estava numa conta e quem o estava a olhar estava noutra.** No dia 16, se
+faltar um de nós, esta folha é o que sobra.*
+
+| O quê | Onde | Quem tem a conta | Se essa pessoa não estiver |
+|---|---|---|---|
+| O site (páginas) | Vercel | **Guilherme** | Não se consegue publicar nada de novo. O site continua no ar com a última versão publicada, e isso chega para a demonstração. Não se tenta resolver no dia. |
+| A API | Render | **João** | O painel serve para ver registos e mexer nas variáveis. Se a API não responder, é adormecimento — espera-se um minuto (§3). |
+| A base de dados | Aiven | **João** | Nada a fazer no dia. Se a base não responder, vai-se para o plano B (§4). |
+| O repositório | GitHub (`Azulindo/Projeto-Final`) | Os dois | — |
+
+**Nenhuma destas contas é precisa para a apresentação.** Está aqui para quando alguma coisa
+correr mal e alguém perguntar *"quem é que pode mexer nisto?"* — não para se abrir no dia.
+
+**Como se vê o que o site está mesmo a servir, sem entrar em conta nenhuma:**
+
+```
+cd backend
+npm run site
+```
+
+Pergunta ao site publicado o que ele serve e compara com este repositório. Foi escrito a 28/10
+porque nenhum de nós conseguia responder a essa pergunta — e um lugar no painel do Vercel é
+pago, enquanto medir não é. *Vale mais do que o painel, porque olha para a coisa em vez de
+olhar para o que o painel diz dela.*
+
+---
+
+## 10 · Duas coisas para não fazer
 
 **Não recriar a base à frente do júri.** Se os dados parecerem estranhos, continua — ninguém
 sabe quais deviam ser. Recriar apaga tudo e leva um minuto de silêncio.

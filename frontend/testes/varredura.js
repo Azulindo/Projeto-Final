@@ -56,6 +56,7 @@
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
+const { PASSWORD_SIMULACAO } = require('./_credenciais');
 
 const DIR_CLIENTE = path.resolve(__dirname, '..', 'cliente');
 const DIR_GESTAO = path.resolve(__dirname, '..', 'funcionarios');
@@ -340,7 +341,7 @@ const recomendacoes = [];
     await entrada.evaluate(() => { try { localStorage.clear(); } catch (e) {} });
     await entrada.goto(`${RAIZ_GESTAO}login.html?simular=1`);
     await entrada.fill('#email', 'admin@vemproabate.pt');
-    await entrada.fill('#password', 'abate2026');
+    await entrada.fill('#password', PASSWORD_SIMULACAO);
     await entrada.click('#btnEntrar');
     await entrada.waitForTimeout(1500);
     const entrou = await entrada.evaluate(() => {

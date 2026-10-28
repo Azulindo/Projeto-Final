@@ -23,6 +23,7 @@
  */
 const { chromium } = require('playwright');
 const path = require('path');
+const { PASSWORD_SIMULACAO } = require('./_credenciais');
 
 const RAIZ    = 'file://' + path.resolve(__dirname, '..');
 const CLIENTE = RAIZ + '/cliente';
@@ -175,7 +176,7 @@ const check = (n, c, e = '') => {
   });
   await coz.goto(`${GESTAO}/login.html?simular=1`);
   await coz.fill('#email', 'cozinha@vemproabate.pt');
-  await coz.fill('#password', 'abate2026');
+  await coz.fill('#password', PASSWORD_SIMULACAO);
   await coz.click('#btnEntrar');
   await coz.waitForTimeout(1400);
   await coz.goto(`${GESTAO}/cozinha.html?simular=1`);

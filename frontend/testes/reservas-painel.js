@@ -27,6 +27,7 @@
  */
 const { chromium } = require('playwright');
 const path = require('path');
+const { PASSWORD_SIMULACAO } = require('./_credenciais');
 
 const GESTAO = 'file://' + path.resolve(__dirname, '..', 'funcionarios');
 
@@ -47,7 +48,7 @@ async function entrar(ctx, email) {
   await p.evaluate(() => { try { localStorage.clear(); } catch (e) {} });
   await p.goto(`${GESTAO}/login.html?simular=1`);
   await p.fill('#email', email);
-  await p.fill('#password', 'abate2026');
+  await p.fill('#password', PASSWORD_SIMULACAO);
   await p.click('#btnEntrar');
   await p.waitForTimeout(1500);
   p._erros = erros;

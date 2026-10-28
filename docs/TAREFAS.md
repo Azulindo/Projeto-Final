@@ -570,9 +570,9 @@ sem depender de nuvem nenhuma nem da rede da escola.
 
 ## Resumo de esforço
 
-*Contagens refeitas a **28/10**, a entrar o **X-32** e o **X-33**, com o script que lê as
-linhas das tabelas acima e as conta (**227 códigos**, nenhum repetido, nenhum em falta na
-sequência: B-1..77, F-1..89, C-1..28, X-1..33). **A estimativa restante também é somada das
+*Contagens refeitas a **28/10**, a entrar o **X-32**, o **X-33** e o **X-34** — e já pelo
+**`npm run tarefas`**, que lê as linhas das tabelas acima e as conta: **228 códigos**,
+nenhum repetido, nenhum em falta na sequência (B-1..77, F-1..89, C-1..28, X-1..34). **A estimativa restante também é somada das
 linhas, e isso corrigiu uma divergência:** a tabela dizia 2 h 15 nos X- e 37 h no total, que
 era o que lá estava antes de o X-27 fechar — fechou-se a tarefa e ninguém mexeu na estimativa.
 Antes disto tinham sido refeitas a 27/10 (a entrar o X-30) e a 10/09, depois de
@@ -590,13 +590,14 @@ refazer.
 | 🟢 Os dois (C-) | 28 | 10 | 2 | 16 | ≈ 32 h 15 |
 | 🐞 Correções (X-) | 34 | 29 | — | 5 | ≈ 3 h 30 |
 
-**Total por fazer: ≈ 38 h 15.** Sobram **dez** tarefas 🟨, e todas contam como por fazer:
+**Total por fazer: ≈ 38 h 15.** Sobram **doze** tarefas 🟨, e todas contam como por fazer:
 **X-08** (não se conseguiu reproduzir), **X-26** (a auditoria mede os ficheiros de onde corre),
 **B-67** (funciona; o que estava errado era o que estava escrito), **C-01** (falta o Guilherme
 ler o `CONTEXTO.md`), **C-06** (os textos do bot, a única das três do fluxo que ficou de pé),
 **C-17** (o relatório está escrito, faltam-lhe números e figuras), **C-20** (os 15 diapositivos
 existem desde 15/10, falta lê-los e pô-los na nossa voz), **C-24** (a base local foi
-reconstruída a 15/10 e ainda não foi corrida ponta a ponta pelos dois), **C-27** (metade do
+reconstruída a 15/10 e ainda não foi corrida ponta a ponta pelos dois), **X-32** (a password saiu do `api.js`, falta mudá-la na base) e
+**X-34** (o `.vercelignore` está escrito, falta o site responder 404), **C-27** (metade do
 ensaio sem rede está feita) e **C-28** (a folha está escrita, falta imprimi-la).
 
 Uma tarefa 🟨 é a que tem trabalho escrito e ainda não tem prova de que funciona — **e enquanto

@@ -10,6 +10,7 @@
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
+const { PASSWORD_SIMULACAO } = require('./_credenciais');
 
 // As capturas ficam fora do repositório (ver .gitignore).
 fs.mkdirSync(path.join(__dirname, '_capturas'), { recursive: true });
@@ -55,7 +56,7 @@ const contaDe  = (p, estado) => p.textContent(`[data-conta="${estado}"]`);
   coz.on('pageerror', e => { console.log('[pageerror cozinha]', e.message); falhas.push('pageerror cozinha'); });
   await coz.goto(`${GESTAO}/login.html?simular=1`);
   await coz.fill('#email', 'cozinha@vemproabate.pt');
-  await coz.fill('#password', 'abate2026');
+  await coz.fill('#password', PASSWORD_SIMULACAO);
   await coz.click('#btnEntrar');
   await coz.waitForTimeout(1200);
   await coz.waitForSelector('.cartao-ronda', { timeout: 8000 });
@@ -149,7 +150,7 @@ const contaDe  = (p, estado) => p.textContent(`[data-conta="${estado}"]`);
   await bal.evaluate(() => localStorage.removeItem('vpa_sessao_funcionario'));
   await bal.goto(`${GESTAO}/login.html?simular=1`);
   await bal.fill('#email', 'balcao@vemproabate.pt');
-  await bal.fill('#password', 'abate2026');
+  await bal.fill('#password', PASSWORD_SIMULACAO);
   await bal.click('#btnEntrar');
   await bal.waitForTimeout(1200);
   await bal.goto(`${GESTAO}/balcao.html?simular=1`);

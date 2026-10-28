@@ -17,6 +17,7 @@
  */
 const { chromium } = require('playwright');
 const path = require('path');
+const { PASSWORD_SIMULACAO } = require('./_credenciais');
 
 const RAIZ   = 'file://' + path.resolve(__dirname, '..');
 const GESTAO = RAIZ + '/funcionarios';
@@ -80,7 +81,7 @@ const check = (n, c, e = '') => { feitas++; console.log(`${c ? '✅' : '❌'} ${
 
   await p.goto(`${GESTAO}/login.html?simular=1&api=http://192.168.1.70:3000/api`);
   await p.fill('#email', 'admin@vemproabate.pt');
-  await p.fill('#password', 'abate2026');
+  await p.fill('#password', PASSWORD_SIMULACAO);
   await p.click('#btnEntrar');
   await p.waitForTimeout(1500);
   await p.goto(`${GESTAO}/produtos.html?simular=1`);
