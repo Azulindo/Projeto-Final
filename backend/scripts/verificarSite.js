@@ -213,10 +213,47 @@ async function main() {
     let corpo = null;
     try { corpo = JSON.parse(saude.texto); } catch { /* nao e JSON */ }
     ver('e a resposta e JSON', corpo !== null, saude.texto.slice(0, 80));
-    if (corpo) {
-      const etiqueta = corpo.ambiente || corpo.NOME_AMBIENTE || '(sem etiqueta)';
-      console.log(`        a falar com: ${etiqueta}` +
-        (corpo.tabelas !== undefined ? `, ${corpo.tabelas} tabelas` : ''));
+
+    /*
+     *  O campo a ler e o `baseDados.origem`, NAO o `ambiente`.
+     *
+     *  A primeira versao disto leu o `ambiente` e escreveu "a falar com:
+     *  production". O `ambiente` e o `NODE_ENV`, que no Render e sempre
+     *  "production" e nao diz nada sobre com que base a API esta a
+     *  falar — podia estar ligada ao Aiven ou a um MySQL de casa e
+     *  dizia "production" na mesma.
+     *
+     *  **E exactamente a confusao contra a qual este projeto decidiu:**
+     *  o `ambiente.js` existe porque a etiqueta tem de sair do
+     *  `DB_HOST` e nao de uma variavel que alguem declara. Eu li o
+     *  campo errado e pus no ecra uma etiqueta que nao responde a
+     *  pergunta — e numa apresentacao e esta a unica que interessa.
+     */
+    const bd = (corpo && corpo.baseDados) || null;
+    if (bd) {
+      ver('e a API esta mesmo ligada a base', bd.ligada === true);
+      console.log(`        a falar com: ${bd.origem} (${bd.nome})` +
+        `, ${bd.tabelas} tabelas e ${bd.vistas} vista(s)` +
+        `, ${bd.produtosAtivos} produtos, ${bd.tempoResposta}`);
+      /*
+       *  O numero de tabelas da base publicada contra o que o
+       *  schema.sql deste repositorio cria. Foi a divergencia do X-20:
+       *  o diagrama dizia 18 porque se gera do esquema, o /api/saude
+       *  dizia 17 porque le a base, e nenhum dos dois estava errado —
+       *  estavam a falar de bases diferentes.
+       */
+      const esquema = path.join(RAIZ, 'database', 'schema.sql');
+      if (fs.existsSync(esquema)) {
+        const texto = fs.readFileSync(esquema, 'utf8');
+        const noEsquema = (texto.match(/CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?/gi) || []).length;
+        ver(`a base publicada tem as mesmas tabelas que o schema.sql (${noEsquema})`,
+          Number(bd.tabelas) === noEsquema,
+          `a base tem ${bd.tabelas} e o esquema cria ${noEsquema} — falta correr uma migracao, `
+          + 'ou o esquema ganhou uma tabela que ninguem aplicou (foi o X-20)');
+      }
+    } else if (corpo) {
+      ver('a resposta traz o bloco baseDados', false,
+        'a API publicada e mais velha do que este repositorio');
     }
   }
 
