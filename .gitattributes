@@ -1,0 +1,19 @@
+# Este repositorio tem core.autocrlf=true no portatil do Guilherme.
+# Sem estas linhas, quem passar um .pptx/.docx/.pdf por uma ferramenta
+# que os trate como texto perde bytes e o Office da o ficheiro como
+# corrompido -- sem erro nenhum no git. Aconteceu a 29/10 com o
+# docs/apresentacao.pptx: 1 051 782 bytes a entrar, 1 051 707 a chegar.
+*.pptx binary
+*.potx binary
+*.docx binary
+*.dotx binary
+*.xlsx binary
+*.pdf  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.svg  text eol=lf
+*.ico  binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
