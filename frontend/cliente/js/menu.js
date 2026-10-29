@@ -207,6 +207,55 @@ function criarLinha(produto) {
  * falhar (um clique que começa dentro e acaba fora fechava a janela a
  * meio de selecionar texto).
  */
+/* ── TRANCAR O FUNDO ENQUANTO O CARTÃO ESTÁ ABERTO ─────────────────
+ * Apanhado pelo Guilherme a 29/10: "se fizer scroll o site anda para
+ * cima e para baixo". Medido, e eram TRÊS coisas e não uma:
+ *
+ *   · com o cartão aberto, rodar a roda sobre o fundo levava a página
+ *     1440px para baixo;
+ *   · ABRIR o cartão já mexia a página sozinho, 189px para cima — é o
+ *     `showModal()` a trazer o foco para dentro e o browser a rolar
+ *     para o mostrar;
+ *   · ao fechar, a página ficava onde a roda a tinha deixado, a 1251px
+ *     de onde estava antes de abrir.
+ *
+ * O `overflow: hidden` no body resolve isto no Android e NÃO resolve no
+ * Safari do iPhone, que continua a arrastar o documento. Por isso a
+ * posição é guardada e o body passa a `position: fixed` com um `top`
+ * negativo — o truque que funciona nos dois, à custa de ter de repor a
+ * posição à mão ao fechar.
+ *
+ * A reposição é INSTANTÂNEA de propósito: o `menu.css` tem
+ * `scroll-behavior: smooth`, e sem isto fechar o cartão fazia a página
+ * deslizar de volta à vista, que é outra vez a página a andar sozinha.
+ */
+let scrollGuardado = 0;
+
+function trancarFundo() {
+  scrollGuardado = window.scrollY;
+  const b = document.body.style;
+  b.position = 'fixed';
+  b.top = `-${scrollGuardado}px`;
+  b.left = '0';
+  b.right = '0';
+  b.width = '100%';
+}
+
+function destrancarFundo() {
+  const b = document.body.style;
+  b.position = '';
+  b.top = '';
+  b.left = '';
+  b.right = '';
+  b.width = '';
+
+  const raiz = document.documentElement;
+  const comportamento = raiz.style.scrollBehavior;
+  raiz.style.scrollBehavior = 'auto';      // ver a nota de cima
+  window.scrollTo(0, scrollGuardado);
+  raiz.style.scrollBehavior = comportamento;
+}
+
 function abrirCartao(produto, origem) {
   const cartao = document.getElementById('pratoCartao');
   if (!cartao || typeof cartao.showModal !== 'function') {
@@ -231,6 +280,10 @@ function abrirCartao(produto, origem) {
   desc.hidden = !produto.descricao;
   document.getElementById('pratoCartaoPreco').textContent = formatarPreco(produto.preco);
 
+  /* A tranca vem ANTES do showModal, e não depois: é o próprio
+     showModal que rola a página ao trazer o foco para dentro. Com o
+     fundo já trancado, não há nada para rolar. */
+  trancarFundo();
   cartao.showModal();
 
   /* Fechar ao tocar fora: compara-se a posição do toque com a caixa do
@@ -249,7 +302,12 @@ function abrirCartao(produto, origem) {
    * `focus()` num botão que já saiu do documento manda o foco para o
    * princípio da página, que num telemóvel é um salto de volta ao topo. */
   cartao.addEventListener('close', function () {
-    if (origem && origem.isConnected) origem.focus();
+    destrancarFundo();
+    /* O `preventScroll` existe pela mesma razão que a tranca: sem ele,
+       devolver o foco ao prato faz o browser rolar até ele — e como a
+       posição acabou de ser reposta, isso era mexer na página logo a
+       seguir a a pôr no sítio. */
+    if (origem && origem.isConnected) origem.focus({ preventScroll: true });
   }, { once: true });
 }
 

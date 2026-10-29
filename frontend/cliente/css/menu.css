@@ -354,6 +354,10 @@
   max-height: calc(100vh - 48px);
   padding: 0;
   overflow: hidden auto;
+  /* Chegado ao fim do cartão, o embalo não passa para a página atrás.
+     É a outra metade da tranca do `menu.js`: aquela impede o fundo de
+     se mexer, esta impede o cartão de lhe entregar o movimento. */
+  overscroll-behavior: contain;
 
   background: #141210;
   color: #e9e5df;

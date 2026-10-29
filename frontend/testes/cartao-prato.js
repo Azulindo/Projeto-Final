@@ -79,6 +79,11 @@ async function correr(largura) {
   });
   check(`${largura}: o prato recebe foco`, alcancavel);
 
+  /* Descer antes de abrir, senão não há posição nenhuma para repor e a
+     verificação da reposição passava sobre o caso trivial (0px). */
+  await p.evaluate(() => window.scrollTo(0, 500));
+  await p.waitForTimeout(500);
+
   const primeiro = pratos.first();
   const nomeNaLista = (await primeiro.locator('.ementa-nome').textContent()).trim();
   const precoNaLista = (await primeiro.locator('.ementa-preco').textContent()).trim();
@@ -96,6 +101,24 @@ async function correr(largura) {
   check(`${largura}: o preço do cartão é o da lista`,
         precoNoCartao === precoNaLista, `${precoNoCartao} / ${precoNaLista}`);
 
+  /* ── O FUNDO NÃO SE MEXE (29/10) ─────────────────────────────────
+   * Apanhado pelo Guilherme no telemóvel: "se fizer scroll o site anda
+   * para cima e para baixo". Eram três coisas — abrir já mexia 189px,
+   * a roda levava o fundo 1440px, e fechar deixava-o a 1251px de onde
+   * estava. Estas duas verificações falhavam todas antes da tranca.
+   *
+   * A roda é rodada no canto SUPERIOR ESQUERDO, que o cartão nunca
+   * ocupa: rodá-la sobre o cartão media o scroll do cartão, que é outra
+   * coisa e que deve mesmo funcionar. */
+  const antesDaRoda = await p.evaluate(() => Math.round(window.scrollY));
+  await p.mouse.move(20, 120);
+  for (let i = 0; i < 5; i++) { await p.mouse.wheel(0, 240); await p.waitForTimeout(50); }
+  await p.waitForTimeout(400);
+  const depoisDaRoda = await p.evaluate(() => Math.round(window.scrollY));
+  check(`${largura}: o fundo não se mexe com o cartão aberto`,
+        Math.abs(depoisDaRoda - antesDaRoda) <= 2,
+        `mexeu ${Math.abs(depoisDaRoda - antesDaRoda)}px`);
+
   const maus = await textosPequenos(p, '#pratoCartao');
   check(`${largura}: nenhum texto do cartão abaixo de 12px`,
         maus.length === 0, maus.length ? maus.join(' | ') : 'nenhum');
@@ -112,10 +135,24 @@ async function correr(largura) {
 
   /* Escape fecha E o foco volta. A segunda metade é a que interessa:
    * sem ela, fechar a janela deixava o teclado no princípio da página. */
+  /* Onde a página estava quando o cartão abriu. Com o fundo trancado o
+     `window.scrollY` lê 0 — a posição verdadeira está no `top` negativo
+     do body, que é como a tranca a guarda. */
+  const guardado = await p.evaluate(() =>
+    Math.abs(parseInt(document.body.style.top || '0', 10)));
+
   await p.keyboard.press('Escape');
-  await p.waitForTimeout(250);
+  await p.waitForTimeout(400);
   check(`${largura}: o Escape fecha`,
         !(await p.evaluate(() => document.getElementById('pratoCartao').open)));
+
+  const reposto = await p.evaluate(() => Math.round(window.scrollY));
+  check(`${largura}: ao fechar, a página fica onde estava`,
+        Math.abs(reposto - guardado) <= 2,
+        `${reposto}px contra os ${guardado}px de quando abriu`);
+  check(`${largura}: o body deixa de estar trancado`,
+        await p.evaluate(() => !document.body.style.position),
+        'position limpo');
   check(`${largura}: o foco volta ao prato de onde saiu`,
         await p.evaluate(() =>
           document.activeElement === document.querySelector('.ementa-item')));
