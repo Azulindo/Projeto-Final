@@ -139,7 +139,23 @@ function desenharEmenta(caixa, produtos, categorias) {
 
 function criarLinha(produto) {
   const item = document.createElement('li');
-  item.className = 'ementa-item';
+
+  /* A linha é um BOTÃO e não uma <div> com um `onclick`.
+   *
+   * Um botão a sério traz o teclado inteiro de graça: entra na ordem de
+   * tabulação, responde ao Enter e ao espaço, e é anunciado como botão
+   * por um leitor de ecrã. Uma <div> clicável não faz nada disso, e
+   * depois acrescenta-se `tabindex`, `role` e dois ouvintes de teclado
+   * para chegar a onde o `<button>` já estava.
+   *
+   * Por isto o nome passou de <h3> a <span>: um <button> só pode conter
+   * texto e elementos de frase — uma <h3> lá dentro é HTML inválido. A
+   * categoria continua a ser o <h2> da secção, por isso a estrutura de
+   * títulos da página não perde nada. */
+  const botao = document.createElement('button');
+  botao.type = 'button';
+  botao.className = 'ementa-item';
+  botao.addEventListener('click', function () { abrirCartao(produto, botao); });
 
   // Miniatura: o caminho vem do servidor relativo à raiz do projeto
   // (`assets/imagens/…`) e estas páginas vivem em `frontend/cliente/`.
@@ -151,32 +167,90 @@ function criarLinha(produto) {
     foto.loading = 'lazy';
     // Um prato sem foto não deixa um quadrado partido no meio da ementa.
     foto.addEventListener('error', function () { foto.remove(); });
-    item.appendChild(foto);
+    botao.appendChild(foto);
   }
 
-  const texto = document.createElement('div');
+  const texto = document.createElement('span');
   texto.className = 'ementa-texto';
 
-  const nome = document.createElement('h3');
+  const nome = document.createElement('span');
   nome.className = 'ementa-nome';
   nome.textContent = produto.nome;      // textContent, nunca innerHTML:
   texto.appendChild(nome);              // isto vem do servidor (X-01)
 
   if (produto.descricao) {
-    const desc = document.createElement('p');
+    const desc = document.createElement('span');
     desc.className = 'ementa-desc';
     desc.textContent = produto.descricao;
     texto.appendChild(desc);
   }
 
-  item.appendChild(texto);
+  botao.appendChild(texto);
 
   const preco = document.createElement('span');
   preco.className = 'ementa-preco';
   preco.textContent = formatarPreco(produto.preco);
-  item.appendChild(preco);
+  botao.appendChild(preco);
 
+  item.appendChild(botao);
   return item;
+}
+
+/* ── O CARTÃO DE UM PRATO ───────────────────────────────────────────
+ * O <dialog> é um só e é reaproveitado. Vinte e cinco janelas no HTML,
+ * uma por prato, davam vinte e cinco sítios para o mesmo defeito.
+ *
+ * Não há aqui nenhum tratamento de Escape, de foco ou de cliques fora:
+ * o `showModal()` faz as três coisas. O único que falta é fechar ao
+ * tocar FORA do cartão, que o browser não dá — e abaixo faz-se pela
+ * geometria e não por `event.target`, que é onde esse truque costuma
+ * falhar (um clique que começa dentro e acaba fora fechava a janela a
+ * meio de selecionar texto).
+ */
+function abrirCartao(produto, origem) {
+  const cartao = document.getElementById('pratoCartao');
+  if (!cartao || typeof cartao.showModal !== 'function') {
+    return;      // browser sem <dialog>: a lista continua a ler-se toda
+  }
+
+  const foto = document.getElementById('pratoCartaoFoto');
+  if (produto.imagem) {
+    foto.src = `../../${produto.imagem}`;
+    foto.alt = '';
+    foto.hidden = false;
+    foto.onerror = function () { foto.hidden = true; };
+  } else {
+    foto.hidden = true;
+    foto.removeAttribute('src');
+  }
+
+  document.getElementById('pratoCartaoCategoria').textContent = produto.categoria || '';
+  document.getElementById('pratoCartaoNome').textContent = produto.nome;
+  const desc = document.getElementById('pratoCartaoDesc');
+  desc.textContent = produto.descricao || '';
+  desc.hidden = !produto.descricao;
+  document.getElementById('pratoCartaoPreco').textContent = formatarPreco(produto.preco);
+
+  cartao.showModal();
+
+  /* Fechar ao tocar fora: compara-se a posição do toque com a caixa do
+   * cartão. O `event.target === dialog` que toda a gente usa funciona
+   * por acidente — o alvo só é o <dialog> quando se acerta no fundo — e
+   * deixa de funcionar assim que alguém põe `padding` no cartão. */
+  cartao.onclick = function (ev) {
+    const r = cartao.getBoundingClientRect();
+    const fora = ev.clientY < r.top || ev.clientY > r.bottom
+              || ev.clientX < r.left || ev.clientX > r.right;
+    if (fora) cartao.close();
+  };
+
+  /* O foco volta sozinho a quem abriu — mas só se esse botão ainda
+   * existir. A ementa é redesenhada do zero a cada carregamento, e um
+   * `focus()` num botão que já saiu do documento manda o foco para o
+   * princípio da página, que num telemóvel é um salto de volta ao topo. */
+  cartao.addEventListener('close', function () {
+    if (origem && origem.isConnected) origem.focus();
+  }, { once: true });
 }
 
 /* Preço em português: vírgula decimal e o símbolo depois do número
