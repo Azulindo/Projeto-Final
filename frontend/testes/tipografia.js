@@ -64,7 +64,11 @@ const PAGINAS = ['index.html', 'menu.html', 'galeria.html',
 const BOTOES = [
   ['index.html', '.btn'],
   ['index.html', '.reservas'],
-  ['menu.html', '.galeria-btn'],
+  /* O `.galeria-btn` saiu desta lista a 29/10 porque o botão saiu da
+     página (era o terceiro caminho para a galeria). Tirar o elemento
+     deixou esta suite com 6 falhas — a exigir a presença de uma coisa
+     que o dono da página mandou embora — e é por isso que a lista está
+     aqui e não espalhada pelas verificações: um sítio para corrigir. */
   ['menu.html', '.takeaway-btn'],
 ];
 

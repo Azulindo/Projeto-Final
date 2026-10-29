@@ -529,52 +529,6 @@
   margin: 0 auto 30px auto;
 }
 
-/* BOTÃO GALERIA */
-.galeria-btn {
-  display: block;
-  margin: 0 auto 20px auto;
-  background: linear-gradient(45deg, #ff4500, #957806);
-  /* #7f0d0d dava 2,53:1 sobre o extremo dourado deste gradiente — o
-   minimo da WCAG e 4,5:1. O `contraste.js` nao apanhava porque nao
-   sabia medir texto sobre gradientes; passou a saber (04/09).
-   #0d0b07 da 4,65:1 no pior ponto sem mexer no gradiente. O
-   #16130d da marca ficava a 4,38 — falhava por pouco. */
-  color: #0d0b07;
-  border: none;
-  padding: 15px 30px;
-  /* A família, o peso, a caixa e o espaçamento vêm da `.vpa-rotulo`
-     no `nav.css` (F-76). Estavam escritos aqui e em mais três sítios —
-     quatro cópias do mesmo papel, ao lado da classe criada para as
-     substituir e que ninguém tinha aplicado. Só o TAMANHO fica,
-     porque esse é deste botão. */
-  font-size: 1.15rem;
-  cursor: pointer;
-  border-radius: 25px;
-  box-shadow: 0 4px 15px rgba(255,69,0,0.6);
-  text-decoration: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.galeria-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(255,69,0,0.8);
-}
-
-/* TEXTO GALERIA — era Nosifer, uma fonte decorativa desenhada para
-   títulos curtos. Numa frase inteira ("Descubra os nossos pratos...")
-   os traços espinhosos tornam-na lenta de ler; a mesma frase em Inter
-   (herdado do body, ver nav.css) fica clara sem perder o peso. Nosifer
-   e Metal Mania continuam a ser a voz dos títulos — isto é só o corpo
-   de texto por baixo do botão. */
-.galeria-text {
-  text-align: center;
-  color: white;
-  font-size: 1.2rem;
-  font-weight: 700;
-  margin-bottom: 20px;
-  line-height: 1.5;
-}
-
 @keyframes fadeInUp {
   from {
     opacity: 0;

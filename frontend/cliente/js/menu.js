@@ -17,7 +17,6 @@
 // nada: o `produtos` já está na lista `ENDPOINTS_REAIS`.
 
 document.addEventListener('DOMContentLoaded', function () {
-  ligarBotaoGaleria();
   carregarEmenta();
 });
 
@@ -31,13 +30,6 @@ document.addEventListener('DOMContentLoaded', function () {
    categoria nova que o João acrescente aparece no fim, em vez de
    desaparecer por não estar nesta lista. */
 const ORDEM_EMENTA = ['Entradas', 'Pratos Principais', 'Bebidas', 'Sobremesas'];
-
-const ICONES_EMENTA = {
-  'Entradas': '🥗',
-  'Pratos Principais': '🥩',
-  'Bebidas': '🍹',
-  'Sobremesas': '🍮',
-};
 
 async function carregarEmenta() {
   const caixa = document.getElementById('ementa');
@@ -125,7 +117,7 @@ function desenharEmenta(caixa, produtos, categorias) {
 
     const titulo = document.createElement('h2');
     titulo.className = 'ementa-titulo';
-    titulo.textContent = `${ICONES_EMENTA[categoria] || '🍽️'} ${categoria}`;
+    titulo.textContent = categoria;
     seccao.appendChild(titulo);
 
     const lista = document.createElement('ul');
@@ -319,26 +311,9 @@ function formatarPreco(valor) {
   return `${n.toFixed(2).replace('.', ',')} €`;
 }
 
-/* ── BOTÃO DA GALERIA (como estava) ─────────────────────────────── */
-
-function ligarBotaoGaleria() {
-  const galeriaBtn = document.getElementById('galeriaBtn');
-  if (!galeriaBtn) return;
-
-  galeriaBtn.addEventListener('click', function (e) {
-    e.preventDefault();
-    this.style.transform = 'scale(0.95)';
-    setTimeout(() => {
-      this.textContent = 'Banana...';
-      setTimeout(() => { window.location.href = 'galeria.html'; }, 500);
-    }, 150);
-  });
-
-  galeriaBtn.addEventListener('mouseenter', function () {
-    this.style.animationPlayState = 'paused';
-  });
-
-  galeriaBtn.addEventListener('mouseleave', function () {
-    this.style.animationPlayState = 'running';
-  });
-}
+/* O botão "Ver Galeria" e a legenda por baixo dele foram tirados a
+   29/10, a pedido do Guilherme. Eram o TERCEIRO caminho para a mesma
+   página — a galeria já tem o link na navegação do topo — e o botão
+   trocava o próprio texto por "Banana..." meio segundo antes de
+   navegar, o que num telemóvel se lê como avaria e não como piada.
+   A galeria continua a chegar-se pela navegação. */
