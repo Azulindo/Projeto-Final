@@ -95,8 +95,11 @@
                  alguém decide levar um para casa, e a decisão acontece
                  nesta página. Um link no topo obrigava a escolher antes
                  de ver. -->
+            <!-- Sem emoji, e não é gosto: era o ÚNICO botão do site com um.
+                 Um elemento decorativo que aparece uma vez lê-se como
+                 engano e não como intenção — e esse foi o argumento do
+                 Guilherme a 29/10, com o telemóvel na mão. -->
             <a href="takeaway.html" class="takeaway-btn vpa-rotulo">
-                <span aria-hidden="true">🥡</span>
                 Encomendar para levar
             </a>
             <p class="takeaway-text">
@@ -104,10 +107,34 @@
                 estiver pronta. Paga-se no balcão, ao levantar.
             </p>
 
-            <button id="galeriaBtn" class="galeria-btn vpa-rotulo">Ver Galeria</button>
-            <p class="galeria-text">Descubra os nossos pratos incríveis! Clique no botão e explore a nossa galeria de delícias irresistíveis.</p>
         </section>
     </main>
+
+    <!-- ── O CARTÃO DE UM PRATO (29/10) ───────────────────────────────
+         Pedido pelo Guilherme: "em cada prato podia abrir um cartãozinho
+         com as legendas". A lista passa a mostrar o essencial — nome,
+         duas linhas de descrição e preço — e quem quiser o resto toca.
+
+         É um <dialog> e não uma <div> inventada, por três coisas que o
+         browser dá de graça e que nós faríamos mal: o Escape fecha, o
+         foco fica preso lá dentro enquanto está aberto, e ao fechar
+         volta sozinho ao prato de onde saiu. Escrever isto à mão é como
+         se perde o teclado (foi o X-16).
+
+         O <form method="dialog"> faz o botão de fechar funcionar mesmo
+         que o JavaScript falhe. -->
+    <dialog id="pratoCartao" class="prato-cartao" aria-labelledby="pratoCartaoNome">
+        <form method="dialog" class="prato-fechar-area">
+            <button class="prato-fechar" aria-label="Fechar">&times;</button>
+        </form>
+        <img id="pratoCartaoFoto" class="prato-foto" alt="" hidden>
+        <div class="prato-corpo">
+            <p id="pratoCartaoCategoria" class="prato-categoria"></p>
+            <h2 id="pratoCartaoNome" class="prato-nome vpa-rotulo"></h2>
+            <p id="pratoCartaoDesc" class="prato-desc"></p>
+            <p id="pratoCartaoPreco" class="prato-preco"></p>
+        </div>
+    </dialog>
 
     <!-- Script -->
     <script src="../js/api.js"></script>

@@ -209,19 +209,35 @@
   gap: 6px;
 }
 
+/* A linha é um <button> desde 29/10 (ver menu.js). Um botão traz consigo
+   `font` e `color` do browser e alinhamento ao centro, por isso aqui
+   repõe-se o que o texto corrido precisa — senão a ementa saía em Arial
+   13px e centrada. */
 .ementa-item {
   display: flex;
   align-items: center;
   gap: 16px;
+  width: 100%;
   padding: 12px 14px;
   border-radius: 12px;
   border: 1px solid transparent;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .ementa-item:hover {
   background: rgba(255, 69, 0, 0.06);
   border-color: rgba(255, 69, 0, 0.35);
+}
+
+/* O toque tem de responder onde não há `:hover` nenhum — num telemóvel
+   a linha de cima nunca acontece. */
+.ementa-item:active {
+  background: rgba(255, 69, 0, 0.1);
 }
 
 .ementa-foto {
@@ -234,18 +250,28 @@
 }
 
 .ementa-texto {
+  display: block;    /* é um <span> dentro do botão (ver menu.js) */
   flex: 1;
   min-width: 0;      /* deixa a descrição partir a linha em vez de esticar */
 }
 
 .ementa-nome {
+  display: block;
   font-size: 1.05rem;
   font-weight: 600;
   color: #fff;
   margin-bottom: 3px;
 }
 
+/* A descrição na LISTA pára às duas linhas; a inteira está no cartão.
+   Não é para esconder texto — é para a lista se poder percorrer. Com as
+   descrições completas, vinte e cinco pratos faziam uma parede, e o
+   preço de cada um afastava-se do nome a que pertence. */
 .ementa-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
   font-size: 0.9rem;
   line-height: 1.45;
   color: #b3b3b3;
@@ -294,6 +320,161 @@
 /* Quem preferir menos movimento não leva um spinner a girar sem parar. */
 @media (prefers-reduced-motion: reduce) {
   .ementa-spinner { animation: none; }
+}
+
+/* ══ O CARTÃO DE UM PRATO (29/10) ══════════════════════════════════
+   Pedido assim: "um cartãozinho com as legendas, não precisa de ser
+   nada muito grande, mas um bocado elaborado".
+
+   A decisão de desenho é toda a mesma: o prato é a fotografia. Ela
+   ocupa o topo inteiro, sem moldura nem margem, e o texto vem por baixo
+   num bloco calmo. Pôr a fotografia pequena ao lado do texto era repetir
+   a linha da lista num sítio onde há espaço para mais.
+───────────────────────────────────────────────────────────────────── */
+
+.prato-cartao {
+  /* `margin: auto` escrito e não herdado, de propósito.
+
+     ESCRITO COM CUIDADO, porque a primeira versão deste comentário
+     estava errada: eu tinha posto que "o reset do site tem
+     `* { margin: 0 }`". **Não tem** — fui confirmar e nem o `menu.css`
+     nem o `nav.css` têm selector universal nenhum. Hoje o browser
+     centrava esta janela sozinho.
+
+     A razão verdadeira é outra: na aplicação de gestão o `base.css` TEM
+     esse reset, e foi precisamente ele que apagou o `margin: auto` com
+     que o browser centra um <dialog> aberto por showModal() — a janela
+     abria encostada ao canto e procurou-se meia hora no ficheiro da
+     página antes de alguém olhar para o reset (X-16). Esta linha custa
+     nada e fecha a porta a que o mesmo aconteça aqui no dia em que
+     alguém acrescentar um reset. */
+  margin: auto;
+
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  padding: 0;
+  overflow: hidden auto;
+  /* Chegado ao fim do cartão, o embalo não passa para a página atrás.
+     É a outra metade da tranca do `menu.js`: aquela impede o fundo de
+     se mexer, esta impede o cartão de lhe entregar o movimento. */
+  overscroll-behavior: contain;
+
+  background: #141210;
+  color: #e9e5df;
+  border: 1px solid rgba(255, 69, 0, 0.28);
+  border-radius: 18px;
+  /* Sem brilho laranja: os botões desta página já gritam. Uma sombra
+     funda separa o cartão do fundo sem acrescentar mais uma luz. */
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.85);
+}
+
+.prato-cartao::backdrop {
+  background: rgba(8, 6, 5, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.prato-foto {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  /* `aspect-ratio` garante que o cartão não muda de altura conforme a
+     fotografia do prato — sem isto, abrir um prato alto e outro largo
+     fazia a janela saltar de tamanho. */
+}
+
+.prato-foto[hidden] { display: none; }
+
+.prato-corpo {
+  padding: 18px 20px 22px;
+}
+
+/* A categoria é a etiqueta, não o título: pequena, dourada e espaçada.
+   12px é o piso que a auditoria usa — e é de propósito que não é menos. */
+.prato-categoria {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #d8a23c;          /* 6,6:1 sobre o #141210 do cartão */
+  margin-bottom: 8px;
+}
+
+.prato-categoria:empty { display: none; }
+
+.prato-nome {
+  font-family: var(--fonte-titulo);   /* Metal Mania: o nome de um prato
+                                         é uma frase, não um rótulo curto
+                                         — é a divisão da F-80 */
+  font-size: clamp(1.4rem, 6vw, 1.75rem);
+  line-height: 1.15;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.prato-desc {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #c2bcb4;          /* 8,2:1 sobre o fundo do cartão */
+  margin-bottom: 16px;
+}
+
+.prato-desc[hidden] { display: none; }
+
+.prato-preco {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffcc00;
+  font-variant-numeric: tabular-nums;
+}
+
+/* O botão de fechar flutua por cima da fotografia, por isso leva fundo
+   próprio: sobre uma imagem clara, um × branco desaparecia. */
+.prato-fechar-area {
+  position: sticky;
+  top: 0;
+  height: 0;              /* não ocupa espaço no fluxo do cartão */
+  text-align: right;
+  z-index: 1;
+}
+
+.prato-fechar {
+  /* 44px, que é o alvo de toque mínimo do projeto — e não 24px, que é
+     o mínimo da norma. Um × pequeno em cima de uma fotografia é o botão
+     que mais vezes se falha. */
+  width: 44px;
+  height: 44px;
+  margin: 8px 8px 0 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(10, 8, 7, 0.72);
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background 0.2s ease;
+}
+
+.prato-fechar:hover { background: rgba(255, 69, 0, 0.55); }
+
+/* Entrada discreta, e desligada para quem pediu menos movimento. */
+@keyframes pratoEntra {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+.prato-cartao[open] {
+  animation: pratoEntra 0.18s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Um @keyframes com o mesmo nome declarado depois SUBSTITUI o de
+     cima. É assim que o movimento se tira num sítio só, sem ter de
+     repetir a lista de selectores (F-88). */
+  @keyframes pratoEntra {
+    from, to { opacity: 1; transform: none; }
+  }
+  .prato-fechar { transition: none; }
 }
 
 /* ── BOTÃO DE TAKE AWAY (F-24, 10/09) ──────────────────────────────
@@ -346,52 +527,6 @@
   line-height: 1.6;
   max-width: 46ch;
   margin: 0 auto 30px auto;
-}
-
-/* BOTÃO GALERIA */
-.galeria-btn {
-  display: block;
-  margin: 0 auto 20px auto;
-  background: linear-gradient(45deg, #ff4500, #957806);
-  /* #7f0d0d dava 2,53:1 sobre o extremo dourado deste gradiente — o
-   minimo da WCAG e 4,5:1. O `contraste.js` nao apanhava porque nao
-   sabia medir texto sobre gradientes; passou a saber (04/09).
-   #0d0b07 da 4,65:1 no pior ponto sem mexer no gradiente. O
-   #16130d da marca ficava a 4,38 — falhava por pouco. */
-  color: #0d0b07;
-  border: none;
-  padding: 15px 30px;
-  /* A família, o peso, a caixa e o espaçamento vêm da `.vpa-rotulo`
-     no `nav.css` (F-76). Estavam escritos aqui e em mais três sítios —
-     quatro cópias do mesmo papel, ao lado da classe criada para as
-     substituir e que ninguém tinha aplicado. Só o TAMANHO fica,
-     porque esse é deste botão. */
-  font-size: 1.15rem;
-  cursor: pointer;
-  border-radius: 25px;
-  box-shadow: 0 4px 15px rgba(255,69,0,0.6);
-  text-decoration: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.galeria-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(255,69,0,0.8);
-}
-
-/* TEXTO GALERIA — era Nosifer, uma fonte decorativa desenhada para
-   títulos curtos. Numa frase inteira ("Descubra os nossos pratos...")
-   os traços espinhosos tornam-na lenta de ler; a mesma frase em Inter
-   (herdado do body, ver nav.css) fica clara sem perder o peso. Nosifer
-   e Metal Mania continuam a ser a voz dos títulos — isto é só o corpo
-   de texto por baixo do botão. */
-.galeria-text {
-  text-align: center;
-  color: white;
-  font-size: 1.2rem;
-  font-weight: 700;
-  margin-bottom: 20px;
-  line-height: 1.5;
 }
 
 @keyframes fadeInUp {
