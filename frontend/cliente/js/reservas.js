@@ -1103,9 +1103,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     await botReply('Escolhe o dia pretendido no calendário abaixo: 📅', 700);
 
-    // Inicializa o calendário no mês atual
+    // Abre no mês do primeiro dia reservável: amanhã, ou o dia a seguir se amanhã
+    // for 2ª feira (encerrado). No último dia do mês, o mês atual já não tem
+    // nenhum dia livre e o calendário abria só com dias bloqueados.
     const now = new Date();
-    calState = { year: now.getFullYear(), month: now.getMonth() };
+    const primeiro = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    if (primeiro.getDay() === 1) primeiro.setDate(primeiro.getDate() + 1);
+    calState = { year: primeiro.getFullYear(), month: primeiro.getMonth() };
     renderCalendar();
 
     lockUI('Seleciona uma data no calendário…');
