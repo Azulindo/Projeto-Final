@@ -7,7 +7,7 @@
 #  Até 28/10 não existia, e o Vercel publica a pasta toda. Quer dizer
 #  que o site estava a servir, a quem os pedisse e com HTTP 200:
 #
-#    · frontend/testes/  — as 28 suites, com `abate2026` escrito lá
+#    · frontend/testes/  — as 28 suites, com `[a password de então]` escrito lá
 #      dentro em 17 ficheiros. Medido, não suposto:
 #      vemproabate.vercel.app/frontend/testes/api-base.js respondia 200.
 #    · docs/             — o RELATORIO.docx e o apresentacao.pptx.

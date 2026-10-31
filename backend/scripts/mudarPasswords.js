@@ -154,6 +154,76 @@ function gravarNoEnvLocal(chave, valor) {
   return 'substituido';
 }
 
+/**
+ * Poe os hashes novos nas tres linhas do `database/seed.sql`.
+ *
+ * ── PORQUE E QUE ISTO ACONTECE AQUI, E NAO NUM COMANDO A PARTE ──────
+ *
+ * O `seed.sql` guarda os `password_hash` das tres contas, e quem o
+ * correr escreve-os por cima do que estiver na base. Com os hashes
+ * velhos la dentro, montar o sistema do zero **repoe em silencio a
+ * password que esteve publicada** (X-32).
+ *
+ * O Guilherme propos um comando separado que lesse os hashes da base e
+ * os escrevesse aqui. Faz o trabalho — e cria a avaria que andamos a
+ * cacar: duas fontes, a base e o ficheiro, com uma pessoa no meio que
+ * tem de se lembrar de correr o segundo comando. Muda-se a password
+ * daqui a um mes, ninguem corre, e o seed volta a divergir sem dizer
+ * nada. E o `postconfig` outra vez.
+ *
+ * Aqui nao ha nada para esquecer: os hashes sao os que acabaram de ser
+ * calculados da password que a pessoa escreveu e confirmou duas vezes.
+ * **O texto da password continua a nao entrar no repositorio** — so
+ * hashes, que ja estavam na base.
+ *
+ * E ha uma coisa que a versao separada nao podia ter: la, correr o
+ * comando contra uma base cujas passwords nao fossem as combinadas
+ * fazia o seed herda-las sem um aviso. Aqui o hash vem da password
+ * acabada de confirmar, e de mais lado nenhum.
+ *
+ * Nao falha a corrida se nao conseguir: a base ja esta mudada, e um
+ * ficheiro por acertar diz-se, nao se desfaz por cima.
+ */
+function escreverNoSeed(hashes) {
+  const caminho = path.join(RAIZ_BACKEND, '..', 'database', 'seed.sql');
+  if (!fs.existsSync(caminho)) return { ok: false, porque: 'nao encontrei o database/seed.sql' };
+
+  const bruto = fs.readFileSync(caminho);
+  const fimDeLinha = bruto.includes('\r\n') ? '\r\n' : '\n';
+  const linhas = bruto.toString('utf8').split(fimDeLinha);
+
+  let postos = 0;
+  const emFalta = [];
+  for (const [email, hash] of hashes) {
+    /*
+     *  A linha certa e a que tem o email entre plicas; o hash e a
+     *  cadeia logo a seguir. Um hash do bcrypt nunca tem plicas la
+     *  dentro, por isso [^']* nao escorrega para fora do campo.
+     */
+    const padrao = new RegExp(`('${email.replace(/\./g, '\\.')}'\\s*,\\s*')[^']*(')`);
+    const i = linhas.findIndex((l) => padrao.test(l));
+    if (i === -1) { emFalta.push(email); continue; }
+    /*
+     *  Funcao, e nao uma cadeia com $1 e $2.
+     *
+     *  A primeira versao escrevia `$1${hash}$2` e saiu lixo: **um hash
+     *  do bcrypt comeca por `$2b$12$`**, e o `$2` la dentro foi lido
+     *  como "o grupo 2" pela propria substituicao. O segredo a ser
+     *  escrito era sintaxe para quem o escrevia. Numa funcao nao ha
+     *  cadeia de substituicao nenhuma para interpretar.
+     */
+    linhas[i] = linhas[i].replace(padrao, (_todo, antes, depois) => antes + hash + depois);
+    postos += 1;
+  }
+
+  if (emFalta.length) {
+    return { ok: false, porque: `nao encontrei a linha de: ${emFalta.join(', ')}` };
+  }
+
+  fs.writeFileSync(caminho, Buffer.from(linhas.join(fimDeLinha), 'utf8'));
+  return { ok: true, postos };
+}
+
 async function main() {
   console.log('');
   console.log('  MUDAR AS PASSWORDS DAS CONTAS DE GESTAO');
@@ -194,10 +264,21 @@ async function main() {
     return;
   }
 
-  /* ---- O hash --------------------------------------------------- */
+  /* ---- Os hashes ------------------------------------------------ */
+  /*
+   *  Um hash POR CONTA, e nao um partilhado pelas tres.
+   *
+   *  O bcrypt poe um sal diferente em cada chamada, por isso a mesma
+   *  password da tres cadeias diferentes. Isso nao e desperdicio: e o
+   *  que impede que tres linhas iguais no `seed.sql` — que vai para o
+   *  repositorio — digam a quem o ler que as tres contas partilham a
+   *  password. O ficheiro passa a nao dizer nada que nao tenha de
+   *  dizer. (Apontado pelo Guilherme a 29/10.)
+   */
   console.log('');
-  console.log(`  A calcular o hash (bcrypt, custo ${CUSTO} — demora um segundo)...`);
-  const hash = await bcrypt.hash(nova, CUSTO);
+  console.log(`  A calcular os hashes (bcrypt, custo ${CUSTO} — demora um segundo)...`);
+  const hashes = new Map();
+  for (const email of CONTAS) hashes.set(email, await bcrypt.hash(nova, CUSTO));
 
   /* ---- A base --------------------------------------------------- */
   /*
@@ -211,7 +292,7 @@ async function main() {
     await ligacao.beginTransaction();
     for (const email of CONTAS) {
       const [r] = await ligacao.query(
-        'UPDATE utilizador SET password_hash = ? WHERE email = ?', [hash, email]);
+        'UPDATE utilizador SET password_hash = ? WHERE email = ?', [hashes.get(email), email]);
       if (r.affectedRows !== 1) {
         throw new Error(`a conta ${email} nao existe nesta base (mexeu em ${r.affectedRows} linhas)`);
       }
@@ -241,6 +322,9 @@ async function main() {
     if (linha && await bcrypt.compare(nova, linha.password_hash)) provadas += 1;
   }
 
+  /* ---- O seed.sql ------------------------------------------------ */
+  const seed = escreverNoSeed(hashes);
+
   /* ---- O .env.local --------------------------------------------- */
   const oQueFez = gravarNoEnvLocal('PASSWORD_TESTE', nova);
 
@@ -251,6 +335,14 @@ async function main() {
   console.log(`  ${provadas === CONTAS.length ? verde('ok') : vermelho('!!')}  ` +
     `${provadas} de ${CONTAS.length} verificadas a ler de volta e a comparar com o bcrypt`);
   console.log(`  ${verde('ok')}  PASSWORD_TESTE ${oQueFez} no backend/.env.local`);
+  if (seed.ok) {
+    console.log(`  ${verde('ok')}  ${seed.postos} hashes novos no database/seed.sql ` +
+      '(so hashes — a password nao entra no repositorio)');
+  } else {
+    console.log(`  ${vermelho('!!')}  nao mexi no database/seed.sql: ${seed.porque}`);
+    console.log('       A base ESTA mudada. O que falta e o seed, e ele ainda tem');
+    console.log('       hashes velhos — quem o correr repoe a password antiga.');
+  }
   console.log('');
   console.log(amarelo('  FALTA FAZER, E NENHUMA DESTAS E AUTOMATICA:'));
   console.log('');
@@ -265,9 +357,10 @@ async function main() {
   console.log('      (seccao 7). As linhas ficam em branco no ficheiro de');
   console.log('      proposito, porque o ficheiro vai para o GitHub.');
   console.log('');
-  console.log('   4. O seed.sql continua a ter os hashes velhos. Quem o');
-  console.log('      correr de novo repoe a password antiga — e essa esta');
-  console.log('      publicada. Trata-se disso no X-32.');
+  console.log('   4. COMMITAR o database/seed.sql. Os hashes novos ja la');
+  console.log('      estao, mas so contam para o outro quando chegarem ao');
+  console.log('      repositorio — e e o proprio aviso aqui em baixo que');
+  console.log('      to lembra.');
   console.log('');
 }
 
