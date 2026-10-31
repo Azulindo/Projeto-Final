@@ -127,3 +127,6 @@ _tmp/
 
 # Pasta criada por ferramentas de apoio, nao faz parte do projeto
 Claude outputs/
+
+# Ficheiros temporarios do Word/PowerPoint (aparecem enquanto o documento esta aberto)
+~$*
