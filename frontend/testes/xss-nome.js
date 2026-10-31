@@ -40,7 +40,12 @@ const SONDA = 'Ana<b id="sonda-xss">X</b>';
     const s = await sit();
     if (s.cartao.length) { await p.locator('#chatBody .btn-menu-confirm').last().click(); continue; }
     if (s.textarea) { const btn = p.locator('#chatBody button').last(); await btn.click(); continue; }
-    if (s.dias && !dataOk) { await p.locator('.cal-day:not([disabled]):not(.cal-day--empty):not(.cal-day--selected)').first().click(); dataOk = true; continue; }
+    if (s.dias && !dataOk) {
+      // Um dia a partir de amanhã (hoje depende da hora a que corre); no último dia do mês, o seguinte.
+      const alvo = '.cal-day:not([disabled]):not(.cal-day--empty):not(.cal-day--selected):not(.cal-day--today)';
+      if (!(await p.locator(alvo).count())) await p.locator('.cal-nav-btn:not([disabled])').last().click();
+      await p.locator(alvo).first().click(); dataOk = true; continue;
+    }
     if (s.qr.length) {
       const t = s.qr.find(x => /2 pessoas/i.test(x)) || s.qr.find(x => /\d{1,2}[:h]\d{2}/.test(x))
              || s.qr.find(x => /restaurante|decidir|lá|sem/i.test(x)) || s.qr[0];

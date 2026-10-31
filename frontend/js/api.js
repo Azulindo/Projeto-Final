@@ -2297,6 +2297,14 @@ async function simularEndpoint(endpoint, opcoes) {
         .filter(r => r.data === data && r.hora === hora && r.estado !== 'cancelada')
         .reduce((t, r) => t + Number(r.pessoas || 0), 0);
       const total = Math.min(lotacao, ocupado + extra);
+      /* Hoje só valem as horas que faltam pelo menos 60 minutos — a mesma
+         regra do servidor (MARGEM_MIN em backend/src/routes/reservas.js).
+         Aqui usa-se o relógio do browser, porque a simulação não tem
+         servidor a quem perguntar. */
+      const agora = new Date();
+      const hojeISO = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
+      const [hh, mm] = hora.split(':').map(Number);
+      const passou = data === hojeISO && (hh * 60 + mm) < (agora.getHours() * 60 + agora.getMinutes() + 60);
       return {
         id: i + 1,
         hora,
@@ -2304,7 +2312,8 @@ async function simularEndpoint(endpoint, opcoes) {
         lotacao,
         ocupado: total,
         livres: Math.max(0, lotacao - total),
-        disponivel: total < lotacao,
+        passou,
+        disponivel: total < lotacao && !passou,
       };
     });
   }
@@ -2344,6 +2353,7 @@ async function simularEndpoint(endpoint, opcoes) {
     const doDia = await simularEndpoint(`reservas/horarios?data=${d.data}`, {});
     const slot = doDia.find(sl => sl.hora === d.hora);
     if (!slot) throw erroSimulado('Não temos essa hora nesse dia.', 400);
+    if (slot.passou) throw erroSimulado('Essa hora já passou ou está demasiado perto. Escolhe uma hora mais tarde, ou outro dia.', 400);
     if (!slot.disponivel) throw erroSimulado('Essa hora já está cheia. Escolhe outra.', 409);
     if (slot.livres < pessoas) {
       throw erroSimulado(

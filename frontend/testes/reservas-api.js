@@ -198,8 +198,13 @@ async function esperarAcao(p, limite = 14000) {
      horas mudavam a cada recarregamento e este teste não podia existir. */
   await p.waitForSelector('.cal-day', { timeout: 10000 });
   const diaEscolhido = await p.evaluate(() => {
-    const livres = [...document.querySelectorAll('.cal-day')]
-      .filter(b => !b.disabled && !/closed|past|far|empty/.test(b.className));
+    // Um dia a partir de amanhã: hoje já se pode reservar, mas o resultado dependia
+    // da hora a que o teste corre. No último dia do mês não há nenhum no mês aberto,
+    // e passa-se ao seguinte.
+    const dias = () => [...document.querySelectorAll('.cal-day')]
+      .filter(b => !b.disabled && !/closed|past|far|empty|today/.test(b.className));
+    if (!dias().length) [...document.querySelectorAll('.cal-nav-btn')].pop().click();
+    const livres = dias();
     const par = livres.find(b => Number(b.textContent.trim()) % 2 === 0) || livres[0];
     par.click();
     return par.textContent.trim();

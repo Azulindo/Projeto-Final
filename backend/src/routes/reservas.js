@@ -26,8 +26,42 @@ const { limiteReservaOuTakeAway, limiteConsultaPorCodigo } = require('../middlew
 
 const router = express.Router();
 
-// Regra do restaurante: reserva-se de amanha ate 60 dias.
+// Regra do restaurante: reserva-se desde hoje ate 60 dias. Para hoje, so
+// as horas que ainda faltam pelo menos MARGEM_MIN minutos.
 const MAX_DIAS = 60;
+const MARGEM_MIN = 60;
+
+/**
+ * A data e a hora de agora, em Lisboa.
+ *
+ * O servidor (o Render) corre em UTC e o restaurante em Lisboa, que no
+ * verao esta uma hora adiante. Perto da meia-noite a data de um e a do
+ * outro nao coincidem, e "hoje" passaria a ser o dia errado. Por isso
+ * pergunta-se a hora a Lisboa e nao ao relogio do servidor.
+ */
+function agoraEmLisboa() {
+  const partes = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Lisbon', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(new Date());
+  const v = (tipo) => partes.find((p) => p.type === tipo).value;
+  return {
+    data: `${v('year')}-${v('month')}-${v('day')}`,
+    minutos: Number(v('hour')) * 60 + Number(v('minute')),
+  };
+}
+
+/**
+ * Esta hora ja nao se pode marcar? So conta para o dia de hoje: uma hora
+ * que ja passou, ou que falta menos de MARGEM_MIN minutos, fica fechada.
+ * Para qualquer outro dia nunca ha problema.
+ */
+function horaJaNaoServe(dataStr, horaStr) {
+  const agora = agoraEmLisboa();
+  if (dataStr !== agora.data) return false;
+  const [h, m] = String(horaStr).slice(0, 5).split(':').map(Number);
+  return h * 60 + m < agora.minutos + MARGEM_MIN;
+}
 
 // Estados que ocupam lugar. Uma reserva cancelada ou recusada liberta
 // a mesa; uma que ninguem apareceu ja nao ocupa nada.
@@ -43,15 +77,15 @@ const OCUPAM = ['pendente', 'confirmada', 'concluida'];
  *  diretamente passa ao lado do calendario.
  * ----------------------------------------------------------------- */
 function verificarData(dataStr) {
-  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  // "Hoje" e o de Lisboa, nao o do relogio do servidor.
+  const hoje = new Date(`${agoraEmLisboa().data}T00:00:00`);
   const d = new Date(`${dataStr}T00:00:00`);
 
   if (Number.isNaN(d.getTime())) return 'Data invalida.';
 
-  // Amanha e o primeiro dia. Reservar para hoje pelo site nao faz
-  // sentido: para daqui a uma hora, telefona-se.
-  const amanha = new Date(hoje); amanha.setDate(amanha.getDate() + 1);
-  if (d < amanha) return 'So e possivel reservar a partir de amanha.';
+  // Hoje ja se pode reservar (so as horas que ainda faltam: ver
+  // horaJaNaoServe). Dias que ja passaram, nao.
+  if (d < hoje) return 'Essa data ja passou.';
 
   const limite = new Date(hoje); limite.setDate(limite.getDate() + MAX_DIAS);
   if (d > limite) return `So e possivel reservar ate ${MAX_DIAS} dias.`;
@@ -131,6 +165,7 @@ router.get('/reservas/horarios', async (req, res, next) => {
     res.json(linhas.map((s) => {
       const ocupado = Number(s.ocupado);
       const livres = Math.max(0, s.lotacao_maxima - ocupado);
+      const passou = horaJaNaoServe(data, String(s.hora));   // so para hoje
       return {
         id:          s.id_slot,
         hora:        String(s.hora).slice(0, 5),   // "19:30:00" → "19:30"
@@ -138,7 +173,8 @@ router.get('/reservas/horarios', async (req, res, next) => {
         lotacao:     s.lotacao_maxima,
         ocupado,
         livres,
-        disponivel:  livres > 0,
+        passou,
+        disponivel:  livres > 0 && !passou,
       };
     }));
   } catch (erro) { next(erro); }
@@ -215,6 +251,13 @@ router.post('/reservas', limiteReservaOuTakeAway, validar(esquemaReserva), async
     if (!slot || !slot.ativo) {
       await con.rollback(); con.release();
       return res.status(400).json({ erro: 'Esse horario nao existe.' });
+    }
+
+    if (horaJaNaoServe(d.data, d.hora)) {
+      await con.rollback(); con.release();
+      return res.status(400).json({
+        erro: 'Essa hora ja passou ou esta demasiado perto. Escolhe uma hora mais tarde, ou outro dia.',
+      });
     }
 
     if (!String(slot.dias_semana).split(',').includes(String(diaISOde(d.data)))) {

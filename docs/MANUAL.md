@@ -49,7 +49,7 @@ A reserva faz-se por conversa, uma pergunta de cada vez:
    caminho normal; pré-escolher serve para grupos e para quem quer
    estimar o valor de antemão.
 3. **O dia**, num calendário. Segunda-feira está fechada e aparece
-   marcada como tal. Aceitam-se reservas de amanhã até 60 dias.
+   marcada como tal. Aceitam-se reservas de hoje até 60 dias; para hoje, só as horas que faltam pelo menos uma hora.
 4. **A hora.** As horas sem lugares aparecem **a cinzento e riscadas** e
    não se podem escolher. As que têm poucos lugares mostram o número ao
    lado — se forem seis pessoas e sobrarem dois lugares, dá para ver

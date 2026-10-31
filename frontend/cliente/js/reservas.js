@@ -1103,11 +1103,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     await botReply('Escolhe o dia pretendido no calendário abaixo: 📅', 700);
 
-    // Abre no mês do primeiro dia reservável: amanhã, ou o dia a seguir se amanhã
-    // for 2ª feira (encerrado). No último dia do mês, o mês atual já não tem
-    // nenhum dia livre e o calendário abria só com dias bloqueados.
+    // Abre no mês do primeiro dia reservável: hoje, ou amanhã se hoje for
+    // 2ª feira (encerrado).
     const now = new Date();
-    const primeiro = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const primeiro = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     if (primeiro.getDay() === 1) primeiro.setDate(primeiro.getDate() + 1);
     calState = { year: primeiro.getFullYear(), month: primeiro.getMonth() };
     renderCalendar();
@@ -1132,10 +1131,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const now = new Date();
     now.setHours(0, 0, 0, 0); // Normaliza para meia-noite para comparação de datas
 
-    // Janela de reservas aceite (F-32 / B-43): de amanhã até 60 dias.
-    // Hoje não entra: às 15h já não faz sentido marcar mesa para as 12h.
+    // Janela de reservas aceite (F-32): de hoje até 60 dias. Para hoje só
+    // aparecem as horas que ainda faltam (o servidor marca as outras como
+    // passadas — ver `passou` em /reservas/horarios).
     const minimo = new Date(now);
-    minimo.setDate(minimo.getDate() + 1);
 
     const limite = new Date(now);
     limite.setDate(limite.getDate() + MAX_DIAS_ANTECEDENCIA);
@@ -1226,7 +1225,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // ── Regras de Bloqueio ──────────────────────────────────
       // isPast: qualquer dia anterior a hoje (comparação de timestamps)
-      // isPast: hoje e qualquer dia anterior — as reservas começam amanhã
+      // isPast: qualquer dia anterior a hoje — as reservas começam hoje
       const isPast    = thisDate < minimo;
       // isMonday: dia da semana = 1 (Segunda-feira = dia de encerramento do restaurante)
       const isMonday  = thisDate.getDay() === 1;
@@ -1304,7 +1303,7 @@ document.addEventListener('DOMContentLoaded', () => {
       &nbsp;<span class="leg-closed">■</span> Encerrado (2ª feira)
       &nbsp;<span class="leg-past">■</span> Indisponível
       &nbsp;<span class="leg-far">■</span> Mais de ${MAX_DIAS_ANTECEDENCIA} dias
-      <span class="cal-nota">Reservas de amanhã até ${MAX_DIAS_ANTECEDENCIA} dias.</span>`;
+      <span class="cal-nota">Reservas de hoje até ${MAX_DIAS_ANTECEDENCIA} dias.</span>`;
     cal.appendChild(legend);
 
     chatBody.appendChild(cal);
@@ -1358,12 +1357,15 @@ document.addEventListener('DOMContentLoaded', () => {
         porPeriodo[p].push(s);
       });
 
-      const cheios = state.horarios.filter(s => !s.disponivel).length;
-      if (cheios && cheios < state.horarios.length) {
+      // As passadas (hoje) não são "cheias": contam-se à parte.
+      const cheios = state.horarios.filter(s => !s.disponivel && !s.passou).length;
+      const todasIndisponiveis = state.horarios.every(s => !s.disponivel);
+      if (todasIndisponiveis && state.horarios.every(s => s.passou)) {
         await botReply(
-          `Há ${cheios === 1 ? 'uma hora' : `${cheios} horas`} já sem lugares nesse dia — `
-          + 'aparecem a cinzento.', 500);
-      } else if (cheios && cheios === state.horarios.length) {
+          '🕘 Já não há horas disponíveis para hoje. Escolhe outro dia no calendário, '
+          + 'ou telefona-nos se for mesmo para hoje.', 700);
+        return stepCalendario();
+      } else if (todasIndisponiveis) {
         await botReply(
           /* "a gente vê" saiu no C-06: é a única frase de todo o bot que
              não soa a português europeu, e destoa ainda mais por o resto
@@ -1372,6 +1374,10 @@ document.addEventListener('DOMContentLoaded', () => {
           '😕 Esse dia está com tudo cheio. Escolhe outro no calendário, '
           + 'ou telefona-nos e vemos o que se pode fazer.', 700);
         return stepCalendario();
+      } else if (cheios) {
+        await botReply(
+          `Há ${cheios === 1 ? 'uma hora' : `${cheios} horas`} já sem lugares nesse dia — `
+          + 'aparecem a cinzento.', 500);
       }
 
       desenharTurno('🌞 Almoço', porPeriodo.almoco);

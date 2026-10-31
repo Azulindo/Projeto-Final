@@ -125,7 +125,12 @@ const check = (n, c, e = '') => { feitas++; console.log(`${c ? '✅' : '❌'} ${
 
     // ── Calendário ─────────────────────────────────────────────
     if (s.dias) {
-      await page.locator('.cal-day:not([disabled]):not(.cal-day--empty), .calendar-day:not([disabled])').first().click();
+      // Hoje já se pode reservar, mas o teste escolhe sempre um dia a partir de amanhã
+      // (com hoje, o resultado dependia da hora a que corre). No último dia do mês
+      // não há nenhum no mês aberto, e passa-se ao seguinte.
+      const alvo = '.cal-day:not([disabled]):not(.cal-day--empty):not(.cal-day--today), .calendar-day:not([disabled]):not(.cal-day--today)';
+      if (!(await page.locator(alvo).count())) await page.locator('.cal-nav-btn:not([disabled])').last().click();
+      await page.locator(alvo).first().click();
       registo.push(`escolheu data (${s.dias} dias disponíveis)`);
       await page.waitForTimeout(600);
       continue;
@@ -214,12 +219,12 @@ const check = (n, c, e = '') => { feitas++; console.log(`${c ? '✅' : '❌'} ${
   check('E dá para recomeçar sem perder a página',
         await page.locator('#quickReplies .qr-btn').filter({ hasText: /recomeçar/i }).count() > 0);
 
-  // B-43: a reserva é de amanhã em diante, nunca hoje.
+  // O teste escolhe sempre um dia a partir de amanhã (ver o passo da data).
   const dataCard = (texto.match(/(\d{2})\/(\d{2})\/(\d{4})/) || []);
   if (dataCard.length) {
     const escolhida = new Date(`${dataCard[3]}-${dataCard[2]}-${dataCard[1]}T12:00:00`);
     const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-    check('A data marcada é de amanhã em diante (B-43)', escolhida > hoje,
+    check('A data marcada não é anterior a hoje', escolhida > hoje,
           `${dataCard[0]} · hoje é ${hoje.toLocaleDateString('pt-PT')}`);
   }
 
