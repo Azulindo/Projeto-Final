@@ -1,1 +1,0 @@
-﻿// Sobre script placeholder

@@ -17,3 +17,6 @@
 *.woff binary
 *.woff2 binary
 *.ttf  binary
+
+# Fica no repositorio, mas nao vai no ZIP da entrega (git archive)
+CLAUDE.md export-ignore
