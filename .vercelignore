@@ -50,6 +50,7 @@
 /frontend/cliente/_obsoleto
 
 # Pastas que ficaram pelo caminho.
+/Claude outputs
 /Projeto Restaurante
 
 # O README. O `vercel.json` NÃO entra nesta lista: é ele que faz o
