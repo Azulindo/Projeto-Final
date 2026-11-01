@@ -298,19 +298,24 @@ async function entrarNaGestao(ctx, base) {
   const fundoBalao = (cssReservas.match(/--bg-bubble-bot:\s*(#[0-9a-fA-F]{3,6})/) || [])[1];
 
   const coresEmJS = [];
+  const saltados = [];
   for (const rel of ['cliente/js/reservas.js', 'cliente/js/galeria.js',
                      'cliente/js/menu.js', 'cliente/js/nav.js',
-                     'cliente/js/sobre.js', 'cliente/js/ementa-comum.js']) {
+                     'cliente/js/ementa-comum.js']) {
     let texto;
     try {
       texto = fsLocal.readFileSync(require('path').join(__dirname, '..', rel), 'utf8');
-    } catch (e) { continue; }
+    } catch (e) { saltados.push(rel); continue; }
     /* So as que estao dentro de um `style=` — uma cor numa variavel ou
        num comentario nao pinta texto nenhum. */
     for (const m of texto.matchAll(/style=["'][^"']*?color:\s*(#[0-9a-fA-F]{3,6})/g)) {
       const linha = texto.slice(0, m.index).split('\n').length;
       coresEmJS.push({ ficheiro: rel, linha, cor: m[1] });
     }
+  }
+
+  if (saltados.length) {
+    console.log('\n\u26A0\uFE0F  Ficheiros JS que nao encontrei (ficaram por medir): ' + saltados.join(', '));
   }
 
   if (!fundoBalao) {
