@@ -17,8 +17,3 @@
 *.woff binary
 *.woff2 binary
 *.ttf  binary
-
-# Ficam no repositorio, mas nao vao no ZIP da entrega (git archive):
-# notas so para os autores.
-docs/PERGUNTAS.md export-ignore
-docs/FOLHA-EMERGENCIA.md export-ignore

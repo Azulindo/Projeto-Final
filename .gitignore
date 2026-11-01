@@ -125,10 +125,8 @@ frontend/testes/.contagem-parcial.jsonl
 # Pasta de apoio (tar para levar a arvore para outra maquina)
 _tmp/
 
-# Pasta de apoio, nao faz parte do projeto. A linha saiu a 01/11 com
-# as notas internas, mas a pasta ficou no disco com 15 ficheiros --
-# e o `git add -A` do enviar.bat apanhava-a para o ZIP da entrega.
-Claude outputs/
+# Pasta de apoio local (so para os autores), nao faz parte do projeto.
+apoio-privado/
 
 # Ficheiros temporarios do Word/PowerPoint (aparecem enquanto o documento esta aberto)
 ~$*
