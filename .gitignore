@@ -125,8 +125,5 @@ frontend/testes/.contagem-parcial.jsonl
 # Pasta de apoio (tar para levar a arvore para outra maquina)
 _tmp/
 
-# Pasta criada por ferramentas de apoio, nao faz parte do projeto
-Claude outputs/
-
 # Ficheiros temporarios do Word/PowerPoint (aparecem enquanto o documento esta aberto)
 ~$*

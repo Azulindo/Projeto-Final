@@ -282,7 +282,7 @@ function medir() {
   /* ── X-26 (14/09): ESTE TESTE MEDE O DISCO DE ONDE CORRE ──────────
      E até 14/09 dizia o que encontrava como se fosse o repositório.
 
-     No contentor do Claude reportou **"Mesa (QR) — logotipo.jpg —
+     No contentor de testes reportou **"Mesa (QR) — logotipo.jpg —
      2,51 MB"**; na máquina do Guilherme esse ficheiro tem **40 KB**
      desde 04/09. A diferença era um espelho velho, anterior à
      optimização das imagens — e o número errado saiu com a mesma
