@@ -804,14 +804,15 @@ Os testes estão em `frontend/testes/` e correm com Playwright:
 | `mesa-estados.js` | A `mesa.html` estado a estado a 320px: texto abaixo de 12px e transbordo horizontal no fluxo que a auditoria não vê (X-30) | 10 |
 | `xss-nome.js` | Que um nome com etiquetas HTML não vira código na página (o X-01 da lista do João) | 2 |
 | `grupo-7a10.js` | Que quem for 7 a 10 pessoas consegue reservar, e que acima de 10 vai mesmo para o telefone (X-05) | 4 |
-| `contraste.js` | Que o contraste do texto passa o mínimo da WCAG (4,5:1 normal, 3:1 grande) nas seis páginas | 452 |
+| `contraste.js` | Que o contraste do texto passa o mínimo da WCAG (4,5:1 normal, 3:1 grande) nas seis páginas | 454 |
+| `reservas-decidir.js` | Que só uma reserva pendente tem botões Confirmar e Recusar, que recusar pergunta primeiro, que a decisão sobrevive a recarregar e que decidir duas vezes dá 409 (também 400 e 404); o balcão decide e a cozinha nem vê a secção | 27 |
 | `stock-cozinha.js` | Que a cozinha vê o stock baixo destacado (e só os produtos que controlam stock), e que o gerente vê o mesmo aviso em qualquer página da app — não só num ecrã de stock (F-62) | 13 |
 
 > **Os números desta coluna eram escritos à mão e dois estavam errados** — o
 > `estados-pedido.js` dizia 24 e faz 25, o `stock-cozinha.js` dizia 11 e faz 13, e os dois
 > `—` eram "isto não se consegue contar". Passaram a vir da medição do X-27
 > (`node frontend/testes/contar.js`), que é a única coluna desta tabela que se pode
-> conferir sem acreditar em ninguém. **São 29 suites: 2 984 verificações e 122 varrimentos.**
+> conferir sem acreditar em ninguém. **São 30 suites: 3 013 verificações e 122 varrimentos.**
 
 ```bash
 npm install playwright        # uma vez

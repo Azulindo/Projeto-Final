@@ -1141,7 +1141,7 @@ para o plano B correrem sem base de dados.*
 
 ---
 
-### 4.14 `GET /api/gestao/reservas` (**B-73**) · *proposta, 11/09*
+### 4.14 `GET /api/gestao/reservas` (**B-73**) e `PATCH /api/gestao/reservas/:codigo` · *proposta, 11/09; PATCH a 01/11*
 
 A secção 4.5 previa este caminho numa linha — *"lista para o painel"* — e nunca disse
 que forma tinha. Vai aqui a proposta **antes** de estar escrito, que é a regra da casa:
@@ -1243,10 +1243,35 @@ dois F5.
 | `401` | sem sessão, sessão expirada ou conta desativada |
 | `403` | sessão de cozinha |
 
-Só leitura. **Confirmar, recusar ou cancelar uma reserva não está aqui** e fica para
-depois da apresentação: mudar o estado de uma reserva obriga a decidir o que acontece à
-lotação do horário quando uma reserva é recusada, e isso é uma conversa, não um
-endpoint.
+#### `PATCH /api/gestao/reservas/:codigo` — confirmar ou recusar (01/11)
+
+O `GET` acima é só leitura. A decisão sobre a lotação, que era a razão de a mudança de
+estado ter ficado por fazer, resolveu-se sozinha: uma reserva `recusada` deixa de contar
+como ocupada (só `pendente`, `confirmada` e `concluida` ocupam lugar), por isso recusar
+devolve a vaga ao horário sem mais nada.
+
+```
+PATCH /api/gestao/reservas/RSV-DEMB3
+{ "estado": "confirmada" }
+{ "estado": "recusada", "motivo": "Estamos fechados nesse dia" }   // motivo opcional, até 255
+```
+
+Resposta `200`: `{ "codigo": "RSV-DEMB3", "estado": "confirmada", "motivo": null }`.
+
+Administrador e balcão (a cozinha leva `403`). **Só se decide uma reserva `pendente`**, e só
+para `confirmada` ou `recusada`. É um único `UPDATE ... AND estado = 'pendente'`: se o colega
+do balcão decidiu primeiro, quem chega segundo recebe `409` com o estado em que ela já está,
+em vez de passar por cima da decisão dele. Fica gravado quem decidiu (`id_funcionario`).
+
+| código | quando |
+|---|---|
+| `400` | estado que não seja `confirmada` ou `recusada`, motivo com mais de 255 caracteres, campos a mais, código com forma inválida |
+| `401` | sem sessão ou sessão expirada |
+| `403` | sessão de cozinha |
+| `404` | essa reserva não existe |
+| `409` | a reserva já não está pendente (`estadoAtual` diz qual) |
+
+Cancelar, marcar como concluída e marcar falta continuam por fazer.
 
 ---
 
@@ -1263,7 +1288,7 @@ existem mesmo. Vão ao servidor com a simulação ligada; **todo o resto continu
 medida que cada endpoint fica pronto, acrescenta-se uma linha. No dia em que a lista cobrir
 tudo, põe-se `MODO_SIMULACAO = false` e apaga-se a lista e a simulação inteira.
 
-**A 11/09 a lista cobre os 34 caminhos do servidor** — todos. Eram 15 a 09/09, e a frase
+**A 11/09 a lista cobria os 34 caminhos do servidor** — todos; a 01/11 são 35, com o `PATCH` das reservas. Eram 15 a 09/09, e a frase
 ficou aqui a dizer 15 durante dois dias em que passaram a 34. Cobrem o catálogo, a
 autenticação, as sessões de mesa e o take away (sem login: o token do QR e o número da
 encomenda são a credencial), a fila de trabalho, o stock, os produtos, as categorias, os

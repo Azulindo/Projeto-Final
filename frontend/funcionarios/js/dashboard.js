@@ -167,7 +167,7 @@ async function carregarReservas(sessao) {
     return;
   }
 
-  desenharReservas(reservas, idsBaixos);
+  desenharReservas(reservas, idsBaixos, () => carregarReservas(sessao));
   escreverResumo(reservas, resposta && resposta.truncado);
 
   estadoEl.classList.add('hidden');
@@ -215,7 +215,7 @@ async function carregarReservas(sessao) {
   }
 }
 
-function desenharReservas(reservas, idsBaixos) {
+function desenharReservas(reservas, idsBaixos, aoDecidir) {
   const corpoEl = document.getElementById('corpoReservas');
   const hoje = hojeEmLisboa();
   corpoEl.innerHTML = '';
@@ -287,10 +287,88 @@ function desenharReservas(reservas, idsBaixos) {
     et.className = `etiqueta ${info.classe}`;
     et.textContent = info.texto;
     tdEstado.appendChild(et);
+    /* Só uma reserva pendente se decide, e é o servidor que o garante
+       (409 a quem chega segundo). Os botões só aparecem onde fazem
+       sentido: numa confirmada ou recusada não há nada a decidir. */
+    if (r.estado === 'pendente') {
+      tdEstado.appendChild(botoesDeDecisao(r, aoDecidir));
+    }
     tr.appendChild(tdEstado);
 
     corpoEl.appendChild(tr);
   });
+}
+
+/**
+ * botoesDeDecisao — Confirmar e Recusar, numa reserva pendente.
+ *
+ * Recusar pede uma segunda vez ("Tens a certeza?"), e não um
+ * `window.confirm`: um diálogo do browser bloqueia a página e não se
+ * estiliza. Confirmar não pede nada — é o caso comum e é desfazível
+ * por telefone. Se o servidor recusar (409: o colega já decidiu), a
+ * frase dele aparece no sítio dos botões e a tabela recarrega.
+ */
+function botoesDeDecisao(r, aoDecidir) {
+  const caixa = document.createElement('div');
+  caixa.className = 'res-acoes';
+
+  const mensagem = document.createElement('span');
+  mensagem.className = 'res-acoes-msg';
+  mensagem.setAttribute('role', 'status');
+
+  function botao(texto, classe, aoClicar) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = `btn-res ${classe}`;
+    b.textContent = texto;
+    b.addEventListener('click', aoClicar);
+    return b;
+  }
+
+  function desenharInicio() {
+    caixa.replaceChildren(
+      botao('Confirmar', 'btn-res-confirmar', () => decidir('confirmada')),
+      botao('Recusar', 'btn-res-recusar', desenharPergunta),
+      mensagem);
+  }
+
+  function desenharPergunta() {
+    const pergunta = document.createElement('span');
+    pergunta.className = 'res-acoes-pergunta';
+    pergunta.textContent = 'Recusar esta reserva?';
+    caixa.replaceChildren(
+      pergunta,
+      botao('Sim, recusar', 'btn-res-recusar', () => decidir('recusada')),
+      botao('Voltar', 'btn-res-voltar', desenharInicio),
+      mensagem);
+  }
+
+  async function decidir(estado) {
+    caixa.querySelectorAll('button').forEach(b => { b.disabled = true; });
+    mensagem.textContent = 'A guardar…';
+    try {
+      await chamarAPI(`gestao/reservas/${encodeURIComponent(r.codigo)}`, {
+        method: 'PATCH',
+        body: { estado },
+      });
+      if (typeof aoDecidir === 'function') aoDecidir();
+    } catch (erro) {
+      mensagem.textContent = erro && erro.message
+        ? erro.message
+        : 'Não foi possível guardar. Tenta outra vez.';
+      mensagem.classList.add('res-acoes-erro');
+      /* Se foi um 409, a reserva já mudou: recarregar mostra o estado
+         verdadeiro em vez de deixar os botões a mentir. */
+      if (erro && erro.status === 409 && typeof aoDecidir === 'function') {
+        setTimeout(aoDecidir, 1500);
+      } else {
+        caixa.querySelectorAll('button').forEach(b => { b.disabled = false; });
+      }
+    }
+  }
+
+  desenharInicio();
+  return caixa;
 }
 
 /**

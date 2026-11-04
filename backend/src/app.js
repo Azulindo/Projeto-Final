@@ -122,7 +122,7 @@ app.use('/api', estatisticasRouter);
 // Contas dos funcionarios: /api/gestao/funcionarios
 app.use('/api', gestaoFuncionariosRouter);
 
-// Agenda de reservas: /api/gestao/reservas — so leitura.
+// Agenda de reservas: /api/gestao/reservas — ler, e confirmar ou recusar (PATCH).
 // Montado DEPOIS do reservasRouter, e nao faz diferenca nenhuma: os
 // caminhos publicos comecam em /reservas e este em /gestao/reservas,
 // por isso nao ha nenhum :codigo que possa apanhar a palavra "gestao".

@@ -275,14 +275,16 @@ const ENDPOINTS_REAIS = [
      4.14. Desbloqueia a F-61 e fecha o único sítio do sistema em que a
      informação entrava e não saía: até hoje um cliente reservava e
      ninguém no restaurante conseguia ver a reserva.
-     Só leitura — confirmar, recusar ou cancelar não está aqui e é de
-     propósito (ver o fim da 4.14: mudar o estado obriga a decidir o que
-     acontece à lotação do horário, e isso é uma conversa).
+     Confirmar e recusar entraram depois (PATCH, a 3.ª entrada): a
+     dúvida da lotação resolveu-se sozinha, porque uma reserva recusada
+     deixa de contar como ocupada. Cancelar, concluir e marcar falta
+     continuam por fazer.
      Duas entradas porque o ecrã chama sempre com `?dias=` ou `?data=`,
      mas o caminho nu tem de continuar a bater — o mesmo par do
      `produtos`. */
   /^gestao\/reservas$/,            // GET /api/gestao/reservas
   /^gestao\/reservas\?/,           // GET /api/gestao/reservas?data= | ?dias= | ?estado=
+  /^gestao\/reservas\/[A-Za-z0-9-]+$/, // PATCH /api/gestao/reservas/:codigo (confirmar | recusar)
 ];
 
 /**
@@ -2524,6 +2526,32 @@ async function simularEndpoint(endpoint, opcoes) {
       })),
       truncado,
     };
+  }
+
+  /* ── confirmar ou recusar uma reserva (PATCH 4.14) ───────────────
+     As mesmas regras do servidor: só se decide uma reserva pendente, e
+     só para confirmada ou recusada. Uma simulação mais branda do que a
+     realidade mente na direção que engana. A decisão fica gravada no
+     armazém das reservas do browser, que ganha às fixas, para o
+     recarregar da tabela mostrar o novo estado. */
+  const mDecidir = /^gestao\/reservas\/([A-Za-z0-9-]+)$/.exec(caminho);
+  if (mDecidir && metodo === 'PATCH') {
+    const codigo = mDecidir[1].toUpperCase();
+    const d = opcoes.body || {};
+    if (d.estado !== 'confirmada' && d.estado !== 'recusada') {
+      throw erroSimulado('O estado tem de ser "confirmada" ou "recusada".', 400);
+    }
+    const atual = reservasDemoTodas()[codigo];
+    if (!atual) throw erroSimulado('Essa reserva nao existe.', 404);
+    if (atual.estado !== 'pendente') {
+      throw erroSimulado(
+        `Esta reserva ja esta ${atual.estado}. So se decide uma reserva pendente.`, 409);
+    }
+    const motivo = d.estado === 'recusada' && d.motivo ? String(d.motivo).trim() : null;
+    const guardadas = lerReservasDemo();
+    guardadas[codigo] = Object.assign({}, atual, { estado: d.estado, motivoRecusa: motivo });
+    gravarReservasDemo(guardadas);
+    return { codigo, estado: d.estado, motivo };
   }
 
   /* ── take away (docs/API.md 4.13 / B-35) ───────────────────────

@@ -193,9 +193,13 @@ existências nenhumas, porque uma pré-escolha não é um pedido.
 > **escreve** que o aviso não está disponível, em vez de ficar calado.
 > Uma tabela sem avisos leria-se como uma tabela sem problemas.
 
-**Confirmar ou recusar uma reserva ainda não se faz aqui.** Para já
-muda-se pelo telefone. Falta decidir o que acontece à lotação da hora
-quando uma reserva é recusada, e isso é uma conversa e não um botão.
+**Confirmar ou recusar uma reserva.** Cada reserva *pendente* tem dois
+botões na coluna do estado: **Confirmar** e **Recusar**. Confirmar é um
+toque. Recusar pergunta primeiro "Recusar esta reserva?", para não se
+recusar por engano — e a vaga volta logo a ficar livre para outro cliente.
+Só se decide uma reserva pendente: se o colega do balcão chegar primeiro, o
+ecrã diz em que estado ela já está e recarrega a lista. Cancelar e marcar
+uma reserva como concluída ou como falta ainda não se faz aqui.
 
 ![A tabela de reservas, com um aviso de stock baixo](imagens/reservas-painel.png)
 *Sessão de Administração. A reserva da Ana pré-escolheu a Tábua Rústica, que

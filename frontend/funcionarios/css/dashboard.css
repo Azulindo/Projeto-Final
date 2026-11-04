@@ -262,3 +262,31 @@ body[data-pagina="dashboard"] #conteudoPagina {
   .tabela-reservas td:nth-child(5) { max-width: 200px; }
   .secao-cabecalho h1 { font-size: 17px; }
 }
+/* ── Confirmar / recusar uma reserva pendente ───────────────────── */
+.res-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.btn-res {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #3a3f47);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.btn-res:disabled { opacity: 0.55; cursor: default; }
+.btn-res-confirmar { background: #2f7d4a; border-color: #2f7d4a; color: #fff; }
+.btn-res-recusar   { border-color: #b4483c; color: #f0a79f; }
+.btn-res-voltar    { color: inherit; }
+.res-acoes-pergunta { font-size: 0.85rem; }
+.res-acoes-msg { flex-basis: 100%; font-size: 0.8rem; opacity: 0.85; }
+.res-acoes-msg:empty { display: none; }
+.res-acoes-erro { color: #f0a79f; opacity: 1; }

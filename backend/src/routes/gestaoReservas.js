@@ -2,10 +2,11 @@
  * =====================================================================
  *  gestaoReservas.js — A agenda de reservas (B-73)
  *
- *  GET /api/gestao/reservas
+ *  GET   /api/gestao/reservas
+ *  PATCH /api/gestao/reservas/:codigo     (confirmar ou recusar)
  *
  *  Contrato no docs/API.md, seccao 4.14. Serve a tabela de reservas do
- *  painel (F-61).
+ *  painel (F-61) e os botoes Confirmar e Recusar.
  *
  *  Porque isto existe:
  *
@@ -14,16 +15,22 @@
  *  entrava e nao saia — o cliente ficava com o codigo na mao e a casa
  *  nao sabia que ele vinha.
  *
- *  So leitura. Confirmar, recusar ou cancelar nao esta aqui: mudar o
- *  estado de uma reserva obriga a decidir o que acontece a lotacao do
- *  horario quando uma e recusada, e isso e uma conversa e nao um
- *  endpoint.
+ *  A decisao sobre a lotacao, que era a razao de isto ficar por fazer:
+ *  uma reserva recusada liberta o lugar sozinha. O servidor so conta
+ *  como ocupadas as reservas pendentes, confirmadas e concluidas (ver
+ *  OCUPAM no reservas.js), por isso mudar o estado para `recusada` ja
+ *  devolve a vaga ao horario sem mais nenhuma linha de codigo.
+ *
+ *  So se muda o que esta pendente, e so para confirmada ou recusada.
+ *  Cancelar, concluir e marcar falta continuam por fazer.
  * =====================================================================
  */
 
 const express = require('express');
+const { z } = require('zod');
 const { pool } = require('../config/bd');
 const { autenticar, exigirNivel } = require('../middleware/autenticar');
+const { validar } = require('../middleware/validar');
 
 const router = express.Router();
 
@@ -227,6 +234,73 @@ router.get('/gestao/reservas',
        *  o produtoId e o aviso sai do cruzamento com a lista que o
        *  painel ja carrega. Uma fonte, dois ecras.
        */
+    } catch (erro) { next(erro); }
+  });
+
+
+// ─────────────────────────────────────────────────────────────────────
+//  PATCH /api/gestao/reservas/:codigo
+//
+//  Confirmar ou recusar uma reserva pendente. Administrador e balcao,
+//  pelo mesmo criterio do GET: quem telefona ao cliente e quem decide.
+//
+//  Corpo:  { "estado": "confirmada" }
+//          { "estado": "recusada", "motivo": "Estamos fechados nesse dia" }
+//
+//  Um UNICO UPDATE, com `AND estado = 'pendente'` na condicao. Nao ha
+//  um SELECT antes a ver se esta pendente e um UPDATE depois: entre as
+//  duas, o colega do balcao podia ter confirmado a mesma reserva, e a
+//  segunda decisao passava por cima da primeira sem ninguem dar por
+//  isso. Assim, quem chega segundo apanha 409 e le o que o outro fez.
+// ─────────────────────────────────────────────────────────────────────
+const esquemaDecidir = z.object({
+  estado: z.enum(['confirmada', 'recusada'], {
+    message: 'O estado tem de ser "confirmada" ou "recusada".',
+  }),
+  motivo: z.string().trim().max(255, 'O motivo tem no maximo 255 caracteres.').optional(),
+}).strict();
+
+const E_CODIGO = /^[A-Za-z0-9-]{3,20}$/;
+
+router.patch('/gestao/reservas/:codigo',
+  autenticar, exigirNivel('administrador', 'balcao'), validar(esquemaDecidir),
+  async (req, res, next) => {
+    try {
+      const codigo = String(req.params.codigo || '').toUpperCase();
+      if (!E_CODIGO.test(codigo)) {
+        return res.status(400).json({ erro: 'Codigo de reserva invalido.' });
+      }
+
+      const { estado, motivo } = req.body;
+      // O motivo so faz sentido numa recusa; numa confirmacao fica vazio.
+      const motivoGuardado = estado === 'recusada' && motivo ? motivo : null;
+
+      const [r] = await pool.query(
+        `UPDATE reserva
+            SET estado = ?,
+                motivo_recusa = ?,
+                id_funcionario = (SELECT f.id_funcionario
+                                    FROM funcionario f
+                                   WHERE f.id_utilizador = ?)
+          WHERE codigo_reserva = ? AND estado = 'pendente'`,
+        [estado, motivoGuardado, req.utilizador.id, codigo]
+      );
+
+      if (r.affectedRows === 1) {
+        return res.json({ codigo, estado, motivo: motivoGuardado });
+      }
+
+      // Nao mudou nada: ou nao existe, ou ja nao estava pendente.
+      const [[atual]] = await pool.query(
+        'SELECT estado FROM reserva WHERE codigo_reserva = ?', [codigo]
+      );
+      if (!atual) {
+        return res.status(404).json({ erro: 'Essa reserva nao existe.' });
+      }
+      return res.status(409).json({
+        erro: `Esta reserva ja esta ${atual.estado}. So se decide uma reserva pendente.`,
+        estadoAtual: atual.estado,
+      });
     } catch (erro) { next(erro); }
   });
 
