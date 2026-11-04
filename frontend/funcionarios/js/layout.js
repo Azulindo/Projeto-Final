@@ -136,7 +136,7 @@ function renderSidebar(sidebarEl, sessao, paginaAtual) {
     <nav class="sidebar-nav" aria-label="Navegação principal">
       ${itensHtml}
     </nav>
-    <div class="sidebar-rodape">v0.1 · Sprint 4 em curso</div>
+    <div class="sidebar-rodape">Projeto final · 2026</div>
   `;
 }
 
