@@ -806,13 +806,14 @@ Os testes estão em `frontend/testes/` e correm com Playwright:
 | `grupo-7a10.js` | Que quem for 7 a 10 pessoas consegue reservar, e que acima de 10 vai mesmo para o telefone (X-05) | 4 |
 | `contraste.js` | Que o contraste do texto passa o mínimo da WCAG (4,5:1 normal, 3:1 grande) nas seis páginas | 454 |
 | `reservas-decidir.js` | Que só uma reserva pendente tem botões Confirmar e Recusar, que recusar pergunta primeiro, que a decisão sobrevive a recarregar e que decidir duas vezes dá 409 (também 400 e 404); o balcão decide e a cozinha nem vê a secção | 27 |
+| `mesa-remover.js` | Que o cliente só vê Remover enquanto a cozinha não aceitou, que remover pergunta primeiro, que o total baixa e a cozinha deixa de ver a ronda anulada, e que depois de aceite, de pedir a conta ou com um item que não existe o servidor recusa (409 e 404) | 14 |
 | `stock-cozinha.js` | Que a cozinha vê o stock baixo destacado (e só os produtos que controlam stock), e que o gerente vê o mesmo aviso em qualquer página da app — não só num ecrã de stock (F-62) | 13 |
 
 > **Os números desta coluna eram escritos à mão e dois estavam errados** — o
 > `estados-pedido.js` dizia 24 e faz 25, o `stock-cozinha.js` dizia 11 e faz 13, e os dois
 > `—` eram "isto não se consegue contar". Passaram a vir da medição do X-27
 > (`node frontend/testes/contar.js`), que é a única coluna desta tabela que se pode
-> conferir sem acreditar em ninguém. **São 30 suites: 3 013 verificações e 122 varrimentos.**
+> conferir sem acreditar em ninguém. **São 31 suites: 3 027 verificações e 122 varrimentos.**
 
 ```bash
 npm install playwright        # uma vez

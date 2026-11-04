@@ -103,6 +103,16 @@
     outline: 3px solid #e8b34f !important;
     outline-offset: 2px;
   }
+
+  /* Remover um item enviado por engano (so enquanto a cozinha nao o aceitou) */
+  .linha-remover { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding-left: 20px; margin-top: 2px; }
+  .btn-remover {
+    min-height: 44px; padding: 0 12px; border-radius: 10px; font-size: 13px; font-weight: 600;
+    background: transparent; color: #fca5a5; border: 1px solid rgba(248,113,113,0.45); cursor: pointer;
+  }
+  .btn-remover-nao { color: #d4d4d4; border-color: rgba(255,255,255,0.2); }
+  .btn-remover:disabled { opacity: .55; cursor: default; }
+  .linha-remover-pergunta { font-size: 13px; color: #d4d4d4; }
 </style>
 </head>
 
@@ -667,10 +677,12 @@ document.addEventListener('DOMContentLoaded', () => {
           precoUnit: Number(item.precoUnit),
           quantidade: 0,
           estados: new Set(),
+          removiveis: [],     // ids dos itens cuja ronda a cozinha ainda nao aceitou
         };
       }
       grupo[id].quantidade += item.quantidade;
       grupo[id].estados.add(item.estado);
+      if (!anulado && item.estado === 'recebido') grupo[id].removiveis.push(item.id);
     });
 
     return { cobrados: Object.values(cobrados), anulados: Object.values(anulados) };
@@ -733,9 +745,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // a conta ficou vazia.
     resumoVazio.classList.toggle('hidden', totalItens > 0 || anulados.length > 0);
 
-    cobrados.forEach(item => resumoLista.appendChild(
-      criarLinhaResumo(item.nome, item.quantidade, item.precoUnit, etiquetaEstado(item.estados))
-    ));
+    const podeRemover = estadoIgual(state.sessao?.estado, 'aberta');
+    cobrados.forEach(item => {
+      const linha = criarLinhaResumo(item.nome, item.quantidade, item.precoUnit, etiquetaEstado(item.estados));
+      if (podeRemover && item.removiveis.length) linha.appendChild(controloRemover(item));
+      resumoLista.appendChild(linha);
+    });
     pendentes.forEach(([id, qty]) => {
       const p = state.produtosPorId[id];
       resumoLista.appendChild(criarLinhaResumo(
@@ -809,6 +824,67 @@ document.addEventListener('DOMContentLoaded', () => {
       ${obs ? `<p class="linha-obs text-[12px] text-copper pl-5 mt-0.5">“${vpaEscapeHtml(obs)}”</p>` : ''}
     `;
     return linha;
+  }
+
+  /**
+   * controloRemover — "Remover" numa linha ja enviada, enquanto a cozinha
+   * ainda nao a aceitou (estado "enviado").
+   *
+   * Duas voltas, como tudo o que apaga: "Remover" pergunta "Remover?",
+   * e so o "Sim" apaga. Quem se enganou num prato nao deve ter de
+   * chamar o empregado, e quem carregou sem querer nao deve perder o
+   * pedido. Se entretanto a cozinha aceitou, o servidor diz que nao
+   * (409), o ecra relê a conta e a linha deixa de ter o botao.
+   */
+  function controloRemover(item) {
+    const caixa = document.createElement('div');
+    caixa.className = 'linha-remover';
+
+    function botao(texto, classe, aoClicar) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'btn-remover ' + classe;
+      b.textContent = texto;
+      b.addEventListener('click', aoClicar);
+      return b;
+    }
+
+    function inicio() {
+      caixa.replaceChildren(botao('Remover', 'btn-remover-sim', pergunta));
+    }
+
+    function pergunta() {
+      const p = document.createElement('span');
+      p.className = 'linha-remover-pergunta';
+      p.textContent = 'Remover este pedido?';
+      caixa.replaceChildren(
+        p,
+        botao('Sim, remover', 'btn-remover-sim', remover),
+        botao('Não', 'btn-remover-nao', inicio));
+    }
+
+    async function remover() {
+      caixa.querySelectorAll('button').forEach(b => { b.disabled = true; });
+      try {
+        for (const id of item.removiveis) {
+          await chamarAPI(`mesas/${encodeURIComponent(state.token)}/itens/${id}`, { method: 'DELETE' });
+        }
+        mostrarToast('🗑️ Pedido removido.');
+      } catch (erro) {
+        mostrarToast(`⚠️ ${erro.message}`);
+      }
+      /* Relê a conta de qualquer maneira: se foi um 409, a cozinha ja
+         aceitou e o ecra tem de mostrar o estado verdadeiro. */
+      try {
+        const dados = await chamarAPI(`mesas/${encodeURIComponent(state.token)}/sessao`);
+        state.sessao = dados.sessao;
+      } catch (e) { /* mantem o que tinha */ }
+      atualizarTotais();
+      atualizarBannerConta();
+    }
+
+    inicio();
+    return caixa;
   }
 
   /**

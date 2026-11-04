@@ -309,6 +309,110 @@ router.post('/mesas/:token/pedir', limitePedidoMesa, validar(esquemaPedir), asyn
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────
+//  DELETE /api/mesas/:token/itens/:idItem
+//
+//  O cliente enganou-se num prato e quer tira-lo. So pode enquanto a
+//  ronda desse item esta "recebido": e o momento em que a cozinha ainda
+//  nao a aceitou, nao ha stock descontado e nao ha nada a desfazer. A
+//  partir de "confirmado" ja nao: o prato pode estar na chapa, e quem
+//  o retira e um empregado.
+//
+//  A credencial e a mesma de todos os caminhos da mesa: o token do QR.
+//  E o item tem de ser da sessao desta mesa — com o id de um item de
+//  outra mesa responde 404, como se nao existisse, e nao 403, que
+//  confirmava que existe.
+//
+//  Transacao e FOR UPDATE: a cozinha pode carregar em "Aceitar" no
+//  mesmo instante. A linha do pedido fica trancada, por isso um dos
+//  dois chega primeiro e o outro ve o resultado — nunca os dois.
+//
+//  Tira-se a LINHA inteira (2x Picanha sai de uma vez). Se era a unica
+//  linha da ronda, a ronda passa a "cancelado" e deixa de aparecer.
+// ─────────────────────────────────────────────────────────────────────
+router.delete('/mesas/:token/itens/:idItem', limitePedidoMesa, async (req, res, next) => {
+  const idItem = Number(req.params.idItem);
+  if (!Number.isInteger(idItem) || idItem < 1) {
+    return res.status(400).json({ erro: 'Item invalido.' });
+  }
+
+  const con = await pool.getConnection();
+  try {
+    const mesa = await procurarMesa(con, req.params.token);
+    if (!mesa)       { con.release(); return res.status(404).json({ erro: 'QR Code invalido.' }); }
+    if (!mesa.ativo) { con.release(); return res.status(403).json({ erro: 'Mesa desativada.' }); }
+
+    const sessao = await sessaoEmCurso(con, mesa.id_mesa);
+    if (!sessao) {
+      con.release();
+      return res.status(409).json({ erro: 'Esta mesa nao tem nenhuma sessao aberta.' });
+    }
+    if (sessao.estado !== 'aberta') {
+      con.release();
+      return res.status(409).json({
+        erro: 'A conta ja foi pedida. Chama um empregado para alterar o pedido.',
+      });
+    }
+
+    await con.beginTransaction();
+
+    const [linhas] = await con.query(
+      `SELECT i.id_item, i.id_pedido, p.estado
+         FROM item_pedido i
+         JOIN pedido p ON p.id_pedido = i.id_pedido
+        WHERE i.id_item = ? AND p.id_sessao = ?
+          FOR UPDATE`,
+      [idItem, sessao.id_sessao]
+    );
+    const linha = linhas[0];
+    if (!linha) {
+      await con.rollback(); con.release();
+      return res.status(404).json({ erro: 'Esse item nao existe nesta mesa.' });
+    }
+    if (linha.estado !== 'recebido') {
+      await con.rollback(); con.release();
+      return res.status(409).json({
+        erro: 'A cozinha ja aceitou este pedido. Chama um empregado para o alterar.',
+        estadoRonda: linha.estado,
+      });
+    }
+
+    await con.query('DELETE FROM item_pedido WHERE id_item = ?', [idItem]);
+
+    const [[{ restam }]] = await con.query(
+      'SELECT COUNT(*) AS restam FROM item_pedido WHERE id_pedido = ?', [linha.id_pedido]
+    );
+
+    await con.query(
+      `UPDATE pedido
+          SET valor_total = (SELECT COALESCE(SUM(subtotal), 0)
+                               FROM item_pedido WHERE id_pedido = ?)
+        WHERE id_pedido = ?`,
+      [linha.id_pedido, linha.id_pedido]
+    );
+
+    const rondaAnulada = Number(restam) === 0;
+    if (rondaAnulada) {
+      await con.query(
+        `UPDATE pedido SET estado = 'cancelado' WHERE id_pedido = ?`, [linha.id_pedido]
+      );
+      await con.query(
+        `INSERT INTO historico_estado_pedido (id_pedido, estado) VALUES (?, 'cancelado')`,
+        [linha.id_pedido]
+      );
+    }
+
+    await con.commit();
+    con.release();
+    res.json({ removido: idItem, rondaAnulada });
+  } catch (erro) {
+    try { await con.rollback(); } catch { /* a ligacao ja pode estar perdida */ }
+    con.release();
+    next(erro);
+  }
+});
+
+
 
 // ─────────────────────────────────────────────────────────────────────
 //  GET /api/mesas/:token/conta           (B-33)

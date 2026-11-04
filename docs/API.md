@@ -1275,6 +1275,40 @@ Cancelar, marcar como concluída e marcar falta continuam por fazer.
 
 ---
 
+### 4.15 `DELETE /api/mesas/:token/itens/:idItem` — o cliente tira um pedido enviado por engano · ✅ **FEITO (04/11)**
+
+Até aqui, o que o cliente enviava da mesa não se desfazia: a ronda ia para a cozinha e
+só um empregado a cancelava. Quem se enganava num prato tinha de chamar alguém. Este
+caminho dá ao cliente a saída, **só enquanto a cozinha ainda não aceitou**.
+
+```
+DELETE /api/mesas/<token>/itens/42
+```
+
+Sem login: o token do QR é a credencial, como nos outros caminhos da mesa. Resposta `200`:
+`{ "removido": 42, "rondaAnulada": false }`. O `rondaAnulada` fica `true` quando o item
+removido era o último da ronda — a ronda passa a `cancelado` (com a linha no
+`historico_estado_pedido`) e deixa de aparecer na cozinha e na conta.
+
+**Quando se pode.** Só se a sessão da mesa estiver `aberta` e a ronda do item estiver em
+`recebido`. A verificação e a remoção correm na mesma transação, com `SELECT ... FOR UPDATE`
+à linha da ronda: se a cozinha aceitar no mesmo instante, ou pede-se a remoção antes e passa,
+ou a cozinha ganha e quem remove recebe `409`. Nunca as duas. Como o stock só desce quando a
+ronda passa a `confirmado`, remover aqui **não mexe no stock**. O `valor_total` da ronda é
+recalculado.
+
+| código | quando |
+|---|---|
+| `400` | `idItem` que não é um número inteiro |
+| `403` | mesa desativada |
+| `404` | o token não existe, ou esse item não pertence a esta mesa |
+| `409` | não há sessão aberta; a conta já foi pedida; ou a cozinha já aceitou a ronda (`estadoRonda` diz em que estado está) |
+| `429` | demasiados pedidos seguidos (o mesmo limite dos outros pedidos de mesa) |
+
+O item de outra mesa devolve `404` e não `403`: o cliente não fica a saber que esse número existe.
+
+---
+
 ## 5. Como ligar o front-end ao backend real
 
 **Não é um interruptor.** É uma lista.
@@ -1288,7 +1322,7 @@ existem mesmo. Vão ao servidor com a simulação ligada; **todo o resto continu
 medida que cada endpoint fica pronto, acrescenta-se uma linha. No dia em que a lista cobrir
 tudo, põe-se `MODO_SIMULACAO = false` e apaga-se a lista e a simulação inteira.
 
-**A 11/09 a lista cobria os 34 caminhos do servidor** — todos; a 01/11 são 35, com o `PATCH` das reservas. Eram 15 a 09/09, e a frase
+**A 11/09 a lista cobria os 34 caminhos do servidor** — todos; a 01/11 são 35, com o `PATCH` das reservas, e a 04/11 são 36, com o `DELETE` de um item da mesa. Eram 15 a 09/09, e a frase
 ficou aqui a dizer 15 durante dois dias em que passaram a 34. Cobrem o catálogo, a
 autenticação, as sessões de mesa e o take away (sem login: o token do QR e o número da
 encomenda são a credencial), a fila de trabalho, o stock, os produtos, as categorias, os

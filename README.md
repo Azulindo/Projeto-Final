@@ -24,7 +24,7 @@ estado de cada módulo.*
 | Módulo | Estado |
 |---|---|
 | Base de dados | ✅ 18 tabelas + 1 vista, alojada no Aiven |
-| API / back-end | ✅ No ar no Render — **os 35 caminhos**: catálogo, login, sessões de mesa, take away, fila de trabalho, stock, produtos, categorias, funcionários, estatísticas, QR Codes e reservas |
+| API / back-end | ✅ No ar no Render — **os 36 caminhos**: catálogo, login, sessões de mesa, take away, fila de trabalho, stock, produtos, categorias, funcionários, estatísticas, QR Codes e reservas |
 | Site institucional (início, menu, galeria, sobre, contactos) | ✅ Concluído · ementa lida da API |
 | Chatbot de reservas (interface) | ✅ Concluído · **ligado à API a sério** desde 10/09 |
 | Pedido à mesa (interface) | ✅ Ligado à API · com notas por prato e take away |

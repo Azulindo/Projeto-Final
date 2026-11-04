@@ -127,6 +127,10 @@ telemóvel abre a ementa dessa mesa.
 - **Pedir Itens** manda para a cozinha. Pode pedir mais vezes ao longo
   da refeição — cada envio é uma ronda, e a conta vai somando.
 - **Chamar empregado** e **Pedir a conta** estão no mesmo painel.
+- **Enganou-se num pedido?** Em cada pedido já enviado há um botão **Remover**,
+  que pergunta "Remover este pedido?" antes de tirar. Só aparece enquanto a
+  cozinha ainda não aceitou: depois disso o botão desaparece e é preciso
+  **chamar um empregado**. Também não aparece depois de pedir a conta.
 
 ![A ementa da mesa, com uma nota escrita num prato](imagens/mesa.png)
 *A ementa da mesa. A nota — aqui uma alergia — vai colada àquele prato e

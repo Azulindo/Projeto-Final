@@ -180,6 +180,7 @@ const ENDPOINTS_REAIS = [
   /^mesas\/[^/]+\/pedir$/,         // POST /api/mesas/:token/pedir
   /^mesas\/[^/]+\/conta$/,         // GET  /api/mesas/:token/conta
   /^mesas\/[^/]+\/pedir-conta$/,   // POST /api/mesas/:token/pedir-conta
+  /^mesas\/[^/]+\/itens\/\d+$/,    // DELETE /api/mesas/:token/itens/:id (remover item ainda nao aceite)
 
   /* Take away — B-35 (10/09). Sem login, como as mesas, e pela mesma
      razão: quem encomenda um frango não vai criar uma conta.
@@ -2113,6 +2114,39 @@ async function simularEndpoint(endpoint, opcoes) {
   /* ── mesas + tokens para imprimir os QR Codes (docs/API.md 4.6) ── */
   if (caminho === 'gestao/mesas/qrcodes') {
     return MESAS_DEMO.filter(m => m.ativa !== false).map(m => ({ ...m }));
+  }
+
+  /* ── remover um item enviado, enquanto a cozinha nao o aceitou ───────
+     As mesmas regras do servidor: so uma ronda "recebido", so com a
+     sessao aberta, e a linha inteira sai de uma vez. */
+  const mRemover = /^mesas\/([^/]+)\/itens\/(\d+)$/.exec(caminho);
+  if (mRemover && metodo === 'DELETE') {
+    const token = mRemover[1];
+    const idItem = Number(mRemover[2]);
+    if (!MESAS_DEMO.find(m => m.qrToken === token)) throw erroSimulado('QR Code inválido.', 404);
+    const sessoes = lerSessoesDemo();
+    const sessao = sessoes[token];
+    if (!sessao || estadoIgual(sessao.estado, 'fechada') || estadoIgual(sessao.estado, 'cancelada')) {
+      throw erroSimulado('Esta mesa nao tem nenhuma sessao aberta.', 409);
+    }
+    if (!estadoIgual(sessao.estado, 'aberta')) {
+      throw erroSimulado('A conta ja foi pedida. Chama um empregado para alterar o pedido.', 409);
+    }
+    const pos = (sessao.itens || []).findIndex(i => Number(i.id) === idItem);
+    if (pos < 0) throw erroSimulado('Esse item nao existe nesta mesa.', 404);
+    const item = sessao.itens[pos];
+    const ronda = (sessao.rondas || []).find(r => r.id === item.pedidoId);
+    const estadoRonda = ronda ? ronda.estado : item.estado;
+    if (estadoRonda !== 'recebido') {
+      const e = erroSimulado('A cozinha ja aceitou este pedido. Chama um empregado para o alterar.', 409);
+      e.estadoRonda = estadoRonda;
+      throw e;
+    }
+    sessao.itens.splice(pos, 1);
+    const restam = sessao.itens.some(i => i.pedidoId === item.pedidoId);
+    if (!restam && ronda) ronda.estado = 'cancelado';
+    gravarSessoesDemo(sessoes);
+    return { removido: idItem, rondaAnulada: !restam };
   }
 
   /* ── mesas/:token/... (docs/API.md 3.2 a 3.5) ──────────────────── */
