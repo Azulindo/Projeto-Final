@@ -129,6 +129,15 @@
   color: var(--info);
 }
 
+.cartao-mesa.mesa-chamou {
+  border-color: rgba(239, 68, 68, 0.55);
+}
+
+.etiqueta-chamada {
+  background: rgba(239, 68, 68, 0.16);
+  color: var(--perigo-texto);
+}
+
 .mesa-baixo {
   display: flex;
   justify-content: space-between;

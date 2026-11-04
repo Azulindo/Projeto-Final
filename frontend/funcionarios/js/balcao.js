@@ -7,7 +7,8 @@
  *
  * Endpoints:
  *     GET  pedidos/ativos              (já existe — docs/API.md 3.6)
- *     GET  gestao/sessoes/:id/conta    (em falta — docs/API.md 4.7)
+ *     GET  gestao/sessoes/:id/conta    (já existe — docs/API.md 4.7)
+ *     POST gestao/sessoes/:id/atendida (já existe — docs/API.md 4.4)
  *     POST pedidos/sessao/:id/fechar   (já existe — docs/API.md 3.9)
  *
  * Porque é que a conta é pedida pelo ID da sessão e não pelo token da
@@ -16,7 +17,9 @@
  * sessão. Ver a nota em docs/API.md 4.7.
  *
  * Ordem das mesas no ecrã: quem pediu a conta aparece primeiro, porque
- * é quem está à espera de alguém. Depois, as mais antigas.
+ * é quem está à espera de alguém; depois quem chamou um empregado, e
+ * só então as mais antigas. Abrir a mesa conta como atendê-la: o ecrã
+ * limpa a chamada ao abrir o painel.
  * =====================================================================
  */
 
@@ -88,9 +91,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function desenhar() {
     // Quem pediu a conta primeiro: está alguém à espera na mesa.
+    const peso = m => estadoIgual(m.estado, 'aguarda_pagamento') ? 0 : (m.chamouEmpregado ? 1 : 2);
     const ordenadas = [...mesas].sort((a, b) => {
-      const pesoA = estadoIgual(a.estado, 'aguarda_pagamento') ? 0 : 1;
-      const pesoB = estadoIgual(b.estado, 'aguarda_pagamento') ? 0 : 1;
+      const pesoA = peso(a);
+      const pesoB = peso(b);
       if (pesoA !== pesoB) return pesoA - pesoB;
       return new Date(a.abertaEm) - new Date(b.abertaEm);
     });
@@ -110,11 +114,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const cartao = document.createElement('button');
     cartao.type = 'button';
-    cartao.className = `cartao-mesa${aguarda ? ' mesa-aguarda' : ''}`;
+    cartao.className = `cartao-mesa${aguarda ? ' mesa-aguarda' : ''}${mesa.chamouEmpregado ? ' mesa-chamou' : ''}`;
     cartao.dataset.sessao = mesa.sessaoId;
 
     const etiquetas = [];
     if (aguarda) etiquetas.push('<span class="etiqueta etiqueta-conta">💳 Pediu a conta</span>');
+    if (mesa.chamouEmpregado) {
+      etiquetas.push(`<span class="etiqueta etiqueta-chamada">🛎️ Chamou empregado · ${formatarDuracao(mesa.chamouEmpregadoEm)}</span>`);
+    }
     if (mesa.temPendentes) etiquetas.push('<span class="etiqueta etiqueta-pendentes">🔔 Por preparar</span>');
 
     cartao.innerHTML = `
@@ -150,6 +157,18 @@ document.addEventListener('DOMContentLoaded', () => {
     painel.classList.add('aberto');
     painel.setAttribute('aria-hidden', 'false');
     painelOverlay.classList.add('ativo');
+
+    /* Abrir a mesa é ir à mesa: a chamada fica atendida. Se falhar, não
+       atrapalha a conta — o aviso apaga-se na próxima vez. */
+    if (mesa.chamouEmpregado) {
+      const idSessao = mesa.sessaoId;
+      chamarAPI(`gestao/sessoes/${idSessao}/atendida`, { method: 'POST' })
+        .then(() => {
+          mesas.forEach(m => { if (m.sessaoId === idSessao) { m.chamouEmpregado = false; m.chamouEmpregadoEm = null; } });
+          desenhar();
+        })
+        .catch(() => { /* o aviso fica até à próxima atualização */ });
+    }
 
     try {
       const conta = await chamarAPI(`gestao/sessoes/${mesa.sessaoId}/conta`);

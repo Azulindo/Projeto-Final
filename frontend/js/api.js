@@ -36,8 +36,7 @@
  *
  * Ainda por desenhar (simulados aqui, ver docs/API.md secção 4):
  *     POST  auth/login · GET auth/eu        ← bloqueia a app de gestão
- *     POST  mesas/:token/chamar-empregado
- *     GET   gestao/mesas/qrcodes · GET gestao/sessoes/:id/conta
+ *     GET   gestao/mesas/qrcodes
  *
  * O stock (gestao/stock e as duas escritas) saiu desta lista a 09/09:
  * o B-63 ficou pronto e os três caminhos passaram para o
@@ -55,8 +54,9 @@
  * às claras em vez de fingir que gravou.
  *
  * Continuam simulados, por não existirem ainda: o `admin/estatisticas`
- * (F-55), o `gestao/mesas/qrcodes` (B-66), o `gestao/sessoes/:id/conta`
- * e o `mesas/:token/chamar-empregado`.
+ * (F-55) e o `gestao/mesas/qrcodes` (B-66). O
+ * `gestao/sessoes/:id/conta`, o `mesas/:token/chamar-empregado` e o
+ * `gestao/sessoes/:id/atendida` passaram para o ENDPOINTS_REAIS a 04/11.
  * =====================================================================
  */
 
@@ -180,6 +180,7 @@ const ENDPOINTS_REAIS = [
   /^mesas\/[^/]+\/pedir$/,         // POST /api/mesas/:token/pedir
   /^mesas\/[^/]+\/conta$/,         // GET  /api/mesas/:token/conta
   /^mesas\/[^/]+\/pedir-conta$/,   // POST /api/mesas/:token/pedir-conta
+  /^mesas\/[^/]+\/chamar-empregado$/, // POST /api/mesas/:token/chamar-empregado (04/11)
   /^mesas\/[^/]+\/itens\/\d+$/,    // DELETE /api/mesas/:token/itens/:id (remover item ainda nao aceite)
 
   /* Take away — B-35 (10/09). Sem login, como as mesas, e pela mesma
@@ -271,6 +272,8 @@ const ENDPOINTS_REAIS = [
      cartões. O critério é a necessidade, não a ausência de perigo — e a
      página já declarava `data-niveis="balcao administrador"`. */
   /^gestao\/mesas\/qrcodes$/,      // GET /api/gestao/mesas/qrcodes
+  /^gestao\/sessoes\/\d+\/conta$/, // GET /api/gestao/sessoes/:id/conta (conta no painel do balcao, 04/11)
+  /^gestao\/sessoes\/\d+\/atendida$/, // POST /api/gestao/sessoes/:id/atendida (o balcao limpa a chamada, 04/11)
 
   /* Reservas vistas de dentro — B-73 (11/09), contrato na docs/API.md
      4.14. Desbloqueia a F-61 e fecha o único sítio do sistema em que a
@@ -2262,6 +2265,11 @@ async function simularEndpoint(endpoint, opcoes) {
     }
 
     if (accao === 'chamar-empregado' && metodo === 'POST') {
+      /* Como no servidor: guarda-se a primeira hora e não se desloca. */
+      if (!sessao.chamouEmpregadoEm) {
+        sessao.chamouEmpregadoEm = new Date().toISOString();
+        gravarSessoesDemo(sessoes);
+      }
       return { mensagem: 'Um empregado foi avisado e vem já à mesa. 🛎️' };
     }
   }
@@ -2284,6 +2292,8 @@ async function simularEndpoint(endpoint, opcoes) {
           numItens: numItensDemo(s),
           total: totalDemo(s),
           temPendentes: (s.rondas || []).some(r => ['recebido', 'confirmado', 'em_preparacao'].includes(r.estado)),
+          chamouEmpregado: Boolean(s.chamouEmpregadoEm),
+          chamouEmpregadoEm: s.chamouEmpregadoEm || null,
         };
       })
       .sort((a, b) => new Date(a.abertaEm) - new Date(b.abertaEm));
@@ -2783,6 +2793,17 @@ async function simularEndpoint(endpoint, opcoes) {
   /* Conta de uma sessão pelo ID (docs/API.md 4.7).
      O ecrã do balcão sabe o ID da sessão mas não o qrToken da mesa — e
      não deve saber: o token é a credencial de acesso da mesa. */
+  const atendidaMatch = caminho.match(/^gestao\/sessoes\/(\d+)\/atendida$/);
+  if (atendidaMatch && metodo === 'POST') {
+    const idSessao = Number(atendidaMatch[1]);
+    const sessoes = lerSessoesDemo();
+    const s = Object.values(sessoes).find(x => x.id === idSessao);
+    if (!s) throw erroSimulado('Sessão não encontrada.', 404);
+    delete s.chamouEmpregadoEm;
+    gravarSessoesDemo(sessoes);
+    return { sessaoId: idSessao, atendida: true };
+  }
+
   const contaSessaoMatch = caminho.match(/^gestao\/sessoes\/(\d+)\/conta$/);
   if (contaSessaoMatch) {
     const idSessao = Number(contaSessaoMatch[1]);

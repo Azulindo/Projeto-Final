@@ -215,6 +215,7 @@ CREATE TABLE sessao_mesa (
   id_funcionario  INT NULL,
   aberta_em       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   fechada_em      DATETIME NULL,
+  chamou_empregado_em DATETIME NULL,   -- hora da chamada por atender (NULL = ninguem chamou)
   mesa_aberta     INT GENERATED ALWAYS AS
                   (CASE WHEN estado = 'aberta' THEN id_mesa END) VIRTUAL,
   PRIMARY KEY (id_sessao),

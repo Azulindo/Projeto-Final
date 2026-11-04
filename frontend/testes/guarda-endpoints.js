@@ -91,9 +91,7 @@ const check = (n, c, e = '') => {
      começar a ser apanhado, é porque alguém ligou metade de um recurso
      e o ecrã dele está a fingir — e é exatamente o aviso que se quer. */
   const simulados = [
-    ['mesas/demo-mesa-4/chamar-empregado', 'POST'],
     ['admin/estatisticas',                 'POST'],
-    ['gestao/sessoes/7/conta',             'POST'],
   ];
   for (const [caminho, metodo] of simulados) {
     check(`Inteiramente simulado, passa: ${metodo} ${caminho}`,
@@ -107,6 +105,9 @@ const check = (n, c, e = '') => {
     ['gestao/categorias/ordem',     'PUT'],
     ['gestao/funcionarios/2',       'PATCH'],
     ['pedidos/takeaway',            'POST'],
+    ['mesas/demo-mesa-4/chamar-empregado', 'POST'],   // real desde 04/11
+    ['gestao/sessoes/7/atendida',   'POST'],          // real desde 04/11
+    ['gestao/sessoes/7/conta',      'GET'],           // real desde 04/11
   ];
   for (const [caminho, metodo] of reais) {
     check(`Já é real, não é apanhado: ${metodo} ${caminho}`,

@@ -126,7 +126,9 @@ telemóvel abre a ementa dessa mesa.
   foi enviado e o que ainda está no carrinho.
 - **Pedir Itens** manda para a cozinha. Pode pedir mais vezes ao longo
   da refeição — cada envio é uma ronda, e a conta vai somando.
-- **Chamar empregado** e **Pedir a conta** estão no mesmo painel.
+- **Chamar empregado** e **Pedir a conta** estão no mesmo painel. Chamar
+  acende o aviso no ecrã do balcão, com a hora; chamar outra vez não faz
+  ninguém esperar mais.
 - **Enganou-se num pedido?** Em cada pedido já enviado há um botão **Remover**,
   que pergunta "Remover este pedido?" antes de tirar. Só aparece enquanto a
   cozinha ainda não aceitou: depois disso o botão desaparece e é preciso
@@ -251,7 +253,10 @@ recusar.
 
 As sessões abertas, com o total de cada uma. Serve para cobrar e fechar.
 
-Uma mesa com a conta pedida aparece destacada.
+Uma mesa com a conta pedida aparece destacada. Uma mesa que **chamou o
+empregado** mostra "🛎️ Chamou empregado" com há quanto tempo, e passa à
+frente das restantes (logo a seguir às que pediram a conta). Abrir a
+mesa conta como ir lá: o aviso desaparece.
 
 **Fechar sessão** com comida ainda por sair da cozinha **avisa, mas não
 impede.** É de propósito: quase sempre é engano, mas às vezes é uma mesa

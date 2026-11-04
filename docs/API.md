@@ -617,9 +617,25 @@ ao abrir a app. `{ "nome": "…", "nivel": "…" }` · `401` se o token não pre
 > decide acessos é o servidor — que desde o X-11 confirma na base, a cada pedido autenticado,
 > se a conta continua ativa e se o cargo ainda dá o nível que o token diz.
 
-### 4.4 `POST /api/mesas/:token/chamar-empregado` — **desenho fechado a 03/09**
+### 4.4 `POST /api/mesas/:token/chamar-empregado` — **desenho fechado a 03/09** · ✅ **FEITO (04/11)**
 
 O botão já existe no `mesa.html`. Falta o sítio onde guardar o aviso.
+
+> **Feito a 04/11, e foi o João a reparar que faltava:** com o servidor a sério o botão
+> dava "QR Code inválido", porque o caminho nunca tinha sido escrito — o ecrã usava a simulação,
+> que só conhece as mesas de demonstração. Ficou **uma coluna** em vez de duas:
+> `sessao_mesa.chamou_empregado_em` (`NULL` = ninguém chamou; senão, a hora da **primeira**
+> chamada por atender — chamar outra vez não a desloca, para quem espera há mais tempo não
+> passar para o fim da fila). A hora já diz tudo o que o booleano dizia.
+>
+> - `POST /api/mesas/:token/chamar-empregado` — sem login (o token é a credencial). `200`; `404`
+>   token inexistente; `403` mesa desativada; `409` sem conta aberta; `429` limite; `503` se a
+>   coluna ainda não existir na base. Funciona com a conta já pedida.
+> - `GET /api/pedidos/ativos` passa a trazer `chamouEmpregado` (boolean) e `chamouEmpregadoEm`.
+> - `POST /api/gestao/sessoes/:id/atendida` limpa a chamada (administrador e balcão; `404` se a
+>   sessão não existe; idempotente). O ecrã do balcão chama-o ao abrir a mesa.
+> - A base precisa de `database/migracao-2026-11-04-chamar-empregado.sql` (uma vez, na Aiven). A
+>   lista de mesas do balcão continua a funcionar sem a coluna.
 
 **Proposta do João, aceite:** dois campos na própria sessão em vez de uma tabela nova —
 `chamou_empregado` e a hora — que o balcão limpa quando atende.
@@ -682,7 +698,11 @@ Implementação sugerida: `SELECT ... FROM mesa WHERE ativa = 1 ORDER BY numero`
 > declarava `data-niveis="balcao administrador"` desde 08/09, por isso não foi preciso mexer
 > na página: só acrescentar o caminho ao `ENDPOINTS_REAIS`.
 
-### 4.7 `GET /api/gestao/sessoes/:id/conta` — **bloqueia o detalhe no balcão**
+### 4.7 `GET /api/gestao/sessoes/:id/conta` — ~~**bloqueia o detalhe no balcão**~~ · ✅ **FEITO (04/11)**
+
+> Estava por escrever e o painel da conta do balcão dava "Sessão não encontrada" com mesas reais:
+> o ecrã caía na simulação. Feito a 04/11, administrador e balcão (`401`, `403`, `400` se o id não
+> é um número, `404` se a sessão não existe). Lê-se a sessão em qualquer estado.
 
 A conta de uma sessão, procurada **pelo ID da sessão** em vez do token da mesa.
 
@@ -1322,7 +1342,7 @@ existem mesmo. Vão ao servidor com a simulação ligada; **todo o resto continu
 medida que cada endpoint fica pronto, acrescenta-se uma linha. No dia em que a lista cobrir
 tudo, põe-se `MODO_SIMULACAO = false` e apaga-se a lista e a simulação inteira.
 
-**A 11/09 a lista cobria os 34 caminhos do servidor** — todos; a 01/11 são 35, com o `PATCH` das reservas, e a 04/11 são 36, com o `DELETE` de um item da mesa. Eram 15 a 09/09, e a frase
+**A 11/09 a lista cobria os 34 caminhos do servidor** — todos; a 01/11 são 35, com o `PATCH` das reservas, e a 04/11 são 39: o `DELETE` de um item da mesa e os três que faltavam (a conta de uma sessão, chamar o empregado e marcá-lo como atendido). Eram 15 a 09/09, e a frase
 ficou aqui a dizer 15 durante dois dias em que passaram a 34. Cobrem o catálogo, a
 autenticação, as sessões de mesa e o take away (sem login: o token do QR e o número da
 encomenda são a credencial), a fila de trabalho, o stock, os produtos, as categorias, os

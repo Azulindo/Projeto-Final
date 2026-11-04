@@ -6,6 +6,10 @@
  *  POST /api/mesas/:token/pedir        → envia uma ronda para a cozinha
  *  GET  /api/mesas/:token/conta        → a conta, agrupada por categoria
  *  POST /api/mesas/:token/pedir-conta  → o cliente pede a conta
+ *  POST /api/mesas/:token/chamar-empregado → o cliente chama um empregado
+ *  GET  /api/gestao/sessoes/:id/conta  → a conta de uma sessao, para o
+ *                                        balcao (COM login)
+ *  POST /api/gestao/sessoes/:id/atendida → o balcao limpa a chamada
  *
  *  Contrato: docs/API.md, seccoes 3.2 a 3.5 e 3.10.
  *
@@ -20,6 +24,7 @@ const express = require('express');
 const { z } = require('zod');
 const { pool } = require('../config/bd');
 const { validar } = require('../middleware/validar');
+const { autenticar, exigirNivel } = require('../middleware/autenticar');
 const { limitePedidoMesa } = require('../middleware/limites');
 const { gerarCodigo, validarItens, criarPedido, lerItens } = require('../servicos/pedidos');
 const { avisarPedidoNovo } = require('../servicos/notificacoes');
@@ -497,6 +502,144 @@ router.post('/mesas/:token/pedir-conta', limitePedidoMesa, async (req, res, next
     res.json({ mensagem: 'Conta pedida! Um empregado ira ter consigo em breve.' });
   } catch (erro) { next(erro); }
 });
+
+
+// ─────────────────────────────────────────────────────────────────────
+//  GET /api/gestao/sessoes/:id/conta
+//
+//  A conta de uma sessao pelo ID dela, para o painel do balcao. O ecra
+//  do balcao trabalha a partir do /pedidos/ativos, que devolve o
+//  sessaoId e NAO o token do QR — e ainda bem: o token e a credencial
+//  da mesa e nao deve andar pelos ecras da gestao.
+//
+//  A resposta e igual a do GET /mesas/:token/conta, e vem das mesmas
+//  duas funcoes (itensDaSessao e totalDaSessao).
+//
+//  COM LOGIN. Administrador e balcao (a cozinha nao tem ecra de contas).
+// ─────────────────────────────────────────────────────────────────────
+router.get('/gestao/sessoes/:id/conta',
+  autenticar, exigirNivel('administrador', 'balcao'),
+  async (req, res, next) => {
+    try {
+      if (!/^\d{1,10}$/.test(req.params.id)) {
+        return res.status(400).json({ erro: 'O id da sessao tem de ser um numero.' });
+      }
+      const [linhas] = await pool.query(
+        `SELECT s.id_sessao, s.estado, s.aberta_em, m.numero_mesa
+           FROM sessao_mesa s
+           JOIN mesa m ON m.id_mesa = s.id_mesa
+          WHERE s.id_sessao = ?`,
+        [Number(req.params.id)]
+      );
+      const sessao = linhas[0];
+      if (!sessao) return res.status(404).json({ erro: 'Sessao nao encontrada.' });
+
+      const [itens, totais] = await Promise.all([
+        itensDaSessao(pool, sessao.id_sessao),
+        totalDaSessao(pool, sessao.id_sessao),
+      ]);
+
+      const porCategoria = {};
+      for (const i of itens) {
+        (porCategoria[i.produto.categoria] ||= []).push({
+          id:         i.id,
+          nome:       i.produto.nome,
+          quantidade: i.quantidade,
+          precoUnit:  i.precoUnit,
+          subtotal:   i.subtotal,
+          estado:     i.estado,
+          observacao: i.observacao,
+          criadoEm:   i.criadoEm,
+        });
+      }
+
+      res.json({
+        mesa:   { numero: sessao.numero_mesa },
+        sessao: { id: sessao.id_sessao, estado: sessao.estado, abertaEm: sessao.aberta_em },
+        porCategoria,
+        total:    totais.total,
+        numItens: totais.numItens,
+      });
+    } catch (erro) { next(erro); }
+  }
+);
+
+
+// ─────────────────────────────────────────────────────────────────────
+//  POST /api/mesas/:token/chamar-empregado     (docs/API.md 4.4)
+//
+//  O cliente carrega em "Chamar empregado". Fica guardada a HORA, na
+//  propria sessao (`sessao_mesa.chamou_empregado_em`) — uma chamada nao
+//  tem historia: ou esta por atender ou nao esta, e por isso nao ha
+//  tabela. O cartao da mesa no balcao acende e diz ha quanto tempo.
+//
+//  Chamar duas vezes nao desloca a hora: o `COALESCE` guarda a primeira,
+//  que e a de quem espera ha mais tempo. Uma segunda chamada nao e uma
+//  chamada nova, e quem carrega tres vezes porque ninguem veio nao deve
+//  passar para o fim da fila por isso.
+//
+//  Funciona com a conta ja pedida: e precisamente quando mais se chama.
+// ─────────────────────────────────────────────────────────────────────
+router.post('/mesas/:token/chamar-empregado', limitePedidoMesa, async (req, res, next) => {
+  try {
+    const mesa = await procurarMesa(pool, req.params.token);
+    if (!mesa) return res.status(404).json({ erro: 'QR Code invalido.' });
+    if (!mesa.ativo) return res.status(403).json({ erro: 'Esta mesa esta desativada.' });
+
+    const sessao = await sessaoEmCurso(pool, mesa.id_mesa);
+    if (!sessao) {
+      return res.status(409).json({ erro: 'Esta mesa nao tem nenhuma conta aberta.' });
+    }
+
+    await pool.query(
+      `UPDATE sessao_mesa
+          SET chamou_empregado_em = COALESCE(chamou_empregado_em, NOW())
+        WHERE id_sessao = ?`,
+      [sessao.id_sessao]
+    );
+
+    res.json({ mensagem: 'Um empregado foi avisado e vem ja a mesa.' });
+  } catch (erro) {
+    if (erro.code === 'ER_BAD_FIELD_ERROR') {
+      return res.status(503).json({ erro: 'O aviso ao empregado ainda nao esta ativo na base de dados.' });
+    }
+    next(erro);
+  }
+});
+
+
+// ─────────────────────────────────────────────────────────────────────
+//  POST /api/gestao/sessoes/:id/atendida
+//
+//  O balcao limpa a chamada quando alguem vai a mesa. O ecra chama-o
+//  ao abrir a mesa. E idempotente: limpar o que ja esta limpo e 200.
+//
+//  COM LOGIN. Administrador e balcao.
+// ─────────────────────────────────────────────────────────────────────
+router.post('/gestao/sessoes/:id/atendida',
+  autenticar, exigirNivel('administrador', 'balcao'),
+  async (req, res, next) => {
+    try {
+      if (!/^\d{1,10}$/.test(req.params.id)) {
+        return res.status(400).json({ erro: 'O id da sessao tem de ser um numero.' });
+      }
+      const id = Number(req.params.id);
+      const [r] = await pool.query(
+        'UPDATE sessao_mesa SET chamou_empregado_em = NULL WHERE id_sessao = ?',
+        [id]
+      );
+      if (r.affectedRows === 0) {
+        /* Zero tanto quer dizer "nao existe" como "ja estava limpa",
+           consoante a configuracao da ligacao: confirma-se. */
+        const [existe] = await pool.query(
+          'SELECT 1 FROM sessao_mesa WHERE id_sessao = ?', [id]
+        );
+        if (!existe[0]) return res.status(404).json({ erro: 'Sessao nao encontrada.' });
+      }
+      res.json({ sessaoId: id, atendida: true });
+    } catch (erro) { next(erro); }
+  }
+);
 
 
 module.exports = router;

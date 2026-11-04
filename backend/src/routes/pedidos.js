@@ -67,8 +67,14 @@ router.get('/pedidos/ativos',
   autenticar, exigirNivel('cozinha', 'balcao', 'administrador'),
   async (_req, res, next) => {
     try {
-      const [linhas] = await pool.query(
-        `SELECT s.id_sessao, s.estado, s.aberta_em, s.num_pessoas,
+      /*
+       *  `chamou_empregado_em` e a coluna que o "Chamar empregado" usa
+       *  (docs/API.md 4.4). Se a base ainda nao a tem, a lista NAO pode
+       *  falhar por causa disso: o balcao e a cozinha dependem dela. Cai
+       *  para a mesma consulta sem a coluna.
+       */
+      const consulta = coluna => `SELECT s.id_sessao, s.estado, s.aberta_em, s.num_pessoas,
+                ${coluna} AS chamou_empregado_em,
                 m.id_mesa, m.numero_mesa, m.capacidade,
                 v.total, v.num_itens,
                 EXISTS (
@@ -80,8 +86,15 @@ router.get('/pedidos/ativos',
            JOIN mesa m            ON m.id_mesa   = s.id_mesa
            JOIN vw_total_sessao v ON v.id_sessao = s.id_sessao
           WHERE s.estado IN ('aberta','aguarda_pagamento')
-          ORDER BY s.aberta_em`
-      );
+          ORDER BY s.aberta_em`;
+
+      let linhas;
+      try {
+        [linhas] = await pool.query(consulta('s.chamou_empregado_em'));
+      } catch (erro) {
+        if (erro.code !== 'ER_BAD_FIELD_ERROR') throw erro;
+        [linhas] = await pool.query(consulta('NULL'));
+      }
 
       res.json(linhas.map(l => ({
         sessaoId:     l.id_sessao,
@@ -92,6 +105,8 @@ router.get('/pedidos/ativos',
         numItens:     Number(l.num_itens),
         total:        Number(l.total),
         temPendentes: Boolean(Number(l.tem_pendentes)),
+        chamouEmpregado:   l.chamou_empregado_em != null,
+        chamouEmpregadoEm: l.chamou_empregado_em || null,
       })));
     } catch (erro) { next(erro); }
   }
