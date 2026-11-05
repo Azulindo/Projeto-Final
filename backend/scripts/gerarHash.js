@@ -1,26 +1,25 @@
 /**
  * =====================================================================
- *  gerarHash.js — Gera os hashes das contas para o seed.sql
+ *  gerarHash.js — Gera hashes bcrypt de tres contas (SO PARA TESTE)
  * =====================================================================
  *
- *  Porque isto existe:
+ *  ATENCAO (05/11): ISTO JA NAO SERVE PARA PREPARAR O seed.sql.
  *
- *  A base de dados nunca guarda a palavra-passe, guarda um hash bcrypt.
- *  Um hash pode ir para o repositorio sem problema — nao se consegue
- *  voltar atras a partir dele. A palavra-passe, essa, nunca pode ser
- *  escrita em ficheiro nenhum do projeto.
+ *  Os hashes das contas verdadeiras nao podem ir para o repositorio:
+ *  ele e publico, e um hash publicado deixa qualquer pessoa
+ *  experimentar palavras contra ele em casa, sem limite de tentativas.
+ *  O seed.sql leva so o hash de uma password descartavel.
  *
- *  Este script pergunta as palavras-passe aqui no terminal, sem as
- *  mostrar no ecra nem as deixar no historico de comandos, e imprime
- *  as tres linhas ja prontas a colar no database/seed.sql.
+ *  Para mudar as passwords a serio:
+ *      npm run mudar-passwords              (base local)
+ *      npm run mudar-passwords -- --nuvem   (Aiven)
+ *  que escreve os hashes so na base.
+ *
+ *  Este script fica para quem precisar de ver como se gera um hash.
+ *  Pergunta as palavras-passe no terminal, sem as mostrar no ecra.
  *
  *  Usar:
  *      node scripts/gerarHash.js
- *
- *  Depois de colares as linhas no seed.sql, corre o schema.sql e o
- *  seed.sql outra vez (local e Aiven) e guarda as palavras-passe fora
- *  do projeto — num gestor de passwords, nao num ficheiro .txt na
- *  pasta.
  * =====================================================================
  */
 
@@ -92,11 +91,9 @@ function perguntarEscondido(pergunta) {
   }
 
   console.log('\n─────────────────────────────────────────────────────────');
-  console.log('Cola isto no database/seed.sql, no INSERT INTO utilizador');
-  console.log('(troca as tres linhas que la estao, atencao a virgula e');
-  console.log('ao ponto e virgula no fim):\n');
+  console.log('NAO colar isto no database/seed.sql: o ficheiro e publico.');
+  console.log('Para as contas a sério: npm run mudar-passwords.\n');
   console.log(linhas.join(',\n') + ';');
   console.log('\n─────────────────────────────────────────────────────────');
-  console.log('Guarda as palavras-passe fora do projeto. Os hashes acima');
-  console.log('podem ir para o Git; as palavras-passe nunca.\n');
+  console.log('Nem as palavras-passe nem estes hashes vao para o Git.\n');
 })();

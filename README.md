@@ -24,7 +24,7 @@ estado de cada módulo.*
 | Módulo | Estado |
 |---|---|
 | Base de dados | ✅ 18 tabelas + 1 vista, alojada no Aiven |
-| API / back-end | ✅ No ar no Render — **os 39 caminhos**: catálogo, login, sessões de mesa, take away, fila de trabalho, stock, produtos, categorias, funcionários, estatísticas, QR Codes e reservas |
+| API / back-end | ✅ No ar no Render — **os 35 caminhos**: catálogo, login, sessões de mesa, take away, fila de trabalho, stock, produtos, categorias, funcionários, estatísticas, QR Codes e reservas |
 | Site institucional (início, menu, galeria, sobre, contactos) | ✅ Concluído · ementa lida da API |
 | Chatbot de reservas (interface) | ✅ Concluído · **ligado à API a sério** desde 10/09 |
 | Pedido à mesa (interface) | ✅ Ligado à API · com notas por prato e take away |
@@ -168,7 +168,7 @@ USE vem_pro_abate;
 SELECT COUNT(*) FROM produto;   -- 25
 ```
 
-> **As palavras-passe das contas não estão em ficheiro nenhum**, só os hashes bcrypt. Para as definir: `cd backend && node scripts/gerarHash.js`.
+> **As palavras-passe das contas não estão em ficheiro nenhum, nem os hashes delas.** O `seed.sql` leva só uma password descartável (`demonstracao-descartavel`, escrita no próprio ficheiro). Depois de o correr numa base, define as verdadeiras com `cd backend && npm run mudar-passwords` (e `-- --nuvem` para o Aiven): o programa grava os hashes só na base.
 
 > ✅ **Os 25 preços foram conferidos contra a ementa impressa do restaurante a 09/09**, à
 > fotografia, e batem certo nos três sítios onde vivem: o `seed.sql`, o `PRODUTOS_DEMO` do
@@ -205,7 +205,7 @@ A versão publicada está em **https://vem-pro-abate-api.onrender.com** e atuali
 
 Fazer isto na **manhã** do dia, não cinco minutos antes.
 
-**1. Regravar a base.** No Workbench, ligado ao Aiven: `database/schema.sql` e depois `database/seed.sql`.
+**1. Regravar a base.** No Workbench, ligado ao Aiven: `database/schema.sql` e depois `database/seed.sql`. **Logo a seguir, no PowerShell, na pasta `backend`: `npm run mudar-passwords -- --nuvem`** — o seed deixa as contas com uma password descartável, e sem este passo ninguém consegue entrar na gestão com a password verdadeira.
 
 > **Porque tem de ser no próprio dia:** as horas dos pedidos, das sessões e do histórico no `seed.sql` são relativas ao momento em que o seed corre (`NOW() - INTERVAL n MINUTE`), e não ao momento em que a página abre. Os cartões da cozinha mudam de cor conforme a antiguidade (F-46), por isso um seed corrido há duas semanas mostra "há 340h" e o ecrã inteiro fica vermelho, como se estivesse tudo atrasado.
 >

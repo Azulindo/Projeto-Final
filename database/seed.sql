@@ -208,28 +208,32 @@ INSERT INTO slot_horario (id_slot, hora, periodo, lotacao_maxima, dias_semana, a
 -- =====================================================================
 --  UTILIZADORES E FUNCIONARIOS
 --
---  As palavras-passe NAO estao escritas aqui, nem em ficheiro nenhum
---  do projeto. O que esta abaixo sao hashes bcrypt (custo 12): um hash
---  pode ir para o repositorio sem perigo, porque nao ha maneira de
---  voltar atras e descobrir a palavra a partir dele.
+--  ATENCAO: AS TRES CONTAS SAEM DESTE FICHEIRO COM UMA PASSWORD
+--  DESCARTAVEL.
 --
---  Repara que os tres hashes sao diferentes mesmo quando as palavras
---  sao parecidas: o bcrypt junta um "sal" aleatorio a cada um. E por
---  isso que nem se consegue perceber se duas contas usam a mesma
---  palavra so por olhar para a base de dados.
+--  A password dos tres hashes abaixo e   demonstracao-descartavel
+--  Esta escrita aqui de proposito: este ficheiro e publico e nao ha
+--  nada a esconder. Serve para montar uma base de demonstracao e nao
+--  abre nenhuma base a serio.
 --
---  Para trocar as palavras-passe:
+--  AS PASSWORDS VERDADEIRAS, E OS HASHES DELAS, NAO ESTAO NESTE FICHEIRO.
+--  Ja estiveram (05/11): o repositorio e publico, e um hash publicado
+--  deixa qualquer pessoa experimentar palavras contra ele em casa, sem
+--  limite de tentativas. Foi por isso que sairam daqui.
+--
+--  DEPOIS DE CORRER ESTE SEED NUMA BASE, MUDAR AS PASSWORDS:
 --      cd backend
---      node scripts/gerarHash.js
---  Ele pergunta as tres sem as mostrar no ecra e imprime estas linhas
---  ja prontas a colar aqui. As palavras ficam com voces, num gestor de
---  passwords — nunca num ficheiro dentro da pasta do projeto.
+--      npm run mudar-passwords              (base local)
+--      npm run mudar-passwords -- --nuvem   (Aiven)
+--  O programa pergunta a password nova e escreve os hashes so na base,
+--  nunca neste ficheiro. Se correres o seed e te esqueceres disto, as
+--  contas ficam com a password descartavel acima.
 -- =====================================================================
 INSERT INTO utilizador
  (id_utilizador, nome, email, password_hash, telefone, tipo_utilizador, ativo) VALUES
- (1, 'João Ribeiro', 'admin@vemproabate.pt', '$2b$12$FGnYBOy4ps9YwuMPy9R6eOioBlDMrbZaeQj020SQ9P52k6r6XeHLC', '912000001', 'funcionario', 1),
- (2, 'Maria Fernandes', 'cozinha@vemproabate.pt', '$2b$12$PF6QGML30wLG35KrT7fh6.85d.8E2v01RNOIAsTklb67u.DxS0/na', '912000002', 'funcionario', 1),
- (3, 'Ricardo Nogueira', 'balcao@vemproabate.pt', '$2b$12$wJ2DNe/bCFB2SrC4uKav6O0uFZHPzuCwxAdZQ0s.tAILzmY.bIlTK', '912000003', 'funcionario', 1);
+ (1, 'João Ribeiro', 'admin@vemproabate.pt', '$2b$12$E4u4hZnw0S6YsJEorpFIJ.hIaGKTEfMiZwzuF57jO6H6Dfz0X/sRC', '912000001', 'funcionario', 1),
+ (2, 'Maria Fernandes', 'cozinha@vemproabate.pt', '$2b$12$CQv3dS..O56Tm0HzyGUrdugtcyhY4.qfH35oDoC2cqHrmaBhc3Leu', '912000002', 'funcionario', 1),
+ (3, 'Ricardo Nogueira', 'balcao@vemproabate.pt', '$2b$12$3zYMY2oIixMptL43oMvPqecuLc1wxCdcR0DhsJKPTM7UAsMn5F5mq', '912000003', 'funcionario', 1);
 
 INSERT INTO funcionario (id_funcionario, id_utilizador, cargo, data_contratacao) VALUES
  (1, 1, 'administrador',  '2026-01-05'),
