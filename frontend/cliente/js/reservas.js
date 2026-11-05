@@ -51,6 +51,78 @@ document.addEventListener('DOMContentLoaded', () => {
   ═══════════════════════════════════════════════════════════════ */
   let state = freshState();
 
+  /* ═══════════════════════════════════════════════════════════════
+     SECÇÃO 2b — PODER VOLTAR ATRÁS  (01/11)
+     ═══════════════════════════════════════════════════════════════
+     O fluxo tinha nove passos e nenhuma maneira de recuar: quem
+     escolhia 4 pessoas e queria 6 só podia `🔄 Recomeçar`, do
+     princípio. Foi a primeira coisa que o Guilherme tentou fazer na
+     página, e a primeira que um júri tenta.
+
+     Como funciona: cada `stepX()` grava, ao entrar, uma fotografia do
+     `state` e QUANTOS balões havia no chat nesse momento. Voltar é
+     deitar fora a fotografia do passo atual, buscar a anterior,
+     repor o estado, cortar o chat nesse ponto e chamar outra vez a
+     função desse passo.
+
+     Guarda-se o NÚMERO de balões e não o HTML: repor `innerHTML`
+     traria as bolhas de volta sem os `addEventListener` que estavam
+     nos botões — ficariam lá, bonitos e mortos. Cortar nós fora é a
+     única operação que não inventa estado nenhum.
+  ═══════════════════════════════════════════════════════════════ */
+
+  const historico = [];
+  const btnVoltar = document.getElementById('chatVoltar');
+
+  /* As funções de cada passo, por nome. Preenchido mais abaixo, depois
+     de elas existirem — um objeto literal aqui em cima apanhava-as
+     ainda por declarar. */
+  const PASSOS = {};
+
+  /** Cópia funda do estado. O `data` é um Date, e o JSON perdia-o. */
+  function copiarEstado(e) {
+    if (typeof structuredClone === 'function') return structuredClone(e);
+    const c = JSON.parse(JSON.stringify(e));
+    c.data = e.data ? new Date(e.data.getTime()) : null;
+    return c;
+  }
+
+  /** Chamada no início de cada passo, antes de desenhar fosse o que fosse. */
+  function marcarPasso() {
+    historico.push({ estado: copiarEstado(state), nos: chatBody.childNodes.length });
+    atualizarBotaoVoltar();
+  }
+
+  function atualizarBotaoVoltar() {
+    if (!btnVoltar) return;
+    // Há para onde voltar quando existe um passo ANTES do atual.
+    const pode = historico.length > 1 && state.step !== 'done';
+    btnVoltar.hidden = !pode;
+  }
+
+  async function voltarPasso() {
+    if (historico.length < 2 || state.step === 'done') return;
+    historico.pop();                       // o passo em que estamos
+    const anterior = historico.pop();      // aquele para onde voltamos
+
+    state = anterior.estado;
+    state.processing = false;
+
+    // Corta o chat ao tamanho que tinha quando esse passo começou.
+    while (chatBody.childNodes.length > anterior.nos) {
+      chatBody.removeChild(chatBody.lastChild);
+    }
+    clearQR();
+    chatInput.value = '';
+
+    const desenhar = PASSOS[state.step];
+    if (desenhar) await desenhar();
+    else atualizarBotaoVoltar();
+  }
+
+  if (btnVoltar) btnVoltar.addEventListener('click', () => { voltarPasso(); });
+
+
   /**
    * freshState — Cria um estado inicial limpo.
    * Chamado no arranque e no reset do chat.
@@ -452,6 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
    * Mostra quick-replies e aceita também texto livre.
    */
   async function stepPessoas() {
+    marcarPasso();
     state.step = 'pessoas';
     lockUI();
 
@@ -566,6 +639,7 @@ document.addEventListener('DOMContentLoaded', () => {
    * stepOpcaoMenu — Pergunta se querem pré-selecionar o menu.
    */
   async function stepOpcaoMenu() {
+    marcarPasso();
     state.step = 'opcao';
     const quant = state.pessoas === 1 ? '1 pessoa' : `${state.pessoas} pessoas`;
 
@@ -874,6 +948,7 @@ document.addEventListener('DOMContentLoaded', () => {
    * Exemplos: "Sem arroz", "Ponto da carne: média", "Alergia a amendoins".
    */
   async function stepObservacoes() {
+    marcarPasso();
     state.step = 'observacoes';
 
     await botReply(
@@ -1098,6 +1173,7 @@ document.addEventListener('DOMContentLoaded', () => {
    * stepCalendario — Inicia o passo de escolha de data.
    */
   async function stepCalendario() {
+    marcarPasso();
     state.step = 'data';
     clearQR();
 
@@ -1320,6 +1396,7 @@ document.addEventListener('DOMContentLoaded', () => {
    * Apresenta turnos de Almoço e Jantar como quick-replies separados.
    */
   async function stepHorario() {
+    marcarPasso();
     state.step = 'hora';
 
     await botReply(
@@ -1488,6 +1565,7 @@ document.addEventListener('DOMContentLoaded', () => {
    * stepContactos — Pede o nome completo do cliente.
    */
   async function stepContactos() {
+    marcarPasso();
     state.step = 'nome';
     await botReply(
       'Para quem fica a reserva? 👤<br>Qual é o <strong>nome completo</strong>?',
@@ -1500,6 +1578,7 @@ document.addEventListener('DOMContentLoaded', () => {
    * stepTelemovel — Pede o número de telemóvel após confirmar o nome.
    */
   async function stepTelemovel() {
+    marcarPasso();
     state.step = 'telefone';
     // Usa apenas o primeiro nome para uma saudação mais natural
     const primeiroNome = state.nome.split(' ')[0];
@@ -1664,6 +1743,7 @@ document.addEventListener('DOMContentLoaded', () => {
    * Apresenta os botões de Confirmar e Recomeçar.
    */
   async function stepResumoFinal() {
+    marcarPasso();
     state.step = 'confirmacao';
     clearQR();
 
@@ -2032,6 +2112,7 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   async function resetChat() {
     state = freshState();
+    historico.length = 0;      // recomeçar apaga o caminho andado
     chatBody.innerHTML = '';
     clearQR();
     chatInput.value = '';
@@ -2042,6 +2123,21 @@ document.addEventListener('DOMContentLoaded', () => {
      ARRANQUE — Inicia o chatbot
      ⚠️ CRÍTICO: Não chamar .focus() aqui para não causar scroll automático
   ═══════════════════════════════════════════════════════════════ */
+  /* O mapa de `state.step` para a função que o desenha. Preenchido
+     aqui, e não no objeto lá em cima, porque estas funções só existem
+     a partir deste ponto do ficheiro. É este mapa que o `voltarPasso`
+     usa para reconstruir o passo para onde volta. */
+  Object.assign(PASSOS, {
+    pessoas:      stepPessoas,
+    opcao:        stepOpcaoMenu,
+    observacoes:  stepObservacoes,
+    data:         stepCalendario,
+    hora:         stepHorario,
+    nome:         stepContactos,
+    telefone:     stepTelemovel,
+    confirmacao:  stepResumoFinal,
+  });
+
   stepPessoas();
 
 }); // Fim do DOMContentLoaded

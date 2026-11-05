@@ -1654,3 +1654,42 @@ html { scroll-behavior: smooth; }
   border-color: var(--orange);
   color: var(--text-primary);
 }
+
+
+/* ── BOTÃO DE VOLTAR UM PASSO (01/11) ──────────────────────────────
+   Vive no cabeçalho do chat, encostado à direita, para não competir
+   com os botões de resposta lá em baixo — onde o dedo já está e onde
+   um "Voltar" ao lado de "2 Pessoas" se carrega por engano.
+   44px de altura: o mínimo para um alvo de dedo que a auditoria exige. */
+.chat-voltar {
+  margin-left: auto;
+  min-height: 44px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 22px;
+  color: #f0ece4;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.chat-voltar:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.chat-voltar:active { transform: scale(0.97); }
+
+.chat-voltar:focus-visible {
+  outline: 2px solid #e8b34f;
+  outline-offset: 2px;
+}
+
+/* `hidden` tem de ganhar ao `display: inline-flex` daqui de cima,
+   senão o botão aparecia no primeiro passo, sem nada para onde voltar. */
+.chat-voltar[hidden] { display: none; }
