@@ -103,7 +103,23 @@ const FOCO = () => {
 };
 
 (async () => {
-  const browser = await chromium.launch();
+  const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
+
+  /* SEM REDE, DE PROPOSITO. A contactos.html tem um mapa do Google num
+     <iframe>. Com internet ele carrega, e o Tab ENTRA nele: o foco fica
+     preso no mapa durante varias paragens e o teste conta-as como se a
+     pagina nao deixasse chegar aos links do rodape ("6 paragens para 9
+     elementos", a 05/11, no computador do Joao). Sem internet o mapa
+     nao carrega e o resultado e outro. Um teste que da numeros diferentes
+     conforme a rede nao mede a pagina, mede a rede — por isso corta-se
+     tudo o que for http(s), como na suite sem-rede.js. */
+  const novaPagina = browser.newPage.bind(browser);
+  browser.newPage = async (...args) => {
+    const pg = await novaPagina(...args);
+    await pg.route(/^https?:/, (r) => r.abort());
+    return pg;
+  };
+
 
   // ══ 1. A ORDEM DE TABULAÇÃO, EM TODAS AS PÁGINAS ══════════════════
   for (const pag of PAGINAS) {

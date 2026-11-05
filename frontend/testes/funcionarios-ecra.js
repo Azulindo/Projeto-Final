@@ -59,7 +59,7 @@ const nomes = p => p.$$eval('#corpoTabela .func-nome',
   els => els.map(e => e.textContent.replace(/a tua conta/, '').trim()));
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 950 } });
 
   const admin = await login(ctx, 'admin@vemproabate.pt');

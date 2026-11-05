@@ -230,7 +230,7 @@ const semEspelho = new Set();
 const recomendacoes = [];
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
 
   /* ── A guarda, antes de tudo ───────────────────────────────────── */
   console.log('AUTO-VERIFICAÇÃO — o detector contra uma página com defeitos de propósito');

@@ -69,7 +69,7 @@ const check = (n, c, e = '') => {
 };
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
 
   for (const largura of LARGURAS) {
     const p = await browser.newPage({ viewport: { width: largura, height: 900 } });

@@ -18,7 +18,7 @@ const URL = 'file://' + path.resolve(__dirname, '../cliente/reservas.html');
 const SONDA = 'Ana<b id="sonda-xss">X</b>';
 
 (async () => {
-  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  const b = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
   const ctx = await b.newContext({ viewport: { width: 420, height: 900 }, isMobile: true, hasTouch: true });
   const p = await ctx.newPage();
   await p.goto(URL);

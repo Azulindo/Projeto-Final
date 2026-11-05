@@ -91,7 +91,7 @@ const check = (n, c, e = '') => {
 const primeiro = f => f.split(',')[0].replace(/["']/g, '').trim();
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
 
   /* ── 1. Um papel, uma fonte ─────────────────────────────────────── */
   const porPapel = {};   // papel → Map(fonte → [onde])

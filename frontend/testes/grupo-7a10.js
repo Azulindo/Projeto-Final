@@ -44,7 +44,7 @@ async function tentar(browser, quantos) {
 }
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
 
   const oito = await tentar(browser, 8);
   check('O botão de grupo existe', oito.existe > 0);

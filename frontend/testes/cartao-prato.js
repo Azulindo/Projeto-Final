@@ -52,7 +52,7 @@ async function textosPequenos(p, dentroDe) {
 }
 
 async function correr(largura) {
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
   const ctx = await browser.newContext({ viewport: { width: largura, height: 800 } });
   const p = await ctx.newPage();
   p.on('pageerror', e => { console.log('[pageerror]', e.message); falhas.push('pageerror: ' + e.message.slice(0, 60)); });
@@ -187,7 +187,7 @@ async function correr(largura) {
 
   /* ── CONTROLO NEGATIVO ──────────────────────────────────────────── */
   console.log('\n── controlo negativo ──');
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
   const p = await (await browser.newContext({ viewport: { width: 390, height: 800 } })).newPage();
   await p.addInitScript(() => {
     // Arranca o showModal ao protótipo: o clique continua a correr, o

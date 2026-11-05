@@ -102,7 +102,7 @@ async function estado(p, nome) {
 }
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
   const ctx = await browser.newContext({ viewport: { width: LARGURA, height: 800 } });
   const p = await ctx.newPage();
   p.on('pageerror', e => {
