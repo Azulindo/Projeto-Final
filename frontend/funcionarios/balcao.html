@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Balcão — Vem Pro Abate</title>
-<meta name="description" content="Ecrã do balcão: mesas abertas e fecho de contas.">
+<meta name="description" content="Ecrã do balcão: mesas abertas, take away e fecho de contas.">
 
 <!-- As fontes vêm do próprio repositório desde 28/09 (F-68): o plano B
      da apresentação é servir o site do portátil sem internet, e medido
@@ -43,6 +43,14 @@
           <button type="button" class="btn btn-secundario" id="btnAtualizar">↻ Atualizar</button>
         </div>
 
+        <!-- Take away (05/11). Uma encomenda para levar não tem mesa nem
+             sessão, por isso não vem no pedidos/ativos: vem da mesma fila
+             da cozinha. Só aparece enquanto houver alguma por entregar. -->
+        <section class="bloco-takeaway hidden" id="blocoTakeaway" aria-labelledby="tituloTakeaway">
+          <h2 class="titulo-takeaway" id="tituloTakeaway">🥡 Take away · <span id="contaTakeaway">0</span></h2>
+          <div class="grelha-takeaway" id="grelhaTakeaway"></div>
+        </section>
+
         <!-- Mesas -->
         <div class="grelha-mesas" id="grelhaMesas"></div>
         <!-- O texto já explicava bem o que se passa; faltava-lhe presença.
@@ -55,7 +63,7 @@
         </p>
 
         <p class="nota-rodape">
-          As mesas que pediram a conta aparecem primeiro e a dourado. O ecrã atualiza-se sozinho a cada 10 segundos.
+          As mesas que pediram a conta aparecem primeiro e a dourado. As encomendas de take away ficam por cima enquanto houver alguma por entregar. O ecrã atualiza-se sozinho a cada 10 segundos.
         </p>
 
       </main>

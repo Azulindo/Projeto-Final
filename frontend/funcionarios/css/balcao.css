@@ -154,6 +154,67 @@
   color: var(--dourado);
 }
 
+/* ── Take away (05/11) ───────────────────────────────────────────
+   Os cartões usam a mesma base dos das mesas (.cartao-mesa), para o
+   ecrã continuar a parecer um só. A diferença é que não se abrem: o
+   que há a fazer é entregar, e o botão está no próprio cartão. */
+
+.bloco-takeaway { margin-bottom: 22px; }
+
+.titulo-takeaway {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--texto);
+  margin: 0 0 10px;
+}
+
+.grelha-takeaway {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.cartao-takeaway { cursor: default; }
+.cartao-takeaway:active { transform: none; }
+
+.cartao-takeaway.takeaway-pronta {
+  border-color: var(--sucesso);
+  background: linear-gradient(135deg, rgba(62, 207, 142, 0.08), var(--bg-card) 65%);
+}
+
+.takeaway-cliente {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  font-size: 14px;
+  color: var(--texto);
+  min-width: 0;
+}
+
+.takeaway-cliente strong { overflow-wrap: anywhere; }
+
+.takeaway-tel {
+  font-size: 12.5px;
+  color: var(--texto-suave);
+}
+
+.takeaway-itens {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--texto-suave);
+  overflow-wrap: anywhere;
+}
+
+.etiqueta-pronta {
+  background: rgba(62, 207, 142, 0.14);
+  color: var(--sucesso);
+}
+
+.btn-entregar { width: 100%; white-space: normal; }
+.btn-entregar.a-confirmar { background: var(--perigo-fundo); color: #fff; }
+
 /* Estado vazio (F-60, 04/09) — o mesmo tratamento das colunas vazias da
    cozinha, para os dois ecrãs parecerem o mesmo sistema. Ícone esbatido:
    isto é moldura, e não pode competir com uma mesa que abra a seguir. */

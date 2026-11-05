@@ -2339,10 +2339,16 @@ async function simularEndpoint(endpoint, opcoes) {
       const cheio = (semente % 2 === 0) && (hora === '20:00' || hora === '20:30');
       const ocupado = cheio ? lotacao : ((semente + i * 3) % 17);
       const reservados = lerReservasDemo();
-      const extra = Object.values(reservados)
-        .filter(r => r.data === data && r.hora === hora && r.estado !== 'cancelada')
-        .reduce((t, r) => t + Number(r.pessoas || 0), 0);
+      const doHorario = Object.values(reservados)
+        .filter(r => r.data === data && r.hora === hora
+                  && r.estado !== 'cancelada' && r.estado !== 'recusada');
+      const extra = doHorario.reduce((t, r) => t + Number(r.pessoas || 0), 0);
       const total = Math.min(lotacao, ocupado + extra);
+      /* No máximo 3 reservas por horário (05/11), a mesma regra do
+         servidor (MAX_RESERVAS_POR_HORARIO). Conta reservas, não
+         pessoas: com 3 marcadas a hora fecha, mesmo com cadeiras. */
+      const reservas = doHorario.length;
+      const fechadaPorReservas = reservas >= 3;
       /* Hoje só valem as horas que faltam pelo menos 60 minutos — a mesma
          regra do servidor (MARGEM_MIN em backend/src/routes/reservas.js).
          Aqui usa-se o relógio do browser, porque a simulação não tem
@@ -2357,9 +2363,10 @@ async function simularEndpoint(endpoint, opcoes) {
         periodo,
         lotacao,
         ocupado: total,
-        livres: Math.max(0, lotacao - total),
+        reservas,
+        livres: fechadaPorReservas ? 0 : Math.max(0, lotacao - total),
         passou,
-        disponivel: total < lotacao && !passou,
+        disponivel: total < lotacao && !fechadaPorReservas && !passou,
       };
     });
   }
@@ -2383,7 +2390,9 @@ async function simularEndpoint(endpoint, opcoes) {
     if (!Number.isInteger(pessoas) || pessoas < 1) {
       throw erroSimulado('Tem de ser pelo menos uma pessoa.', 400);
     }
-    if (pessoas > 50) throw erroSimulado('Para grupos maiores, telefona-nos.', 400);
+    /* Até 10 (05/11), a mesma regra do servidor (MAX_PESSOAS_POR_RESERVA)
+       e do chat, que já mandava ligar a partir de 11. */
+    if (pessoas > 10) throw erroSimulado('Para grupos com mais de 10 pessoas, telefona-nos.', 400);
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d.data || ''))) {
       throw erroSimulado('Data no formato AAAA-MM-DD.', 400);
@@ -2396,6 +2405,17 @@ async function simularEndpoint(endpoint, opcoes) {
        reservar as 20:00 do mesmo sábado. Sem isto a simulação aceitava
        tudo e o ecrã aprendia a confiar numa coisa que o servidor
        recusa. */
+    /* Uma reserva por telemóvel em cada horário do dia (05/11), como no
+       servidor (MAX_RESERVAS_POR_TELEMOVEL). Contam as que ocupam lugar. */
+    const OCUPAM_DEMO = ['pendente', 'confirmada', 'concluida'];
+    const jaTem = Object.values(lerReservasDemo()).some(r =>
+      r.telemovel === telemovel && r.data === d.data && r.hora === d.hora
+      && OCUPAM_DEMO.includes(r.estado));
+    if (jaTem) {
+      throw erroSimulado(`Ja existe uma reserva para este telemovel as ${d.hora} desse dia. `
+        + 'Para mudar o numero de pessoas, telefona-nos.', 409);
+    }
+
     const doDia = await simularEndpoint(`reservas/horarios?data=${d.data}`, {});
     const slot = doDia.find(sl => sl.hora === d.hora);
     if (!slot) throw erroSimulado('Não temos essa hora nesse dia.', 400);
@@ -2717,6 +2737,7 @@ async function simularEndpoint(endpoint, opcoes) {
         tipo: 'take_away',
         observacao: e.observacoes,
         cliente: { nome: e.nome, telemovel: e.telefone },
+        total: e.total,   // o balcão cobra na entrega (05/11)
         itens: e.itens.map(i => ({
           id: i.id,
           nome: i.nome,

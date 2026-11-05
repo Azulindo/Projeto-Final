@@ -67,6 +67,22 @@ function horaJaNaoServe(dataStr, horaStr) {
 // a mesa; uma que ninguem apareceu ja nao ocupa nada.
 const OCUPAM = ['pendente', 'confirmada', 'concluida'];
 
+/*
+ *  No maximo 3 reservas por horario, por pedido do Guilherme (05/11).
+ *  E uma regra diferente da lotacao: a lotacao conta PESSOAS (40 por
+ *  horario), esta conta RESERVAS. Tres grupos a chegar a mesma hora ja
+ *  e o que a sala e a cozinha aguentam receber de uma vez, mesmo que
+ *  ainda sobrem cadeiras.
+ */
+const MAX_RESERVAS_POR_HORARIO = 3;
+
+// Uma reserva por telemovel em cada horario (05/11). Antes eram 3 por
+// dia (B-49); o limite por dia deixou de existir.
+const MAX_RESERVAS_POR_TELEMOVEL = 1;
+
+// Mais do que isto e por telefone — e o que o chat da reserva ja dizia.
+const MAX_PESSOAS_POR_RESERVA = 10;
+
 
 /* -------------------------------------------------------------------
  *  A DATA
@@ -154,17 +170,28 @@ router.get('/reservas/horarios', async (req, res, next) => {
                  WHERE r.id_slot = s.id_slot
                    AND r.data_reserva = ?
                    AND r.estado IN (?)
-              ), 0) AS ocupado
+              ), 0) AS ocupado,
+              (
+                SELECT COUNT(*) FROM reserva r
+                 WHERE r.id_slot = s.id_slot
+                   AND r.data_reserva = ?
+                   AND r.estado IN (?)
+              ) AS reservas
          FROM slot_horario s
         WHERE s.ativo = 1
           AND FIND_IN_SET(?, s.dias_semana)
         ORDER BY s.hora`,
-      [data, OCUPAM, diaISOde(data)]
+      [data, OCUPAM, data, OCUPAM, diaISOde(data)]
     );
 
     res.json(linhas.map((s) => {
       const ocupado = Number(s.ocupado);
-      const livres = Math.max(0, s.lotacao_maxima - ocupado);
+      const reservas = Number(s.reservas);
+      // Com 3 reservas o horario fecha, mesmo que sobrem cadeiras: os
+      // lugares que restam ja nao se podem marcar.
+      const livres = reservas >= MAX_RESERVAS_POR_HORARIO
+        ? 0
+        : Math.max(0, s.lotacao_maxima - ocupado);
       const passou = horaJaNaoServe(data, String(s.hora));   // so para hoje
       return {
         id:          s.id_slot,
@@ -172,6 +199,7 @@ router.get('/reservas/horarios', async (req, res, next) => {
         periodo:     s.periodo,
         lotacao:     s.lotacao_maxima,
         ocupado,
+        reservas,
         livres,
         passou,
         disponivel:  livres > 0 && !passou,
@@ -199,9 +227,13 @@ const esquemaReserva = z.object({
 
   email: z.string().trim().toLowerCase().email('Email invalido.').max(150).nullish(),
 
+  // Ate 10 (05/11). O chat da reserva ja mandava ligar a partir de 11
+  // pessoas, mas o servidor aceitava 50: um pedido feito a mao, sem o
+  // chat, passava. A regra e uma so, e quem a garante e o servidor.
   pessoas: z.coerce.number().int()
     .min(1, 'Tem de ser pelo menos uma pessoa.')
-    .max(50, 'Para grupos maiores, telefona-nos.'),
+    .max(MAX_PESSOAS_POR_RESERVA,
+      `Para grupos com mais de ${MAX_PESSOAS_POR_RESERVA} pessoas, telefona-nos.`),
 
   data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data no formato AAAA-MM-DD.'),
 
@@ -266,7 +298,10 @@ router.post('/reservas', limiteReservaOuTakeAway, validar(esquemaReserva), async
     }
 
     /*
-     *  B-49 — no maximo 3 reservas por telemovel para o MESMO DIA.
+     *  Uma reserva por telemovel no MESMO HORARIO do mesmo dia (05/11).
+     *  Ate ai era o B-49: 3 por telemovel por dia. O Guilherme mudou a
+     *  regra: o mesmo numero pode marcar o almoco e o jantar, o que nao
+     *  pode e ocupar duas vezes a mesma hora.
      *
      *  Conta-se por data da reserva e nao por dia em que se reservou:
      *  quem marca cinco sextas-feiras ao longo de dois meses e um bom
@@ -275,15 +310,31 @@ router.post('/reservas', limiteReservaOuTakeAway, validar(esquemaReserva), async
      */
     const [[{ jaTem }]] = await con.query(
       `SELECT COUNT(*) AS jaTem FROM reserva
-        WHERE telemovel = ? AND data_reserva = ? AND estado IN (?)`,
-      [d.telemovel, d.data, OCUPAM]
+        WHERE telemovel = ? AND data_reserva = ? AND id_slot = ?
+          AND estado IN (?)`,
+      [d.telemovel, d.data, slot.id_slot, OCUPAM]
     );
 
-    if (jaTem >= 3) {
+    if (jaTem >= MAX_RESERVAS_POR_TELEMOVEL) {
       await con.rollback(); con.release();
       return res.status(409).json({
-        erro: 'Ja existem 3 reservas para este telemovel nesse dia. '
-            + 'Para um grupo maior, telefona-nos e tratamos disso.',
+        erro: `Ja existe uma reserva para este telemovel as ${d.hora} desse dia. `
+            + 'Para mudar o numero de pessoas, telefona-nos.',
+      });
+    }
+
+    // Ja ha 3 reservas a esta hora? (MAX_RESERVAS_POR_HORARIO)
+    const [[{ reservasNoHorario }]] = await con.query(
+      `SELECT COUNT(*) AS reservasNoHorario FROM reserva
+        WHERE id_slot = ? AND data_reserva = ? AND estado IN (?)`,
+      [slot.id_slot, d.data, OCUPAM]
+    );
+
+    if (reservasNoHorario >= MAX_RESERVAS_POR_HORARIO) {
+      await con.rollback(); con.release();
+      return res.status(409).json({
+        erro: `As ${d.hora} ja temos ${MAX_RESERVAS_POR_HORARIO} reservas. Escolhe outra hora.`,
+        livres: 0,
       });
     }
 

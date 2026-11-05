@@ -132,7 +132,7 @@ router.get('/pedidos/cozinha',
     try {
       const [rondas] = await pool.query(
         `SELECT p.id_pedido, p.numero_pedido, p.estado, p.data_hora,
-                p.tipo_pedido, p.observacoes,
+                p.tipo_pedido, p.observacoes, p.valor_total,
                 p.nome_convidado, p.telefone_convidado,
                 m.numero_mesa, p.id_sessao
            FROM pedido p
@@ -188,6 +188,8 @@ router.get('/pedidos/cozinha',
         // espera ao balcao, e e o nome dela que interessa mostrar.
         if (r.tipo_pedido === 'take_away') {
           base.cliente = { nome: r.nome_convidado, telemovel: r.telefone_convidado };
+          // O balcao cobra na entrega, por isso precisa do valor (05/11).
+          base.total = Number(r.valor_total);
         } else {
           base.mesa = { numero: r.numero_mesa, sessaoId: r.id_sessao };
         }

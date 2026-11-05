@@ -670,6 +670,21 @@ grava em `localStorage`. Não há tabelas nem endpoints. Mínimo necessário:
 
 O ecrã de confirmação do cliente já está preparado para mostrar e copiar esse código.
 
+> **Regras do `POST /api/reservas` a 05/11** (pedidas pelo Guilherme), todas verificadas no
+> servidor, dentro da mesma transação que trava o horário:
+>
+> 1. **Até 10 pessoas por reserva** (`MAX_PESSOAS_POR_RESERVA`). Era 50 no Zod, e o chat já
+>    mandava telefonar a partir de 11 — um pedido feito sem o chat passava. Acima de 10 → 400.
+> 2. **Uma reserva por telemóvel em cada horário** (`MAX_RESERVAS_POR_TELEMOVEL`) → 409. O
+>    mesmo número pode marcar o almoço e o jantar; não pode marcar duas vezes a mesma hora.
+>    O limite por dia (3 por telemóvel, B-49) deixou de existir.
+> 3. **No máximo 3 reservas por horário** (`MAX_RESERVAS_POR_HORARIO`) → 409. É outra regra
+>    que a lotação: a lotação conta **pessoas**, esta conta **reservas**. O
+>    `GET /api/reservas/horarios` passou a trazer `reservas` (quantas há) e dá `livres: 0`
+>    quando chegam a 3, mesmo que sobrem cadeiras.
+>
+> A simulação do `api.js` aplica as mesmas três.
+
 ### 4.6 `GET /api/gestao/mesas/qrcodes`
 
 Lista das mesas com o respetivo `qrToken`, para a página que imprime os QR Codes
@@ -1154,6 +1169,18 @@ fila que as rondas de mesa — para quem está na grelha não há diferença ent
 para a mesa 4 e fazer um para levar. O que muda é o cabeçalho: leva
 `cliente: { nome, telemovel }` e **a chave `mesa` nem existe**. As transições de estado são as
 mesmas, e um salto inválido dá o mesmo 409.
+
+> **E no balcão (05/11).** O `GET /api/pedidos/ativos` é `sessao_mesa JOIN mesa`, e uma
+> encomenda para levar não tem nenhuma das duas — por isso nunca lá aparecia: a cozinha fazia-a
+> e o balcão não tinha onde ver que estava pronta. O balcão passou a ler também o
+> `GET /api/pedidos/cozinha` (já aceitava o nível `balcao`) e mostra só as de `take_away`, com
+> as prontas primeiro e um botão **Entregar (pago)** que faz o `PATCH .../estado` para
+> `entregue` (dois toques, como fechar uma mesa). Para isso a encomenda leva também
+> **`total`** nesta resposta — o balcão cobra na entrega. Nenhum caminho novo.
+>
+> **Catálogo sem cache (05/11).** `GET /api/categorias`, `/api/produtos` e `/api/produtos/:id`
+> respondem com `Cache-Control: no-store`: um preço mudado na gestão tem de aparecer na ementa
+> no pedido seguinte, sem depender do que o browser decidiu guardar.
 
 *O ecrã do cliente é a `frontend/cliente/takeaway.html` (F-24 + F-25). A simulação no
 `api.js` tem os dois caminhos com os mesmos limites e as mesmas mensagens, para os testes e

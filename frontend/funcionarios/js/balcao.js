@@ -7,6 +7,8 @@
  *
  * Endpoints:
  *     GET  pedidos/ativos              (já existe — docs/API.md 3.6)
+ *     GET  pedidos/cozinha             (já existe — docs/API.md 3.10.1)
+ *     PATCH pedidos/:id/estado         (já existe — docs/API.md 3.10.2)
  *     GET  gestao/sessoes/:id/conta    (já existe — docs/API.md 4.7)
  *     POST gestao/sessoes/:id/atendida (já existe — docs/API.md 4.4)
  *     POST pedidos/sessao/:id/fechar   (já existe — docs/API.md 3.9)
@@ -20,6 +22,13 @@
  * é quem está à espera de alguém; depois quem chamou um empregado, e
  * só então as mais antigas. Abrir a mesa conta como atendê-la: o ecrã
  * limpa a chamada ao abrir o painel.
+ *
+ * Take away (05/11): uma encomenda para levar não tem mesa nem sessão,
+ * por isso nunca vinha no pedidos/ativos — a cozinha fazia-a e o balcão
+ * não tinha onde a ver. Vem agora da mesma fila da cozinha
+ * (pedidos/cozinha, filtrada pelo tipo). As prontas aparecem primeiro,
+ * com o botão de entregar; entregar é receber o pagamento, por isso
+ * pede dois toques, como fechar uma mesa.
  * =====================================================================
  */
 
@@ -44,9 +53,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnFecharPainel = document.getElementById('btnFecharPainel');
   const btnFecharMesa   = document.getElementById('btnFecharMesa');
 
+  const blocoTakeaway  = document.getElementById('blocoTakeaway');
+  const grelhaTakeaway = document.getElementById('grelhaTakeaway');
+  const contaTakeaway  = document.getElementById('contaTakeaway');
+
   if (!grelha) return;
 
   let mesas = [];
+  let encomendas = [];        // take away ainda por entregar
+  let entregaAConfirmar = null;  // id da encomenda à espera do 2.º toque
+  let temporizadorEntrega = null;
   let sessaoAberta = null;   // sessão mostrada no painel
   let confirmarFecho = false;
 
@@ -71,7 +87,18 @@ document.addEventListener('DOMContentLoaded', () => {
   async function atualizar(manual = false) {
     if (manual) btnAtualizar.disabled = true;
     try {
-      mesas = await chamarAPI('pedidos/ativos');
+      /* As duas listas pedem-se juntas, mas uma falha no take away não
+         pode apagar as mesas: se a fila da cozinha falhar, ficam os
+         últimos dados bons dela. */
+      const [ativos, fila] = await Promise.allSettled([
+        chamarAPI('pedidos/ativos'),
+        chamarAPI('pedidos/cozinha'),
+      ]);
+      if (ativos.status === 'rejected') throw ativos.reason;
+      mesas = ativos.value;
+      if (fila.status === 'fulfilled' && Array.isArray(fila.value)) {
+        encomendas = fila.value.filter(r => r.tipo === 'take_away');
+      }
       marcarLigacao(true);
       desenhar();
     } catch (erro) {
@@ -107,6 +134,125 @@ document.addEventListener('DOMContentLoaded', () => {
     grelha.innerHTML = '';
     semMesas.classList.toggle('hidden', ordenadas.length > 0);
     ordenadas.forEach(mesa => grelha.appendChild(criarCartaoMesa(mesa)));
+
+    desenharTakeaway();
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     TAKE AWAY
+  ═══════════════════════════════════════════════════════════ */
+
+  function desenharTakeaway() {
+    // Prontas primeiro: há alguém ao balcão à espera delas.
+    const lista = [...encomendas].sort((a, b) => {
+      const pa = estadoIgual(a.estado, 'pronto') ? 0 : 1;
+      const pb = estadoIgual(b.estado, 'pronto') ? 0 : 1;
+      if (pa !== pb) return pa - pb;
+      return new Date(a.criadoEm) - new Date(b.criadoEm);
+    });
+
+    blocoTakeaway.classList.toggle('hidden', lista.length === 0);
+    contaTakeaway.textContent = lista.length;
+    grelhaTakeaway.innerHTML = '';
+    lista.forEach(enc => grelhaTakeaway.appendChild(criarCartaoTakeaway(enc)));
+  }
+
+  function criarCartaoTakeaway(enc) {
+    const pronta = estadoIgual(enc.estado, 'pronto');
+
+    const cartao = document.createElement('article');
+    cartao.className = `cartao-mesa cartao-takeaway${pronta ? ' takeaway-pronta' : ''}`;
+    cartao.dataset.pedido = enc.id;
+
+    // Tudo o que vem do cliente (nome, telefone, pratos) entra como
+    // texto, nunca como HTML.
+    const topo = document.createElement('div');
+    topo.className = 'mesa-topo';
+    const numero = document.createElement('span');
+    numero.className = 'mesa-numero';
+    numero.textContent = enc.numero;
+    const tempo = document.createElement('span');
+    tempo.className = 'mesa-tempo';
+    tempo.textContent = formatarDuracao(enc.criadoEm);
+    topo.append(numero, tempo);
+
+    const cliente = document.createElement('div');
+    cliente.className = 'takeaway-cliente';
+    const nome = document.createElement('strong');
+    nome.textContent = enc.cliente?.nome || 'Sem nome';
+    cliente.appendChild(nome);
+    if (enc.cliente?.telemovel) {
+      const tel = document.createElement('a');
+      tel.className = 'takeaway-tel';
+      tel.href = `tel:${String(enc.cliente.telemovel).replace(/\s/g, '')}`;
+      tel.textContent = enc.cliente.telemovel;
+      cliente.appendChild(tel);
+    }
+
+    const etiquetas = document.createElement('div');
+    etiquetas.className = 'mesa-etiquetas';
+    const etiqueta = document.createElement('span');
+    etiqueta.className = pronta ? 'etiqueta etiqueta-pronta' : 'etiqueta etiqueta-pendentes';
+    etiqueta.textContent = pronta
+      ? '✅ Pronta para entregar'
+      : `🔔 Na cozinha · ${ETIQUETA_ESTADO[enc.estado] || enc.estado}`;
+    etiquetas.appendChild(etiqueta);
+
+    const itens = document.createElement('p');
+    itens.className = 'takeaway-itens';
+    itens.textContent = (enc.itens || []).map(i => `${i.quantidade}× ${i.nome}`).join(' · ');
+
+    const baixo = document.createElement('div');
+    baixo.className = 'mesa-baixo';
+    const qtd = (enc.itens || []).reduce((s, i) => s + Number(i.quantidade || 0), 0);
+    const nItens = document.createElement('span');
+    nItens.className = 'mesa-itens';
+    nItens.textContent = `${qtd} ${qtd === 1 ? 'item' : 'itens'}`;
+    const total = document.createElement('span');
+    total.className = 'mesa-total';
+    total.textContent = enc.total == null ? '—' : formatarPreco(Number(enc.total));
+    baixo.append(nItens, total);
+
+    cartao.append(topo, cliente, etiquetas, itens, baixo);
+
+    if (pronta) {
+      const confirmar = entregaAConfirmar === enc.id;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `btn btn-primario btn-entregar${confirmar ? ' a-confirmar' : ''}`;
+      btn.textContent = confirmar ? 'Confirmar — recebeste o pagamento?' : 'Entregar (pago)';
+      btn.addEventListener('click', () => tentarEntregar(enc, btn));
+      cartao.appendChild(btn);
+    }
+
+    return cartao;
+  }
+
+  async function tentarEntregar(enc, btn) {
+    if (entregaAConfirmar !== enc.id) {
+      entregaAConfirmar = enc.id;
+      clearTimeout(temporizadorEntrega);
+      // Sem o segundo toque em 6 segundos, o botão volta ao normal.
+      temporizadorEntrega = setTimeout(() => { entregaAConfirmar = null; desenharTakeaway(); }, 6000);
+      desenharTakeaway();
+      return;
+    }
+
+    clearTimeout(temporizadorEntrega);
+    entregaAConfirmar = null;
+    btn.disabled = true;
+    btn.textContent = 'A entregar…';
+
+    try {
+      await chamarAPI(`pedidos/${enc.id}/estado`, { method: 'PATCH', body: { estado: 'entregue' } });
+      encomendas = encomendas.filter(e => e.id !== enc.id);
+      desenharTakeaway();
+      atualizar();
+    } catch (erro) {
+      btn.disabled = false;
+      btn.textContent = `❌ ${erro.message}`;
+      setTimeout(desenharTakeaway, 4000);
+    }
   }
 
   function criarCartaoMesa(mesa) {

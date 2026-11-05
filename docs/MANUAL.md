@@ -53,10 +53,13 @@ A reserva faz-se por conversa, uma pergunta de cada vez:
 4. **A hora.** As horas sem lugares aparecem **a cinzento e riscadas** e
    não se podem escolher. As que têm poucos lugares mostram o número ao
    lado — se forem seis pessoas e sobrarem dois lugares, dá para ver
-   antes de escrever o nome.
+   antes de escrever o nome. Cada hora aceita **no máximo três
+   reservas**: à terceira fecha, mesmo que ainda sobrem cadeiras.
 5. **Nome e telemóvel.** O telemóvel são nove dígitos começados em 9.
    Pode escrever-se com espaços (`912 345 678`) e aceita o indicativo
-   do país à frente (`+351912345678`).
+   do país à frente (`+351912345678`). Cada telemóvel só pode ter
+   **uma reserva em cada hora** do mesmo dia; para mudar o número de
+   pessoas, telefona-se.
 6. **Confirmar** no resumo, que mostra tudo antes de gravar.
 
 ![O passo das horas, com as cheias a cinzento e riscadas](imagens/reservas-horas.png)
@@ -257,6 +260,13 @@ Uma mesa com a conta pedida aparece destacada. Uma mesa que **chamou o
 empregado** mostra "🛎️ Chamou empregado" com há quanto tempo, e passa à
 frente das restantes (logo a seguir às que pediram a conta). Abrir a
 mesa conta como ir lá: o aviso desaparece.
+
+**Take away.** Enquanto houver encomendas para levar por entregar, aparecem
+num bloco "🥡 Take away" por cima das mesas, com o número, o nome, o
+telemóvel (que liga), os pratos e o total. As **prontas** vêm primeiro, a
+verde, com o botão **Entregar (pago)**: o primeiro toque pede confirmação,
+o segundo marca-a como entregue e ela sai do ecrã. As que ainda estão na
+cozinha aparecem com o estado em que estão, sem botão.
 
 **Fechar sessão** com comida ainda por sair da cozinha **avisa, mas não
 impede.** É de propósito: quase sempre é engano, mas às vezes é uma mesa

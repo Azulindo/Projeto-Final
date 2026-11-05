@@ -27,6 +27,20 @@ const { pool } = require('../config/bd');
  *  saber como a base de dados esta organizada por dentro.
  */
 
+/*
+ *  SEM CACHE (05/11)
+ *  -----------------
+ *  O preco e o que a gestao mudou ha um minuto, nao o de ontem. Sem
+ *  Cache-Control, a decisao de guardar a resposta fica com o browser
+ *  (ou com quem estiver pelo meio) — e um preco mudado na gestao podia
+ *  continuar antigo na ementa. O `no-store` tira essa duvida: cada
+ *  pedido vai a base de dados.
+ */
+function semCache(_req, res, next) {
+  res.set('Cache-Control', 'no-store');
+  next();
+}
+
 /** Converte uma linha da base de dados no formato que a API expoe. */
 function formatarProduto(linha) {
   return {
@@ -49,7 +63,7 @@ function formatarProduto(linha) {
 //  ementa — entradas primeiro, sobremesas no fim. Sem o campo "ordem"
 //  sairiam por ordem alfabetica e "Bebidas" vinha antes de "Entradas".
 // ─────────────────────────────────────────────────────────────────────
-router.get('/categorias', async (_req, res, next) => {
+router.get('/categorias', semCache, async (_req, res, next) => {
   try {
     const [linhas] = await pool.query(
       `SELECT id_categoria, nome, descricao, ordem
@@ -74,7 +88,7 @@ router.get('/categorias', async (_req, res, next) => {
 //
 //  Devolve o catalogo que o cliente pode pedir.
 // ─────────────────────────────────────────────────────────────────────
-router.get('/produtos', async (req, res, next) => {
+router.get('/produtos', semCache, async (req, res, next) => {
   try {
     const { categoria } = req.query;
 
@@ -140,7 +154,7 @@ router.get('/produtos', async (req, res, next) => {
 //  GET /api/produtos/:id
 //  Um produto so. Util para confirmar o preco antes de gravar um item.
 // ─────────────────────────────────────────────────────────────────────
-router.get('/produtos/:id', async (req, res, next) => {
+router.get('/produtos/:id', semCache, async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id < 1) {
