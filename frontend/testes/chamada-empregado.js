@@ -94,15 +94,24 @@ const check = (n, c, e = '') => {
   check('e é a da mesa 06, que passou à frente da 07', /Mesa 06/.test(primeiro) && /Chamou empregado/.test(primeiro), primeiro.replace(/\s+/g, ' '));
   check('o cartão fica destacado', (await bal.locator('.cartao-mesa.mesa-chamou').count()) === 1);
 
-  await bal.setViewportSize({ width: 320, height: 700 });
-  await bal.waitForTimeout(300);
-  const transbordo = await bal.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-  const etiquetaFora = await bal.evaluate(() => {
-    const c = document.querySelector('.cartao-mesa.mesa-chamou').getBoundingClientRect();
-    const e = document.querySelector('.etiqueta-chamada').getBoundingClientRect();
-    return e.right - c.right;
-  });
-  check('a 320px a etiqueta cabe no cartão e a página não transborda', transbordo <= 0 && etiquetaFora <= 0.5, `página +${transbordo}px · etiqueta +${etiquetaFora}px`);
+  /* Várias larguras, e não só 320 (07/11). A 320 o balcão tem UMA
+     coluna e o cartão é largo; abaixo de 620px a grelha passa a
+     minmax(160px), e entre ~375 e 620 há DUAS colunas de ~170px —
+     era aí que a etiqueta saía do cartão, e a 320 nunca se via. */
+  const medidas = [];
+  for (const largura of [320, 390, 430, 600, 768, 1280]) {
+    await bal.setViewportSize({ width: largura, height: 800 });
+    await bal.waitForTimeout(250);
+    medidas.push(await bal.evaluate((largura) => {
+      const c = document.querySelector('.cartao-mesa.mesa-chamou').getBoundingClientRect();
+      const e = document.querySelector('.etiqueta-chamada').getBoundingClientRect();
+      return { largura, pagina: document.documentElement.scrollWidth - window.innerWidth, etiqueta: e.right - c.right };
+    }, largura));
+  }
+  const pior = medidas.reduce((a, m) => (m.etiqueta > a.etiqueta || m.pagina > a.pagina ? m : a));
+  check('de 320 a 1280px a etiqueta cabe no cartão e a página não transborda',
+        medidas.every(m => m.pagina <= 0 && m.etiqueta <= 0.5),
+        `pior: ${pior.largura}px · página +${pior.pagina}px · etiqueta ${pior.etiqueta > 0 ? '+' : ''}${Math.round(pior.etiqueta)}px`);
   await bal.setViewportSize({ width: 390, height: 844 });
 
   console.log('\nO BALCÃO ATENDE');
