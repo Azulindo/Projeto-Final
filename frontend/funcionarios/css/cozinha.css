@@ -297,6 +297,20 @@
 .btn-accao:active:not(:disabled) { transform: scale(0.985); }
 .btn-accao:disabled { opacity: 0.5; cursor: wait; }
 
+/* Take away pronto (05/11): entrega-se no balcão, por isso no lugar do
+   botão fica este aviso, do mesmo tamanho para o cartão não saltar. */
+.ronda-aguarda-balcao {
+  width: 100%;
+  margin: 0;
+  padding: 11px 12px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
 .nota-rodape {
   margin-top: 20px;
   font-size: 12px;

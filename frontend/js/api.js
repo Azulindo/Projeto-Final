@@ -2796,6 +2796,12 @@ async function simularEndpoint(endpoint, opcoes) {
     const chave = Object.keys(encomendas).find(n => encomendas[n].id === idRonda);
     if (chave) {
       const enc = encomendas[chave];
+      /* O take away entrega-se no balcão (05/11), como no servidor:
+         a cozinha leva-o até "pronto" e pára aí. */
+      if (estado === 'entregue' && enc.estado !== 'entregue'
+          && (obterSessao() || {}).nivel === 'cozinha') {
+        throw erroSimulado('O take away entrega-se no balcao, onde se recebe o pagamento.', 403);
+      }
       const permitidos = TRANSICOES_RONDA[enc.estado] || [];
       if (estado !== enc.estado && !permitidos.includes(estado)) {
         const erro = erroSimulado(

@@ -241,7 +241,10 @@ sempre a mesma coisa.
 
 Os pedidos para levar aparecem na mesma fila, marcados **🥡 TAKE AWAY**
 e com o nome de quem vem buscar em vez de um número de mesa. Para quem
-está na grelha não há diferença: o prato é o mesmo.
+está na grelha não há diferença: o prato é o mesmo. A única diferença
+está no fim: um take away **pronto** não tem botão "Entregue" na cozinha,
+só o aviso "🥡 À espera no balcão". Entrega-se no balcão, que é onde se
+recebe o pagamento.
 
 ![O ecrã da cozinha, com duas rondas em espera](imagens/cozinha.png)
 *Sessão de Cozinha — daí a barra lateral ter só três itens. A ronda de 28
@@ -265,7 +268,9 @@ mesa conta como ir lá: o aviso desaparece.
 num bloco "🥡 Take away" por cima das mesas, com o número, o nome, o
 telemóvel (que liga), os pratos e o total. As **prontas** vêm primeiro, a
 verde, com o botão **Entregar (pago)**: o primeiro toque pede confirmação,
-o segundo marca-a como entregue e ela sai do ecrã. As que ainda estão na
+o segundo marca-a como entregue e ela sai do ecrã. Só o balcão (e a
+administração) pode fazer isto: a cozinha leva a encomenda até "Pronto" e
+pára aí. As que ainda estão na
 cozinha aparecem com o estado em que estão, sem botão.
 
 **Fechar sessão** com comida ainda por sair da cozinha **avisa, mas não

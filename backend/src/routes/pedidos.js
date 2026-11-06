@@ -244,7 +244,7 @@ router.patch('/pedidos/:id/estado',
        *  descia a dobrar.
        */
       const [linhas] = await con.query(
-        'SELECT id_pedido, numero_pedido, estado FROM pedido WHERE id_pedido = ? FOR UPDATE',
+        'SELECT id_pedido, numero_pedido, estado, tipo_pedido FROM pedido WHERE id_pedido = ? FOR UPDATE',
         [id]
       );
 
@@ -261,6 +261,21 @@ router.patch('/pedidos/:id/estado',
         return res.json({
           mensagem: `O pedido ${pedido.numero_pedido} ja estava em "${novo}".`,
           pedido: { id, numero: pedido.numero_pedido, estado: novo },
+        });
+      }
+
+      /*
+       *  O take away entrega-se no balcao (05/11). Entregar e receber o
+       *  pagamento, e quem cobra e o balcao: a cozinha leva a encomenda
+       *  ate "pronto" e para ai. O ecra da cozinha ja nao mostra o botao,
+       *  mas quem garante a regra e o servidor. A administracao pode,
+       *  porque substitui qualquer posto.
+       */
+      if (novo === 'entregue' && pedido.tipo_pedido === 'take_away'
+          && req.utilizador.nivel === 'cozinha') {
+        await con.rollback(); con.release();
+        return res.status(403).json({
+          erro: 'O take away entrega-se no balcao, onde se recebe o pagamento.',
         });
       }
 

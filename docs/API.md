@@ -1175,7 +1175,11 @@ mesmas, e um salto inválido dá o mesmo 409.
 > e o balcão não tinha onde ver que estava pronta. O balcão passou a ler também o
 > `GET /api/pedidos/cozinha` (já aceitava o nível `balcao`) e mostra só as de `take_away`, com
 > as prontas primeiro e um botão **Entregar (pago)** que faz o `PATCH .../estado` para
-> `entregue` (dois toques, como fechar uma mesa). Para isso a encomenda leva também
+> `entregue` (dois toques, como fechar uma mesa). **Só o balcão e a administração o podem
+> fazer:** com sessão de `cozinha`, levar um take away a `entregue` dá **403** — a cozinha
+> leva-o até `pronto`, e o ecrã dela mostra "À espera no balcão" em vez do botão. As rondas
+> de mesa não mudam: continuam a ser entregues pela cozinha, porque o balcão não tem botão por
+> ronda. Para isso a encomenda leva também
 > **`total`** nesta resposta — o balcão cobra na entrega. Nenhum caminho novo.
 >
 > **Catálogo sem cache (05/11).** `GET /api/categorias`, `/api/produtos` e `/api/produtos/:id`

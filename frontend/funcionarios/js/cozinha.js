@@ -285,13 +285,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const accoes = document.createElement('div');
     accoes.className = 'ronda-accoes';
 
-    const botao = document.createElement('button');
-    botao.type = 'button';
-    botao.className = 'btn-accao';
-    botao.textContent = coluna.accao;
-    botao.disabled = aOcupar.has(ronda.id);
-    botao.addEventListener('click', () => mudarEstado(ronda, coluna.alvo));
-    accoes.appendChild(botao);
+    /* Take away pronto (05/11): entrega-se no balcão, onde se recebe o
+       pagamento. Aqui fica só o aviso de que está à espera lá. */
+    if (ronda.tipo === 'take_away' && ronda.estado === 'pronto') {
+      const aviso = document.createElement('p');
+      aviso.className = 'ronda-aguarda-balcao';
+      aviso.textContent = '🥡 À espera no balcão';
+      accoes.appendChild(aviso);
+    } else {
+      const botao = document.createElement('button');
+      botao.type = 'button';
+      botao.className = 'btn-accao';
+      botao.textContent = coluna.accao;
+      botao.disabled = aOcupar.has(ronda.id);
+      botao.addEventListener('click', () => mudarEstado(ronda, coluna.alvo));
+      accoes.appendChild(botao);
+    }
 
     /* Cancelar — só faz sentido antes de estar pronto. Dois toques,
        porque anular uma ronda devolve stock e não se desfaz. */
