@@ -133,9 +133,24 @@
   border-color: rgba(239, 68, 68, 0.55);
 }
 
+/* Esta etiqueta e a mais comprida de todas ("Chamou empregado\u00a0· agora
+   mesmo") e a unica que PODE partir em duas linhas. As outras cabem
+   sempre numa; esta, num cartao estreito, passava a borda do cartao
+   -- reportado com captura a 07/11.
+
+   `white-space: normal` sozinho nao chega: o cartao e uma coluna
+   flex, e um filho de flex nao encolhe abaixo do seu conteudo sem
+   `min-width: 0`. Por isso vao os dois.
+
+   E um aviso, nao um rotulo: tem de se ler inteiro. Duas linhas sao
+   melhores do que reticencias ou do que sair fora da caixa. */
 .etiqueta-chamada {
   background: rgba(239, 68, 68, 0.16);
   color: var(--perigo-texto);
+  white-space: normal;
+  min-width: 0;
+  line-height: 1.35;
+  text-align: left;
 }
 
 .mesa-baixo {
